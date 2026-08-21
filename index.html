@@ -340,6 +340,17 @@
   .auth-btn-google:hover { background: #F9FAFB; }
   .auth-btn-logout { width: 100%; background: #FEE2E2; color: var(--red); font-weight: 800; font-size: 13.5px; padding: 11px; border-radius: 999px; text-align: center; margin-top: 8px; }
 
+  /* ============ IN-APP BROWSER (INSTAGRAM / TIKTOK) GUIDANCE MODAL ============ */
+  .iab-modal { position: fixed; inset: 0; background: rgba(31, 41, 55, 0.6); backdrop-filter: blur(4px); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity .25s; }
+  .iab-modal.open { opacity: 1; pointer-events: auto; }
+  .iab-content { background: #fff; border-radius: var(--radius-lg); padding: 26px 20px; max-width: 420px; width: 100%; text-align: center; border: 1.5px solid var(--line); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+  .iab-icon { width: 64px; height: 64px; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; border: 1.5px solid var(--line); color: var(--accent); }
+  .iab-title { font-size: 18px; font-weight: 900; color: #b01e4a; margin: 0 0 10px; }
+  .iab-desc { font-size: 13.5px; color: var(--text-soft); line-height: 1.8; margin-bottom: 20px; text-align: right; }
+  .iab-step { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--surface); border-radius: 12px; margin-bottom: 8px; font-size: 13px; font-weight: 700; color: var(--ink); }
+  .iab-step-num { width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+  .iab-close-btn { width: 100%; background: var(--accent); color: #fff; font-weight: 800; font-size: 14px; padding: 12px; border-radius: 999px; margin-top: 14px; }
+
   /* ============ INFO / ABOUT ============ */
   .info-page h2 { font-size: 20px; font-weight: 900; margin: 16px 0 12px; color: var(--ink); }
   .info-page p { font-size: 14px; color: var(--text-soft); line-height: 1.9; margin-bottom: 14px; }
@@ -490,7 +501,7 @@
           <!-- Flower 5 (Tip Blossom) -->
           <g transform="translate(255, 45) scale(0.85)">
             <ellipse cx="-6" cy="-6" rx="6" ry="8" fill="#FFFFFF" transform="rotate(-30 -6 -6)"/>
-            <ellipse cx="6" cy="-6" rx="6" ry="8" fill="#FFE4EA" transform="rotate(30 6 -6)"/>
+            <ellipse cx="6" cy="-6" rx="6.5" ry="8.5" fill="#FFE4EA" transform="rotate(30 6 -6)"/>
             <ellipse cx="8" cy="4" rx="6" ry="8" fill="#FFC8D6" transform="rotate(75 8 4)"/>
             <ellipse cx="-2" cy="8" rx="6" ry="8" fill="#FFE4EA" transform="rotate(130 -2 8)"/>
             <ellipse cx="-8" cy="2" rx="6" ry="8" fill="#FFF0F5" transform="rotate(-65 -8 2)"/>
@@ -702,6 +713,30 @@
   </div>
 </div>
 
+<!-- ============ IN-APP BROWSER (INSTAGRAM) GUIDANCE MODAL ============ -->
+<div class="iab-modal" id="iabModal">
+  <div class="iab-content">
+    <div class="iab-icon">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+    </div>
+    <h3 class="iab-title">فتح في متصفح خارجي</h3>
+    <div class="iab-desc">
+      متصفح إنستغرام يمنع تسجيل الدخول عبر Google لأسباب أمنية. لتسجيل الدخول بسهولة، يرجى اتباع الخطوتين:
+      <div style="margin-top:12px;">
+        <div class="iab-step">
+          <div class="iab-step-num">1</div>
+          <div>اضغطي على الثلاث نقاط (•••) في أعلى الشاشة</div>
+        </div>
+        <div class="iab-step">
+          <div class="iab-step-num">2</div>
+          <div>اختاري <strong>فتح في المتصفح / Open in Safari / Chrome</strong></div>
+        </div>
+      </div>
+    </div>
+    <button class="iab-close-btn" onclick="document.getElementById('iabModal').classList.remove('open')">حسناً، فهمت</button>
+  </div>
+</div>
+
 <!-- ============ ABOUT VIEW ============ -->
 <div class="view" id="view-about">
   <div class="wrap info-page">
@@ -767,16 +802,15 @@
 
 <script>
   // ============ FIREBASE CONFIGURATION ============
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDnbqgd89zrjXtKT-uZ_36iG7xL2yBEgtc",
-  authDomain: "cottanpharmacy.firebaseapp.com",
-  projectId: "cottanpharmacy",
-  storageBucket: "cottanpharmacy.appspot.com",
-  messagingSenderId: "163407198551",
-  appId: "1:163407198551:web:1c397d23733101456a6612",
-  measurementId: "G-QC29GK2MDW"
-};
+  const firebaseConfig = {
+    apiKey: "AIzaSyDnbqgd89zrjXtKT-uZ_36iG7xL2yBEgtc",
+    authDomain: "cottanpharmacy.firebaseapp.com",
+    projectId: "cottanpharmacy",
+    storageBucket: "cottanpharmacy.appspot.com",
+    messagingSenderId: "163407198551",
+    appId: "1:163407198551:web:1c397d23733101456a6612",
+    measurementId: "G-QC29GK2MDW"
+  };
 
   let auth = null;
   let db = null;
@@ -887,6 +921,16 @@ const firebaseConfig = {
     localStorage.setItem('qutn_wishlist', JSON.stringify([...wishlist]));
   }
 
+  // ============ IN-APP BROWSER DETECTION ============
+  function isInAppBrowser() {
+    const ua = navigator.userAgent || navigator.vendor || window.opera || '';
+    return (ua.indexOf('Instagram') > -1) ||
+           (ua.indexOf('FBAN') > -1) ||
+           (ua.indexOf('FBAV') > -1) ||
+           (ua.indexOf('TikTok') > -1) ||
+           (ua.indexOf('Snapchat') > -1);
+  }
+
   // ============ FIREBASE SYNC ============
   async function syncToFirebase() {
     saveLocalState();
@@ -933,14 +977,27 @@ const firebaseConfig = {
 
   async function signInWithGoogle() {
     if (!isFirebaseConfigured) {
-      showToast('يرجى ضبط إعدادات firebaseConfig لتفعيل تسجيل الدخول');
+      showToast('يرجى ضبط إعدادات تسجيل الدخول');
       return null;
     }
-    const provider = new firebase.auth.GoogleAuthProvider();
+
+    // التعامل الذكي مع متصفح إنستغرام لفتح المتصفح الخارجي
+    if (isInAppBrowser()) {
+      const isAndroid = /android/i.test(navigator.userAgent || '');
+      if (isAndroid) {
+        const cleanUrl = window.location.href.replace(/^https?:\/\//, '');
+        window.location.href = `intent://${cleanUrl}#Intent;scheme=https;package=com.android.chrome;end`;
+        return null;
+      } else {
+        const modal = document.getElementById('iabModal');
+        if (modal) modal.classList.add('open');
+        return null;
+      }
+    }
+
     try {
-      const result = await auth.signInWithPopup(provider);
-      showToast('تم تسجيل الدخول بنجاح ✓');
-      return result.user;
+      const provider = new firebase.auth.GoogleAuthProvider();
+      await auth.signInWithRedirect(provider);
     } catch (err) {
       console.error(err);
       showToast('تعذر تسجيل الدخول: ' + (err.message || 'حدث خطأ'));
@@ -963,6 +1020,23 @@ const firebaseConfig = {
     }
   }
 
+  if (isFirebaseConfigured && auth) {
+    auth.getRedirectResult().then((result) => {
+      if (result && result.user) {
+        currentUser = result.user;
+        showToast('تم تسجيل الدخول بنجاح ✓');
+        if (typeof renderAccountView === 'function') {
+          renderAccountView();
+        }
+      }
+    }).catch((err) => {
+      if (err.code && err.code !== 'auth/null-user') {
+        console.error(err);
+        showToast('تعذر تسجيل الدخول: ' + (err.message || 'حدث خطأ'));
+      }
+    });
+  }
+
   // ============ SEND ORDER TO FIREBASE FIRESTORE ============
   async function sendOrderToFirebase(cartItems, totalPrice, customerPhone) {
     if (!isFirebaseConfigured) {
@@ -970,20 +1044,14 @@ const firebaseConfig = {
       return "LOCAL_ORDER";
     }
 
-    let user = auth.currentUser;
-    if (!user) {
-      showToast('يرجى تسجيل الدخول بحساب Google أولاً لتأكيد الطلب');
-      user = await loginWithGoogle();
-      if (!user) {
-        return null;
-      }
-    }
-
+    let user = auth ? auth.currentUser : null;
+    
+    // إذا كان مسجلاً نحفظ الطلب ببياناته، وإذا لم يكن مسجلاً نحفظه ببيانات الزبون دون إيقاف العملية
     try {
       const orderPayload = {
-        userId: user.uid,
-        customerName: user.displayName || document.getElementById('custName').value.trim() || 'عميل مسجل',
-        customerEmail: user.email || '',
+        userId: user ? user.uid : 'guest_order',
+        customerName: (user && user.displayName) ? user.displayName : (document.getElementById('custName').value.trim() || 'عميل المتجر'),
+        customerEmail: (user && user.email) ? user.email : '',
         customerPhone: customerPhone,
         customerAddress: document.getElementById('custAddress').value.trim(),
         deliveryMethod: deliveryMethod,
@@ -998,7 +1066,6 @@ const firebaseConfig = {
       return docRef.id;
     } catch (error) {
       console.error("Error adding order to Firestore:", error);
-      showToast('تعذر حفظ الطلب سحابياً، سيتم إرساله عبر واتساب');
       return null;
     }
   }
@@ -1448,10 +1515,6 @@ const firebaseConfig = {
 
     // إرسال الطلب إلى Firestore
     const orderId = await sendOrderToFirebase(itemObjects, grandTotal, phone);
-    if (!orderId && isFirebaseConfigured && !currentUser) {
-      // User cancelled sign in
-      return;
-    }
 
     const deliveryLabel = deliveryMethod === 'express' ? 'توصيل سريع (خلال 24 ساعة)' : 'توصيل عادي (24-48 ساعة)';
     const msg = encodeURIComponent(
