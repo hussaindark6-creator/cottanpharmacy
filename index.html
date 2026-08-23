@@ -14,8 +14,10 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
+
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-  <!-- Google tag (gtag.js) -->
+<!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-QC29GK2MDW"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -522,11 +524,11 @@
           </g>
 
           <g transform="translate(255, 45) scale(0.85)">
-            <ellipse cx="-6" cy="-6" rx="6" ry="8" fill="#FFFFFF" transform="rotate(-30 -6 -6)"/>
+            <ellipse cx="-6" cy="-6" rx="6.5" ry="8" fill="#FFFFFF" transform="rotate(-30 -6 -6)"/>
             <ellipse cx="6" cy="-6" rx="6.5" ry="8" fill="#FFE4EA" transform="rotate(30 6 -6)"/>
-            <ellipse cx="8" cy="4" rx="6" ry="8" fill="#FFC8D6" transform="rotate(75 8 4)"/>
-            <ellipse cx="-2" cy="8" rx="6" ry="8" fill="#FFE4EA" transform="rotate(130 -2 8)"/>
-            <ellipse cx="-8" cy="2" rx="6" ry="8" fill="#FFF0F5" transform="rotate(-65 -8 2)"/>
+            <ellipse cx="8" cy="4" rx="6.5" ry="8" fill="#FFC8D6" transform="rotate(75 8 4)"/>
+            <ellipse cx="-2" cy="8" rx="6.5" ry="8" fill="#FFE4EA" transform="rotate(130 -2 8)"/>
+            <ellipse cx="-8" cy="2" rx="6.5" ry="8.5" fill="#FFF0F5" transform="rotate(-65 -8 2)"/>
             <circle cx="0" cy="0" r="2.5" fill="#E85D8A"/>
           </g>
 
@@ -832,8 +834,12 @@
     measurementId: "G-QC29GK2MDW"
   };
 
+  // VAPID Key for Web Push Notifications
+  const FCM_VAPID_KEY = "BOVN9U5VjY_FhtHD9yEiCPc38HTLn4tU_f_iKtMjgymGAC73TPSEtDzA7XX0eW1XBGweQhpG8bLEBxkb4WcLy4";
+
   let auth = null;
   let db = null;
+  let messaging = null;
   let currentUser = null;
   let isFirebaseConfigured = false;
   let authMode = 'login'; // 'login' | 'register'
@@ -843,6 +849,11 @@
       firebase.initializeApp(firebaseConfig);
       auth = firebase.auth();
       db = firebase.firestore();
+      
+      // Initialize Firebase Cloud Messaging if supported
+      if (firebase.messaging && firebase.messaging.isSupported()) {
+        messaging = firebase.messaging();
+      }
       isFirebaseConfigured = true;
     }
   } catch (err) {
@@ -952,6 +963,83 @@
            (ua.indexOf('Snapchat') > -1);
   }
 
+  // ============ FIREBASE CLOUD MESSAGING (FCM) ============
+  async function initFirebaseMessaging() {
+    if (!messaging || !('serviceWorker' in navigator)) return;
+
+    try {
+      const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+      console.log('FCM Service Worker registered:', registration.scope);
+
+      // الاستماع للرسائل في الواجهة الأمامية (Foreground Messages)
+      messaging.onMessage((payload) => {
+        console.log('Foreground FCM Message received:', payload);
+        const title = payload.notification ? payload.notification.title : 'صيدلية القطن';
+        const body = payload.notification ? payload.notification.body : '';
+        showToast(`🔔 ${title}: ${body}`);
+      });
+    } catch (err) {
+      console.warn('Service Worker registration or FCM listener error:', err);
+    }
+  }
+
+  async function requestNotificationPermission() {
+    if (!messaging || !('Notification' in window)) {
+      showToast('المتصفح لا يدعم خدمة الإشعارات.');
+      return;
+    }
+
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        const registration = await navigator.serviceWorker.getRegistration('./firebase-messaging-sw.js');
+        
+        // جلب الـ Token باستخدام مفتاح VAPID المرفق
+        const token = await messaging.getToken({
+          vapidKey: FCM_VAPID_KEY,
+          serviceWorkerRegistration: registration
+        });
+
+        if (token) {
+          console.log('FCM Token generated successfully:', token);
+          localStorage.setItem('qutn_fcm_token', token);
+          await saveTokenToFirestore(token);
+          showToast('تم تفعيل استقبال الإشعارات بنجاح ✓');
+        } else {
+          showToast('تعذر توليد رمز الإشعارات، تحقق من الأذونات.');
+        }
+      } else {
+        showToast('تم رفض إذن الإشعارات من المتصفح.');
+      }
+    } catch (err) {
+      console.error('Error getting FCM token:', err);
+      showToast('تعذر تفعيل الإشعارات: ' + (err.message || 'حدث خطأ'));
+    }
+  }
+
+  async function saveTokenToFirestore(token) {
+    if (!db || !token) return;
+    try {
+      const tokenData = {
+        token: token,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        userId: currentUser ? currentUser.uid : 'guest',
+        userAgent: navigator.userAgent
+      };
+
+      if (currentUser && !currentUser.uid.startsWith('guest_')) {
+        await db.collection('users').doc(currentUser.uid).set({
+          fcmToken: token,
+          fcmUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+      }
+
+      await db.collection('fcm_tokens').doc(token.substring(0, 30)).set(tokenData, { merge: true });
+    } catch (err) {
+      console.warn('Error saving token to Firestore:', err);
+    }
+  }
+
   // ============ FIREBASE SYNC ============
   async function syncToFirebase() {
     saveLocalState();
@@ -980,6 +1068,11 @@
         renderAccountView();
         if (currentView === 'cart') renderCart();
         if (currentView === 'wishlist') renderWishlist();
+      }
+
+      const savedToken = localStorage.getItem('qutn_fcm_token');
+      if (savedToken) {
+        saveTokenToFirestore(savedToken);
       }
     } catch (err) {
       console.warn("Error fetching user data:", err);
@@ -1699,7 +1792,7 @@
               <img src="${currentUser.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'}" alt="Avatar">
             </div>
             <div class="user-info">
-              <h3>${currentUser.displayName || 'مستخدم مسجل'}</h3>
+              <h3>${currentUser.displayName || currentUser.email || 'مستخدم مسجل'}</h3>
               <p>${currentUser.email || ''}</p>
               <div class="sync-indicator">
                 <span class="sync-dot"></span>
@@ -1707,6 +1800,12 @@
               </div>
             </div>
           </div>
+
+          <!-- زر تفعيل الإشعارات وتوليد FCM Token -->
+          <button class="auth-btn-google" style="margin-bottom:10px; border-color:var(--rose);" onclick="requestNotificationPermission()">
+            🔔 تفعيل استقبال الإشعارات والعروض
+          </button>
+
           <button class="auth-btn-logout" onclick="handleSignOut()">تسجيل الخروج</button>
         </div>`;
     } else {
@@ -1766,6 +1865,7 @@
   renderHome();
   updateCartBadge();
   renderAccountView();
+  initFirebaseMessaging();
 </script>
 <div class="cf-turnstile" data-sitekey="0x4AAAAAAEYEmvDuF-QQDg0s" style="display: none;"></div>
 </body>
