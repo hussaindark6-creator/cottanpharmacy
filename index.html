@@ -73,6 +73,33 @@
   @media (min-width: 768px) { .wrap { max-width: 820px; } }
   @media (min-width: 1024px) { .wrap { max-width: 1100px; } }
 
+  /* ============ STICKY ADMIN BAR ============ */
+  .admin-sticky-bar {
+    background: #111827;
+    color: #FBBF24;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    font-weight: 800;
+    position: sticky;
+    top: 0;
+    z-index: 60;
+    border-bottom: 1px solid #374151;
+  }
+  .admin-bar-btn {
+    background: #F59E0B;
+    color: #111827;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: transform .15s;
+  }
+  .admin-bar-btn:hover { transform: scale(1.04); }
+
   /* ============ HEADER ============ */
   header { position: sticky; top: 0; z-index: 40; background: #fff; border-bottom: 1px solid var(--line); }
   .nav { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; gap: 10px; }
@@ -82,24 +109,6 @@
   .logo-text { font-weight: 900; font-size: 19px; color: var(--rose-deep); letter-spacing: -0.5px; }
   .logo-mark { width: 34px; height: 34px; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); }
   .cart-badge { position: absolute; top: -1px; left: -1px; background: var(--accent); color: #fff; font-size: 10px; font-weight: 800; min-width: 17px; height: 17px; border-radius: 999px; display: flex; align-items: center; justify-content: center; padding: 0 4px; box-shadow: 0 2px 6px rgba(232,93,138,0.4); }
-
-  /* Admin Quick Access Pill */
-  .admin-badge-btn {
-    background: linear-gradient(135deg, #1F2937 0%, #111827 100%);
-    color: #FBBF24;
-    font-weight: 800;
-    font-size: 11.5px;
-    padding: 6px 12px;
-    border-radius: 999px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    border: 1px solid #374151;
-    cursor: pointer;
-    transition: transform .15s;
-  }
-  .admin-badge-btn:hover { transform: scale(1.03); }
 
   .search-wrap { padding: 6px 0 10px; }
   .search-bar { display: flex; align-items: center; gap: 10px; background: #fff; border: 1.5px solid var(--line); border-radius: 999px; padding: 10px 16px; transition: border-color .2s, box-shadow .2s; }
@@ -701,6 +710,14 @@
 </head>
 <body>
 
+<!-- STICKY ADMIN BAR (Visible ONLY for hussaindark6@gmail.com) -->
+<div id="adminTopBar" class="admin-sticky-bar" style="display:none;">
+  <div style="display:flex; align-items:center; gap:8px;">
+    <span>👑 مرحباً بالمشرف (hussaindark6@gmail.com)</span>
+  </div>
+  <button class="admin-bar-btn" onclick="openAdminModal()">⚙️ لوحة التحكم</button>
+</div>
+
 <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
 <aside class="menu-drawer" id="menuDrawer">
   <div class="drawer-header">
@@ -763,11 +780,6 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E85D8A" stroke-width="2"><circle cx="12" cy="8" r="3"/><circle cx="8" cy="10" r="3"/><circle cx="16" cy="10" r="3"/><path d="M12 13v7"/></svg>
       </span>
     </div>
-
-    <!-- Admin Panel Shortcut (Only for hussaindark6@gmail.com) -->
-    <button id="adminHeaderPill" class="admin-badge-btn" style="display:none;" onclick="openAdminModal()">
-      ⚙️ لوحة التحكم
-    </button>
 
     <button class="icon-btn" onclick="showView('cart')" aria-label="السلة">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h2l2.4 12.4a2 2 0 0 0 2 1.6h8.4a2 2 0 0 0 2-1.6L22 8H6"/><circle cx="9" cy="21" r="1.4" fill="currentColor" stroke="none"/><circle cx="18" cy="21" r="1.4" fill="currentColor" stroke="none"/></svg>
@@ -1001,72 +1013,7 @@
   </div>
 </div>
 
-<!-- ============ DIRECT PHARMACIST CONSULTATION MODAL ============ -->
-<div class="consult-modal-overlay" id="consultModal">
-  <div class="consult-modal-card">
-    <div class="consult-header">
-      <div class="consult-title-wrap">
-        <span class="consult-badge-pill">خدمة الاستشارة المباشرة</span>
-        <h3>استشارة صيدلانية فورية 🩺</h3>
-      </div>
-      <button class="icon-btn" onclick="closeConsultModal()" aria-label="إغلاق">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <div class="consult-body">
-      <form id="consultForm" onsubmit="handleConsultSubmit(event)">
-        <div style="display:flex; gap:10px;">
-          <div class="form-field" style="flex:1.6;">
-            <label>الاسم الكامل</label>
-            <input type="text" id="consultName" placeholder="مثال: سارة علي" required>
-          </div>
-          <div class="form-field" style="flex:1;">
-            <label>العمر</label>
-            <input type="number" id="consultAge" placeholder="25" required min="1" max="100">
-          </div>
-        </div>
-
-        <div class="form-field">
-          <label>الحالة الخاصة (لضمان أمان التركيبات)</label>
-          <div class="consult-toggle-group">
-            <button type="button" class="consult-toggle-btn active" data-val="لا يوجد" onclick="selectConsultCondition(this)">لا يوجد ✨</button>
-            <button type="button" class="consult-toggle-btn" data-val="حامل" onclick="selectConsultCondition(this)">حامل 🤰</button>
-            <button type="button" class="consult-toggle-btn" data-val="مرضع" onclick="selectConsultCondition(this)">مرضع 🤱</button>
-          </div>
-          <input type="hidden" id="consultCondition" value="لا يوجد">
-        </div>
-
-        <div class="form-field">
-          <label>نوع البشرة أو المشكلة بالتفصيل</label>
-          <textarea id="consultDesc" rows="3" placeholder="صفي مشكلة بشرتك (حب شباب، تصبغات، حساسية...) أو اسألي عن منتج أو روتين محدد..." required></textarea>
-        </div>
-
-        <div class="form-field">
-          <label>إرفاق صورة الروشتة أو الحالة (اختياري)</label>
-          <div class="consult-upload-zone" onclick="document.getElementById('consultImgInput').click()">
-            <input type="file" id="consultImgInput" accept="image/*" style="display:none;" onchange="handleConsultImgPreview(this)">
-            <div id="consultUploadPlaceholder">
-              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#E85D8A" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
-              <div style="font-size:12px; font-weight:700; color:var(--ink); margin-top:4px;">اضغطي لرفع صورة الروشتة أو المشكلة</div>
-              <div style="font-size:11px; color:var(--text-soft);">PNG, JPG حتى 10MB</div>
-            </div>
-            <div id="consultImgPreviewWrap" style="display:none; position:relative;">
-              <img id="consultImgPreview" src="" alt="معاينة الصورة" style="max-height:110px; border-radius:10px; margin:0 auto; object-fit:contain; display:block;">
-              <button type="button" onclick="event.stopPropagation(); removeConsultImg();" style="position:absolute; top:-6px; right:-6px; background:var(--red); color:#fff; width:22px; height:22px; border-radius:50%; font-size:12px; display:flex; align-items:center; justify-content:center;">✕</button>
-            </div>
-          </div>
-        </div>
-
-        <button type="submit" class="consult-submit-btn">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.7 14.2c-.2.6-1.4 1.2-1.9 1.2-.5.1-1.1.1-1.8-.1-.4-.1-1-.3-1.7-.6-3-1.3-4.9-4.3-5.1-4.5-.1-.2-1.2-1.6-1.2-3s.8-2.2 1.1-2.5c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5.2.5.8 1.9.8 2.1.1.2.1.3 0 .5-.1.2-.1.3-.3.5-.1.2-.3.4-.4.5-.2.2-.3.4-.1.7.2.3.9 1.5 2 2.4 1.3 1.2 2.4 1.5 2.8 1.7.3.2.5.1.7-.1l.9-1c.2-.3.4-.2.7-.1l1.8.9c.3.1.5.2.5.4.1.2.1.7-.1 1.3Z"/></svg>
-          إرسال الاستشارة ومتابعتها على واتساب
-        </button>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- ============ ADMIN CONTROL MODAL (Hussaindark6@gmail.com Only) ============ -->
+<!-- ============ ADMIN CONTROL MODAL (hussaindark6@gmail.com Only) ============ -->
 <div class="admin-modal-overlay" id="adminModal">
   <div class="admin-modal-card">
     <div class="admin-header">
@@ -1085,7 +1032,7 @@
     </div>
     
     <div class="admin-modal-body">
-      <!-- TAB A: MANAGE PRODUCTS -->
+      <!-- TAB 1: PRODUCT MANAGEMENT -->
       <div id="adminTabSectionProducts">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
           <h4 style="margin:0; font-size:15px; font-weight:800; color:var(--ink);" id="adminFormModeTitle">إضافة منتج جديد</h4>
@@ -1185,7 +1132,7 @@
         </form>
       </div>
 
-      <!-- TAB B: STORE CUSTOMIZATION -->
+      <!-- TAB 2: BANNER CUSTOMIZATION -->
       <div id="adminTabSectionDesign" style="display:none;">
         <h4 style="margin:0 0 6px; font-size:15px; font-weight:800;">تخصيص صورة الشريط الوردي الرئيسي (Hero Banner)</h4>
         <p style="font-size:12px; color:var(--text-soft); margin-bottom:14px;">استبدلي صورة العارضة الظاهرة في الجانب الأيسر من البانر الرئيسي فوراً:</p>
@@ -1205,7 +1152,7 @@
         <button type="button" class="admin-btn-save" onclick="saveStoreBannerSetting()">✨ حفظ وتطبيق الصورة على المتجر</button>
       </div>
 
-      <!-- TAB C: STATS & BROADCAST -->
+      <!-- TAB 3: STATS & BROADCAST -->
       <div id="adminTabSectionStats" style="display:none;">
         <div class="admin-stat-grid">
           <div class="admin-stat-card">
@@ -1343,7 +1290,7 @@
 
   const FCM_VAPID_KEY = "BOVN9U5VjY_FhtHD9yEiCPc38HTLn4tU_f_iKtMjgymGAC73TPSEtDzA7XX0eW1XBGweQhpG8bLEBxkb4WcLy4";
   
-  // ADMIN EMAIL PROTECTION
+  // STRICT ADMIN ROLE EMAIL
   const ADMIN_EMAIL = 'hussaindark6@gmail.com';
 
   let auth = null;
@@ -1426,7 +1373,7 @@
     face: c => `<svg viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M9 10h.01M15 10h.01M9 15c1 1 5 1 6 0"/></svg>`,
   };
 
-  // Initial Product catalog (Used as fallback and for automatic Firestore seeding)
+  // Hardcoded initial catalog ensuring zero blank state on load
   const initialDefaultProducts = [
     {id:'1', name:'كريم سيرافي مرطب للبشرة الجافة', brand:'Cerave', category:'moisturizer', size:'236 مل', price:25000, rating:4.8, reviews:126, type:'jar', inStock:true, isSpecialOffer:false, description:'كريم مرطب غني بالسيراميدات وحمض الهيالورونيك، يرمم حاجز البشرة ويمنحها ترطيباً يدوم 24 ساعة، مناسب للبشرة الجافة والحساسة.', ingredients:'Ceramides NP/AP/EOP, Hyaluronic Acid, Glycerin, Petrolatum, Niacinamide', usage:'يوضع على الوجه والجسم بعد التنظيف صباحاً ومساءً.'},
     {id:'2', name:'رفيول حل نياسيناميد 10% + زنك', brand:'REVUELE', category:'serum', size:'30 مل', price:18000, rating:4.7, reviews:98, type:'bottle', inStock:true, isSpecialOffer:false, description:'سيروم مركّز يقلل من ظهور المسام الواسعة ويوازن إفراز الدهون، مثالي للبشرة الدهنية والمختلطة.', ingredients:'Niacinamide 10%, Zinc PCA, Hyaluronic Acid, Aqua', usage:'تُوضع 3-4 نقاط على بشرة نظيفة وجافة مساءً.'},
@@ -1475,26 +1422,27 @@
     if (!isFirebaseConfigured || !db) return;
 
     // 1. Sync Store Settings (Banner Image)
-    db.collection('store_settings').doc('general').onSnapshot(doc => {
-      if (doc.exists) {
-        const data = doc.data();
-        if (data.bannerImgUrl) {
-          const el = document.getElementById('primaryHeroBannerImg');
-          if (el) el.src = data.bannerImgUrl;
-        }
+    db.collection('store_settings').doc('banner').onSnapshot(doc => {
+      if (doc.exists && doc.data().bannerImgUrl) {
+        const el = document.getElementById('primaryHeroBannerImg');
+        if (el) el.src = doc.data().bannerImgUrl;
       }
-    }, err => console.warn('Error reading store_settings:', err));
+    }, err => console.warn('Banner sync fallback:', err));
 
-    // 2. Sync Products Collection with Auto-Seeding
+    // 2. Sync Products Collection with Auto-Seeding fallback
     db.collection('products').onSnapshot(async snapshot => {
       if (snapshot.empty) {
         console.log('Seeding initial products to Firestore...');
-        const batch = db.batch();
-        initialDefaultProducts.forEach(item => {
-          const docRef = db.collection('products').doc(String(item.id));
-          batch.set(docRef, item);
-        });
-        await batch.commit();
+        try {
+          const batch = db.batch();
+          initialDefaultProducts.forEach(item => {
+            const docRef = db.collection('products').doc(String(item.id));
+            batch.set(docRef, item);
+          });
+          await batch.commit();
+        } catch (e) {
+          console.warn('Seeding skipped:', e);
+        }
         return;
       }
 
@@ -1505,7 +1453,7 @@
       });
       products = loaded;
       
-      // Update Brand list if new brands exist
+      // Update Brand list dynamically
       products.forEach(p => {
         if (p.brand && !brandColors[p.brand]) {
           brandColors[p.brand] = hashColor(p.brand);
@@ -1515,7 +1463,7 @@
       renderCurrentActiveView();
       updateAdminStats();
     }, err => {
-      console.warn('Firestore products listener error:', err);
+      console.warn('Firestore products listener error, using static fallback:', err);
     });
   }
 
@@ -1538,7 +1486,6 @@
     switchAdminTab('products');
     updateAdminStats();
     
-    // Load current banner URL to input
     const curImg = document.getElementById('primaryHeroBannerImg').src;
     document.getElementById('adminBannerImgInput').value = curImg;
     updateAdminBannerPreview(curImg);
@@ -1578,7 +1525,7 @@
       return;
     }
     try {
-      await db.collection('store_settings').doc('general').set({
+      await db.collection('store_settings').doc('banner').set({
         bannerImgUrl: url,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
@@ -1729,10 +1676,11 @@
   }
 
   function updateAdminInterfaceState() {
-    const adminPill = document.getElementById('adminHeaderPill');
+    const adminTopBar = document.getElementById('adminTopBar');
     const adminMenu = document.getElementById('adminMenuLink');
     const isAdmin = isCurrentUserAdmin();
-    if (adminPill) adminPill.style.display = isAdmin ? 'flex' : 'none';
+    
+    if (adminTopBar) adminTopBar.style.display = isAdmin ? 'flex' : 'none';
     if (adminMenu) adminMenu.style.display = isAdmin ? 'flex' : 'none';
     renderCurrentActiveView();
   }
@@ -1811,16 +1759,13 @@
 
     try {
       const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
-      console.log('FCM Service Worker registered:', registration.scope);
-
       messaging.onMessage((payload) => {
-        console.log('Foreground FCM Message received:', payload);
         const title = payload.notification ? payload.notification.title : 'صيدلية القطن';
         const body = payload.notification ? payload.notification.body : '';
         showToast(`🔔 ${title}: ${body}`);
       });
     } catch (err) {
-      console.warn('Service Worker registration or FCM listener error:', err);
+      console.warn('Service Worker registration error:', err);
     }
   }
 
@@ -1920,6 +1865,14 @@
   if (isFirebaseConfigured) {
     auth.onAuthStateChanged(user => {
       currentUser = user;
+      if (isCurrentUserAdmin()) {
+        if (!sessionStorage.getItem('admin_notified')) {
+          showToast('تم تسجيل الدخول بصلاحية الأدمن بنجاح ⭐');
+          sessionStorage.setItem('admin_notified', '1');
+        }
+      } else {
+        sessionStorage.removeItem('admin_notified');
+      }
       updateAdminInterfaceState();
       renderAccountView();
       if (user) {
@@ -2073,6 +2026,7 @@
       }
     }
     currentUser = null;
+    sessionStorage.removeItem('admin_notified');
     updateAdminInterfaceState();
     renderAccountView();
     showToast('تم تسجيل الخروج بنجاح');
@@ -2182,9 +2136,9 @@
     else if (listingMode === 'category') list = list.filter(p => p.category === listingValue);
     else if (listingMode === 'search') {
       const t = listingValue.toLowerCase();
-      list = list.filter(p => p.name.toLowerCase().includes(t) || p.brand.toLowerCase().includes(t));
+      list = list.filter(p => p.name.toLowerCase().includes(t) || (p.brand && p.brand.toLowerCase().includes(t)));
     }
-    else if (listingMode === 'bestsellers') list = list.slice().sort((a,b) => b.rating - a.rating);
+    else if (listingMode === 'bestsellers') list = list.slice().sort((a,b) => (b.rating || 0) - (a.rating || 0));
 
     if (listingCatActive !== 'all' && listingMode !== 'category') {
       list = list.filter(p => p.category === listingCatActive);
@@ -2680,7 +2634,8 @@
     toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
   }
 
-  // ============ INIT ============
+  // ============ IMMEDIATE ZERO-DELAY INITIALIZATION ============
+  // Render products immediately so visitors never see a blank page
   renderHome();
   updateCartBadge();
   renderAccountView();
