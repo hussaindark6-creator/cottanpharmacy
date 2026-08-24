@@ -2811,7 +2811,24 @@
   updateUserHeaderProfile();
   initFirebaseMessaging();
   initFirestoreSync();
-</script>
+  <!-- Inline Deep Link & External Browser Redirect Script -->
+<script>
+(function() { var ua = navigator.userAgent  navigator.vendor  window.opera; var isInApp = /Instagram|FBAN|FBAV|Telegram/i.test(ua);
+if (isInApp) {
+  if (/Android/i.test(ua)) {
+    var rawUrl = window.location.href.replace(/^https?:\/\//, '');
+    window.location.href = 'intent://' + rawUrl + '#Intent;scheme=https;package=com.android.chrome;end';
+  } else if (/iPhone|iPad|iPod/i.test(ua)) {
+    document.addEventListener("DOMContentLoaded", function() {
+      var banner = document.createElement('div');
+      banner.style.cssText = 'position:fixed; top:0; left:0; width:100%; background:#0f172a; color:#fff; text-align:center; padding:12px; font-size:13px; font-weight:bold; z-index:999999; border-bottom:2px solid #0d9488;';
+      banner.innerHTML = '⚠️ للتصفح بشكل أفضل: اضغط على النقاط الثلاث (•••) بالأعلى واختر <span style="color:#2dd4bf;">"فتح في Safari"</span>';
+      document.body.prepend(banner);
+      document.body.style.paddingTop = '45px';
+    });
+  }
+}
+})(); </script>
 <div class="cf-turnstile" data-sitekey="0x4AAAAAAEYEmvDuF-QQDg0s" style="display: none;"></div>
 </body>
 </html>
