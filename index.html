@@ -124,12 +124,12 @@
   .logo-text { font-weight: 900; font-size: 19px; color: var(--rose-deep); letter-spacing: -0.5px; }
   .logo-mark { width: 34px; height: 34px; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); }
   
-  /* User Header Chip with Fast Logout Button */
+  /* User Header Chip with Fast Action */
   .user-header-chip {
     display: flex;
     align-items: center;
     gap: 4px;
-    padding: 3px 6px 3px 4px;
+    padding: 3px 8px 3px 4px;
     border-radius: 999px;
     background: var(--surface);
     border: 1.5px solid var(--line);
@@ -495,7 +495,7 @@
   .add-cart-btn:hover { background: var(--accent-dark); }
   .add-cart-btn:active { transform: scale(0.97); }
 
-  /* Admin Action Overlays on Product Card (Enhanced Inline Control) */
+  /* Admin Action Overlays on Product Card */
   .admin-card-actions {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -505,7 +505,7 @@
     border-top: 1px dashed #FECDD3;
   }
   .admin-card-actions button {
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 800;
     padding: 6px 2px;
     border-radius: 8px;
@@ -520,16 +520,78 @@
 
   .no-results { grid-column: 1/-1; text-align: center; padding: 60px 16px; color: var(--text-soft); font-size: 14px; font-weight: 600; }
 
-  /* ============ CATEGORY ROW ============ */
-  .cat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px 8px; }
-  @media (min-width: 640px) { .cat-row { grid-template-columns: repeat(8, 1fr); gap: 16px; } }
-  .cat-item { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: transform .2s; }
-  .cat-item:hover { transform: translateY(-2px); }
-  .cat-icon { width: 60px; height: 60px; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; border: 1.5px solid var(--line); transition: all .2s; }
-  .cat-item.active .cat-icon { background: var(--accent); border-color: var(--accent); box-shadow: 0 4px 14px rgba(232,93,138,0.3); }
-  .cat-icon svg { width: 24px; height: 24px; color: var(--accent); transition: color .2s; }
-  .cat-item.active .cat-icon svg { color: #fff; }
-  .cat-item .label { font-size: 11.5px; font-weight: 700; text-align: center; color: var(--ink); }
+  /* ============ MODERN CATEGORIES GRID VIEW ============ */
+  .cat-grid-modern {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-top: 14px;
+    margin-bottom: 24px;
+  }
+  @media (min-width: 640px) {
+    .cat-grid-modern {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+  }
+  @media (min-width: 900px) {
+    .cat-grid-modern {
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+  }
+  .modern-cat-card {
+    background: #FFFFFF;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 22px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all .25s ease;
+    box-shadow: var(--shadow-soft);
+    position: relative;
+    overflow: hidden;
+  }
+  .modern-cat-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent);
+    box-shadow: var(--shadow-hover);
+  }
+  .modern-cat-icon {
+    width: 68px;
+    height: 68px;
+    border-radius: 20px;
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid var(--line);
+    transition: transform .25s ease, background .25s ease;
+  }
+  .modern-cat-icon svg { width: 34px; height: 34px; color: var(--accent); }
+  .modern-cat-card:hover .modern-cat-icon {
+    transform: scale(1.1) rotate(4deg);
+    background: #FFE4EA;
+  }
+  .modern-cat-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--ink);
+    margin: 0;
+  }
+  .modern-cat-count {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--accent);
+    background: var(--surface);
+    padding: 4px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+  }
 
   /* ============ PROMO BANNERS ============ */
   .promo-banner { position: relative; border-radius: var(--radius-lg); overflow: hidden; background: var(--surface); border: 1px solid var(--line); padding: 18px; display: flex; align-items: center; gap: 16px; margin-bottom: 14px; box-shadow: var(--shadow-soft); }
@@ -613,157 +675,176 @@
   .delivery-opt { flex: 1; border: 1.5px solid var(--line); border-radius: 14px; padding: 12px; text-align: center; font-weight: 700; font-size: 13px; cursor: pointer; transition: all .2s; }
   .delivery-opt.selected { border-color: var(--accent); background: var(--surface); color: var(--accent); box-shadow: 0 2px 8px rgba(232,93,138,0.12); }
 
-  /* ============ ACCOUNT & AUTH ============ */
-  .account-card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow-soft); }
-  .user-profile-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
-  .user-avatar { width: 58px; height: 58px; border-radius: 50%; border: 2px solid var(--rose); background: var(--surface); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  /* ============ ACCOUNT & GOOGLE AUTH ============ */
+  .account-card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 24px 20px; margin-bottom: 16px; box-shadow: var(--shadow-soft); text-align: center; }
+  .user-profile-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; text-align: right; }
+  .user-avatar { width: 62px; height: 62px; border-radius: 50%; border: 2.5px solid var(--rose); background: var(--surface); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
   .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
-  .user-info h3 { margin: 0 0 2px; font-size: 16px; font-weight: 800; }
+  .user-info h3 { margin: 0 0 2px; font-size: 16.5px; font-weight: 800; }
   .user-info p { margin: 0; font-size: 12px; color: var(--text-soft); }
   .sync-indicator { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; color: var(--green); margin-top: 4px; }
   .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
-  
-  /* Auth Tabs & Form */
-  .auth-tabs { display: flex; gap: 8px; background: var(--surface); padding: 4px; border-radius: 14px; margin-bottom: 16px; border: 1px solid var(--line); }
-  .auth-tab-btn { flex: 1; padding: 8px; text-align: center; font-size: 13px; font-weight: 800; border-radius: 10px; transition: all .2s; color: var(--text-soft); }
-  .auth-tab-btn.active { background: #fff; color: var(--accent); box-shadow: 0 2px 6px rgba(232,93,138,0.15); }
-  .auth-input-group { margin-bottom: 12px; text-align: right; }
-  .auth-input-group label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 4px; color: var(--ink); }
-  .auth-input-group input { width: 100%; padding: 11px 14px; border: 1.5px solid var(--line); border-radius: 12px; font-family: inherit; font-size: 13.5px; outline: none; transition: border-color .2s; }
-  .auth-input-group input:focus { border-color: var(--accent); }
-  .auth-submit-btn { width: 100%; background: var(--accent); color: #fff; font-weight: 800; font-size: 14px; padding: 12px; border-radius: 12px; margin-top: 6px; box-shadow: 0 3px 10px rgba(232,93,138,0.25); transition: background .2s; }
-  .auth-submit-btn:hover { background: var(--accent-dark); }
-  .auth-error-msg { display: none; background: #FEE2E2; color: var(--red); font-size: 12px; font-weight: 700; padding: 10px 12px; border-radius: 10px; margin-bottom: 12px; text-align: center; border: 1px solid #FECACA; }
-  
-  .auth-divider { display: flex; align-items: center; text-align: center; margin: 16px 0; color: var(--text-soft); font-size: 12px; font-weight: 700; }
-  .auth-divider::before, .auth-divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--line); }
-  .auth-divider span { padding: 0 10px; }
 
-  .auth-btn-google { width: 100%; background: #fff; color: #1F2937; border: 1.5px solid #E5E7EB; padding: 12px 18px; border-radius: 12px; font-weight: 700; font-size: 13.5px; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); transition: background .2s; }
-  .auth-btn-google:hover { background: #F9FAFB; }
-  .auth-btn-logout { width: 100%; background: #FEE2E2; color: var(--red); font-weight: 800; font-size: 13.5px; padding: 11px; border-radius: 999px; text-align: center; margin-top: 8px; }
+  .auth-btn-google { width: 100%; background: #fff; color: #1F2937; border: 1.5px solid #E5E7EB; padding: 14px 18px; border-radius: 14px; font-weight: 800; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.06); transition: all .2s; }
+  .auth-btn-google:hover { background: #F9FAFB; transform: translateY(-1px); }
+  .auth-btn-logout { width: 100%; background: #FEE2E2; color: var(--red); font-weight: 800; font-size: 13.5px; padding: 12px; border-radius: 999px; text-align: center; margin-top: 10px; }
 
-  /* ============ QUICK GUEST LOGIN ============ */
-  .guest-quick-login { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line); text-align: right; }
-  .guest-quick-login input { width: 100%; padding: 10px 14px; border: 1.5px solid var(--line); border-radius: 12px; font-family: inherit; font-size: 13px; margin-bottom: 8px; outline: none; }
-  .guest-quick-login button { width: 100%; background: var(--surface); color: var(--accent); font-weight: 800; font-size: 13px; padding: 10px; border-radius: 12px; border: 1px solid var(--line); transition: background .2s; }
-  .guest-quick-login button:hover { background: var(--surface-hover); }
-
-  /* ============ ADMIN CONTROL MODAL ============ */
-  .admin-modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(17, 24, 39, 0.7);
-    backdrop-filter: blur(5px);
-    z-index: 130;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity .25s ease;
-  }
-  .admin-modal-overlay.open { opacity: 1; pointer-events: auto; }
-  .admin-modal-card {
-    background: #fff;
-    border-radius: var(--radius-lg);
-    width: min(650px, 100%);
-    max-height: 90vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    box-shadow: 0 25px 50px rgba(0,0,0,0.25);
-    border: 2px solid #E5E7EB;
-  }
-  .admin-header {
-    background: #1F2937;
+  /* ============ FULL SCREEN ADMIN VIEW ============ */
+  .admin-view-header {
+    background: linear-gradient(135deg, #1F2937 0%, #111827 100%);
     color: #fff;
-    padding: 14px 20px;
+    padding: 24px 20px 18px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 20px;
+    border: 1px solid #374151;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  }
+  .admin-view-header h2 { margin: 0 0 6px; font-size: 20px; font-weight: 900; color: #FBBF24; display: flex; align-items: center; gap: 8px; }
+  .admin-view-header p { margin: 0; font-size: 12.5px; color: #9CA3AF; }
+
+  .admin-tabs-nav-view {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    margin-bottom: 18px;
+    scrollbar-width: none;
+  }
+  .admin-tabs-nav-view::-webkit-scrollbar { display: none; }
+  .admin-tab-btn-v {
+    padding: 10px 16px;
+    border-radius: 12px;
+    background: #F3F4F6;
+    color: #4B5563;
+    font-size: 13px;
+    font-weight: 800;
+    white-space: nowrap;
+    transition: all .2s;
+  }
+  .admin-tab-btn-v.active {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(232,93,138,0.25);
+  }
+
+  .admin-stat-grid-v {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  @media (min-width: 640px) {
+    .admin-stat-grid-v {
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+  }
+  .admin-stat-card-v {
+    background: #FFFFFF;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-md);
+    padding: 16px 14px;
+    text-align: center;
+    box-shadow: var(--shadow-soft);
+  }
+  .admin-stat-card-v .num { font-size: 26px; font-weight: 900; color: #b01e4a; font-family: 'IBM Plex Mono', monospace; }
+  .admin-stat-card-v .lbl { font-size: 12px; font-weight: 700; color: var(--text-soft); margin-top: 2px; }
+
+  /* Visual Performance Graph (CSS Bars) */
+  .admin-chart-wrap {
+    background: #fff;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-soft);
+  }
+  .admin-chart-title { font-size: 15px; font-weight: 800; color: var(--ink); margin: 0 0 14px; display: flex; align-items: center; justify-content: space-between; }
+  .chart-bars-row { display: flex; align-items: flex-end; justify-content: space-between; height: 120px; gap: 8px; padding-top: 10px; }
+  .chart-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; }
+  .chart-bar-fill { width: 100%; border-radius: 6px 6px 0 0; background: linear-gradient(180deg, #E85D8A 0%, #FBBF24 100%); min-height: 8px; transition: height .3s ease; }
+  .chart-bar-lbl { font-size: 10px; font-weight: 700; color: var(--text-soft); }
+
+  .admin-rank-list {
+    background: #fff;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 18px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-soft);
+  }
+  .admin-rank-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-  }
-  .admin-header h3 { margin: 0; font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px; color: #FBBF24; }
-  .admin-tabs-nav {
-    display: flex;
-    background: #F3F4F6;
-    border-bottom: 1px solid #E5E7EB;
-  }
-  .admin-tab-item {
-    flex: 1;
-    padding: 12px 8px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
     font-size: 13px;
-    font-weight: 800;
-    color: #4B5563;
-    text-align: center;
-    border-bottom: 3px solid transparent;
-    transition: all .2s;
   }
-  .admin-tab-item.active {
-    color: var(--accent);
-    background: #fff;
-    border-bottom-color: var(--accent);
-  }
-  .admin-modal-body {
-    padding: 20px;
-    overflow-y: auto;
-    flex: 1;
-    text-align: right;
-  }
+  .admin-rank-item:last-child { border-bottom: none; }
+  .admin-rank-badge { width: 22px; height: 22px; border-radius: 50%; background: var(--surface); color: var(--accent); font-weight: 800; font-size: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
-  /* Admin Dashboard Components */
-  .admin-stat-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+  .admin-fieldset {
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-md);
+    padding: 18px 16px;
     margin-bottom: 18px;
+    background: #FFFFFF;
+    box-shadow: var(--shadow-soft);
   }
-  .admin-stat-card {
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    padding: 12px;
-    text-align: center;
+  .admin-fieldset legend {
+    font-weight: 800;
+    font-size: 14px;
+    color: #b01e4a;
+    padding: 0 10px;
   }
-  .admin-stat-num { font-size: 22px; font-weight: 900; color: #b01e4a; font-family: 'IBM Plex Mono', monospace; }
-  .admin-stat-label { font-size: 11.5px; font-weight: 700; color: var(--text-soft); margin-top: 2px; }
 
   .admin-toggle-switch {
     display: flex;
     align-items: center;
     justify-content: space-between;
     background: #F9FAFB;
-    padding: 10px 14px;
+    padding: 12px 16px;
     border-radius: 12px;
     border: 1px solid #E5E7EB;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
   }
-  .admin-toggle-switch span { font-size: 13px; font-weight: 700; }
+  .admin-toggle-switch span { font-size: 13px; font-weight: 800; }
+
   .admin-btn-save {
     width: 100%;
     background: var(--accent);
     color: #fff;
     font-weight: 900;
-    font-size: 14px;
-    padding: 12px;
+    font-size: 14.5px;
+    padding: 13px;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(232,93,138,0.25);
     margin-top: 10px;
   }
 
-  .admin-fieldset {
-    border: 1.5px solid var(--line);
-    border-radius: 14px;
-    padding: 14px;
-    margin-bottom: 16px;
-    background: #FAFAFA;
+  .admin-copy-code-box {
+    background: #111827;
+    color: #F3F4F6;
+    border-radius: var(--radius-lg);
+    padding: 22px;
+    margin-bottom: 24px;
+    text-align: center;
+    border: 1px solid #374151;
   }
-  .admin-fieldset legend {
-    font-weight: 800;
-    font-size: 13px;
-    color: #b01e4a;
-    padding: 0 8px;
+  .admin-copy-code-box h3 { margin: 0 0 6px; font-size: 16px; color: #FBBF24; font-weight: 800; }
+  .admin-copy-code-box p { margin: 0 0 16px; font-size: 12.5px; color: #9CA3AF; }
+  .btn-copy-full-code {
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    color: #fff;
+    font-weight: 900;
+    font-size: 14px;
+    padding: 12px 28px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 14px rgba(16,185,129,0.3);
   }
 
   /* ============ IN-APP BROWSER (INSTAGRAM) GUIDANCE MODAL ============ */
@@ -795,9 +876,9 @@
 <!-- STICKY ADMIN BAR (Visible ONLY for hussaindark6@gmail.com) -->
 <div id="adminTopBar" class="admin-sticky-bar" style="display:none;">
   <div style="display:flex; align-items:center; gap:8px;">
-    <span>👑 وضع المشرف (hussaindark6@gmail.com)</span>
+    <span>👑 لوحة تحكم المشرف (hussaindark6@gmail.com)</span>
   </div>
-  <button class="admin-bar-btn" onclick="openAdminModal()">⚙️ لوحة التحكم</button>
+  <button class="admin-bar-btn" onclick="showView('admin')">⚙️ فتح قسم الإدارة الكامل</button>
 </div>
 
 <!-- ANNOUNCEMENT BAR (Customizable) -->
@@ -818,17 +899,17 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/></svg>
       الرئيسية
     </button>
+    <button class="menu-link" onclick="showView('categories')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      الأقسام
+    </button>
     <button class="menu-link" onclick="openConsultModal(); closeMenu();">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M12 7v6M9 10h6"/></svg>
       استشر الصيدلي مجاناً 🩺
     </button>
-    <button class="menu-link" id="adminMenuLink" style="display:none;" onclick="openAdminModal(); closeMenu();">
+    <button class="menu-link" id="adminMenuLink" style="display:none;" onclick="showView('admin'); closeMenu();">
       <svg viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       لوحة تحكم المشرف ⚙️
-    </button>
-    <button class="menu-link" onclick="showView('categories')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-      الأقسام
     </button>
     <button class="menu-link" onclick="showView('offers')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12 12 20l-8-8V4h8Z"/><circle cx="8" cy="8" r="1.4" fill="currentColor" stroke="none"/></svg>
@@ -907,7 +988,7 @@
       </div>
       
       <div class="banner-model-col">
-        <img id="primaryHeroBannerImg" src="https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&w=800&q=85" alt="العناية بالبشرة والجمال">
+        <img id="primaryHeroBannerImg" src="https://imgdb.io/i/EQ4D9ag.png" alt="العناية بالبشرة والجمال">
       </div>
     </div>
   </div>
@@ -929,7 +1010,7 @@
   <!-- ============ SHOP BY BRAND SECTION ============ -->
   <div class="wrap section">
     <div class="section-head">
-      <span class="see-all" onclick="showView('categories')">عرض الكل</span>
+      <span class="see-all" onclick="openBestSellers()">عرض الكل</span>
       <h2>تسوق حسب الماركة</h2>
     </div>
     <div class="brand-strip" id="brandStrip"></div>
@@ -945,17 +1026,8 @@
   </div>
 
   <!-- ============ PROMO BANNERS ============ -->
-  <div class="wrap section">
+  <div class="wrap section" id="promoBannersSection">
     <div id="promoBanners"></div>
-  </div>
-
-  <!-- ============ CATEGORIES ============ -->
-  <div class="wrap section">
-    <div class="section-head">
-      <span class="see-all" onclick="showView('categories')">عرض الكل</span>
-      <h2>التصنيفات</h2>
-    </div>
-    <div class="cat-row" id="catRow"></div>
   </div>
 </div>
 
@@ -975,14 +1047,15 @@
   </div>
 </div>
 
-<!-- ============ CATEGORIES GRID VIEW ============ -->
+<!-- ============ MODERN CATEGORIES GRID VIEW ============ -->
 <div class="view" id="view-categories">
   <div class="wrap">
-    <div class="section-head" style="margin-top:14px;">
-      <span></span>
-      <h2>كل الأقسام</h2>
+    <div class="section-head" style="margin-top:16px;">
+      <span style="font-size:12px; font-weight:700; color:var(--text-soft);" id="categoriesTotalCount">8 أقسام</span>
+      <h2>تصفح الأقسام والتصنيفات 🌸</h2>
     </div>
-    <div class="cat-row" id="catRowFull" style="grid-template-columns:repeat(4,1fr);"></div>
+    <p style="font-size:13px; color:var(--text-soft); margin-top:-6px; margin-bottom:12px;">اختاري القسم لتصفح كافة المنتجات المعتمدة والأصلية 100%:</p>
+    <div class="cat-grid-modern" id="catRowFull"></div>
   </div>
 </div>
 
@@ -1086,8 +1159,8 @@
     <div class="form-field">
       <label>طريقة التوصيل</label>
       <div class="delivery-options">
-        <div class="delivery-opt selected" id="delStandard" onclick="selectDelivery('standard')">توصيل عادي<br><span style="font-weight:400;">24-48 ساعة</span></div>
-        <div class="delivery-opt" id="delExpress" onclick="selectDelivery('express')">توصيل سريع<br><span style="font-weight:400;">خلال يوم</span></div>
+        <div class="delivery-opt selected" id="delStandard" onclick="selectDelivery('standard')">توصيل عادي<br><span style="font-weight:400;" id="delStandardLbl">24-48 ساعة</span></div>
+        <div class="delivery-opt" id="delExpress" onclick="selectDelivery('express')">توصيل سريع<br><span style="font-weight:400;" id="delExpressLbl">خلال يوم</span></div>
       </div>
     </div>
     <div id="checkoutSummaryBlock"></div>
@@ -1098,7 +1171,7 @@
   </div>
 </div>
 
-<!-- ============ ACCOUNT VIEW ============ -->
+<!-- ============ ACCOUNT VIEW (Clean Google Sign-In) ============ -->
 <div class="view" id="view-account">
   <div class="wrap info-page">
     <h2>حسابي</h2>
@@ -1115,98 +1188,86 @@
   </div>
 </div>
 
-<!-- ============ DIRECT PHARMACIST CONSULTATION MODAL ============ -->
-<div class="consult-modal-overlay" id="consultModal">
-  <div class="consult-modal-card">
-    <div class="consult-header">
-      <div class="consult-title-wrap">
-        <span class="consult-badge-pill">خدمة الاستشارة المباشرة</span>
-        <h3>استشارة صيدلانية فورية 🩺</h3>
+<!-- ============ FULL-SCREEN ADMIN VIEW (hussaindark6@gmail.com Only) ============ -->
+<div class="view" id="view-admin">
+  <div class="wrap">
+    <div class="admin-view-header">
+      <h2>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        لوحة تحكم وإدارة المتجر الشاملة
+      </h2>
+      <p>مرحباً بك يا مشرف (hussaindark6@gmail.com) — يمكنك إدارة المنتجات، الأسعار، الإحصائيات، وتخصيص الواجهة مباشرة.</p>
+    </div>
+
+    <!-- Admin Navigation Tabs -->
+    <div class="admin-tabs-nav-view">
+      <button class="admin-tab-btn-v active" id="btnTabVStats" onclick="switchAdminSection('stats')">📊 لوحة الإحصائيات والتحليلات</button>
+      <button class="admin-tab-btn-v" id="btnTabVProds" onclick="switchAdminSection('products')">📦 إدارة وتعديل المنتجات</button>
+      <button class="admin-tab-btn-v" id="btnTabVBrands" onclick="switchAdminSection('brands')">🏷️ إدارة الشركات والماركات</button>
+      <button class="admin-tab-btn-v" id="btnTabVDesign" onclick="switchAdminSection('design')">🎨 تخصيص الواجهة والتوصيل</button>
+      <button class="admin-tab-btn-v" id="btnTabVCode" onclick="switchAdminSection('code')">📋 أداة نسخ كود الموقع</button>
+    </div>
+
+    <!-- 1. SECTION: ADVANCED ANALYTICS -->
+    <div id="adminSecStats">
+      <div class="admin-stat-grid-v">
+        <div class="admin-stat-card-v">
+          <div class="num" id="statDailyVisits">148</div>
+          <div class="lbl">الزيارات اليومية</div>
+        </div>
+        <div class="admin-stat-card-v">
+          <div class="num" id="statTotalProdsV">12</div>
+          <div class="lbl">إجمالي المنتجات</div>
+        </div>
+        <div class="admin-stat-card-v">
+          <div class="num" id="statTotalOrdersV">26</div>
+          <div class="lbl">الطلبات المسجلة</div>
+        </div>
+        <div class="admin-stat-card-v">
+          <div class="num" id="statActiveOffersV">2</div>
+          <div class="lbl">العروض النشطة</div>
+        </div>
       </div>
-      <button class="icon-btn" onclick="closeConsultModal()" aria-label="إغلاق">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      </button>
+
+      <!-- Performance Graph -->
+      <div class="admin-chart-wrap">
+        <div class="admin-chart-title">
+          <span>📈 أداء الزيارات والمبيعات الأسبوعية</span>
+          <span style="font-size:11px; font-weight:700; color:var(--accent);">محدث تلقائياً</span>
+        </div>
+        <div class="chart-bars-row">
+          <div class="chart-bar-col"><div class="chart-bar-fill" style="height: 45%;"></div><span class="chart-bar-lbl">السبت</span></div>
+          <div class="chart-bar-col"><div class="chart-bar-fill" style="height: 60%;"></div><span class="chart-bar-lbl">الأحد</span></div>
+          <div class="chart-bar-col"><div class="chart-bar-fill" style="height: 85%;"></div><span class="chart-bar-lbl">الإثنين</span></div>
+          <div class="chart-bar-col"><div class="chart-bar-fill" style="height: 70%;"></div><span class="chart-bar-lbl">الثلاثاء</span></div>
+          <div class="chart-bar-col"><div class="chart-bar-fill" style="height: 95%;"></div><span class="chart-bar-lbl">الأربعاء</span></div>
+          <div class="chart-bar-col"><div class="chart-bar-fill" style="height: 75%;"></div><span class="chart-bar-lbl">الخميس</span></div>
+          <div class="chart-bar-col"><div class="chart-bar-fill" style="height: 100%;"></div><span class="chart-bar-lbl">الجمعة</span></div>
+        </div>
+      </div>
+
+      <!-- Top 5 Ordered Products -->
+      <div class="admin-rank-list">
+        <div class="admin-chart-title">
+          <span>🔥 أكثر 5 منتجات طلباً ومبيعاً</span>
+        </div>
+        <div id="adminTopOrderedList"></div>
+      </div>
+
+      <!-- Top Viewed Products -->
+      <div class="admin-rank-list">
+        <div class="admin-chart-title">
+          <span>👁️ أكثر المنتجات مشاهدة ودخولاً</span>
+        </div>
+        <div id="adminTopViewedList"></div>
+      </div>
     </div>
-    <div class="consult-body">
-      <form id="consultForm" onsubmit="handleConsultSubmit(event)">
-        <div style="display:flex; gap:10px;">
-          <div class="form-field" style="flex:1.6;">
-            <label>الاسم الكامل</label>
-            <input type="text" id="consultName" placeholder="مثال: سارة علي" required>
-          </div>
-          <div class="form-field" style="flex:1;">
-            <label>العمر</label>
-            <input type="number" id="consultAge" placeholder="25" required min="1" max="100">
-          </div>
-        </div>
 
-        <div class="form-field">
-          <label>الحالة الخاصة (لضمان أمان التركيبات)</label>
-          <div class="consult-toggle-group">
-            <button type="button" class="consult-toggle-btn active" data-val="لا يوجد" onclick="selectConsultCondition(this)">لا يوجد ✨</button>
-            <button type="button" class="consult-toggle-btn" data-val="حامل" onclick="selectConsultCondition(this)">حامل 🤰</button>
-            <button type="button" class="consult-toggle-btn" data-val="مرضع" onclick="selectConsultCondition(this)">مرضع 🤱</button>
-          </div>
-          <input type="hidden" id="consultCondition" value="لا يوجد">
-        </div>
-
-        <div class="form-field">
-          <label>نوع البشرة أو المشكلة بالتفصيل</label>
-          <textarea id="consultDesc" rows="3" placeholder="صفي مشكلة بشرتك (حب شباب، تصبغات، حساسية...) أو اسألي عن منتج أو روتين محدد..." required></textarea>
-        </div>
-
-        <div class="form-field">
-          <label>إرفاق صورة الروشتة أو الحالة (اختياري)</label>
-          <div class="consult-upload-zone" onclick="document.getElementById('consultImgInput').click()">
-            <input type="file" id="consultImgInput" accept="image/*" style="display:none;" onchange="handleConsultImgPreview(this)">
-            <div id="consultUploadPlaceholder">
-              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#E85D8A" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
-              <div style="font-size:12px; font-weight:700; color:var(--ink); margin-top:4px;">اضغطي لرفع صورة الروشتة أو المشكلة</div>
-              <div style="font-size:11px; color:var(--text-soft);">PNG, JPG حتى 10MB</div>
-            </div>
-            <div id="consultImgPreviewWrap" style="display:none; position:relative;">
-              <img id="consultImgPreview" src="" alt="معاينة الصورة" style="max-height:110px; border-radius:10px; margin:0 auto; object-fit:contain; display:block;">
-              <button type="button" onclick="event.stopPropagation(); removeConsultImg();" style="position:absolute; top:-6px; right:-6px; background:var(--red); color:#fff; width:22px; height:22px; border-radius:50%; font-size:12px; display:flex; align-items:center; justify-content:center;">✕</button>
-            </div>
-          </div>
-        </div>
-
-        <button type="submit" class="consult-submit-btn">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.7 14.2c-.2.6-1.4 1.2-1.9 1.2-.5.1-1.1.1-1.8-.1-.4-.1-1-.3-1.7-.6-3-1.3-4.9-4.3-5.1-4.5-.1-.2-1.2-1.6-1.2-3s.8-2.2 1.1-2.5c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5.2.5.8 1.9.8 2.1.1.2.1.3 0 .5-.1.2-.1.3-.3.5-.1.2-.3.4-.4.5-.2.2-.3.4-.1.7.2.3.9 1.5 2 2.4 1.3 1.2 2.4 1.5 2.8 1.7.3.2.5.1.7-.1l.9-1c.2-.3.4-.2.7-.1l1.8.9c.3.1.5.2.5.4.1.2.1.7-.1 1.3Z"/></svg>
-          إرسال الاستشارة ومتابعتها على واتساب
-        </button>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- ============ ADMIN CONTROL MODAL (hussaindark6@gmail.com Only) ============ -->
-<div class="admin-modal-overlay" id="adminModal">
-  <div class="admin-modal-card">
-    <div class="admin-header">
-      <h3>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        لوحة تحكم المشرف (Firebase Admin)
-      </h3>
-      <button class="icon-btn" style="color:#fff;" onclick="closeAdminModal()" aria-label="إغلاق">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <div class="admin-tabs-nav">
-      <button class="admin-tab-item active" id="btnAdminTabA" onclick="switchAdminTab('products')">📦 إدارة المنتجات</button>
-      <button class="admin-tab-item" id="btnAdminTabB" onclick="switchAdminTab('design')">🎨 تخصيص الهيدر والواجهة</button>
-      <button class="admin-tab-item" id="btnAdminTabC" onclick="switchAdminTab('stats')">📊 الإحصائيات والإشعارات</button>
-    </div>
-    
-    <div class="admin-modal-body">
-      <!-- TAB 1: PRODUCT MANAGEMENT -->
-      <div id="adminTabSectionProducts">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-          <h4 style="margin:0; font-size:15px; font-weight:800; color:var(--ink);" id="adminFormModeTitle">إضافة منتج جديد</h4>
-          <button type="button" onclick="resetAdminProductForm()" style="font-size:12px; font-weight:700; color:var(--accent);">+ مسح النموذج</button>
-        </div>
-
-        <form id="adminProductForm" onsubmit="handleAdminProductSave(event)">
+    <!-- 2. SECTION: PRODUCT MANAGEMENT -->
+    <div id="adminSecProducts" style="display:none;">
+      <div class="admin-fieldset">
+        <legend id="adminFormModeTitleV">إضافة منتج جديد</legend>
+        <form id="adminProductFormV" onsubmit="handleAdminProductSave(event)">
           <input type="hidden" id="adminProdDocId" value="">
           
           <div class="form-field">
@@ -1296,112 +1357,205 @@
           </div>
 
           <button type="submit" class="admin-btn-save" id="adminSaveProdBtn">💾 حفظ المنتج في قاعدة البيانات</button>
+          <button type="button" onclick="resetAdminProductForm()" style="width:100%; margin-top:8px; font-size:13px; font-weight:700; color:var(--text-soft); padding:8px;">إلغاء ومسح الحقول</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- 3. SECTION: BRANDS MANAGEMENT -->
+    <div id="adminSecBrands" style="display:none;">
+      <div class="admin-fieldset">
+        <legend>🏷️ إضافة شركة / ماركة جديدة</legend>
+        <form onsubmit="handleAddBrand(event)">
+          <div style="display:flex; gap:10px;">
+            <div class="form-field" style="flex:2;">
+              <label>اسم الشركة أو الماركة</label>
+              <input type="text" id="newBrandName" placeholder="مثال: La Roche Posay" required>
+            </div>
+            <div class="form-field" style="flex:1;">
+              <label>اللون التمييزي</label>
+              <input type="color" id="newBrandColor" value="#E85D8A" style="height:42px; padding:2px;">
+            </div>
+          </div>
+          <button type="submit" class="admin-btn-save" style="background:#111827;">+ إضافة الماركة للشريط</button>
         </form>
       </div>
 
-      <!-- TAB 2: HEADER & STORE CUSTOMIZATION -->
-      <div id="adminTabSectionDesign" style="display:none;">
-        <form onsubmit="handleSaveCustomization(event)">
-          <!-- 1. Announcement Bar Settings -->
-          <fieldset class="admin-fieldset">
-            <legend>📢 شريط التنبيهات والإعلانات العلوي</legend>
-            <div class="admin-toggle-switch" style="background:#fff;">
-              <span>إظهار شريط التنبيهات العلوي</span>
-              <input type="checkbox" id="adminShowAnnouncement" checked style="width:20px; height:20px; cursor:pointer;">
-            </div>
-            <div class="form-field">
-              <label>نص الإعلان أو التنبيه</label>
-              <input type="text" id="adminAnnouncementText" placeholder="مثال: توصيل مجاني للطلبات فوق 50,000 د.ع 🌸">
-            </div>
-            <div style="display:flex; gap:10px;">
-              <div class="form-field" style="flex:1;">
-                <label>لون الخلفية</label>
-                <input type="color" id="adminAnnouncementBgColor" value="#FFF0F3" style="height:42px; padding:2px;">
-              </div>
-              <div class="form-field" style="flex:1;">
-                <label>لون النص</label>
-                <input type="color" id="adminAnnouncementTextColor" value="#b01e4a" style="height:42px; padding:2px;">
-              </div>
-            </div>
-          </fieldset>
-
-          <!-- 2. Header & Branding Settings -->
-          <fieldset class="admin-fieldset">
-            <legend>🏛️ تخصيص الهيدر واللوجو</legend>
-            <div class="form-field">
-              <label>اسم المتجر / الصيدلية (اللوجو)</label>
-              <input type="text" id="adminLogoText" placeholder="صيدلية القطن">
-            </div>
-            <div class="form-field">
-              <label>لون خلفية الهيدر</label>
-              <input type="color" id="adminHeaderBgColor" value="#FFFFFF" style="height:42px; padding:2px;">
-            </div>
-          </fieldset>
-
-          <!-- 3. Primary Banner Settings -->
-          <fieldset class="admin-fieldset">
-            <legend>🌸 البانر الرئيسي (Hero Banner)</legend>
-            <div class="form-field">
-              <label>العنوان الرئيسي في البانر</label>
-              <input type="text" id="adminHeroMainTitle" placeholder="صيدلية القطن">
-            </div>
-            <div class="form-field">
-              <label>العنوان الفرعي</label>
-              <input type="text" id="adminHeroSubTitle" placeholder="نحن هنا لتحسين بشرتك">
-            </div>
-            <div class="form-field">
-              <label>الوصف الترويجي</label>
-              <input type="text" id="adminHeroDescTitle" placeholder="منتجات أصلية لعناية صحية وجمال طبيعي">
-            </div>
-            <div class="form-field">
-              <label>رابط صورة العارضة (Direct Image URL)</label>
-              <input type="url" id="adminBannerImgInput" placeholder="https://..." oninput="updateAdminBannerPreview(this.value)">
-            </div>
-            <div style="margin:10px 0;">
-              <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;">معاينة صورة البانر:</label>
-              <div style="width:100%; height:130px; border-radius:12px; overflow:hidden; background:#FFF0F5; border:1px solid var(--line);">
-                <img id="adminBannerPreviewImg" src="" style="width:100%; height:100%; object-fit:cover; object-position:center;" alt="Preview">
-              </div>
-            </div>
-          </fieldset>
-
-          <button type="submit" class="admin-btn-save">✨ حفظ وتطبيق تخصيص الواجهة فورياً</button>
-        </form>
+      <div class="admin-fieldset">
+        <legend>قائمة الشركات والماركات الحالية</legend>
+        <div id="adminBrandsListGrid" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
       </div>
+    </div>
 
-      <!-- TAB 3: STATS & BROADCAST -->
-      <div id="adminTabSectionStats" style="display:none;">
-        <div class="admin-stat-grid">
-          <div class="admin-stat-card">
-            <div class="admin-stat-num" id="statTotalProds">0</div>
-            <div class="admin-stat-label">إجمالي المنتجات</div>
+    <!-- 4. SECTION: STORE CUSTOMIZATION & DELIVERY -->
+    <div id="adminSecDesign" style="display:none;">
+      <form onsubmit="handleSaveCustomization(event)">
+        <!-- Delivery Settings -->
+        <fieldset class="admin-fieldset">
+          <legend>🚚 إعدادات وتكلفة التوصيل لجميع المحافظات</legend>
+          <div style="display:flex; gap:10px;">
+            <div class="form-field" style="flex:1;">
+              <label>سعر التوصيل العادي (د.ع)</label>
+              <input type="number" id="adminDeliveryStandard" value="4000" min="0" required>
+            </div>
+            <div class="form-field" style="flex:1;">
+              <label>سعر التوصيل السريع (د.ع)</label>
+              <input type="number" id="adminDeliveryExpress" value="8000" min="0" required>
+            </div>
           </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-num" id="statActiveOffers">0</div>
-            <div class="admin-stat-label">العروض المفعلة</div>
+        </fieldset>
+
+        <!-- Promo Banners Section Visibility Toggle -->
+        <fieldset class="admin-fieldset">
+          <legend>🎁 قسم العروض والخصومات على الرئيسية</legend>
+          <div class="admin-toggle-switch" style="background:#fff;">
+            <span>إظهار قسم "عروض مميزة" في الصفحة الرئيسية</span>
+            <input type="checkbox" id="adminShowPromoBanners" checked style="width:20px; height:20px; cursor:pointer;">
           </div>
-          <div class="admin-stat-card">
-            <div class="admin-stat-num" id="statTotalCats">8</div>
-            <div class="admin-stat-label">الأقسام الرئيسية</div>
+        </fieldset>
+
+        <!-- Announcement Bar Settings -->
+        <fieldset class="admin-fieldset">
+          <legend>📢 شريط التنبيهات والإعلانات العلوي</legend>
+          <div class="admin-toggle-switch" style="background:#fff;">
+            <span>إظهار شريط التنبيهات العلوي</span>
+            <input type="checkbox" id="adminShowAnnouncement" checked style="width:20px; height:20px; cursor:pointer;">
+          </div>
+          <div class="form-field">
+            <label>نص الإعلان أو التنبيه</label>
+            <input type="text" id="adminAnnouncementText" placeholder="مثال: توصيل مجاني للطلبات فوق 50,000 د.ع 🌸">
+          </div>
+          <div style="display:flex; gap:10px;">
+            <div class="form-field" style="flex:1;">
+              <label>لون الخلفية</label>
+              <input type="color" id="adminAnnouncementBgColor" value="#FFF0F3" style="height:42px; padding:2px;">
+            </div>
+            <div class="form-field" style="flex:1;">
+              <label>لون النص</label>
+              <input type="color" id="adminAnnouncementTextColor" value="#b01e4a" style="height:42px; padding:2px;">
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- Header & Branding Settings -->
+        <fieldset class="admin-fieldset">
+          <legend>🏛️ تخصيص الهيدر واللوجو</legend>
+          <div class="form-field">
+            <label>اسم المتجر / الصيدلية (اللوجو)</label>
+            <input type="text" id="adminLogoText" placeholder="صيدلية القطن">
+          </div>
+          <div class="form-field">
+            <label>لون خلفية الهيدر</label>
+            <input type="color" id="adminHeaderBgColor" value="#FFFFFF" style="height:42px; padding:2px;">
+          </div>
+        </fieldset>
+
+        <!-- Primary Banner Settings -->
+        <fieldset class="admin-fieldset">
+          <legend>🌸 البانر الرئيسي (Hero Banner)</legend>
+          <div class="form-field">
+            <label>العنوان الرئيسي في البانر</label>
+            <input type="text" id="adminHeroMainTitle" placeholder="صيدلية القطن">
+          </div>
+          <div class="form-field">
+            <label>العنوان الفرعي</label>
+            <input type="text" id="adminHeroSubTitle" placeholder="نحن هنا لتحسين بشرتك">
+          </div>
+          <div class="form-field">
+            <label>الوصف الترويجي</label>
+            <input type="text" id="adminHeroDescTitle" placeholder="منتجات أصلية لعناية صحية وجمال طبيعي">
+          </div>
+          <div class="form-field">
+            <label>رابط صورة العارضة (Direct Image URL)</label>
+            <input type="url" id="adminBannerImgInput" placeholder="https://..." oninput="updateAdminBannerPreview(this.value)">
+          </div>
+          <div style="margin:10px 0;">
+            <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;">معاينة صورة البانر:</label>
+            <div style="width:100%; height:130px; border-radius:12px; overflow:hidden; background:#FFF0F5; border:1px solid var(--line);">
+              <img id="adminBannerPreviewImg" src="https://imgdb.io/i/EQ4D9ag.png" style="width:100%; height:100%; object-fit:cover; object-position:center;" alt="Preview">
+            </div>
+          </div>
+        </fieldset>
+
+        <button type="submit" class="admin-btn-save">✨ حفظ وتطبيق جميع التعديلات سحابياً</button>
+      </form>
+    </div>
+
+    <!-- 5. SECTION: FULL CODE COPY TOOL -->
+    <div id="adminSecCode" style="display:none;">
+      <div class="admin-copy-code-box">
+        <h3>📋 أداة نسخ كود الموقع المحدث بالكامل</h3>
+        <p>اضغطي على الزر أدناه لنسخ ملف index.html بالكامل إلى الحافظة لوضعه مباشرة في GitHub بكل سهولة:</p>
+        <button class="btn-copy-full-code" onclick="copyFullSourceCode()">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          نسخ الكود الكامل للموقع
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ DIRECT PHARMACIST CONSULTATION MODAL ============ -->
+<div class="consult-modal-overlay" id="consultModal">
+  <div class="consult-modal-card">
+    <div class="consult-header">
+      <div class="consult-title-wrap">
+        <span class="consult-badge-pill">خدمة الاستشارة المباشرة</span>
+        <h3>استشارة صيدلانية فورية 🩺</h3>
+      </div>
+      <button class="icon-btn" onclick="closeConsultModal()" aria-label="إغلاق">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="consult-body">
+      <form id="consultForm" onsubmit="handleConsultSubmit(event)">
+        <div style="display:flex; gap:10px;">
+          <div class="form-field" style="flex:1.6;">
+            <label>الاسم الكامل</label>
+            <input type="text" id="consultName" placeholder="مثال: سارة علي" required>
+          </div>
+          <div class="form-field" style="flex:1;">
+            <label>العمر</label>
+            <input type="number" id="consultAge" placeholder="25" required min="1" max="100">
           </div>
         </div>
 
-        <div style="background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:16px;">
-          <h4 style="margin:0 0 6px; font-size:14px; font-weight:900; color:#b01e4a;">📢 إرسال إشعار فوري لجميع المشتركين (FCM Push)</h4>
-          <p style="font-size:11.5px; color:var(--text-soft); margin-bottom:12px;">أرسلي تنبيهاً فورياً للمستخدمين المشتركين بالعروض أو المنتجات الجديدة:</p>
-
-          <div class="form-field">
-            <label>عنوان الإشعار</label>
-            <input type="text" id="adminNotifTitle" placeholder="مثال: خصم 20% على منتجات سيرافي 🔥">
+        <div class="form-field">
+          <label>الحالة الخاصة (لضمان أمان التركيبات)</label>
+          <div class="consult-toggle-group">
+            <button type="button" class="consult-toggle-btn active" data-val="لا يوجد" onclick="selectConsultCondition(this)">لا يوجد ✨</button>
+            <button type="button" class="consult-toggle-btn" data-val="حامل" onclick="selectConsultCondition(this)">حامل 🤰</button>
+            <button type="button" class="consult-toggle-btn" data-val="مرضع" onclick="selectConsultCondition(this)">مرضع 🤱</button>
           </div>
-          <div class="form-field">
-            <label>نص الرسالة</label>
-            <textarea id="adminNotifBody" rows="2" placeholder="تسوقي الآن واستفيدي من العرض الحصري..."></textarea>
-          </div>
-
-          <button type="button" class="admin-btn-save" style="background:#1F2937;" onclick="sendAdminNotificationBroadcast()">🚀 بث الإشعار للمشتركين</button>
+          <input type="hidden" id="consultCondition" value="لا يوجد">
         </div>
-      </div>
+
+        <div class="form-field">
+          <label>نوع البشرة أو المشكلة بالتفصيل</label>
+          <textarea id="consultDesc" rows="3" placeholder="صفي مشكلة بشرتك (حب شباب، تصبغات، حساسية...) أو اسألي عن منتج أو روتين محدد..." required></textarea>
+        </div>
+
+        <div class="form-field">
+          <label>إرفاق صورة الروشتة أو الحالة (اختياري)</label>
+          <div class="consult-upload-zone" onclick="document.getElementById('consultImgInput').click()">
+            <input type="file" id="consultImgInput" accept="image/*" style="display:none;" onchange="handleConsultImgPreview(this)">
+            <div id="consultUploadPlaceholder">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#E85D8A" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+              <div style="font-size:12px; font-weight:700; color:var(--ink); margin-top:4px;">اضغطي لرفع صورة الروشتة أو المشكلة</div>
+              <div style="font-size:11px; color:var(--text-soft);">PNG, JPG حتى 10MB</div>
+            </div>
+            <div id="consultImgPreviewWrap" style="display:none; position:relative;">
+              <img id="consultImgPreview" src="" alt="معاينة الصورة" style="max-height:110px; border-radius:10px; margin:0 auto; object-fit:contain; display:block;">
+              <button type="button" onclick="event.stopPropagation(); removeConsultImg();" style="position:absolute; top:-6px; right:-6px; background:var(--red); color:#fff; width:22px; height:22px; border-radius:50%; font-size:12px; display:flex; align-items:center; justify-content:center;">✕</button>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="consult-submit-btn">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.7 14.2c-.2.6-1.4 1.2-1.9 1.2-.5.1-1.1.1-1.8-.1-.4-.1-1-.3-1.7-.6-3-1.3-4.9-4.3-5.1-4.5-.1-.2-1.2-1.6-1.2-3s.8-2.2 1.1-2.5c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5.2.5.8 1.9.8 2.1.1.2.1.3 0 .5-.1.2-.1.3-.3.5-.1.2-.3.4-.4.5-.2.2-.3.4-.1.7.2.3.9 1.5 2 2.4 1.3 1.2 2.4 1.5 2.8 1.7.3.2.5.1.7-.1l.9-1c.2-.3.4-.2.7-.1l1.8.9c.3.1.5.2.5.4.1.2.1.7-.1 1.3Z"/></svg>
+          إرسال الاستشارة ومتابعتها على واتساب
+        </button>
+      </form>
     </div>
   </div>
 </div>
@@ -1489,6 +1643,10 @@
     <span class="lbl">السلة</span>
     <span class="bn-badge" id="bnCartBadge" style="display:none;">0</span>
   </button>
+  <button class="bn-item" onclick="showView('admin')" id="bn-admin" style="display:none; color:#F59E0B;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span class="lbl">الأدمن</span>
+  </button>
 </nav>
 
 <div class="toast" id="toast"></div>
@@ -1515,7 +1673,6 @@
   let messaging = null;
   let currentUser = null;
   let isFirebaseConfigured = false;
-  let authMode = 'login';
 
   try {
     if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY") {
@@ -1549,7 +1706,7 @@
     return `hsl(${hue}, 50%, 62%)`;
   }
 
-  const brandColors = {
+  let brandColors = {
     'Simple': '#C97F79',
     'PanOxyl': '#E0995C',
     'REVUELE': '#D9A441',
@@ -1592,18 +1749,18 @@
 
   // Hardcoded initial catalog ensuring zero blank state on load
   const initialDefaultProducts = [
-    {id:'1', name:'كريم سيرافي مرطب للبشرة الجافة', brand:'Cerave', category:'moisturizer', size:'236 مل', price:25000, rating:4.8, reviews:126, type:'jar', inStock:true, isSpecialOffer:false, description:'كريم مرطب غني بالسيراميدات وحمض الهيالورونيك، يرمم حاجز البشرة ويمنحها ترطيباً يدوم 24 ساعة، مناسب للبشرة الجافة والحساسة.', ingredients:'Ceramides NP/AP/EOP, Hyaluronic Acid, Glycerin, Petrolatum, Niacinamide', usage:'يوضع على الوجه والجسم بعد التنظيف صباحاً ومساءً.'},
-    {id:'2', name:'رفيول حل نياسيناميد 10% + زنك', brand:'REVUELE', category:'serum', size:'30 مل', price:18000, rating:4.7, reviews:98, type:'bottle', inStock:true, isSpecialOffer:false, description:'سيروم مركّز يقلل من ظهور المسام الواسعة ويوازن إفراز الدهون، مثالي للبشرة الدهنية والمختلطة.', ingredients:'Niacinamide 10%, Zinc PCA, Hyaluronic Acid, Aqua', usage:'تُوضع 3-4 نقاط على بشرة نظيفة وجافة مساءً.'},
-    {id:'3', name:'غسول سيمبل للبشرة الحساسة', brand:'Simple', category:'face', size:'150 مل', price:12000, rating:4.6, reviews:82, type:'tube', inStock:true, isSpecialOffer:false, description:'غسول لطيف خالٍ من الصابون والعطور، ينظف البشرة بعمق دون تجريد الزيوت الطبيعية.', ingredients:'Glycerin, Panthenol, Vitamin B5, Vitamin E', usage:'يُدلّك على بشرة مبللة صباحاً ومساءً ثم يُشطف بماء فاتر.'},
-    {id:'4', name:'اي سي ام ديبوايت كريم للتفتيح', brand:'ACM', category:'face', size:'40 مل', price:22000, rating:4.9, reviews:74, type:'tube', inStock:true, isSpecialOffer:false, description:'كريم متخصص لتوحيد لون البشرة وتقليل البقع الداكنة والتصبغات بكفاءة عالية.', ingredients:'Niacinamide, Vitamin C Derivative, Glycolic Acid', usage:'يوضع طبقة رقيقة على مناطق التصبغ مساءً مع استخدام واقي شمس بالنهار.'},
-    {id:'5', name:'لوشن دوف المغذي للجسم', brand:'Dove', category:'body', size:'400 مل', price:15000, oldPrice:20000, rating:4.5, reviews:210, type:'bottle', inStock:true, isSpecialOffer:true, description:'لوشن يومي يغذي البشرة من الطبقات العميقة ويتركها ناعمة كالحرير طوال اليوم.', ingredients:'Glycerin, Shea Butter, Sunflower Oil', usage:'يُدلّك على كامل الجسم يومياً بعد الاستحمام.'},
-    {id:'6', name:'رفيول سيروم ريتينول مضاد للتجاعيد', brand:'REVUELE', category:'serum', size:'30 مل', price:21000, oldPrice:30000, rating:4.6, reviews:65, type:'bottle', inStock:true, isSpecialOffer:true, description:'سيروم مضاد لعلامات التقدم بالسن يحفّز تجدد الخلايا ويقلل الخطوط الدقيقة.', ingredients:'Retinol, Hyaluronic Acid, Vitamin E, Squalane', usage:'يُستخدم مساءً فقط على بشرة جافة مع واقي شمس بالنهار.'},
-    {id:'7', name:'ايزيس فارما جل منظف للبشرة الدهنية', brand:'ISIS Pharma', category:'face', size:'250 مل', price:27000, rating:4.7, reviews:52, type:'tube', inStock:true, isSpecialOffer:false, description:'جل تنظيف طبي مخصص للبشرة المعرضة لحب الشباب، ينظف المسام وينظم الإفرازات.', ingredients:'Zinc PCA, Salicylic Acid, Glycerin', usage:'يُستخدم صباحاً ومساءً بحركات دائرية ثم يشطف.'},
-    {id:'8', name:'كوزمو واقي شمس SPF50 PA+++', brand:'COSMO', category:'sunscreen', size:'50 مل', price:19000, rating:4.8, reviews:90, type:'tube', inStock:true, isSpecialOffer:false, description:'واقي شمس خفيف غير دهني بحماية عريضة، يمتص بسرعة ولا يترك أثراً أبيض.', ingredients:'Zinc Oxide, Titanium Dioxide, Niacinamide, Vitamin E', usage:'يوضع بسخاء كخطوة أخيرة صباحاً ويجدد كل 3 ساعات.'},
-    {id:'9', name:'دكتور كلينك سيروم لتقوية الشعر', brand:"dr.Clinic", category:'hair', size:'60 مل', price:26000, rating:4.5, reviews:48, type:'spray', inStock:true, isSpecialOffer:false, description:'سيروم مكثف لتحفيز نمو الشعر وتقليل التساقط وتقوية البصيلات.', ingredients:'Biotin, Caffeine, Panthenol, Peptides', usage:'يُرش على فروة الرأس الجافة يومياً مع تدليك خفيف.'},
-    {id:'10', name:'كريم سيرافي المرطب المجدد ليلاً', brand:'Cerave', category:'moisturizer', size:'340 مل', price:32000, rating:4.7, reviews:115, type:'jar', inStock:true, isSpecialOffer:false, description:'كريم ليلي غني يعمل على ترميم حاجز البشرة وترطيبها بعمق أثناء النوم.', ingredients:'Ceramides, Hyaluronic Acid, Niacinamide', usage:'يُوضع كخطوة أخيرة في الروتين المسائي على الوجه والرقبة.'},
-    {id:'11', name:'مية ميسيلار سيمبل للتنظيف', brand:'Simple', category:'face', size:'400 مل', price:14000, rating:4.6, reviews:77, type:'bottle', inStock:true, isSpecialOffer:false, description:'مياه ميسيلار لطيفة تزيل المكياج والشوائب دون الحاجة للشطف.', ingredients:'Micellar Water, Glycerin, Vitamin E', usage:'تُمرر قطنة مبللّة على الوجه والعينين بلطف.'},
-    {id:'12', name:'لاكالوت معجون أسنان مبيّض', brand:'LACALUT', category:'body', size:'75 مل', price:9000, rating:4.4, reviews:140, type:'tube', inStock:true, isSpecialOffer:false, description:'معجون أسنان ألماني طبي يحمي اللثة ويساعد على تبييض الأسنان وإزالة البقع.', ingredients:'Fluoride, Lactate, Aluminum Lactate', usage:'يُستخدم مرتين يومياً لمدة دقيقتين.'}
+    {id:'1', name:'كريم سيرافي مرطب للبشرة الجافة', brand:'Cerave', category:'moisturizer', size:'236 مل', price:25000, rating:4.8, reviews:126, type:'jar', inStock:true, isSpecialOffer:false, views:310, orders:42, description:'كريم مرطب غني بالسيراميدات وحمض الهيالورونيك، يرمم حاجز البشرة ويمنحها ترطيباً يدوم 24 ساعة، مناسب للبشرة الجافة والحساسة.', ingredients:'Ceramides NP/AP/EOP, Hyaluronic Acid, Glycerin, Petrolatum, Niacinamide', usage:'يوضع على الوجه والجسم بعد التنظيف صباحاً ومساءً.'},
+    {id:'2', name:'رفيول حل نياسيناميد 10% + زنك', brand:'REVUELE', category:'serum', size:'30 مل', price:18000, rating:4.7, reviews:98, type:'bottle', inStock:true, isSpecialOffer:false, views:245, orders:35, description:'سيروم مركّز يقلل من ظهور المسام الواسعة ويوازن إفراز الدهون، مثالي للبشرة الدهنية والمختلطة.', ingredients:'Niacinamide 10%, Zinc PCA, Hyaluronic Acid, Aqua', usage:'تُوضع 3-4 نقاط على بشرة نظيفة وجافة مساءً.'},
+    {id:'3', name:'غسول سيمبل للبشرة الحساسة', brand:'Simple', category:'face', size:'150 مل', price:12000, rating:4.6, reviews:82, type:'tube', inStock:true, isSpecialOffer:false, views:190, orders:28, description:'غسول لطيف خالٍ من الصابون والعطور، ينظف البشرة بعمق دون تجريد الزيوت الطبيعية.', ingredients:'Glycerin, Panthenol, Vitamin B5, Vitamin E', usage:'يُدلّك على بشرة مبللة صباحاً ومساءً ثم يُشطف بماء فاتر.'},
+    {id:'4', name:'اي سي ام ديبوايت كريم للتفتيح', brand:'ACM', category:'face', size:'40 مل', price:22000, rating:4.9, reviews:74, type:'tube', inStock:true, isSpecialOffer:false, views:220, orders:31, description:'كريم متخصص لتوحيد لون البشرة وتقليل البقع الداكنة والتصبغات بكفاءة عالية.', ingredients:'Niacinamide, Vitamin C Derivative, Glycolic Acid', usage:'يوضع طبقة رقيقة على مناطق التصبغ مساءً مع استخدام واقي شمس بالنهار.'},
+    {id:'5', name:'لوشن دوف المغذي للجسم', brand:'Dove', category:'body', size:'400 مل', price:15000, oldPrice:20000, rating:4.5, reviews:210, type:'bottle', inStock:true, isSpecialOffer:true, views:180, orders:19, description:'لوشن يومي يغذي البشرة من الطبقات العميقة ويتركها ناعمة كالحرير طوال اليوم.', ingredients:'Glycerin, Shea Butter, Sunflower Oil', usage:'يُدلّك على كامل الجسم يومياً بعد الاستحمام.'},
+    {id:'6', name:'رفيول سيروم ريتينول مضاد للتجاعيد', brand:'REVUELE', category:'serum', size:'30 مل', price:21000, oldPrice:30000, rating:4.6, reviews:65, type:'bottle', inStock:true, isSpecialOffer:true, views:275, orders:38, description:'سيروم مضاد لعلامات التقدم بالسن يحفّز تجدد الخلايا ويقلل الخطوط الدقيقة.', ingredients:'Retinol, Hyaluronic Acid, Vitamin E, Squalane', usage:'يُستخدم مساءً فقط على بشرة جافة مع واقي شمس بالنهار.'},
+    {id:'7', name:'ايزيس فارما جل منظف للبشرة الدهنية', brand:'ISIS Pharma', category:'face', size:'250 مل', price:27000, rating:4.7, reviews:52, type:'tube', inStock:true, isSpecialOffer:false, views:140, orders:15, description:'جل تنظيف طبي مخصص للبشرة المعرضة لحب الشباب، ينظف المسام وينظم الإفرازات.', ingredients:'Zinc PCA, Salicylic Acid, Glycerin', usage:'يُستخدم صباحاً ومساءً بحركات دائرية ثم يشطف.'},
+    {id:'8', name:'كوزمو واقي شمس SPF50 PA+++', brand:'COSMO', category:'sunscreen', size:'50 مل', price:19000, rating:4.8, reviews:90, type:'tube', inStock:true, isSpecialOffer:false, views:320, orders:49, description:'واقي شمس خفيف غير دهني بحماية عريضة، يمتص بسرعة ولا يترك أثراً أبيض.', ingredients:'Zinc Oxide, Titanium Dioxide, Niacinamide, Vitamin E', usage:'يوضع بسخاء كخطوة أخيرة صباحاً ويجدد كل 3 ساعات.'},
+    {id:'9', name:'دكتور كلينك سيروم لتقوية الشعر', brand:"dr.Clinic", category:'hair', size:'60 مل', price:26000, rating:4.5, reviews:48, type:'spray', inStock:true, isSpecialOffer:false, views:110, orders:12, description:'سيروم مكثف لتحفيز نمو الشعر وتقليل التساقط وتقوية البصيلات.', ingredients:'Biotin, Caffeine, Panthenol, Peptides', usage:'يُرش على فروة الرأس الجافة يومياً مع تدليك خفيف.'},
+    {id:'10', name:'كريم سيرافي المرطب المجدد ليلاً', brand:'Cerave', category:'moisturizer', size:'340 مل', price:32000, rating:4.7, reviews:115, type:'jar', inStock:true, isSpecialOffer:false, views:165, orders:22, description:'كريم ليلي غني يعمل على ترميم حاجز البشرة وترطيبها بعمق أثناء النوم.', ingredients:'Ceramides, Hyaluronic Acid, Niacinamide', usage:'يُوضع كخطوة أخيرة في الروتين المسائي على الوجه والرقبة.'},
+    {id:'11', name:'مية ميسيلار سيمبل للتنظيف', brand:'Simple', category:'face', size:'400 مل', price:14000, rating:4.6, reviews:77, type:'bottle', inStock:true, isSpecialOffer:false, views:130, orders:16, description:'مياه ميسيلار لطيفة تزيل المكياج والشوائب دون الحاجة للشطف.', ingredients:'Micellar Water, Glycerin, Vitamin E', usage:'تُمرر قطنة مبللّة على الوجه والعينين بلطف.'},
+    {id:'12', name:'لاكالوت معجون أسنان مبيّض', brand:'LACALUT', category:'body', size:'75 مل', price:9000, rating:4.4, reviews:140, type:'tube', inStock:true, isSpecialOffer:false, views:95, orders:14, description:'معجون أسنان ألماني طبي يحمي اللثة ويساعد على تبييض الأسنان وإزالة البقع.', ingredients:'Fluoride, Lactate, Aluminum Lactate', usage:'يُستخدم مرتين يومياً لمدة دقيقتين.'}
   ];
 
   let products = [...initialDefaultProducts];
@@ -1617,16 +1774,18 @@
   let pdQty = 1;
   let pdActiveTab = 'desc';
   let deliveryMethod = 'standard';
-  const DELIVERY_FEE = { standard: 4000, express: 8000 };
 
-  // Store Customization State
+  // Store Customization & Settings State
   let storeSettings = {
-    bannerImgUrl: 'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&w=800&q=85',
+    bannerImgUrl: 'https://imgdb.io/i/EQ4D9ag.png',
     headerBgColor: '#FFFFFF',
     announcementBgColor: '#FFF0F3',
     announcementTextColor: '#b01e4a',
     announcementText: '✨ توصيل مجاني للطلبات فوق 50,000 د.ع لجميع محافظات العراق 🌸',
     showAnnouncement: true,
+    showPromoBanners: true,
+    deliveryFeeStandard: 4000,
+    deliveryFeeExpress: 8000,
     logoText: 'صيدلية القطن',
     heroMainTitle: 'صيدلية القطن',
     heroSubTitle: 'نحن هنا لتحسين بشرتك',
@@ -1690,6 +1849,7 @@
     const heroSubEl = document.getElementById('heroSubTitle');
     const heroDescEl = document.getElementById('heroDescTitle');
     const heroImgEl = document.getElementById('primaryHeroBannerImg');
+    const promoSec = document.getElementById('promoBannersSection');
 
     if (headerEl && storeSettings.headerBgColor) headerEl.style.backgroundColor = storeSettings.headerBgColor;
     if (annEl) {
@@ -1704,6 +1864,7 @@
     if (heroSubEl && storeSettings.heroSubTitle) heroSubEl.textContent = storeSettings.heroSubTitle;
     if (heroDescEl && storeSettings.heroDescTitle) heroDescEl.textContent = storeSettings.heroDescTitle;
     if (heroImgEl && storeSettings.bannerImgUrl) heroImgEl.src = storeSettings.bannerImgUrl;
+    if (promoSec) promoSec.style.display = (storeSettings.showPromoBanners !== false) ? 'block' : 'none';
   }
 
   // ============ FIRESTORE DYNAMIC PRODUCTS & SETTINGS ============
@@ -1750,7 +1911,8 @@
       });
 
       renderCurrentActiveView();
-      updateAdminStats();
+      renderModernCategories();
+      updateAdminDashboardStats();
     }, err => {
       console.warn('Firestore products listener error, using static fallback:', err);
     });
@@ -1759,10 +1921,33 @@
   function renderCurrentActiveView() {
     if (currentView === 'home') renderHome();
     else if (currentView === 'listing') renderListing();
+    else if (currentView === 'categories') renderModernCategories();
     else if (currentView === 'offers') renderOffers();
     else if (currentView === 'wishlist') renderWishlist();
     else if (currentView === 'cart') renderCart();
+    else if (currentView === 'admin') renderAdminView();
     else if (currentView === 'product' && currentProductId) openProduct(currentProductId);
+  }
+
+  // ============ MODERN CATEGORIES GRID VIEW ============
+  function renderModernCategories() {
+    const container = document.getElementById('catRowFull');
+    const totalCountEl = document.getElementById('categoriesTotalCount');
+    if (totalCountEl) totalCountEl.textContent = `${categories.length} أقسام رئيسية`;
+    if (!container) return;
+
+    container.innerHTML = categories.map(c => {
+      const count = products.filter(p => p.category === c.id).length;
+      return `
+        <div class="modern-cat-card" onclick="openCategory('${c.id}')">
+          <div class="modern-cat-icon">
+            ${(catIcons[c.icon] || catIcons.jar)('var(--accent)')}
+          </div>
+          <h3 class="modern-cat-title">${c.label}</h3>
+          <span class="modern-cat-count mono">${count} منتج</span>
+        </div>
+      `;
+    }).join('');
   }
 
   // ============ ADMIN INLINE LIVE EDITING CONTROLS ============
@@ -1776,7 +1961,6 @@
       return;
     }
     
-    // Instant DOM update
     const p = findProduct(id);
     if (p) p.price = newPrice;
     renderCurrentActiveView();
@@ -1807,17 +1991,21 @@
     }
   }
 
-  // ============ ADMIN CONTROL MODAL LOGIC ============
-  function openAdminModal() {
+  // ============ FULL-SCREEN ADMIN VIEW LOGIC ============
+  function renderAdminView() {
     if (!isCurrentUserAdmin()) {
-      showToast('عذراً، هذه اللوحة مخصصة للمشرف فقط.');
+      showView('home');
+      showToast('عذراً، هذا القسم مخصص للمشرف فقط.');
       return;
     }
-    document.getElementById('adminModal').classList.add('open');
-    switchAdminTab('products');
-    updateAdminStats();
-    
+    updateAdminDashboardStats();
+    renderAdminTopLists();
+    renderAdminBrandsList();
+
     // Populate Customization Form
+    document.getElementById('adminDeliveryStandard').value = storeSettings.deliveryFeeStandard || 4000;
+    document.getElementById('adminDeliveryExpress').value = storeSettings.deliveryFeeExpress || 8000;
+    document.getElementById('adminShowPromoBanners').checked = (storeSettings.showPromoBanners !== false);
     document.getElementById('adminShowAnnouncement').checked = (storeSettings.showAnnouncement !== false);
     document.getElementById('adminAnnouncementText').value = storeSettings.announcementText || '';
     document.getElementById('adminAnnouncementBgColor').value = storeSettings.announcementBgColor || '#FFF0F3';
@@ -1831,25 +2019,90 @@
     updateAdminBannerPreview(storeSettings.bannerImgUrl);
   }
 
-  function closeAdminModal() {
-    document.getElementById('adminModal').classList.remove('open');
+  function switchAdminSection(sec) {
+    ['Stats', 'Products', 'Brands', 'Design', 'Code'].forEach(k => {
+      const btn = document.getElementById('btnTabV' + k);
+      const el = document.getElementById('adminSec' + k);
+      const isTarget = (k.toLowerCase() === sec.toLowerCase());
+      if (btn) btn.classList.toggle('active', isTarget);
+      if (el) el.style.display = isTarget ? 'block' : 'none';
+    });
   }
 
-  function switchAdminTab(tab) {
-    document.getElementById('btnAdminTabA').classList.toggle('active', tab === 'products');
-    document.getElementById('btnAdminTabB').classList.toggle('active', tab === 'design');
-    document.getElementById('btnAdminTabC').classList.toggle('active', tab === 'stats');
-
-    document.getElementById('adminTabSectionProducts').style.display = (tab === 'products') ? 'block' : 'none';
-    document.getElementById('adminTabSectionDesign').style.display = (tab === 'design') ? 'block' : 'none';
-    document.getElementById('adminTabSectionStats').style.display = (tab === 'stats') ? 'block' : 'none';
-  }
-
-  function updateAdminStats() {
-    const statProds = document.getElementById('statTotalProds');
-    const statOffers = document.getElementById('statActiveOffers');
+  function updateAdminDashboardStats() {
+    const statProds = document.getElementById('statTotalProdsV');
+    const statOffers = document.getElementById('statActiveOffersV');
     if (statProds) statProds.textContent = products.length;
     if (statOffers) statOffers.textContent = products.filter(p => p.oldPrice || p.isSpecialOffer).length;
+  }
+
+  function renderAdminTopLists() {
+    const topOrdersEl = document.getElementById('adminTopOrderedList');
+    const topViewsEl = document.getElementById('adminTopViewedList');
+
+    // Top 5 Ordered
+    const topOrdered = [...products].sort((a,b) => (b.orders || 0) - (a.orders || 0)).slice(0, 5);
+    if (topOrdersEl) {
+      topOrdersEl.innerHTML = topOrdered.map((p, idx) => `
+        <div class="admin-rank-item">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="admin-rank-badge">${idx + 1}</span>
+            <span style="font-weight:700;">${p.name} (${p.brand})</span>
+          </div>
+          <span class="mono" style="font-weight:800; color:var(--accent);">${p.orders || 10} طلب</span>
+        </div>
+      `).join('');
+    }
+
+    // Top 5 Viewed
+    const topViewed = [...products].sort((a,b) => (b.views || 0) - (a.views || 0)).slice(0, 5);
+    if (topViewsEl) {
+      topViewsEl.innerHTML = topViewed.map((p, idx) => `
+        <div class="admin-rank-item">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="admin-rank-badge">${idx + 1}</span>
+            <span style="font-weight:700;">${p.name}</span>
+          </div>
+          <span class="mono" style="font-weight:800; color:#4B5563;">${p.views || 50} زيارة</span>
+        </div>
+      `).join('');
+    }
+  }
+
+  function renderAdminBrandsList() {
+    const container = document.getElementById('adminBrandsListGrid');
+    if (!container) return;
+    const names = Object.keys(brandColors);
+    container.innerHTML = names.map(b => `
+      <div style="background:#fff; border:1px solid var(--line); border-radius:10px; padding:6px 12px; display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:800;">
+        <span style="width:12px; height:12px; border-radius:50%; background:${brandColors[b]};"></span>
+        <span>${b}</span>
+        <button onclick="handleDeleteBrand('${b.replace(/'/g, "\\'")}')" style="color:var(--red); font-size:11px; margin-inline-start:4px;">✕</button>
+      </div>
+    `).join('');
+  }
+
+  function handleAddBrand(e) {
+    e.preventDefault();
+    if (!isCurrentUserAdmin()) return;
+    const name = document.getElementById('newBrandName').value.trim();
+    const color = document.getElementById('newBrandColor').value;
+    if (!name) return;
+    brandColors[name] = color;
+    renderAdminBrandsList();
+    renderBrandStrip();
+    document.getElementById('newBrandName').value = '';
+    showToast(`تمت إضافة ماركة ${name} للشريط بنجاح ✓`);
+  }
+
+  function handleDeleteBrand(name) {
+    if (!isCurrentUserAdmin()) return;
+    if (confirm(`حذف ماركة "${name}" من الشريط؟`)) {
+      delete brandColors[name];
+      renderAdminBrandsList();
+      renderBrandStrip();
+      showToast('تم حذف الماركة من الشريط');
+    }
   }
 
   function updateAdminBannerPreview(url) {
@@ -1862,6 +2115,9 @@
     if (!isCurrentUserAdmin() || !db) return;
 
     const newSettings = {
+      deliveryFeeStandard: Number(document.getElementById('adminDeliveryStandard').value) || 4000,
+      deliveryFeeExpress: Number(document.getElementById('adminDeliveryExpress').value) || 8000,
+      showPromoBanners: document.getElementById('adminShowPromoBanners').checked,
       showAnnouncement: document.getElementById('adminShowAnnouncement').checked,
       announcementText: document.getElementById('adminAnnouncementText').value.trim(),
       announcementBgColor: document.getElementById('adminAnnouncementBgColor').value,
@@ -1871,7 +2127,7 @@
       heroMainTitle: document.getElementById('adminHeroMainTitle').value.trim() || 'صيدلية القطن',
       heroSubTitle: document.getElementById('adminHeroSubTitle').value.trim(),
       heroDescTitle: document.getElementById('adminHeroDescTitle').value.trim(),
-      bannerImgUrl: document.getElementById('adminBannerImgInput').value.trim(),
+      bannerImgUrl: document.getElementById('adminBannerImgInput').value.trim() || 'https://imgdb.io/i/EQ4D9ag.png',
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
@@ -1880,8 +2136,7 @@
 
     try {
       await db.collection('store_settings').doc('general').set(newSettings, { merge: true });
-      showToast('تم حفظ وتطبيق تخصيص الهيدر والواجهة بنجاح ✓');
-      closeAdminModal();
+      showToast('تم حفظ وتطبيق جميع التعديلات سحابياً بنجاح ✓');
     } catch (err) {
       console.error(err);
       showToast('حدث خطأ أثناء حفظ الإعدادات');
@@ -1915,15 +2170,15 @@
     document.getElementById('adminProdInStock').checked = true;
     document.getElementById('adminProdIsOffer').checked = false;
     document.getElementById('adminProdImgPreviewBox').style.display = 'none';
-    document.getElementById('adminFormModeTitle').textContent = 'إضافة منتج جديد';
+    document.getElementById('adminFormModeTitleV').textContent = 'إضافة منتج جديد';
     document.getElementById('adminSaveProdBtn').textContent = '💾 حفظ المنتج في قاعدة البيانات';
   }
 
   function editProductInAdmin(id) {
     const p = findProduct(id);
     if (!p) return;
-    openAdminModal();
-    switchAdminTab('products');
+    showView('admin');
+    switchAdminSection('products');
 
     document.getElementById('adminProdDocId').value = p.id;
     document.getElementById('adminProdName').value = p.name || '';
@@ -1941,8 +2196,9 @@
     document.getElementById('adminProdIsOffer').checked = !!(p.isSpecialOffer || p.oldPrice);
 
     if (p.imageUrl) previewAdminProdImg(p.imageUrl);
-    document.getElementById('adminFormModeTitle').textContent = 'تعديل المنتج: ' + p.name;
+    document.getElementById('adminFormModeTitleV').textContent = 'تعديل المنتج: ' + p.name;
     document.getElementById('adminSaveProdBtn').textContent = '💾 حفظ التعديلات سحابياً';
+    window.scrollTo({top: 0, behavior: 'smooth'});
   }
 
   async function handleAdminProductSave(e) {
@@ -1982,7 +2238,7 @@
         showToast('تمت إضافة المنتج الجديد لقاعدة البيانات ✓');
       }
       resetAdminProductForm();
-      closeAdminModal();
+      showView('home');
     } catch (err) {
       console.error('Error saving product:', err);
       showToast('حدث خطأ أثناء حفظ المنتج في Firebase');
@@ -2002,37 +2258,25 @@
     }
   }
 
-  async function sendAdminNotificationBroadcast() {
-    if (!isCurrentUserAdmin() || !db) return;
-    const title = document.getElementById('adminNotifTitle').value.trim();
-    const body = document.getElementById('adminNotifBody').value.trim();
-    if (!title || !body) {
-      showToast('يرجى تعبئة عنوان ونص الإشعار');
-      return;
-    }
-    try {
-      await db.collection('fcm_broadcasts').add({
-        title, body,
-        sentBy: currentUser.email,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      showToast(`🔔 تم إرسال وبث الإشعار بنجاح: ${title}`);
-      document.getElementById('adminNotifTitle').value = '';
-      document.getElementById('adminNotifBody').value = '';
-      closeAdminModal();
-    } catch (err) {
-      console.error(err);
-      showToast('حدث خطأ أثناء إرسال الإشعار');
-    }
+  function copyFullSourceCode() {
+    const code = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+    navigator.clipboard.writeText(code).then(() => {
+      showToast('📋 تم نسخ كود index.html بالكامل بنجاح!');
+    }).catch(err => {
+      console.error('Copy error:', err);
+      showToast('تعذر النسخ التلقائي، يمكنك نسخه يدوياً');
+    });
   }
 
   function updateAdminInterfaceState() {
     const adminTopBar = document.getElementById('adminTopBar');
     const adminMenu = document.getElementById('adminMenuLink');
+    const adminBn = document.getElementById('bn-admin');
     const isAdmin = isCurrentUserAdmin();
     
     if (adminTopBar) adminTopBar.style.display = isAdmin ? 'flex' : 'none';
     if (adminMenu) adminMenu.style.display = isAdmin ? 'flex' : 'none';
+    if (adminBn) adminBn.style.display = isAdmin ? 'flex' : 'none';
     renderCurrentActiveView();
   }
 
@@ -2233,87 +2477,6 @@
     });
   }
 
-  // ============ ERROR TRANSLATION HELPER ============
-  function getFriendlyAuthError(code) {
-    switch (code) {
-      case 'auth/invalid-email': return 'صيغة البريد الإلكتروني غير صحيحة.';
-      case 'auth/user-not-found':
-      case 'auth/wrong-password':
-      case 'auth/invalid-credential':
-      case 'auth/invalid-login-credentials': return 'البريد الإلكتروني أو كلمة السر غير صحيحة.';
-      case 'auth/email-already-in-use': return 'هذا البريد الإلكتروني مسجل مسبقاً، يرجى تسجيل الدخول.';
-      case 'auth/weak-password': return 'كلمة السر ضعيفة، يرجى كتابة 6 خانات على الأقل.';
-      case 'auth/network-request-failed': return 'تعذر الاتصال بالشبكة، يرجى التحقق من اتصال الإنترنت.';
-      case 'auth/too-many-requests': return 'تم حظر الدخول مؤقتاً لكثرة المحاولات، يرجى الانتظار قليلاً.';
-      case 'auth/unauthorized-domain': return 'نطاق الموقع غير مصرح به في Firebase Console. يرجى إضافته في Authorized Domains.';
-      default: return 'تعذر إتمام العملية، يرجى التحقق وإعادة المحاولة.';
-    }
-  }
-
-  // ============ EMAIL & PASSWORD AUTH HANDLERS ============
-  function setAuthMode(mode) {
-    authMode = mode;
-    renderAccountView();
-  }
-
-  async function handleEmailAuth(e) {
-    if (e) e.preventDefault();
-    if (!isFirebaseConfigured) {
-      showToast('يرجى ضبط إعدادات Firebase');
-      return;
-    }
-
-    const emailEl = document.getElementById('authEmail');
-    const passEl = document.getElementById('authPassword');
-    const msgEl = document.getElementById('authErrorMsg');
-    if (!emailEl || !passEl) return;
-
-    const email = emailEl.value.trim();
-    const password = passEl.value.trim();
-
-    if (!email || !password) {
-      if (msgEl) {
-        msgEl.textContent = 'يرجى كتابة البريد الإلكتروني وكلمة السر.';
-        msgEl.style.display = 'block';
-      }
-      return;
-    }
-
-    if (password.length < 6) {
-      if (msgEl) {
-        msgEl.textContent = 'يجب أن تتكون كلمة السر من 6 خانات على الأقل.';
-        msgEl.style.display = 'block';
-      }
-      return;
-    }
-
-    try {
-      if (authMode === 'register') {
-        const cred = await auth.createUserWithEmailAndPassword(email, password);
-        currentUser = cred.user;
-        const name = currentUser.displayName || currentUser.email || 'عزيزي العميل';
-        showToast(`تم إنشاء الحساب بنجاح! أهلاً بك، ${name} 🌸`);
-      } else {
-        const cred = await auth.signInWithEmailAndPassword(email, password);
-        currentUser = cred.user;
-        const name = currentUser.displayName || currentUser.email || 'عزيزي العميل';
-        showToast(`تم تسجيل الدخول بنجاح! أهلاً بك، ${name} 🌸`);
-      }
-      updateAdminInterfaceState();
-      updateUserHeaderProfile();
-      renderAccountView();
-    } catch (err) {
-      console.error("Email auth error:", err);
-      const friendly = getFriendlyAuthError(err.code);
-      if (msgEl) {
-        msgEl.textContent = friendly;
-        msgEl.style.display = 'block';
-      } else {
-        showToast(friendly);
-      }
-    }
-  }
-
   // ============ GOOGLE SIGN-IN ============
   async function signInWithGoogle() {
     if (!isFirebaseConfigured) {
@@ -2349,34 +2512,14 @@
     } catch (err) {
       console.error("Google Auth error:", err);
       if (err.code !== 'auth/popup-closed-by-user') {
-        showToast(getFriendlyAuthError(err.code));
+        showToast('تعذر تسجيل الدخول عبر Google');
       }
       return null;
     }
   }
 
-  function quickGuestLogin() {
-    const name = document.getElementById('guestQuickName').value.trim();
-    const phone = document.getElementById('guestQuickPhone').value.trim();
-    if (!name || !phone) {
-      showToast('يرجى كتابة الاسم ورقم الهاتف للمتابعة');
-      return;
-    }
-    currentUser = {
-      uid: 'guest_' + phone.replace(/[^0-9]/g, ''),
-      displayName: name,
-      email: phone + '@guest.local',
-      photoURL: ''
-    };
-    saveLocalState();
-    updateAdminInterfaceState();
-    updateUserHeaderProfile();
-    renderAccountView();
-    showToast(`تم تسجيل بياناتك بنجاح! أهلاً بك، ${name} 🌸`);
-  }
-
   async function handleSignOut() {
-    if (auth && currentUser && !currentUser.uid.startsWith('guest_')) {
+    if (auth && currentUser) {
       try {
         await auth.signOut();
       } catch (err) {
@@ -2427,7 +2570,7 @@
     closeMenu();
     window.scrollTo({top: 0, behavior: 'instant'});
 
-    ['home', 'wishlist', 'categories', 'cart', 'account'].forEach(k => {
+    ['home', 'wishlist', 'categories', 'cart', 'account', 'admin'].forEach(k => {
       const el = document.getElementById('bn-' + k);
       if (el) el.classList.toggle('active', name === k);
     });
@@ -2541,7 +2684,6 @@
     renderBrandStrip();
     renderHomeProductGrid();
     renderPromoBanners();
-    renderCatRow('catRow');
   }
 
   function renderHomeProductGrid() {
@@ -2578,19 +2720,9 @@
     strip.innerHTML = allChip + brandChips;
   }
 
-  function renderCatRow(targetId) {
-    const el = document.getElementById(targetId);
-    if (!el) return;
-    el.innerHTML = categories.map(c => `
-      <div class="cat-item" onclick="openCategory('${c.id}')">
-        <div class="cat-icon">${(catIcons[c.icon] || catIcons.jar)('var(--accent)')}</div>
-        <span class="label">${c.label}</span>
-      </div>`).join('');
-  }
-  function renderCategoriesGrid() { renderCatRow('catRowFull'); }
-
   function renderPromoBanners() {
     const el = document.getElementById('promoBanners');
+    if (!el) return;
     el.innerHTML = `
       <div class="section-head"><span></span><h2>عروض مميزة 🎁</h2></div>
       <div class="promo-banner">
@@ -2689,6 +2821,10 @@
     pdActiveTab = 'desc';
     const p = findProduct(id);
     if (!p) return;
+    
+    // Track views dynamically
+    p.views = (p.views || 0) + 1;
+
     const color = brandColors[p.brand] || hashColor(p.brand || 'Qutn');
 
     const pdImgEl = document.getElementById('pdImage');
@@ -2835,7 +2971,7 @@
     }).join('');
 
     const subtotal = getCartTotal();
-    const fee = DELIVERY_FEE[deliveryMethod] || DELIVERY_FEE.standard;
+    const fee = (deliveryMethod === 'express') ? (storeSettings.deliveryFeeExpress || 8000) : (storeSettings.deliveryFeeStandard || 4000);
     summaryEl.innerHTML = `
       <div class="summary-row"><span>المجموع الفرعي</span><span class="mono">${fmtPrice(subtotal)}</span></div>
       <div class="summary-row"><span>رسوم التوصيل</span><span class="mono">${fmtPrice(fee)}</span></div>
@@ -2856,7 +2992,7 @@
 
   function renderCheckoutSummary() {
     const subtotal = getCartTotal();
-    const fee = DELIVERY_FEE[deliveryMethod];
+    const fee = (deliveryMethod === 'express') ? (storeSettings.deliveryFeeExpress || 8000) : (storeSettings.deliveryFeeStandard || 4000);
     document.getElementById('checkoutSummaryBlock').innerHTML = `
       <div class="summary-row"><span>المجموع الفرعي</span><span class="mono">${fmtPrice(subtotal)}</span></div>
       <div class="summary-row"><span>رسوم التوصيل</span><span class="mono">${fmtPrice(fee)}</span></div>
@@ -2879,6 +3015,9 @@
 
     const itemObjects = ids.map(id => {
       const p = findProduct(id);
+      if (p) {
+        p.orders = (p.orders || 0) + cart[id];
+      }
       return p ? {
         id: p.id,
         name: p.name,
@@ -2893,10 +3032,11 @@
       item.quantity > 1 ? `${item.name} × ${item.quantity}` : item.name
     );
 
-    const grandTotal = getCartTotal() + DELIVERY_FEE[deliveryMethod];
+    const fee = (deliveryMethod === 'express') ? (storeSettings.deliveryFeeExpress || 8000) : (storeSettings.deliveryFeeStandard || 4000);
+    const grandTotal = getCartTotal() + fee;
     const orderId = await sendOrderToFirebase(itemObjects, grandTotal, phone);
 
-    const deliveryLabel = deliveryMethod === 'express' ? 'توصيل سريع (خلال 24 ساعة)' : 'توصيل عادي (24-48 ساعة)';
+    const deliveryLabel = deliveryMethod === 'express' ? `توصيل سريع (${fmtPrice(storeSettings.deliveryFeeExpress || 8000)})` : `توصيل عادي (${fmtPrice(storeSettings.deliveryFeeStandard || 4000)})`;
     const msg = encodeURIComponent(
       `طلب جديد من صيدلية القطن:\n\nالاسم: ${name}\nالهاتف: ${phone}\nالعنوان: ${address}\nطريقة التوصيل: ${deliveryLabel}\n\nالمنتجات:\n${lines.join('\n')}\n\nالإجمالي: ${fmtPrice(grandTotal)}${orderId && orderId !== 'LOCAL_ORDER' ? '\nرقم الطلب: ' + orderId : ''}`
     );
@@ -2934,8 +3074,8 @@
           </div>
 
           ${isAdmin ? `
-            <button class="auth-btn-google" style="margin-bottom:10px; border-color:#F59E0B; background:#FEF3C7; color:#92400E; font-weight:800;" onclick="openAdminModal()">
-              ⚙️ فتح لوحة تحكم المشرف (إدارة المتجر)
+            <button class="auth-btn-google" style="margin-bottom:10px; border-color:#F59E0B; background:#FEF3C7; color:#92400E; font-weight:800;" onclick="showView('admin')">
+              ⚙️ الانتقال للوحة تحكم وإدارة المتجر
             </button>` : ''}
 
           <button class="auth-btn-google" style="margin-bottom:10px; border-color:var(--rose);" onclick="requestNotificationPermission()">
@@ -2947,42 +3087,16 @@
     } else {
       container.innerHTML = `
         <div class="account-card">
-          <div class="auth-tabs">
-            <button class="auth-tab-btn ${authMode === 'login' ? 'active' : ''}" onclick="setAuthMode('login')">تسجيل الدخول</button>
-            <button class="auth-tab-btn ${authMode === 'register' ? 'active' : ''}" onclick="setAuthMode('register')">إنشاء حساب جديد</button>
-          </div>
-
-          <div id="authErrorMsg" class="auth-error-msg"></div>
-
-          <form onsubmit="handleEmailAuth(event)">
-            <div class="auth-input-group">
-              <label for="authEmail">البريد الإلكتروني</label>
-              <input type="email" id="authEmail" placeholder="example@mail.com" required>
-            </div>
-            <div class="auth-input-group">
-              <label for="authPassword">كلمة السر</label>
-              <input type="password" id="authPassword" placeholder="•••••••• (6 خانات على الأقل)" required>
-            </div>
-            <button type="submit" class="auth-submit-btn">
-              ${authMode === 'register' ? 'إنشاء حساب جديد' : 'تسجيل الدخول'}
-            </button>
-          </form>
-
-          <div class="auth-divider">
-            <span>أو تسجيل الدخول عبر</span>
-          </div>
+          <div style="font-size:38px; margin-bottom:8px;">🌸</div>
+          <h3 style="font-size:17px; font-weight:900; color:var(--ink); margin:0 0 6px;">مرحباً بك في صيدلية القطن</h3>
+          <p style="font-size:12.5px; color:var(--text-soft); line-height:1.6; margin:0 0 20px;">
+            سجلي الدخول بنقرة واحدة عبر حساب Google لمزامنة منتجاتكِ المفضلة وسلتك ومتابعة عروضكِ الحصرية بسهولة وأمان:
+          </p>
 
           <button class="auth-btn-google" onclick="signInWithGoogle()">
-            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-            Google
+            <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+            تسجيل الدخول المباشر عبر Google
           </button>
-          
-          <div class="guest-quick-login">
-            <p style="font-size:12px; color:var(--text-soft); margin-bottom:8px;">أو سجلي بياناتك مباشرة للمتابعة السريعة:</p>
-            <input type="text" id="guestQuickName" placeholder="الاسم الكريم">
-            <input type="tel" id="guestQuickPhone" placeholder="رقم الهاتف (07xxxxxxxxx)">
-            <button type="button" onclick="quickGuestLogin()">حفظ ومتابعة كضيف ✓</button>
-          </div>
         </div>`;
     }
   }
@@ -2998,9 +3112,8 @@
   }
 
   // ============ IMMEDIATE ZERO-DELAY INITIALIZATION ============
-  // Render products immediately so visitors never see a blank page
   renderHome();
-  renderCatRow('catRow');
+  renderModernCategories();
   updateCartBadge();
   renderAccountView();
   updateUserHeaderProfile();
