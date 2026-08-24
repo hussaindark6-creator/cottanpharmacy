@@ -109,33 +109,54 @@
   .logo-text { font-weight: 900; font-size: 19px; color: var(--rose-deep); letter-spacing: -0.5px; }
   .logo-mark { width: 34px; height: 34px; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); }
   
-  /* User Header Chip */
+  /* User Header Chip with Fast Logout Button */
   .user-header-chip {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 4px 10px 4px 6px;
+    gap: 4px;
+    padding: 3px 6px 3px 4px;
     border-radius: 999px;
     background: var(--surface);
-    border: 1px solid var(--line);
-    cursor: pointer;
+    border: 1.5px solid var(--line);
     transition: all .2s;
   }
   .user-header-chip:hover { border-color: var(--rose); }
+  .user-chip-main {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
   .user-chip-avatar {
     width: 28px;
     height: 28px;
     border-radius: 50%;
     overflow: hidden;
     background: #fff;
-    border: 1px solid var(--rose);
+    border: 1.5px solid var(--rose);
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
   }
   .user-chip-avatar img { width: 100%; height: 100%; object-fit: cover; }
   .user-chip-avatar svg { width: 16px; height: 16px; color: var(--accent); }
-  .user-chip-name { font-size: 11.5px; font-weight: 800; color: var(--ink); max-width: 75px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-chip-name { font-size: 11.5px; font-weight: 800; color: var(--ink); max-width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-chip-logout-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #FEE2E2;
+    color: var(--red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all .15s;
+    border: 1px solid #FECACA;
+    margin-inline-start: 2px;
+  }
+  .user-chip-logout-btn:hover { background: #FCA5A5; color: #991B1B; }
 
   .cart-badge { position: absolute; top: -1px; left: -1px; background: var(--accent); color: #fff; font-size: 10px; font-weight: 800; min-width: 17px; height: 17px; border-radius: 999px; display: flex; align-items: center; justify-content: center; padding: 0 4px; box-shadow: 0 2px 6px rgba(232,93,138,0.4); }
 
@@ -765,7 +786,7 @@
       استشر الصيدلي مجاناً 🩺
     </button>
     <button class="menu-link" id="adminMenuLink" style="display:none;" onclick="openAdminModal(); closeMenu();">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       لوحة تحكم المشرف ⚙️
     </button>
     <button class="menu-link" onclick="showView('categories')">
@@ -811,12 +832,17 @@
       </span>
     </div>
 
-    <!-- User Header Profile Chip (Shows logged in state / login action) -->
-    <div class="user-header-chip" id="userHeaderChip" onclick="showView('account')" title="حسابي">
-      <div class="user-chip-avatar" id="userChipAvatar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>
+    <!-- User Header Profile Chip with Direct Action -->
+    <div class="user-header-chip" id="userHeaderChip">
+      <div class="user-chip-main" onclick="showView('account')" title="حسابي">
+        <div class="user-chip-avatar" id="userChipAvatar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>
+        </div>
+        <span class="user-chip-name" id="userChipName">دخول</span>
       </div>
-      <span class="user-chip-name" id="userChipName">دخول</span>
+      <button id="userHeaderLogoutBtn" class="user-chip-logout-btn" onclick="event.stopPropagation(); handleSignOut();" title="تسجيل الخروج" style="display:none;">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
     </div>
 
     <button class="icon-btn" onclick="showView('cart')" aria-label="السلة">
@@ -1507,7 +1533,7 @@
   const DELIVERY_FEE = { standard: 4000, express: 8000 };
 
   function isCurrentUserAdmin() {
-    return !!(currentUser && currentUser.email && currentUser.email.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+    return !!(currentUser && currentUser.email && currentUser.email.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase());
   }
 
   function fmtPrice(n) { return (n || 0).toLocaleString('en-US') + ' IQD'; }
@@ -1525,22 +1551,27 @@
   function updateUserHeaderProfile() {
     const chipAvatar = document.getElementById('userChipAvatar');
     const chipName = document.getElementById('userChipName');
+    const logoutBtn = document.getElementById('userHeaderLogoutBtn');
     const bnAccountLbl = document.getElementById('bnAccountLbl');
 
     if (currentUser) {
-      const name = currentUser.displayName ? currentUser.displayName.split(' ')[0] : 'حسابي';
-      if (chipName) chipName.textContent = name;
-      if (bnAccountLbl) bnAccountLbl.textContent = name;
+      const rawName = currentUser.displayName || currentUser.email || 'حسابي';
+      const firstName = rawName.split(' ')[0].split('@')[0];
+      if (chipName) chipName.textContent = firstName;
+      if (bnAccountLbl) bnAccountLbl.textContent = firstName;
+      if (logoutBtn) logoutBtn.style.display = 'flex';
+      
       if (chipAvatar) {
         if (currentUser.photoURL) {
-          chipAvatar.innerHTML = `<img src="${currentUser.photoURL}" alt="User">`;
+          chipAvatar.innerHTML = `<img src="${currentUser.photoURL}" alt="${firstName}">`;
         } else {
-          chipAvatar.innerHTML = `<span style="font-size:12px; font-weight:800; color:var(--accent);">${name.charAt(0)}</span>`;
+          chipAvatar.innerHTML = `<span style="font-size:12px; font-weight:900; color:var(--accent);">${firstName.charAt(0).toUpperCase()}</span>`;
         }
       }
     } else {
       if (chipName) chipName.textContent = 'دخول';
       if (bnAccountLbl) bnAccountLbl.textContent = 'حسابي';
+      if (logoutBtn) logoutBtn.style.display = 'none';
       if (chipAvatar) {
         chipAvatar.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>`;
       }
