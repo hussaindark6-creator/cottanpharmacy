@@ -91,7 +91,7 @@
   .admin-bar-btn {
     background: #F59E0B;
     color: #111827;
-    padding: 4px 12px;
+    padding: 5px 14px;
     border-radius: 999px;
     font-size: 11.5px;
     font-weight: 900;
@@ -108,6 +108,35 @@
   .logo-block { display: flex; align-items: center; gap: 8px; cursor: pointer; }
   .logo-text { font-weight: 900; font-size: 19px; color: var(--rose-deep); letter-spacing: -0.5px; }
   .logo-mark { width: 34px; height: 34px; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); }
+  
+  /* User Header Chip */
+  .user-header-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px 4px 6px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .user-header-chip:hover { border-color: var(--rose); }
+  .user-chip-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid var(--rose);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .user-chip-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .user-chip-avatar svg { width: 16px; height: 16px; color: var(--accent); }
+  .user-chip-name { font-size: 11.5px; font-weight: 800; color: var(--ink); max-width: 75px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
   .cart-badge { position: absolute; top: -1px; left: -1px; background: var(--accent); color: #fff; font-size: 10px; font-weight: 800; min-width: 17px; height: 17px; border-radius: 999px; display: flex; align-items: center; justify-content: center; padding: 0 4px; box-shadow: 0 2px 6px rgba(232,93,138,0.4); }
 
   .search-wrap { padding: 6px 0 10px; }
@@ -736,7 +765,7 @@
       استشر الصيدلي مجاناً 🩺
     </button>
     <button class="menu-link" id="adminMenuLink" style="display:none;" onclick="openAdminModal(); closeMenu();">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       لوحة تحكم المشرف ⚙️
     </button>
     <button class="menu-link" onclick="showView('categories')">
@@ -774,6 +803,7 @@
     <button class="icon-btn" onclick="openMenu()" aria-label="القائمة">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
     </button>
+    
     <div class="logo-block" onclick="showView('home')">
       <span class="logo-text">صيدلية القطن</span>
       <span class="logo-mark">
@@ -781,11 +811,20 @@
       </span>
     </div>
 
+    <!-- User Header Profile Chip (Shows logged in state / login action) -->
+    <div class="user-header-chip" id="userHeaderChip" onclick="showView('account')" title="حسابي">
+      <div class="user-chip-avatar" id="userChipAvatar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>
+      </div>
+      <span class="user-chip-name" id="userChipName">دخول</span>
+    </div>
+
     <button class="icon-btn" onclick="showView('cart')" aria-label="السلة">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h2l2.4 12.4a2 2 0 0 0 2 1.6h8.4a2 2 0 0 0 2-1.6L22 8H6"/><circle cx="9" cy="21" r="1.4" fill="currentColor" stroke="none"/><circle cx="18" cy="21" r="1.4" fill="currentColor" stroke="none"/></svg>
       <span class="cart-badge" id="cartBadge" style="display:none;">0</span>
     </button>
   </div>
+  
   <div class="wrap search-wrap">
     <div class="search-bar">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
@@ -1009,6 +1048,71 @@
     <div class="contact-row" onclick="showView('cart')" style="cursor:pointer;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h2l2.4 12.4a2 2 0 0 0 2 1.6h8.4a2 2 0 0 0 2-1.6L22 8H6"/></svg>
       <div><div class="t">سلتي</div><div class="s">مراجعة المنتجات والطلب</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ DIRECT PHARMACIST CONSULTATION MODAL ============ -->
+<div class="consult-modal-overlay" id="consultModal">
+  <div class="consult-modal-card">
+    <div class="consult-header">
+      <div class="consult-title-wrap">
+        <span class="consult-badge-pill">خدمة الاستشارة المباشرة</span>
+        <h3>استشارة صيدلانية فورية 🩺</h3>
+      </div>
+      <button class="icon-btn" onclick="closeConsultModal()" aria-label="إغلاق">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="consult-body">
+      <form id="consultForm" onsubmit="handleConsultSubmit(event)">
+        <div style="display:flex; gap:10px;">
+          <div class="form-field" style="flex:1.6;">
+            <label>الاسم الكامل</label>
+            <input type="text" id="consultName" placeholder="مثال: سارة علي" required>
+          </div>
+          <div class="form-field" style="flex:1;">
+            <label>العمر</label>
+            <input type="number" id="consultAge" placeholder="25" required min="1" max="100">
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label>الحالة الخاصة (لضمان أمان التركيبات)</label>
+          <div class="consult-toggle-group">
+            <button type="button" class="consult-toggle-btn active" data-val="لا يوجد" onclick="selectConsultCondition(this)">لا يوجد ✨</button>
+            <button type="button" class="consult-toggle-btn" data-val="حامل" onclick="selectConsultCondition(this)">حامل 🤰</button>
+            <button type="button" class="consult-toggle-btn" data-val="مرضع" onclick="selectConsultCondition(this)">مرضع 🤱</button>
+          </div>
+          <input type="hidden" id="consultCondition" value="لا يوجد">
+        </div>
+
+        <div class="form-field">
+          <label>نوع البشرة أو المشكلة بالتفصيل</label>
+          <textarea id="consultDesc" rows="3" placeholder="صفي مشكلة بشرتك (حب شباب، تصبغات، حساسية...) أو اسألي عن منتج أو روتين محدد..." required></textarea>
+        </div>
+
+        <div class="form-field">
+          <label>إرفاق صورة الروشتة أو الحالة (اختياري)</label>
+          <div class="consult-upload-zone" onclick="document.getElementById('consultImgInput').click()">
+            <input type="file" id="consultImgInput" accept="image/*" style="display:none;" onchange="handleConsultImgPreview(this)">
+            <div id="consultUploadPlaceholder">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#E85D8A" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+              <div style="font-size:12px; font-weight:700; color:var(--ink); margin-top:4px;">اضغطي لرفع صورة الروشتة أو المشكلة</div>
+              <div style="font-size:11px; color:var(--text-soft);">PNG, JPG حتى 10MB</div>
+            </div>
+            <div id="consultImgPreviewWrap" style="display:none; position:relative;">
+              <img id="consultImgPreview" src="" alt="معاينة الصورة" style="max-height:110px; border-radius:10px; margin:0 auto; object-fit:contain; display:block;">
+              <button type="button" onclick="event.stopPropagation(); removeConsultImg();" style="position:absolute; top:-6px; right:-6px; background:var(--red); color:#fff; width:22px; height:22px; border-radius:50%; font-size:12px; display:flex; align-items:center; justify-content:center;">✕</button>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="consult-submit-btn">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.7 14.2c-.2.6-1.4 1.2-1.9 1.2-.5.1-1.1.1-1.8-.1-.4-.1-1-.3-1.7-.6-3-1.3-4.9-4.3-5.1-4.5-.1-.2-1.2-1.6-1.2-3s.8-2.2 1.1-2.5c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5.2.5.8 1.9.8 2.1.1.2.1.3 0 .5-.1.2-.1.3-.3.5-.1.2-.3.4-.4.5-.2.2-.3.4-.1.7.2.3.9 1.5 2 2.4 1.3 1.2 2.4 1.5 2.8 1.7.3.2.5.1.7-.1l.9-1c.2-.3.4-.2.7-.1l1.8.9c.3.1.5.2.5.4.1.2.1.7-.1 1.3Z"/></svg>
+          إرسال الاستشارة ومتابعتها على واتساب
+        </button>
+      </form>
     </div>
   </div>
 </div>
@@ -1253,7 +1357,7 @@
 <nav class="bottom-nav">
   <button class="bn-item" onclick="showView('account')" id="bn-account">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>
-    <span class="lbl">حسابي</span>
+    <span class="lbl" id="bnAccountLbl">حسابي</span>
   </button>
   <button class="bn-item" onclick="showView('wishlist')" id="bn-wishlist">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.5-4.9-10-9.5C.5 7.8 2.7 4 6.5 4 9 4 11 5.5 12 7c1-1.5 3-3 5.5-3 3.8 0 6 3.8 4.5 7.5C19.5 16.1 12 21 12 21Z"/></svg>
@@ -1385,7 +1489,7 @@
     {id:'8', name:'كوزمو واقي شمس SPF50 PA+++', brand:'COSMO', category:'sunscreen', size:'50 مل', price:19000, rating:4.8, reviews:90, type:'tube', inStock:true, isSpecialOffer:false, description:'واقي شمس خفيف غير دهني بحماية عريضة، يمتص بسرعة ولا يترك أثراً أبيض.', ingredients:'Zinc Oxide, Titanium Dioxide, Niacinamide, Vitamin E', usage:'يوضع بسخاء كخطوة أخيرة صباحاً ويجدد كل 3 ساعات.'},
     {id:'9', name:'دكتور كلينك سيروم لتقوية الشعر', brand:"dr.Clinic", category:'hair', size:'60 مل', price:26000, rating:4.5, reviews:48, type:'spray', inStock:true, isSpecialOffer:false, description:'سيروم مكثف لتحفيز نمو الشعر وتقليل التساقط وتقوية البصيلات.', ingredients:'Biotin, Caffeine, Panthenol, Peptides', usage:'يُرش على فروة الرأس الجافة يومياً مع تدليك خفيف.'},
     {id:'10', name:'كريم سيرافي المرطب المجدد ليلاً', brand:'Cerave', category:'moisturizer', size:'340 مل', price:32000, rating:4.7, reviews:115, type:'jar', inStock:true, isSpecialOffer:false, description:'كريم ليلي غني يعمل على ترميم حاجز البشرة وترطيبها بعمق أثناء النوم.', ingredients:'Ceramides, Hyaluronic Acid, Niacinamide', usage:'يُوضع كخطوة أخيرة في الروتين المسائي على الوجه والرقبة.'},
-    {id:'11', name:'مية ميسيلار سيمبل للتنظيف', brand:'Simple', category:'face', size:'400 مل', price:14000, rating:4.6, reviews:77, type:'bottle', inStock:true, isSpecialOffer:false, description:'مياه ميسيلار لطيفة تزيل المكياج والشوائب دون الحاجة للشطف.', ingredients:'Micellar Water, Glycerin, Vitamin E', usage:'تُمرر قطنة مبللة على الوجه والعينين بلطف.'},
+    {id:'11', name:'مية ميسيلار سيمبل للتنظيف', brand:'Simple', category:'face', size:'400 مل', price:14000, rating:4.6, reviews:77, type:'bottle', inStock:true, isSpecialOffer:false, description:'مياه ميسيلار لطيفة تزيل المكياج والشوائب دون الحاجة للشطف.', ingredients:'Micellar Water, Glycerin, Vitamin E', usage:'تُمرر قطنة مبللّة على الوجه والعينين بلطف.'},
     {id:'12', name:'لاكالوت معجون أسنان مبيّض', brand:'LACALUT', category:'body', size:'75 مل', price:9000, rating:4.4, reviews:140, type:'tube', inStock:true, isSpecialOffer:false, description:'معجون أسنان ألماني طبي يحمي اللثة ويساعد على تبييض الأسنان وإزالة البقع.', ingredients:'Fluoride, Lactate, Aluminum Lactate', usage:'يُستخدم مرتين يومياً لمدة دقيقتين.'}
   ];
 
@@ -1415,6 +1519,32 @@
   function saveLocalState() {
     localStorage.setItem('qutn_cart', JSON.stringify(cart));
     localStorage.setItem('qutn_wishlist', JSON.stringify([...wishlist]));
+  }
+
+  // Update Dynamic User Header & Nav State
+  function updateUserHeaderProfile() {
+    const chipAvatar = document.getElementById('userChipAvatar');
+    const chipName = document.getElementById('userChipName');
+    const bnAccountLbl = document.getElementById('bnAccountLbl');
+
+    if (currentUser) {
+      const name = currentUser.displayName ? currentUser.displayName.split(' ')[0] : 'حسابي';
+      if (chipName) chipName.textContent = name;
+      if (bnAccountLbl) bnAccountLbl.textContent = name;
+      if (chipAvatar) {
+        if (currentUser.photoURL) {
+          chipAvatar.innerHTML = `<img src="${currentUser.photoURL}" alt="User">`;
+        } else {
+          chipAvatar.innerHTML = `<span style="font-size:12px; font-weight:800; color:var(--accent);">${name.charAt(0)}</span>`;
+        }
+      }
+    } else {
+      if (chipName) chipName.textContent = 'دخول';
+      if (bnAccountLbl) bnAccountLbl.textContent = 'حسابي';
+      if (chipAvatar) {
+        chipAvatar.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>`;
+      }
+    }
   }
 
   // ============ FIRESTORE DYNAMIC PRODUCTS & SETTINGS ============
@@ -1874,6 +2004,7 @@
         sessionStorage.removeItem('admin_notified');
       }
       updateAdminInterfaceState();
+      updateUserHeaderProfile();
       renderAccountView();
       if (user) {
         loadFromFirebase(user.uid);
@@ -1939,13 +2070,16 @@
       if (authMode === 'register') {
         const cred = await auth.createUserWithEmailAndPassword(email, password);
         currentUser = cred.user;
-        showToast('تم إنشاء الحساب بنجاح ✓');
+        const name = currentUser.displayName || currentUser.email || 'عزيزي العميل';
+        showToast(`تم إنشاء الحساب بنجاح! أهلاً بك، ${name} 🌸`);
       } else {
         const cred = await auth.signInWithEmailAndPassword(email, password);
         currentUser = cred.user;
-        showToast('تم تسجيل الدخول بنجاح ✓');
+        const name = currentUser.displayName || currentUser.email || 'عزيزي العميل';
+        showToast(`تم تسجيل الدخول بنجاح! أهلاً بك، ${name} 🌸`);
       }
       updateAdminInterfaceState();
+      updateUserHeaderProfile();
       renderAccountView();
     } catch (err) {
       console.error("Email auth error:", err);
@@ -1985,8 +2119,10 @@
     try {
       const result = await auth.signInWithPopup(provider);
       currentUser = result.user;
-      showToast('تم تسجيل الدخول بنجاح ✓');
+      const welcomeName = currentUser.displayName || currentUser.email || 'عزيزي العميل';
+      showToast(`تم تسجيل الدخول بنجاح! أهلاً بك، ${welcomeName} 🌸`);
       updateAdminInterfaceState();
+      updateUserHeaderProfile();
       renderAccountView();
       return result.user;
     } catch (err) {
@@ -2013,8 +2149,9 @@
     };
     saveLocalState();
     updateAdminInterfaceState();
+    updateUserHeaderProfile();
     renderAccountView();
-    showToast('تم تسجيل بياناتك بنجاح ✓');
+    showToast(`تم تسجيل بياناتك بنجاح! أهلاً بك، ${name} 🌸`);
   }
 
   async function handleSignOut() {
@@ -2028,6 +2165,7 @@
     currentUser = null;
     sessionStorage.removeItem('admin_notified');
     updateAdminInterfaceState();
+    updateUserHeaderProfile();
     renderAccountView();
     showToast('تم تسجيل الخروج بنجاح');
   }
@@ -2561,7 +2699,7 @@
               <img src="${currentUser.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'}" alt="Avatar">
             </div>
             <div class="user-info">
-              <h3>${currentUser.displayName || currentUser.email || 'مستخدم مسجل'} ${isAdmin ? '⭐ (مشرف)' : ''}</h3>
+              <h3>${currentUser.displayName || currentUser.email || 'مستخدم مسجل'} ${isAdmin ? '⭐ (مشرف المتجر)' : ''}</h3>
               <p>${currentUser.email || ''}</p>
               <div class="sync-indicator">
                 <span class="sync-dot"></span>
@@ -2639,6 +2777,7 @@
   renderHome();
   updateCartBadge();
   renderAccountView();
+  updateUserHeaderProfile();
   initFirebaseMessaging();
   initFirestoreSync();
 </script>
