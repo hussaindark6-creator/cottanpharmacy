@@ -100,6 +100,21 @@
   }
   .admin-bar-btn:hover { transform: scale(1.04); }
 
+  /* ============ ANNOUNCEMENT BAR ============ */
+  .announcement-bar {
+    background: var(--surface);
+    color: #b01e4a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 6px 12px;
+    text-align: center;
+    border-bottom: 1px solid var(--line);
+    transition: all .2s;
+  }
+
   /* ============ HEADER ============ */
   header { position: sticky; top: 0; z-index: 40; background: #fff; border-bottom: 1px solid var(--line); }
   .nav { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; gap: 10px; }
@@ -480,24 +495,27 @@
   .add-cart-btn:hover { background: var(--accent-dark); }
   .add-cart-btn:active { transform: scale(0.97); }
 
-  /* Admin Action Overlays on Product Card */
+  /* Admin Action Overlays on Product Card (Enhanced Inline Control) */
   .admin-card-actions {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     gap: 4px;
     margin-top: 6px;
     padding-top: 6px;
     border-top: 1px dashed #FECDD3;
   }
   .admin-card-actions button {
-    flex: 1;
-    font-size: 11px;
+    font-size: 10.5px;
     font-weight: 800;
-    padding: 5px 2px;
+    padding: 6px 2px;
     border-radius: 8px;
     text-align: center;
-    transition: background .15s;
+    transition: all .15s;
   }
-  .btn-admin-edit { background: #FEF3C7; color: #B45309; }
+  .btn-admin-stock.is-in { background: #DCFCE7; color: #166534; }
+  .btn-admin-stock.is-out { background: #FEE2E2; color: #991B1B; }
+  .btn-admin-price { background: #FEF3C7; color: #B45309; }
+  .btn-admin-edit { background: #E0E7FF; color: #3730A3; }
   .btn-admin-del { background: #FEE2E2; color: #DC2626; }
 
   .no-results { grid-column: 1/-1; text-align: center; padding: 60px 16px; color: var(--text-soft); font-size: 14px; font-weight: 600; }
@@ -734,6 +752,20 @@
     margin-top: 10px;
   }
 
+  .admin-fieldset {
+    border: 1.5px solid var(--line);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 16px;
+    background: #FAFAFA;
+  }
+  .admin-fieldset legend {
+    font-weight: 800;
+    font-size: 13px;
+    color: #b01e4a;
+    padding: 0 8px;
+  }
+
   /* ============ IN-APP BROWSER (INSTAGRAM) GUIDANCE MODAL ============ */
   .iab-modal { position: fixed; inset: 0; background: rgba(31, 41, 55, 0.6); backdrop-filter: blur(4px); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity .25s; }
   .iab-modal.open { opacity: 1; pointer-events: auto; }
@@ -763,15 +795,20 @@
 <!-- STICKY ADMIN BAR (Visible ONLY for hussaindark6@gmail.com) -->
 <div id="adminTopBar" class="admin-sticky-bar" style="display:none;">
   <div style="display:flex; align-items:center; gap:8px;">
-    <span>👑 مرحباً بالمشرف (hussaindark6@gmail.com)</span>
+    <span>👑 وضع المشرف (hussaindark6@gmail.com)</span>
   </div>
   <button class="admin-bar-btn" onclick="openAdminModal()">⚙️ لوحة التحكم</button>
+</div>
+
+<!-- ANNOUNCEMENT BAR (Customizable) -->
+<div id="announcementBar" class="announcement-bar">
+  <span id="announcementText">✨ توصيل مجاني للطلبات فوق 50,000 د.ع لجميع محافظات العراق 🌸</span>
 </div>
 
 <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
 <aside class="menu-drawer" id="menuDrawer">
   <div class="drawer-header">
-    <h3>صيدلية القطن</h3>
+    <h3 id="drawerLogoTitle">صيدلية القطن</h3>
     <button onclick="closeMenu()" class="icon-btn" aria-label="إغلاق">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
     </button>
@@ -786,7 +823,7 @@
       استشر الصيدلي مجاناً 🩺
     </button>
     <button class="menu-link" id="adminMenuLink" style="display:none;" onclick="openAdminModal(); closeMenu();">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       لوحة تحكم المشرف ⚙️
     </button>
     <button class="menu-link" onclick="showView('categories')">
@@ -819,15 +856,15 @@
   </div>
 </aside>
 
-<header>
+<header id="mainHeader">
   <div class="wrap nav">
     <button class="icon-btn" onclick="openMenu()" aria-label="القائمة">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
     </button>
     
     <div class="logo-block" onclick="showView('home')">
-      <span class="logo-text">صيدلية القطن</span>
-      <span class="logo-mark">
+      <span class="logo-text" id="headerLogoText">صيدلية القطن</span>
+      <span class="logo-mark" id="headerLogoMark">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E85D8A" stroke-width="2"><circle cx="12" cy="8" r="3"/><circle cx="8" cy="10" r="3"/><circle cx="16" cy="10" r="3"/><path d="M12 13v7"/></svg>
       </span>
     </div>
@@ -864,9 +901,9 @@
   <div class="wrap hero-wrap">
     <div class="qutn-hybrid-banner" onclick="showView('categories')">
       <div class="banner-text-col">
-        <h1 class="main-title">صيدلية القطن</h1>
-        <p class="sub-title">نحن هنا لتحسين بشرتك</p>
-        <p class="desc-title"><span>منتجات أصلية لعناية صحية وجمال طبيعي</span> <span>🌸</span></p>
+        <h1 class="main-title" id="heroMainTitle">صيدلية القطن</h1>
+        <p class="sub-title" id="heroSubTitle">نحن هنا لتحسين بشرتك</p>
+        <p class="desc-title"><span id="heroDescTitle">منتجات أصلية لعناية صحية وجمال طبيعي</span> <span>🌸</span></p>
       </div>
       
       <div class="banner-model-col">
@@ -1157,7 +1194,7 @@
     </div>
     <div class="admin-tabs-nav">
       <button class="admin-tab-item active" id="btnAdminTabA" onclick="switchAdminTab('products')">📦 إدارة المنتجات</button>
-      <button class="admin-tab-item" id="btnAdminTabB" onclick="switchAdminTab('design')">🎨 تخصيص الواجهة</button>
+      <button class="admin-tab-item" id="btnAdminTabB" onclick="switchAdminTab('design')">🎨 تخصيص الهيدر والواجهة</button>
       <button class="admin-tab-item" id="btnAdminTabC" onclick="switchAdminTab('stats')">📊 الإحصائيات والإشعارات</button>
     </div>
     
@@ -1262,24 +1299,74 @@
         </form>
       </div>
 
-      <!-- TAB 2: BANNER CUSTOMIZATION -->
+      <!-- TAB 2: HEADER & STORE CUSTOMIZATION -->
       <div id="adminTabSectionDesign" style="display:none;">
-        <h4 style="margin:0 0 6px; font-size:15px; font-weight:800;">تخصيص صورة الشريط الوردي الرئيسي (Hero Banner)</h4>
-        <p style="font-size:12px; color:var(--text-soft); margin-bottom:14px;">استبدلي صورة العارضة الظاهرة في الجانب الأيسر من البانر الرئيسي فوراً:</p>
+        <form onsubmit="handleSaveCustomization(event)">
+          <!-- 1. Announcement Bar Settings -->
+          <fieldset class="admin-fieldset">
+            <legend>📢 شريط التنبيهات والإعلانات العلوي</legend>
+            <div class="admin-toggle-switch" style="background:#fff;">
+              <span>إظهار شريط التنبيهات العلوي</span>
+              <input type="checkbox" id="adminShowAnnouncement" checked style="width:20px; height:20px; cursor:pointer;">
+            </div>
+            <div class="form-field">
+              <label>نص الإعلان أو التنبيه</label>
+              <input type="text" id="adminAnnouncementText" placeholder="مثال: توصيل مجاني للطلبات فوق 50,000 د.ع 🌸">
+            </div>
+            <div style="display:flex; gap:10px;">
+              <div class="form-field" style="flex:1;">
+                <label>لون الخلفية</label>
+                <input type="color" id="adminAnnouncementBgColor" value="#FFF0F3" style="height:42px; padding:2px;">
+              </div>
+              <div class="form-field" style="flex:1;">
+                <label>لون النص</label>
+                <input type="color" id="adminAnnouncementTextColor" value="#b01e4a" style="height:42px; padding:2px;">
+              </div>
+            </div>
+          </fieldset>
 
-        <div class="form-field">
-          <label>رابط الصورة المباشر (Direct Image URL)</label>
-          <input type="url" id="adminBannerImgInput" placeholder="https://..." oninput="updateAdminBannerPreview(this.value)">
-        </div>
+          <!-- 2. Header & Branding Settings -->
+          <fieldset class="admin-fieldset">
+            <legend>🏛️ تخصيص الهيدر واللوجو</legend>
+            <div class="form-field">
+              <label>اسم المتجر / الصيدلية (اللوجو)</label>
+              <input type="text" id="adminLogoText" placeholder="صيدلية القطن">
+            </div>
+            <div class="form-field">
+              <label>لون خلفية الهيدر</label>
+              <input type="color" id="adminHeaderBgColor" value="#FFFFFF" style="height:42px; padding:2px;">
+            </div>
+          </fieldset>
 
-        <div style="margin:12px 0;">
-          <label style="font-size:12px; font-weight:700; display:block; margin-bottom:6px;">معاينة الصورة المباشرة:</label>
-          <div style="width:100%; height:140px; border-radius:14px; overflow:hidden; background:#FFF0F5; border:1px solid var(--line);">
-            <img id="adminBannerPreviewImg" src="" style="width:100%; height:100%; object-fit:cover; object-position:center;" alt="Preview">
-          </div>
-        </div>
+          <!-- 3. Primary Banner Settings -->
+          <fieldset class="admin-fieldset">
+            <legend>🌸 البانر الرئيسي (Hero Banner)</legend>
+            <div class="form-field">
+              <label>العنوان الرئيسي في البانر</label>
+              <input type="text" id="adminHeroMainTitle" placeholder="صيدلية القطن">
+            </div>
+            <div class="form-field">
+              <label>العنوان الفرعي</label>
+              <input type="text" id="adminHeroSubTitle" placeholder="نحن هنا لتحسين بشرتك">
+            </div>
+            <div class="form-field">
+              <label>الوصف الترويجي</label>
+              <input type="text" id="adminHeroDescTitle" placeholder="منتجات أصلية لعناية صحية وجمال طبيعي">
+            </div>
+            <div class="form-field">
+              <label>رابط صورة العارضة (Direct Image URL)</label>
+              <input type="url" id="adminBannerImgInput" placeholder="https://..." oninput="updateAdminBannerPreview(this.value)">
+            </div>
+            <div style="margin:10px 0;">
+              <label style="font-size:12px; font-weight:700; display:block; margin-bottom:4px;">معاينة صورة البانر:</label>
+              <div style="width:100%; height:130px; border-radius:12px; overflow:hidden; background:#FFF0F5; border:1px solid var(--line);">
+                <img id="adminBannerPreviewImg" src="" style="width:100%; height:100%; object-fit:cover; object-position:center;" alt="Preview">
+              </div>
+            </div>
+          </fieldset>
 
-        <button type="button" class="admin-btn-save" onclick="saveStoreBannerSetting()">✨ حفظ وتطبيق الصورة على المتجر</button>
+          <button type="submit" class="admin-btn-save">✨ حفظ وتطبيق تخصيص الواجهة فورياً</button>
+        </form>
       </div>
 
       <!-- TAB 3: STATS & BROADCAST -->
@@ -1532,6 +1619,20 @@
   let deliveryMethod = 'standard';
   const DELIVERY_FEE = { standard: 4000, express: 8000 };
 
+  // Store Customization State
+  let storeSettings = {
+    bannerImgUrl: 'https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?auto=format&fit=crop&w=800&q=85',
+    headerBgColor: '#FFFFFF',
+    announcementBgColor: '#FFF0F3',
+    announcementTextColor: '#b01e4a',
+    announcementText: '✨ توصيل مجاني للطلبات فوق 50,000 د.ع لجميع محافظات العراق 🌸',
+    showAnnouncement: true,
+    logoText: 'صيدلية القطن',
+    heroMainTitle: 'صيدلية القطن',
+    heroSubTitle: 'نحن هنا لتحسين بشرتك',
+    heroDescTitle: 'منتجات أصلية لعناية صحية وجمال طبيعي'
+  };
+
   function isCurrentUserAdmin() {
     return !!(currentUser && currentUser.email && currentUser.email.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase());
   }
@@ -1578,17 +1679,44 @@
     }
   }
 
+  // ============ APPLY STORE SETTINGS DYNAMICALLY ============
+  function applyStoreSettings() {
+    const headerEl = document.getElementById('mainHeader');
+    const annEl = document.getElementById('announcementBar');
+    const annTextEl = document.getElementById('announcementText');
+    const logoTextEl = document.getElementById('headerLogoText');
+    const drawerLogoEl = document.getElementById('drawerLogoTitle');
+    const heroMainEl = document.getElementById('heroMainTitle');
+    const heroSubEl = document.getElementById('heroSubTitle');
+    const heroDescEl = document.getElementById('heroDescTitle');
+    const heroImgEl = document.getElementById('primaryHeroBannerImg');
+
+    if (headerEl && storeSettings.headerBgColor) headerEl.style.backgroundColor = storeSettings.headerBgColor;
+    if (annEl) {
+      annEl.style.display = (storeSettings.showAnnouncement !== false) ? 'flex' : 'none';
+      if (storeSettings.announcementBgColor) annEl.style.backgroundColor = storeSettings.announcementBgColor;
+      if (storeSettings.announcementTextColor) annEl.style.color = storeSettings.announcementTextColor;
+    }
+    if (annTextEl && storeSettings.announcementText) annTextEl.textContent = storeSettings.announcementText;
+    if (logoTextEl && storeSettings.logoText) logoTextEl.textContent = storeSettings.logoText;
+    if (drawerLogoEl && storeSettings.logoText) drawerLogoEl.textContent = storeSettings.logoText;
+    if (heroMainEl && storeSettings.heroMainTitle) heroMainEl.textContent = storeSettings.heroMainTitle;
+    if (heroSubEl && storeSettings.heroSubTitle) heroSubEl.textContent = storeSettings.heroSubTitle;
+    if (heroDescEl && storeSettings.heroDescTitle) heroDescEl.textContent = storeSettings.heroDescTitle;
+    if (heroImgEl && storeSettings.bannerImgUrl) heroImgEl.src = storeSettings.bannerImgUrl;
+  }
+
   // ============ FIRESTORE DYNAMIC PRODUCTS & SETTINGS ============
   function initFirestoreSync() {
     if (!isFirebaseConfigured || !db) return;
 
-    // 1. Sync Store Settings (Banner Image)
-    db.collection('store_settings').doc('banner').onSnapshot(doc => {
-      if (doc.exists && doc.data().bannerImgUrl) {
-        const el = document.getElementById('primaryHeroBannerImg');
-        if (el) el.src = doc.data().bannerImgUrl;
+    // 1. Sync Store Customization Settings
+    db.collection('store_settings').doc('general').onSnapshot(doc => {
+      if (doc.exists) {
+        storeSettings = { ...storeSettings, ...doc.data() };
+        applyStoreSettings();
       }
-    }, err => console.warn('Banner sync fallback:', err));
+    }, err => console.warn('Settings sync fallback:', err));
 
     // 2. Sync Products Collection with Auto-Seeding fallback
     db.collection('products').onSnapshot(async snapshot => {
@@ -1637,6 +1765,48 @@
     else if (currentView === 'product' && currentProductId) openProduct(currentProductId);
   }
 
+  // ============ ADMIN INLINE LIVE EDITING CONTROLS ============
+  async function quickEditPrice(id, currentPrice) {
+    if (!isCurrentUserAdmin() || !db) return;
+    const newPriceStr = prompt('تعديل السعر المباشر (د.ع):', currentPrice);
+    if (newPriceStr === null) return;
+    const newPrice = Number(newPriceStr.trim());
+    if (isNaN(newPrice) || newPrice <= 0) {
+      showToast('يرجى إدخال سعر صحيح بالأرقام');
+      return;
+    }
+    
+    // Instant DOM update
+    const p = findProduct(id);
+    if (p) p.price = newPrice;
+    renderCurrentActiveView();
+    
+    try {
+      await db.collection('products').doc(String(id)).set({ price: newPrice }, { merge: true });
+      showToast('تم تحديث السعر فورياً ✓');
+    } catch (e) {
+      console.error(e);
+      showToast('حدث خطأ أثناء تحديث السعر');
+    }
+  }
+
+  async function quickToggleStock(id) {
+    if (!isCurrentUserAdmin() || !db) return;
+    const p = findProduct(id);
+    if (!p) return;
+    const newStock = (p.inStock === false) ? true : false;
+    p.inStock = newStock;
+    renderCurrentActiveView();
+
+    try {
+      await db.collection('products').doc(String(id)).set({ inStock: newStock }, { merge: true });
+      showToast(newStock ? 'تم تحويل المنتج إلى: متوفر بالمخزون 🟢' : 'تم تحويل المنتج إلى: نفذت الكمية 🔴');
+    } catch (e) {
+      console.error(e);
+      showToast('حدث خطأ أثناء تغيير حالة التوفر');
+    }
+  }
+
   // ============ ADMIN CONTROL MODAL LOGIC ============
   function openAdminModal() {
     if (!isCurrentUserAdmin()) {
@@ -1647,9 +1817,18 @@
     switchAdminTab('products');
     updateAdminStats();
     
-    const curImg = document.getElementById('primaryHeroBannerImg').src;
-    document.getElementById('adminBannerImgInput').value = curImg;
-    updateAdminBannerPreview(curImg);
+    // Populate Customization Form
+    document.getElementById('adminShowAnnouncement').checked = (storeSettings.showAnnouncement !== false);
+    document.getElementById('adminAnnouncementText').value = storeSettings.announcementText || '';
+    document.getElementById('adminAnnouncementBgColor').value = storeSettings.announcementBgColor || '#FFF0F3';
+    document.getElementById('adminAnnouncementTextColor').value = storeSettings.announcementTextColor || '#b01e4a';
+    document.getElementById('adminLogoText').value = storeSettings.logoText || 'صيدلية القطن';
+    document.getElementById('adminHeaderBgColor').value = storeSettings.headerBgColor || '#FFFFFF';
+    document.getElementById('adminHeroMainTitle').value = storeSettings.heroMainTitle || 'صيدلية القطن';
+    document.getElementById('adminHeroSubTitle').value = storeSettings.heroSubTitle || 'نحن هنا لتحسين بشرتك';
+    document.getElementById('adminHeroDescTitle').value = storeSettings.heroDescTitle || 'منتجات أصلية لعناية صحية وجمال طبيعي';
+    document.getElementById('adminBannerImgInput').value = storeSettings.bannerImgUrl || '';
+    updateAdminBannerPreview(storeSettings.bannerImgUrl);
   }
 
   function closeAdminModal() {
@@ -1678,19 +1857,30 @@
     if (img && url) img.src = url;
   }
 
-  async function saveStoreBannerSetting() {
+  async function handleSaveCustomization(e) {
+    e.preventDefault();
     if (!isCurrentUserAdmin() || !db) return;
-    const url = document.getElementById('adminBannerImgInput').value.trim();
-    if (!url) {
-      showToast('يرجى كتابة رابط صورة صحيح');
-      return;
-    }
+
+    const newSettings = {
+      showAnnouncement: document.getElementById('adminShowAnnouncement').checked,
+      announcementText: document.getElementById('adminAnnouncementText').value.trim(),
+      announcementBgColor: document.getElementById('adminAnnouncementBgColor').value,
+      announcementTextColor: document.getElementById('adminAnnouncementTextColor').value,
+      logoText: document.getElementById('adminLogoText').value.trim() || 'صيدلية القطن',
+      headerBgColor: document.getElementById('adminHeaderBgColor').value,
+      heroMainTitle: document.getElementById('adminHeroMainTitle').value.trim() || 'صيدلية القطن',
+      heroSubTitle: document.getElementById('adminHeroSubTitle').value.trim(),
+      heroDescTitle: document.getElementById('adminHeroDescTitle').value.trim(),
+      bannerImgUrl: document.getElementById('adminBannerImgInput').value.trim(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    storeSettings = { ...storeSettings, ...newSettings };
+    applyStoreSettings();
+
     try {
-      await db.collection('store_settings').doc('banner').set({
-        bannerImgUrl: url,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
-      showToast('تم تحديث وتطبيق صورة البانر بنجاح ✓');
+      await db.collection('store_settings').doc('general').set(newSettings, { merge: true });
+      showToast('تم حفظ وتطبيق تخصيص الهيدر والواجهة بنجاح ✓');
       closeAdminModal();
     } catch (err) {
       console.error(err);
@@ -2473,8 +2663,12 @@
 
         ${isAdmin ? `
           <div class="admin-card-actions" onclick="event.stopPropagation()">
-            <button class="btn-admin-edit" onclick="editProductInAdmin('${p.id}')">تعديل ✏️</button>
-            <button class="btn-admin-del" onclick="deleteProductConfirm('${p.id}', '${p.name.replace(/'/g, "\\'")}')">حذف 🗑️</button>
+            <button class="btn-admin-stock ${inStock ? 'is-in' : 'is-out'}" onclick="quickToggleStock('${p.id}')" title="تغيير التوفر بالمخزون">
+              ${inStock ? 'متوفر 🟢' : 'نفذت 🔴'}
+            </button>
+            <button class="btn-admin-price" onclick="quickEditPrice('${p.id}', ${p.price})" title="تعديل السعر المباشر">السعر 💰</button>
+            <button class="btn-admin-edit" onclick="editProductInAdmin('${p.id}')" title="تعديل شامل">تعديل ✏️</button>
+            <button class="btn-admin-del" onclick="deleteProductConfirm('${p.id}', '${p.name.replace(/'/g, "\\'")}')" title="حذف">🗑️</button>
           </div>` : ''}
       </div>`;
     }).join('');
@@ -2806,9 +3000,11 @@
   // ============ IMMEDIATE ZERO-DELAY INITIALIZATION ============
   // Render products immediately so visitors never see a blank page
   renderHome();
+  renderCatRow('catRow');
   updateCartBadge();
   renderAccountView();
   updateUserHeaderProfile();
+  applyStoreSettings();
   initFirebaseMessaging();
   initFirestoreSync();
 </script>
