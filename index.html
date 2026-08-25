@@ -803,7 +803,7 @@
   </div>
 </div>
 
-<!-- ============ CART VIEW (WITH SERVER PROMO CODE SUPPORT) ============ -->
+<!-- ============ CART VIEW (WITH PROMO CODE SUPPORT) ============ -->
 <div class="view" id="view-cart">
   <div class="wrap">
     <div class="section-head" style="margin-top:14px;">
@@ -823,7 +823,7 @@
   </div>
 </div>
 
-<!-- ============ CHECKOUT VIEW (SECURE SERVER CALCULATION) ============ -->
+<!-- ============ CHECKOUT VIEW ============ -->
 <div class="view" id="view-checkout">
   <div class="wrap">
     <div class="pd-back" onclick="showView('cart')">
@@ -1509,7 +1509,7 @@
 
 <script>
   // ==========================================================
-  //  CONFIG & BACKEND URL (WITH CUSTOM PROTECTED API KEY)
+  //  CONFIG & BACKEND URL (WITH PROTECTED CUSTOM API KEY)
   // ==========================================================
   const WORKER_API_BASE = "https://cottanbackend.hussaindark6.workers.dev";
   const ADMIN_EMAIL = "hussaindark6@gmail.com";
@@ -1534,17 +1534,9 @@
       db = firebase.firestore();
       isFirebaseConfigured = true;
 
-      // Handle redirect results for mobile devices
-      auth.getRedirectResult().then(res => {
-        if (res && res.user) {
-          currentUser = res.user;
-          showToast(`أهلاً بكِ ${sanitizeText(currentUser.displayName || '')} 🌸`);
-          updateUserHeaderProfile();
-          renderAccountView();
-          updateAdminInterfaceState();
-        }
-      }).catch(err => {
-        console.warn("Redirect Auth error:", err);
+      // Force LOCAL persistence for Safari & iOS devices
+      auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(err => {
+        console.warn("Persistence set fallback:", err);
       });
     }
   } catch (err) {
@@ -1596,16 +1588,12 @@
     return true;
   }
 
-  // ============ IN-APP BROWSER DETECTOR (EXPANDED FOR TELEGRAM & ALL APPS) ============
+  // ============ IN-APP BROWSER DETECTOR ============
   function isInAppBrowser() {
     const ua = navigator.userAgent || navigator.vendor || window.opera || '';
     return (
       /Instagram|FBAN|FBAV|TikTok|Snapchat|Telegram|Line|Twitter|MicroMessenger|WhatsApp|musical_ly/i.test(ua)
     );
-  }
-
-  function isMobileDevice() {
-    return /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   }
 
   // ============ SECURE API CLIENT (WITH BEARER TOKEN) ============
@@ -3230,7 +3218,7 @@
     renderProductGrid('listingGrid', list);
   }
 
-  // ============ ACCOUNT & AUTH (SAFARI & MOBILE REDIRECT COMPATIBLE) ============
+  // ============ ACCOUNT & AUTH (FIXED FOR SAFARI & PERSISTENCE) ============
   function updateUserHeaderProfile() {
     const chipAvatar = document.getElementById('userChipAvatar');
     const chipName = document.getElementById('userChipName');
@@ -3300,15 +3288,14 @@
     }
 
     try {
+      // Ensure persistence is set to LOCAL
+      await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
       const provider = new firebase.auth.GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
 
-      // If on mobile (Safari/Android), use redirect to completely prevent popup/cookie blocks
-      if (isMobileDevice()) {
-        showToast('جاري تحويلك لتسجيل الدخول بأمان...');
-        await auth.signInWithRedirect(provider);
-      } else {
-        const res = await auth.signInWithPopup(provider);
+      // Direct Popup (Keeps parent window open, prevents Safari session drops)
+      const res = await auth.signInWithPopup(provider);
+      if (res && res.user) {
         currentUser = res.user;
         showToast(`أهلاً بكِ ${sanitizeText(currentUser.displayName || '')} 🌸`);
         updateUserHeaderProfile();
@@ -3318,11 +3305,11 @@
     } catch (e) {
       console.error("Google Auth Error:", e);
       if (e.code === 'auth/popup-blocked') {
-        showToast('يرجى السماح بالنوافذ المنبثقة (Popups) أو المحاولة ثانية');
+        showToast('يرجى السماح بالنوافذ المنبثقة (Popups) في إعدادات سفاري');
       } else if (e.code === 'auth/unauthorized-domain') {
         showToast('⚠️ يرجى إضافة دومين الموقع في قائمة Authorized Domains في Firebase');
       } else if (e.code !== 'auth/popup-closed-by-user') {
-        showToast('تعذر تسجيل الدخول (' + (e.code || 'يرجى التحقق من إعدادات الـ API Key') + ')');
+        showToast('تعذر تسجيل الدخول (' + (e.code || 'يرجى المحاولة مجدداً') + ')');
       }
     }
   }
@@ -3336,7 +3323,7 @@
     showToast('تم تسجيل الخروج بنجاح');
   }
 
-  if (isFirebaseConfigured) {
+  if (isFirebaseConfigured && auth) {
     auth.onAuthStateChanged(user => {
       currentUser = user;
       updateAdminInterfaceState();
