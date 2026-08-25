@@ -43,6 +43,7 @@
     --gold: #F2B807;
     --green: #16A34A;
     --red: #DC2626;
+    --blue: #2563EB;
     --shadow-soft: 0 4px 20px rgba(232, 93, 138, 0.08);
     --shadow-hover: 0 10px 26px rgba(232, 93, 138, 0.16);
     --radius-lg: 20px;
@@ -377,6 +378,51 @@
   .promo-discount { font-weight: 800; color: var(--accent); font-size: 13.5px; margin-bottom: 8px; }
   .promo-cta { display: inline-flex; background: var(--accent); color: #fff; font-weight: 800; font-size: 12px; padding: 8px 18px; border-radius: 999px; box-shadow: 0 2px 8px rgba(232,93,138,0.3); }
 
+  /* ============ PROMO CODE INPUT STYLING (NEW) ============ */
+  .promo-input-group {
+    display: flex;
+    gap: 8px;
+    margin: 14px 0 8px;
+  }
+  .promo-input-group input {
+    flex: 1;
+    padding: 11px 14px;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700;
+    font-size: 13.5px;
+    text-transform: uppercase;
+    background: #fff;
+    color: var(--ink);
+    outline: none;
+  }
+  .promo-input-group input:focus { border-color: var(--accent); }
+  .promo-input-group button {
+    background: #111827;
+    color: #fff;
+    padding: 0 18px;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 12.5px;
+    white-space: nowrap;
+    transition: all .2s;
+  }
+  .promo-input-group button:hover { background: var(--accent); }
+  .applied-promo-tag {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #DCFCE7;
+    color: #15803D;
+    border: 1px solid #BBF7D0;
+    border-radius: 12px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 800;
+    margin-bottom: 12px;
+  }
+
   /* ============ BOTTOM NAV & FAB ============ */
   .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; background: rgba(255,255,255,0.96); backdrop-filter: blur(8px); border-top: 1px solid var(--line); display: flex; padding: 8px 6px calc(8px + env(safe-area-inset-bottom)); }
   .bn-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px 2px; position: relative; color: var(--text-soft); }
@@ -386,7 +432,7 @@
   .fab-whatsapp { position: fixed; bottom: 90px; left: 16px; z-index: 45; width: 52px; height: 52px; border-radius: 50%; background: #25D366; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(37,211,102,.4); }
   .fab-whatsapp svg { width: 28px; height: 28px; color: #fff; }
 
-  /* ============ VIEWS & PRODUCT DETAIL SCROLLING FIXED ============ */
+  /* ============ VIEWS & PRODUCT DETAIL ============ */
   .view { display: none; padding-top: 6px; }
   .view.active { display: block; animation: fadeIn .2s ease; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
@@ -467,7 +513,7 @@
 
   .admin-tabs-nav-view { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 18px; scrollbar-width: none; }
   .admin-tabs-nav-view::-webkit-scrollbar { display: none; }
-  .admin-tab-btn-v { padding: 10px 16px; border-radius: 12px; background: #F3F4F6; color: #4B5563; font-size: 13px; font-weight: 800; white-space: nowrap; cursor: pointer; }
+  .admin-tab-btn-v { padding: 10px 16px; border-radius: 12px; background: #F3F4F6; color: #4B5563; font-size: 13px; font-weight: 800; white-space: nowrap; cursor: pointer; transition: all .15s; }
   .admin-tab-btn-v.active { background: var(--accent); color: #fff; }
 
   .admin-stat-grid-v { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
@@ -492,6 +538,12 @@
   .admin-fieldset legend { font-weight: 800; font-size: 14px; color: #b01e4a; padding: 0 10px; }
   .admin-toggle-switch { display: flex; align-items: center; justify-content: space-between; background: #F9FAFB; padding: 12px 16px; border-radius: 12px; border: 1px solid #E5E7EB; margin-bottom: 14px; }
   .admin-btn-save { width: 100%; background: var(--accent); color: #fff; font-weight: 900; font-size: 14.5px; padding: 13px; border-radius: 12px; box-shadow: 0 4px 12px rgba(232,93,138,0.25); margin-top: 10px; }
+
+  /* AUDIT LOG TABLE */
+  .log-table { width: 100%; border-collapse: collapse; font-size: 12px; text-align: right; margin-top: 8px; }
+  .log-table th { background: #F3F4F6; padding: 8px 10px; font-weight: 800; border-bottom: 1px solid var(--line); color: var(--ink); }
+  .log-table td { padding: 9px 10px; border-bottom: 1px solid var(--line); color: var(--text-soft); }
+  .log-badge { display: inline-block; padding: 2px 7px; border-radius: 6px; font-size: 10.5px; font-weight: 800; background: var(--surface); color: var(--accent); border: 1px solid var(--line); }
 
   .admin-copy-code-box { background: #111827; color: #F3F4F6; border-radius: var(--radius-lg); padding: 22px; margin-bottom: 24px; text-align: center; border: 1px solid #374151; }
   .btn-copy-full-code { background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: #fff; font-weight: 900; font-size: 14px; padding: 12px 28px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; }
@@ -751,7 +803,7 @@
   </div>
 </div>
 
-<!-- ============ CART VIEW ============ -->
+<!-- ============ CART VIEW (WITH SERVER PROMO CODE SUPPORT) ============ -->
 <div class="view" id="view-cart">
   <div class="wrap">
     <div class="section-head" style="margin-top:14px;">
@@ -759,6 +811,14 @@
       <h2>سلة المشتريات</h2>
     </div>
     <div id="cartItemsList"></div>
+
+    <!-- Promo Code Input Group in Cart -->
+    <div class="promo-input-group" id="cartPromoGroup">
+      <input type="text" id="cartPromoCodeInput" placeholder="أدخلي كود الخصم (مثال: QUTN10)">
+      <button type="button" onclick="applyPromoCode(document.getElementById('cartPromoCodeInput').value)">تطبيق الكود</button>
+    </div>
+    <div id="appliedPromoBadge" style="display:none;"></div>
+
     <div id="cartSummaryBlock"></div>
   </div>
 </div>
@@ -772,7 +832,7 @@
     </div>
     <div class="section-head" style="margin-top:10px;">
       <span></span>
-      <h2>إتمام الطلب (موثق وآمن)</h2>
+      <h2>إتمام الطلب (موثق وآمن عبر السيرفر)</h2>
     </div>
     <div class="form-field">
       <label>الاسم الكامل *</label>
@@ -812,12 +872,12 @@
   </div>
 </div>
 
-<!-- ============ FULL-SCREEN ADMIN VIEW (ALL 8 TABS RESTORED) ============ -->
+<!-- ============ FULL-SCREEN ADMIN VIEW (ALL 11 TABS INCLUDED) ============ -->
 <div class="view" id="view-admin">
   <div class="wrap">
     <div class="admin-view-header">
       <h2>
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         لوحة تحكم وإدارة المتجر الشاملة
       </h2>
       <p>مرحباً بك يا مشرف (hussaindark6@gmail.com) — إدارة حقيقية بالكامل ومربوطة بـ Cloudflare Worker و Firebase.</p>
@@ -826,6 +886,9 @@
     <!-- Admin Tabs -->
     <div class="admin-tabs-nav-view">
       <button class="admin-tab-btn-v active" id="btnTabVStats" onclick="switchAdminSection('stats')">📊 الإحصائيات الحقيقية</button>
+      <button class="admin-tab-btn-v" id="btnTabVCoupons" onclick="switchAdminSection('coupons')">🎟️ إدارة أكواد الخصم</button>
+      <button class="admin-tab-btn-v" id="btnTabVTelegram" onclick="switchAdminSection('telegram')">✈️ إشعارات تلغرام</button>
+      <button class="admin-tab-btn-v" id="btnTabVAudit" onclick="switchAdminSection('audit')">🛡️ سجل العمليات والحماية</button>
       <button class="admin-tab-btn-v" id="btnTabVCats" onclick="switchAdminSection('cats')">🗂️ إدارة الأقسام</button>
       <button class="admin-tab-btn-v" id="btnTabVProds" onclick="switchAdminSection('products')">📦 إدارة المنتجات</button>
       <button class="admin-tab-btn-v" id="btnTabVOffers" onclick="switchAdminSection('offers')">🎁 إدارة الخصومات والعروض</button>
@@ -882,7 +945,123 @@
       </div>
     </div>
 
-    <!-- 2. CATEGORY MANAGEMENT SECTION -->
+    <!-- 2. PROMO CODES / COUPONS MANAGEMENT SECTION (NEW) -->
+    <div id="adminSecCoupons" style="display:none;">
+      <div class="admin-fieldset">
+        <legend id="adminCouponFormTitle">🎟️ إضافة كود خصم جديد (Server-Side Promo Code)</legend>
+        <form id="adminCouponForm" onsubmit="handleAdminCouponSave(event)">
+          <input type="hidden" id="couponDocId" value="">
+          <div style="display:flex; gap:10px;">
+            <div class="form-field" style="flex:1.5;">
+              <label>كود الخصم (Promo Code) *</label>
+              <input type="text" id="couponCodeInput" placeholder="مثال: QUTN20" style="text-transform:uppercase; font-family:monospace;" required>
+            </div>
+            <div class="form-field" style="flex:1;">
+              <label>نوع الخصم</label>
+              <select id="couponTypeSelect">
+                <option value="percentage">نسبة مئوية (%)</option>
+                <option value="fixed">مبلغ ثابت (د.ع)</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <div class="form-field" style="flex:1;">
+              <label>قيمة الخصم *</label>
+              <input type="number" id="couponValueInput" placeholder="مثال: 20 أو 5000" min="1" required>
+            </div>
+            <div class="form-field" style="flex:1;">
+              <label>الحد الأدنى للطلب (د.ع)</label>
+              <input type="number" id="couponMinSpendInput" placeholder="مثال: 30000" min="0">
+            </div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <div class="form-field" style="flex:1;">
+              <label>الحد الأقصى للاستخدامات</label>
+              <input type="number" id="couponMaxUsesInput" value="100" min="1">
+            </div>
+            <div class="form-field" style="flex:1;">
+              <label>تاريخ انتهاء الصلاحية</label>
+              <input type="date" id="couponExpiryInput" value="2027-12-31">
+            </div>
+          </div>
+          <div class="admin-toggle-switch">
+            <span>تفعيل الكود فورياً للعملاء</span>
+            <input type="checkbox" id="couponActiveCheck" checked style="width:20px; height:20px; cursor:pointer;">
+          </div>
+          <button type="submit" class="admin-btn-save" id="btnSaveCoupon">💾 حفظ وتفعيل كود الخصم سحابياً</button>
+        </form>
+      </div>
+
+      <div class="admin-fieldset">
+        <legend>قائمة أكواد الخصم النشطة في النظام</legend>
+        <div id="adminCouponsListGrid" style="display:flex; flex-direction:column; gap:8px;"></div>
+      </div>
+    </div>
+
+    <!-- 3. TELEGRAM BOT NOTIFICATIONS SETTINGS (NEW) -->
+    <div id="adminSecTelegram" style="display:none;">
+      <div class="admin-fieldset">
+        <legend>✈️ إعدادات ربط التلغرام (Telegram Bot Instant Webhook)</legend>
+        <p style="font-size:12.5px; color:var(--text-soft); margin-top:-4px;">عند تأكيد أي طلب، سيقوم الخادم بإرسال تفاصيل الفاتورة واسم العميل وعنوانه إلى التلغرام تلقائياً:</p>
+        <form onsubmit="handleSaveTelegramSettings(event)">
+          <div class="form-field">
+            <label>توكن البوت (Telegram Bot Token) *</label>
+            <input type="text" id="teleBotTokenInput" placeholder="مثال: 7123456789:AAFx...">
+          </div>
+          <div class="form-field">
+            <label>معرف المحادثة أو المجموعة (Chat ID) *</label>
+            <input type="text" id="teleChatIdInput" placeholder="مثال: 987654321 أو -100123456789">
+          </div>
+          <div style="display:flex; gap:10px; margin-top:10px;">
+            <button type="button" onclick="testTelegramBotNotification()" style="flex:1; background:#0284C7; color:#fff; font-weight:800; padding:12px; border-radius:12px;">🚀 إرسال إشعار تجريبي</button>
+            <button type="submit" class="admin-btn-save" style="flex:1; margin-top:0;">💾 حفظ إعدادات التلغرام</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 4. AUDIT LOGS & RATE LIMITING SECTION (NEW) -->
+    <div id="adminSecAudit" style="display:none;">
+      <div class="admin-fieldset">
+        <legend>🛡️ إعدادات الحماية ومعدل الطلبات (Rate Limiting)</legend>
+        <form onsubmit="handleSaveSecuritySettings(event)">
+          <div style="display:flex; gap:10px;">
+            <div class="form-field" style="flex:1;">
+              <label>الحد الأقصى للطلبات لكل IP / ساعة</label>
+              <input type="number" id="secMaxOrdersHour" value="8" min="1" max="50">
+            </div>
+            <div class="form-field" style="flex:1;">
+              <label>الحد الأقصى للطلبات العامة / دقيقة</label>
+              <input type="number" id="secMaxReqsMin" value="60" min="10" max="200">
+            </div>
+          </div>
+          <button type="submit" class="admin-btn-save" style="background:#111827;">🛡️ حفظ سياسات الأمان</button>
+        </form>
+      </div>
+
+      <div class="admin-fieldset">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <legend style="margin-bottom:0;">📜 سجل تدقيق عمليات المشرف (Audit Logs)</legend>
+          <button type="button" onclick="fetchAuditLogs()" style="color:var(--accent); font-size:12px; font-weight:800;">🔄 تحديث السجل</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="log-table">
+            <thead>
+              <tr>
+                <th>الحدث</th>
+                <th>التفاصيل</th>
+                <th>المشرف</th>
+                <th>الوقت</th>
+                <th>IP</th>
+              </tr>
+            </thead>
+            <tbody id="adminAuditLogsTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. CATEGORY MANAGEMENT SECTION -->
     <div id="adminSecCats" style="display:none;">
       <div class="admin-fieldset">
         <legend id="adminCatFormTitle">إضافة قسم جديد</legend>
@@ -927,7 +1106,7 @@
       </div>
     </div>
 
-    <!-- 3. PRODUCT MANAGEMENT SECTION -->
+    <!-- 6. PRODUCT MANAGEMENT SECTION -->
     <div id="adminSecProducts" style="display:none;">
       <div class="admin-fieldset">
         <legend id="adminFormModeTitleV">إضافة منتج جديد</legend>
@@ -1007,7 +1186,7 @@
       </div>
     </div>
 
-    <!-- 4. ADVANCED DISCOUNTS & OFFERS SECTION -->
+    <!-- 7. ADVANCED DISCOUNTS & OFFERS SECTION -->
     <div id="adminSecOffers" style="display:none;">
       <div class="admin-fieldset">
         <legend>🎯 تطبيق خصم ذكي مجمع (Bulk Discount Rule)</legend>
@@ -1074,7 +1253,7 @@
       </div>
     </div>
 
-    <!-- 5. BRAND MANAGEMENT & LOGO UPLOAD SECTION -->
+    <!-- 8. BRAND MANAGEMENT & LOGO UPLOAD SECTION -->
     <div id="adminSecBrands" style="display:none;">
       <div class="admin-fieldset">
         <legend id="adminBrandFormTitle">🏷️ إضافة ماركة جديدة</legend>
@@ -1108,7 +1287,7 @@
       </div>
     </div>
 
-    <!-- 6. NOTIFICATIONS BROADCAST SECTION -->
+    <!-- 9. NOTIFICATIONS BROADCAST SECTION -->
     <div id="adminSecNotifs" style="display:none;">
       <div class="admin-fieldset">
         <legend>📢 إرسال إشعار وتنبيه عام لجميع مستخدمي الموقع</legend>
@@ -1139,7 +1318,7 @@
       </div>
     </div>
 
-    <!-- 7. STORE CUSTOMIZATION & DELIVERY SECTION -->
+    <!-- 10. STORE CUSTOMIZATION & DELIVERY SECTION -->
     <div id="adminSecDesign" style="display:none;">
       <form onsubmit="handleSaveCustomization(event)">
         <fieldset class="admin-fieldset">
@@ -1191,7 +1370,7 @@
       </form>
     </div>
 
-    <!-- 8. COPY CODE TOOL -->
+    <!-- 11. COPY CODE TOOL -->
     <div id="adminSecCode" style="display:none;">
       <div class="admin-copy-code-box">
         <h3>📋 أداة نسخ كود الموقع المحدث بالكامل</h3>
@@ -1321,7 +1500,7 @@
     <span class="badge-count" id="bnCartBadge" style="display:none;">0</span>
   </button>
   <button class="bn-item" onclick="showView('admin')" id="bn-admin" style="display:none; color:#F59E0B;">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     <span class="lbl">الأدمن</span>
   </button>
 </nav>
@@ -1497,6 +1676,7 @@
   let currentView = 'home';
   let listingMode = null, listingValue = null, listingCatActive = 'all';
   let currentProductId = null, pdQty = 1, pdActiveTab = 'desc', deliveryMethod = 'standard';
+  let appliedPromo = null; // { code, discountAmount }
 
   let totalOrdersCount = 0;
   let todayVisitsCount = 0;
@@ -1536,6 +1716,184 @@
   function isInAppBrowser() {
     const ua = navigator.userAgent || navigator.vendor || window.opera || '';
     return (ua.indexOf('Instagram') > -1) || (ua.indexOf('FBAN') > -1) || (ua.indexOf('FBAV') > -1) || (ua.indexOf('TikTok') > -1) || (ua.indexOf('Snapchat') > -1);
+  }
+
+  // ============ PROMO CODES LOGIC (SERVER VALIDATION) ============
+  async function applyPromoCode(code) {
+    if (!code || !code.trim()) {
+      showToast('يرجى كتابة كود الخصم أولاً');
+      return;
+    }
+    const subtotal = getCartSubtotal();
+    if (subtotal <= 0) {
+      showToast('السلة فارغة!');
+      return;
+    }
+
+    showToast('جاري التحقق من كود الخصم سحابياً...');
+    const res = await apiFetch("/api/coupons/validate", {
+      method: "POST",
+      body: JSON.stringify({ code: code.trim(), subtotal })
+    });
+
+    if (res && res.valid) {
+      appliedPromo = { code: res.code, discountAmount: res.discountAmount };
+      showToast(res.message || 'تم تطبيق الخصم بنجاح! 🎉');
+      renderCart();
+      renderCheckoutSummary();
+    } else {
+      appliedPromo = null;
+      showToast((res && res.message) || 'كود الخصم غير صالح أو منتهي الصلاحية ❌');
+      renderCart();
+      renderCheckoutSummary();
+    }
+  }
+
+  function removePromoCode() {
+    appliedPromo = null;
+    showToast('تم إلغاء كود الخصم');
+    renderCart();
+    renderCheckoutSummary();
+  }
+
+  // ============ ADMIN PROMO CODES TAB ============
+  async function fetchAdminCoupons() {
+    const res = await apiFetch("/api/admin/coupons");
+    if (res && res.coupons) {
+      renderAdminCouponsList(res.coupons);
+    }
+  }
+
+  function renderAdminCouponsList(coupons) {
+    const container = document.getElementById('adminCouponsListGrid');
+    if (!container) return;
+    if (coupons.length === 0) {
+      container.innerHTML = `<div class="no-results" style="padding:16px 0;">لا توجد أكواد خصم مسجلة حالياً.</div>`;
+      return;
+    }
+    container.innerHTML = coupons.map(c => `
+      <div style="background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="font-weight:900; font-size:14px; color:#b01e4a; font-family:monospace;">
+            ${sanitizeText(c.code)} 
+            <span class="log-badge">${c.type === 'percentage' ? c.value + '%' : fmtPrice(c.value)}</span>
+            ${c.active ? '<span style="color:#16A34A; font-size:11px; font-weight:800; margin-inline-start:6px;">● نشط</span>' : '<span style="color:#DC2626; font-size:11px; font-weight:800; margin-inline-start:6px;">● متوقف</span>'}
+          </div>
+          <div style="font-size:11.5px; color:var(--text-soft); margin-top:2px;">
+            الاستخدام: ${c.usedCount || 0}/${c.maxUses || '∞'} · الحد الأدنى: ${fmtPrice(c.minSpend || 0)} · الانتهاء: ${c.expiry || 'دائم'}
+          </div>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button onclick="deleteAdminCoupon('${sanitizeText(c.id)}')" style="background:#FEE2E2; color:var(--red); padding:6px 10px; border-radius:8px; font-weight:800; font-size:11px;">حذف 🗑️</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function handleAdminCouponSave(e) {
+    e.preventDefault();
+    if (!assertAdmin()) return;
+    if (!lockAction('saveCoupon', 1500)) return;
+
+    const payload = {
+      code: document.getElementById('couponCodeInput').value.trim().toUpperCase(),
+      type: document.getElementById('couponTypeSelect').value,
+      value: Number(document.getElementById('couponValueInput').value),
+      minSpend: Number(document.getElementById('couponMinSpendInput').value || 0),
+      maxUses: Number(document.getElementById('couponMaxUsesInput').value || 100),
+      expiry: document.getElementById('couponExpiryInput').value,
+      active: document.getElementById('couponActiveCheck').checked
+    };
+
+    const res = await apiFetch("/api/admin/coupons", { method: "POST", body: JSON.stringify(payload) });
+    if (res && res.success) {
+      showToast('تم حفظ كود الخصم وتفعيله سحابياً بنجاح! 🎉');
+      document.getElementById('couponCodeInput').value = '';
+      document.getElementById('couponValueInput').value = '';
+      fetchAdminCoupons();
+    } else {
+      showToast((res && res.message) || 'حدث خطأ أثناء حفظ الكوبون');
+    }
+  }
+
+  async function deleteAdminCoupon(id) {
+    if (!assertAdmin()) return;
+    if (confirm('هل أنتِ متأكدة من حذف هذا الكوبون نهائياً؟')) {
+      await apiFetch(`/api/admin/coupons/${id}`, { method: "DELETE" });
+      fetchAdminCoupons();
+      showToast('تم حذف الكوبون بنجاح ✓');
+    }
+  }
+
+  // ============ TELEGRAM NOTIFICATIONS SETTINGS ============
+  async function handleSaveTelegramSettings(e) {
+    e.preventDefault();
+    if (!assertAdmin()) return;
+    const botToken = document.getElementById('teleBotTokenInput').value.trim();
+    const chatId = document.getElementById('teleChatIdInput').value.trim();
+
+    await apiFetch("/api/admin/settings", {
+      method: "POST",
+      body: JSON.stringify({ telegramConfig: { botToken, chatId, enabled: true } })
+    });
+    showToast('تم حفظ إعدادات التلغرام بنجاح ✓');
+  }
+
+  async function testTelegramBotNotification() {
+    if (!assertAdmin()) return;
+    const botToken = document.getElementById('teleBotTokenInput').value.trim();
+    const chatId = document.getElementById('teleChatIdInput').value.trim();
+
+    if (!botToken || !chatId) {
+      showToast('يرجى إدخال Bot Token و Chat ID أولاً');
+      return;
+    }
+
+    showToast('جاري إرسال إشعار تجريبي إلى التلغرام...');
+    const res = await apiFetch("/api/admin/telegram/test", {
+      method: "POST",
+      body: JSON.stringify({ botToken, chatId })
+    });
+
+    if (res && res.success) {
+      showToast(res.message);
+    } else {
+      showToast((res && res.message) || 'تعذر إرسال الإشعار، تحققي من صحة التوكن ورقم الشات');
+    }
+  }
+
+  // ============ AUDIT LOGS VIEWER & SECURITY SETTINGS ============
+  async function fetchAuditLogs() {
+    const res = await apiFetch("/api/admin/logs");
+    const tbody = document.getElementById('adminAuditLogsTbody');
+    if (!tbody) return;
+
+    if (res && res.logs && res.logs.length > 0) {
+      tbody.innerHTML = res.logs.map(log => `
+        <tr>
+          <td><span class="log-badge">${sanitizeText(log.action)}</span></td>
+          <td>${sanitizeText(log.details)}</td>
+          <td>${sanitizeText(log.adminEmail)}</td>
+          <td class="mono" style="font-size:10px;">${new Date(log.timestamp).toLocaleTimeString('ar-IQ')}</td>
+          <td class="mono" style="font-size:10px;">${sanitizeText(log.ip)}</td>
+        </tr>
+      `).join('');
+    } else {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:14px;">لا توجد سجلات بعد.</td></tr>`;
+    }
+  }
+
+  async function handleSaveSecuritySettings(e) {
+    e.preventDefault();
+    if (!assertAdmin()) return;
+    const maxOrdersPerHour = Number(document.getElementById('secMaxOrdersHour').value);
+    const maxRequestsPerMin = Number(document.getElementById('secMaxReqsMin').value);
+
+    await apiFetch("/api/admin/settings", {
+      method: "POST",
+      body: JSON.stringify({ rateLimits: { maxOrdersPerHour, maxRequestsPerMin } })
+    });
+    showToast('تم حفظ سياسات الحماية بنجاح ✓');
   }
 
   // ============ REAL DYNAMIC ANALYTICS ============
@@ -2373,7 +2731,8 @@
   }
 
   function switchAdminSection(sec) {
-    ['Stats', 'Cats', 'Products', 'Offers', 'Brands', 'Notifs', 'Design', 'Code'].forEach(k => {
+    const sections = ['Stats', 'Coupons', 'Telegram', 'Audit', 'Cats', 'Products', 'Offers', 'Brands', 'Notifs', 'Design', 'Code'];
+    sections.forEach(k => {
       const btn = document.getElementById('btnTabV' + k);
       const el = document.getElementById('adminSec' + k);
       const isTarget = (k.toLowerCase() === sec.toLowerCase());
@@ -2381,6 +2740,8 @@
       if (el) el.style.display = isTarget ? 'block' : 'none';
     });
     if (sec === 'stats') fetchRealAnalytics();
+    if (sec === 'coupons') fetchAdminCoupons();
+    if (sec === 'audit') fetchAuditLogs();
     if (sec === 'offers') {
       updateDiscountTargetOptions();
       loadPromoCardToEdit(0);
@@ -2622,7 +2983,7 @@
       b1.style.display = 'none'; b2.style.display = 'none';
     }
   }
-  function getCartTotal() {
+  function getCartSubtotal() {
     return Object.keys(cart).reduce((sum, id) => {
       const p = findProduct(id);
       return sum + (p ? p.price * cart[id] : 0);
@@ -2633,10 +2994,12 @@
     const ids = Object.keys(cart);
     const listEl = document.getElementById('cartItemsList');
     const summaryEl = document.getElementById('cartSummaryBlock');
+    const promoBadge = document.getElementById('appliedPromoBadge');
 
     if (ids.length === 0) {
       listEl.innerHTML = `<div class="no-results">سلتك فارغة — تصفّحي المنتجات وأضيفي ما يعجبك.</div>`;
       summaryEl.innerHTML = '';
+      if (promoBadge) promoBadge.style.display = 'none';
       return;
     }
 
@@ -2665,12 +3028,24 @@
         </div>`;
     }).join('');
 
-    const subtotal = getCartTotal();
+    const subtotal = getCartSubtotal();
+    const discount = appliedPromo ? appliedPromo.discountAmount : 0;
     const fee = (deliveryMethod === 'express') ? (storeSettings.deliveryFeeExpress || 8000) : (storeSettings.deliveryFeeStandard || 4000);
+    const finalTotal = Math.max(0, subtotal - discount) + fee;
+
+    if (appliedPromo && promoBadge) {
+      promoBadge.style.display = 'flex';
+      promoBadge.className = 'applied-promo-tag';
+      promoBadge.innerHTML = `<span>🎟️ تم تفعيل كود الخصم: <b>${appliedPromo.code}</b> (-${fmtPrice(discount)})</span><button type="button" onclick="removePromoCode()" style="color:#DC2626; font-weight:900; background:none;">✕</button>`;
+    } else if (promoBadge) {
+      promoBadge.style.display = 'none';
+    }
+
     summaryEl.innerHTML = `
       <div class="summary-row"><span>المجموع الفرعي</span><span class="mono">${fmtPrice(subtotal)}</span></div>
+      ${discount > 0 ? `<div class="summary-row" style="color:#16A34A; font-weight:800;"><span>خصم الكوبون</span><span class="mono">-${fmtPrice(discount)}</span></div>` : ''}
       <div class="summary-row"><span>رسوم التوصيل</span><span class="mono">${fmtPrice(fee)}</span></div>
-      <div class="summary-row total"><span>الإجمالي</span><span class="mono">${fmtPrice(subtotal + fee)}</span></div>
+      <div class="summary-row total"><span>الإجمالي</span><span class="mono">${fmtPrice(finalTotal)}</span></div>
       <button class="checkout-btn" onclick="showView('checkout')">متابعة الطلب</button>`;
   }
 
@@ -2682,12 +3057,16 @@
   }
 
   function renderCheckoutSummary() {
-    const subtotal = getCartTotal();
+    const subtotal = getCartSubtotal();
+    const discount = appliedPromo ? appliedPromo.discountAmount : 0;
     const fee = (deliveryMethod === 'express') ? (storeSettings.deliveryFeeExpress || 8000) : (storeSettings.deliveryFeeStandard || 4000);
+    const finalTotal = Math.max(0, subtotal - discount) + fee;
+
     document.getElementById('checkoutSummaryBlock').innerHTML = `
       <div class="summary-row"><span>المجموع الفرعي</span><span class="mono">${fmtPrice(subtotal)}</span></div>
+      ${discount > 0 ? `<div class="summary-row" style="color:#16A34A; font-weight:800;"><span>خصم الكوبون (${appliedPromo.code})</span><span class="mono">-${fmtPrice(discount)}</span></div>` : ''}
       <div class="summary-row"><span>رسوم التوصيل</span><span class="mono">${fmtPrice(fee)}</span></div>
-      <div class="summary-row total"><span>الإجمالي</span><span class="mono">${fmtPrice(subtotal + fee)}</span></div>`;
+      <div class="summary-row total"><span>الإجمالي</span><span class="mono">${fmtPrice(finalTotal)}</span></div>`;
   }
 
   async function confirmOrder() {
@@ -2726,11 +3105,12 @@
           customerPhone: phone,
           customerAddress: address,
           deliveryMethod,
-          items: itemsPayload
+          items: itemsPayload,
+          promoCode: appliedPromo ? appliedPromo.code : null
         })
       });
 
-      let grandTotal = getCartTotal() + (deliveryMethod === 'express' ? (storeSettings.deliveryFeeExpress || 8000) : (storeSettings.deliveryFeeStandard || 4000));
+      let grandTotal = getCartSubtotal() - (appliedPromo ? appliedPromo.discountAmount : 0) + (deliveryMethod === 'express' ? (storeSettings.deliveryFeeExpress || 8000) : (storeSettings.deliveryFeeStandard || 4000));
       let orderId = "LOCAL-" + Date.now();
 
       if (response && response.success) {
@@ -2745,13 +3125,15 @@
 
       const lines = itemObjects.map(item => `${item.name} × ${item.quantity}`);
       const deliveryLabel = deliveryMethod === 'express' ? `سريع (${fmtPrice(storeSettings.deliveryFeeExpress || 8000)})` : `عادي (${fmtPrice(storeSettings.deliveryFeeStandard || 4000)})`;
-      const msg = encodeURIComponent(`*طلب موثق جديد - صيدلية القطن* 🌸\nرقم الطلب: ${orderId}\n\nالاسم: ${name}\nالهاتف: ${phone}\nالعنوان: ${address}\nالتوصيل: ${deliveryLabel}\n\nالمنتجات:\n${lines.join('\n')}\n\nالإجمالي الموثق: ${fmtPrice(grandTotal)}`);
+      const promoInfo = appliedPromo ? `كود الخصم: ${appliedPromo.code} (-${fmtPrice(appliedPromo.discountAmount)})\n` : '';
+      const msg = encodeURIComponent(`*طلب موثق جديد - صيدلية القطن* 🌸\nرقم الطلب: ${orderId}\n\nالاسم: ${name}\nالهاتف: ${phone}\nالعنوان: ${address}\nالتوصيل: ${deliveryLabel}\n${promoInfo}\nالمنتجات:\n${lines.join('\n')}\n\nالإجمالي الموثق: ${fmtPrice(grandTotal)}`);
 
       cart = {};
+      appliedPromo = null;
       updateCartBadge();
       saveLocalState();
       window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank');
-      showToast('تم توثيق وحفظ الطلب بنجاح ✓');
+      showToast('تم توثيق وحفظ الطلب وإرساله للمشرف بنجاح ✓');
       showView('home');
     } catch (err) {
       console.error(err);
@@ -2785,6 +3167,8 @@
         showToast('هذا القسم مخصص للمشرف فقط');
       } else {
         renderRealAnalyticsView();
+        fetchAdminCoupons();
+        fetchAuditLogs();
         renderAdminCategoriesList();
         renderAdminBrandsList();
       }
