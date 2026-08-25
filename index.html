@@ -55,7 +55,6 @@
     background-color: #FFFFFF !important;
   }
   html { scroll-behavior: smooth; }
-  html, body { max-width: 100%; overflow-x: hidden; }
   body {
     margin: 0;
     background: var(--paper);
@@ -63,6 +62,7 @@
     font-family: 'Cairo', sans-serif;
     line-height: 1.6;
     padding-bottom: 84px;
+    min-height: 100vh;
   }
   .mono { font-family: 'IBM Plex Mono', monospace; }
   a { color: inherit; text-decoration: none; }
@@ -137,12 +137,7 @@
     transition: all .2s;
   }
   .user-header-chip:hover { border-color: var(--rose); }
-  .user-chip-main {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    cursor: pointer;
-  }
+  .user-chip-main { display: flex; align-items: center; gap: 6px; cursor: pointer; }
   .user-chip-avatar {
     width: 28px;
     height: 28px;
@@ -191,7 +186,7 @@
   .menu-link svg { width: 20px; height: 20px; color: var(--accent); flex-shrink: 0; }
   .drawer-footer { font-size: 11.5px; color: var(--text-soft); text-align: center; padding-top: 16px; border-top: 1px solid var(--line); }
 
-  /* ============ BEAUTY HERO BANNER ============ */
+  /* ============ HERO BANNER ============ */
   .hero-wrap { padding: 6px 0 10px; }
   .qutn-hybrid-banner {
     width: 100%;
@@ -269,7 +264,7 @@
   .consult-toggle-btn.active { border-color: var(--accent); background: var(--surface); color: #b01e4a; font-weight: 800; }
   .consult-submit-btn { width: 100%; background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); color: #fff; font-weight: 900; font-size: 14.5px; padding: 13px; border-radius: 999px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 16px rgba(37,211,102,0.3); margin-top: 14px; }
 
-  /* ============ NOTIFICATION MODAL & CARDS ============ */
+  /* ============ NOTIFICATION MODAL ============ */
   .notif-modal-overlay { position: fixed; inset: 0; background: rgba(31, 41, 55, 0.5); backdrop-filter: blur(4px); z-index: 110; display: flex; align-items: center; justify-content: center; padding: 16px; opacity: 0; pointer-events: none; transition: opacity .25s; }
   .notif-modal-overlay.open { opacity: 1; pointer-events: auto; }
   .notif-modal-card { background: #fff; border-radius: var(--radius-lg); width: min(460px, 100%); max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; border: 1.5px solid var(--line); box-shadow: 0 20px 45px rgba(0,0,0,0.2); }
@@ -280,7 +275,7 @@
   .notif-item-time { font-size: 10.5px; color: var(--text-soft); }
   .notif-item-desc { font-size: 12px; color: var(--ink); margin: 0; line-height: 1.5; }
 
-  /* ============ IN-APP BROWSER (INSTAGRAM) GUIDANCE MODAL ============ */
+  /* ============ IN-APP BROWSER GUIDANCE MODAL ============ */
   .iab-modal { position: fixed; inset: 0; background: rgba(31, 41, 55, 0.6); backdrop-filter: blur(4px); z-index: 130; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity .25s; }
   .iab-modal.open { opacity: 1; pointer-events: auto; }
   .iab-content { background: #fff; border-radius: var(--radius-lg); padding: 26px 20px; max-width: 420px; width: 100%; text-align: center; border: 1.5px solid var(--line); box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
@@ -291,7 +286,7 @@
   .iab-step-num { width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
   .iab-close-btn { width: 100%; background: var(--accent); color: #fff; font-weight: 800; font-size: 14px; padding: 12px; border-radius: 999px; margin-top: 14px; }
 
-  /* ============ SECTION HEAD & STRIPS ============ */
+  /* ============ BRAND STRIP WITH LOGOS ============ */
   .section { padding: 8px 0; margin: 6px 0; }
   .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
   .section-head h2 { font-size: 16.5px; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 6px; }
@@ -299,10 +294,29 @@
   
   .brand-strip { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 10px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
   .brand-strip::-webkit-scrollbar { display: none; }
-  .brand-chip { flex: 0 0 auto; min-width: 95px; height: 54px; border: 1.5px solid var(--line); border-radius: 16px; display: flex; align-items: center; justify-content: center; padding: 6px 14px; background: #fff; cursor: pointer; font-weight: 800; font-size: 13px; color: var(--ink); transition: all .2s; }
+  
+  .brand-chip {
+    flex: 0 0 auto;
+    min-width: 105px;
+    height: 52px;
+    border: 1.5px solid var(--line);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: #fff;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: 13px;
+    color: var(--ink);
+    transition: all .2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
   .brand-chip:hover { border-color: var(--rose); transform: translateY(-2px); }
-  .brand-chip.active { border-color: #b01e4a; border-width: 2px; background: var(--surface); color: #b01e4a; }
-  .brand-chip.all-chip { flex-direction: column; gap: 2px; font-size: 11.5px; color: var(--accent); }
+  .brand-chip.active { border-color: #b01e4a; border-width: 2px; background: var(--surface); color: #b01e4a; box-shadow: 0 4px 14px rgba(232,93,138,0.18); }
+  .brand-chip-img { width: 28px; height: 28px; border-radius: 8px; object-fit: contain; background: #fff; border: 1px solid var(--line); flex-shrink: 0; }
+  .brand-chip-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .brand-chip.all-chip { flex-direction: column; gap: 2px; justify-content: center; font-size: 11.5px; color: var(--accent); }
   .brand-chip.all-chip svg { width: 18px; height: 18px; }
 
   /* ============ PRODUCT GRID & CARD ============ */
@@ -331,7 +345,6 @@
   .add-cart-btn { width: 100%; background: var(--accent); color: #fff; font-weight: 800; font-size: 12.5px; padding: 10px; border-radius: 999px; text-align: center; transition: background .2s; box-shadow: 0 3px 10px rgba(232,93,138,0.25); }
   .add-cart-btn:hover { background: var(--accent-dark); }
 
-  /* Admin Action Overlays on Product Card */
   .admin-card-actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 6px; padding-top: 6px; border-top: 1px dashed #FECDD3; }
   .admin-card-actions button { font-size: 10px; font-weight: 800; padding: 6px 2px; border-radius: 8px; text-align: center; }
   .btn-admin-stock.is-in { background: #DCFCE7; color: #166534; }
@@ -373,10 +386,17 @@
   .fab-whatsapp { position: fixed; bottom: 90px; left: 16px; z-index: 45; width: 52px; height: 52px; border-radius: 50%; background: #25D366; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(37,211,102,.4); }
   .fab-whatsapp svg { width: 28px; height: 28px; color: #fff; }
 
-  /* ============ VIEWS & COMMON ============ */
+  /* ============ VIEWS & PRODUCT DETAIL SCROLLING FIXED ============ */
   .view { display: none; padding-top: 6px; }
   .view.active { display: block; animation: fadeIn .2s ease; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  #view-product {
+    min-height: 100vh;
+    padding-bottom: 60px;
+    overflow-y: visible !important;
+    -webkit-overflow-scrolling: touch;
+  }
 
   .pd-back { display: inline-flex; align-items: center; gap: 6px; padding: 10px 0 6px; font-weight: 700; font-size: 13.5px; color: var(--text-soft); cursor: pointer; }
   .pd-back svg { width: 18px; height: 18px; }
@@ -691,7 +711,7 @@
   </div>
 </div>
 
-<!-- ============ PRODUCT DETAIL VIEW ============ -->
+<!-- ============ PRODUCT DETAIL VIEW (SCROLLING FIXED) ============ -->
 <div class="view" id="view-product">
   <div class="wrap">
     <div class="pd-back" onclick="goBackFromProduct()">
@@ -809,8 +829,8 @@
       <button class="admin-tab-btn-v" id="btnTabVCats" onclick="switchAdminSection('cats')">🗂️ إدارة الأقسام</button>
       <button class="admin-tab-btn-v" id="btnTabVProds" onclick="switchAdminSection('products')">📦 إدارة المنتجات</button>
       <button class="admin-tab-btn-v" id="btnTabVOffers" onclick="switchAdminSection('offers')">🎁 إدارة الخصومات والعروض</button>
+      <button class="admin-tab-btn-v" id="btnTabVBrands" onclick="switchAdminSection('brands')">🏷️ إدارة الماركات والشعارات</button>
       <button class="admin-tab-btn-v" id="btnTabVNotifs" onclick="switchAdminSection('notifs')">📢 إرسال إشعار للمستخدمين</button>
-      <button class="admin-tab-btn-v" id="btnTabVBrands" onclick="switchAdminSection('brands')">🏷️ إدارة الشركات والماركات</button>
       <button class="admin-tab-btn-v" id="btnTabVDesign" onclick="switchAdminSection('design')">🎨 الواجهة والتوصيل</button>
       <button class="admin-tab-btn-v" id="btnTabVCode" onclick="switchAdminSection('code')">📋 نسخ الكود</button>
     </div>
@@ -836,7 +856,7 @@
         </div>
       </div>
 
-      <!-- Real Performance Bar Graph -->
+      <!-- Real Bar Graph -->
       <div class="admin-chart-wrap">
         <div class="admin-chart-title">
           <span>📈 الزيارات اليومية الحقيقية (آخر 7 أيام)</span>
@@ -878,7 +898,7 @@
           </div>
           <div class="form-field">
             <label>رابط صورة/أيقونة القسم (Direct URL - اختياري)</label>
-            <input type="url" id="adminCatImgUrl" placeholder="https://images.unsplash.com/..." oninput="previewAdminCatImg(this.value)">
+            <input type="url" id="adminCatImgUrl" placeholder="https://..." oninput="previewAdminCatImg(this.value)">
             <div id="adminCatImgPreviewBox" style="margin-top:6px; display:none;">
               <img id="adminCatImgPreviewEl" src="" style="height:60px; border-radius:8px; border:1px solid var(--line);" alt="Category Preview">
             </div>
@@ -954,7 +974,7 @@
           </div>
           <div class="form-field">
             <label>رابط الصورة المباشر (اختياري)</label>
-            <input type="url" id="adminProdImgUrl" placeholder="https://images.unsplash.com/..." oninput="previewAdminProdImg(this.value)">
+            <input type="url" id="adminProdImgUrl" placeholder="https://..." oninput="previewAdminProdImg(this.value)">
             <div id="adminProdImgPreviewBox" style="margin-top:6px; display:none;">
               <img id="adminProdImgPreviewEl" src="" style="height:70px; border-radius:8px; border:1px solid var(--line);" alt="Preview">
             </div>
@@ -1054,7 +1074,41 @@
       </div>
     </div>
 
-    <!-- 5. NOTIFICATIONS BROADCAST SECTION -->
+    <!-- 5. BRAND MANAGEMENT & LOGO UPLOAD SECTION -->
+    <div id="adminSecBrands" style="display:none;">
+      <div class="admin-fieldset">
+        <legend id="adminBrandFormTitle">🏷️ إضافة ماركة جديدة</legend>
+        <form id="adminBrandForm" onsubmit="handleSaveBrand(event)">
+          <input type="hidden" id="adminBrandOriginalKey" value="">
+          <div style="display:flex; gap:10px;">
+            <div class="form-field" style="flex:2;">
+              <label>اسم الشركة أو الماركة *</label>
+              <input type="text" id="adminBrandNameInput" placeholder="مثال: La Roche Posay" required>
+            </div>
+            <div class="form-field" style="flex:1;">
+              <label>اللون التمييزي</label>
+              <input type="color" id="adminBrandColorInput" value="#E85D8A" style="height:44px; padding:2px; cursor:pointer;">
+            </div>
+          </div>
+          <div class="form-field">
+            <label>رابط شعار الماركة (Logo Image URL - اختياري)</label>
+            <input type="url" id="adminBrandLogoInput" placeholder="https://..." oninput="previewBrandLogoImg(this.value)">
+            <div id="adminBrandLogoPreviewWrap" style="margin-top:8px; display:none;">
+              <img id="adminBrandLogoPreviewImg" src="" style="height:48px; border-radius:8px; border:1px solid var(--line); background:#fff; padding:3px;" alt="Logo Preview">
+            </div>
+          </div>
+          <button type="submit" class="admin-btn-save" id="adminSaveBrandBtn" style="background:#111827;">+ إضافة الماركة للشريط</button>
+          <button type="button" id="adminCancelBrandBtn" onclick="cancelAdminBrandEdit()" style="display:none; width:100%; margin-top:8px; font-size:13px; font-weight:700; color:var(--text-soft); padding:8px;">إلغاء التعديل</button>
+        </form>
+      </div>
+
+      <div class="admin-fieldset">
+        <legend>قائمة الشركات والماركات الحالية المعتمدة</legend>
+        <div id="adminBrandsListGrid" style="display:flex; flex-direction:column; gap:8px;"></div>
+      </div>
+    </div>
+
+    <!-- 6. NOTIFICATIONS BROADCAST SECTION -->
     <div id="adminSecNotifs" style="display:none;">
       <div class="admin-fieldset">
         <legend>📢 إرسال إشعار وتنبيه عام لجميع مستخدمي الموقع</legend>
@@ -1082,31 +1136,6 @@
       <div class="admin-fieldset">
         <legend>سجل الإشعارات المرسلة مؤخراً</legend>
         <div id="adminNotifsHistoryList" style="display:flex; flex-direction:column; gap:8px;"></div>
-      </div>
-    </div>
-
-    <!-- 6. BRANDS SECTION -->
-    <div id="adminSecBrands" style="display:none;">
-      <div class="admin-fieldset">
-        <legend>🏷️ إضافة شركة / ماركة جديدة</legend>
-        <form onsubmit="handleAddBrand(event)">
-          <div style="display:flex; gap:10px;">
-            <div class="form-field" style="flex:2;">
-              <label>اسم الشركة أو الماركة</label>
-              <input type="text" id="newBrandName" placeholder="مثال: La Roche Posay" required>
-            </div>
-            <div class="form-field" style="flex:1;">
-              <label>اللون التمييزي</label>
-              <input type="color" id="newBrandColor" value="#E85D8A" style="height:42px; padding:2px;">
-            </div>
-          </div>
-          <button type="submit" class="admin-btn-save" style="background:#111827;">+ إضافة الماركة للشريط</button>
-        </form>
-      </div>
-
-      <div class="admin-fieldset">
-        <legend>قائمة الشركات والماركات الحالية</legend>
-        <div id="adminBrandsListGrid" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
       </div>
     </div>
 
@@ -1192,7 +1221,7 @@
   </div>
 </div>
 
-<!-- ============ IN-APP BROWSER (INSTAGRAM) GUIDANCE MODAL ============ -->
+<!-- ============ IN-APP BROWSER GUIDANCE MODAL ============ -->
 <div class="iab-modal" id="iabModal">
   <div class="iab-content">
     <div class="iab-icon">
@@ -1292,7 +1321,7 @@
     <span class="badge-count" id="bnCartBadge" style="display:none;">0</span>
   </button>
   <button class="bn-item" onclick="showView('admin')" id="bn-admin" style="display:none; color:#F59E0B;">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     <span class="lbl">الأدمن</span>
   </button>
 </nav>
@@ -1351,11 +1380,22 @@
     return `hsl(${Math.abs(hash) % 360}, 50%, 62%)`;
   }
 
-  let brandColors = {
-    'Simple': '#C97F79', 'PanOxyl': '#E0995C', 'REVUELE': '#D9A441', 'COSMO': '#B7A233',
-    'Skin1004': '#8FAE4A', 'Cerave': '#5FAE6E', 'The Ordinary': '#4CAE93', 'DIADERM': '#b01e4a',
-    'Photoblock': '#4C8CAE', 'ISIS Pharma': '#4C6FAE', 'Uriage': '#5C5CAE', 'Dove': '#7A4A6B',
-    'dr.Clinic': '#C9463D', 'LACALUT': '#C33A2E', 'ACM': '#6B7078'
+  // قاعدة بيانات الماركات والشعارات الافتراضية
+  let brandsData = {
+    'Cerave': { name: 'Cerave', color: '#5FAE6E', logoUrl: '' },
+    'Simple': { name: 'Simple', color: '#C97F79', logoUrl: '' },
+    'REVUELE': { name: 'REVUELE', color: '#D9A441', logoUrl: '' },
+    'COSMO': { name: 'COSMO', color: '#B7A233', logoUrl: '' },
+    'Skin1004': { name: 'Skin1004', color: '#8FAE4A', logoUrl: '' },
+    'The Ordinary': { name: 'The Ordinary', color: '#4CAE93', logoUrl: '' },
+    'DIADERM': { name: 'DIADERM', color: '#b01e4a', logoUrl: '' },
+    'Photoblock': { name: 'Photoblock', color: '#4C8CAE', logoUrl: '' },
+    'ISIS Pharma': { name: 'ISIS Pharma', color: '#4C6FAE', logoUrl: '' },
+    'Uriage': { name: 'Uriage', color: '#5C5CAE', logoUrl: '' },
+    'Dove': { name: 'Dove', color: '#7A4A6B', logoUrl: '' },
+    'dr.Clinic': { name: 'dr.Clinic', color: '#C9463D', logoUrl: '' },
+    'LACALUT': { name: 'LACALUT', color: '#C33A2E', logoUrl: '' },
+    'ACM': { name: 'ACM', color: '#6B7078', logoUrl: '' }
   };
 
   let categories = [
@@ -1369,7 +1409,6 @@
     {id:'hair', label:'العناية بالشعر', icon:'hair'}
   ];
 
-  // كاتلوج أولي احتياطي لضمان عدم ظهور الموقع فارغاً
   const initialDefaultProducts = [
     {id:'1', name:'كريم سيرافي مرطب للبشرة الجافة', brand:'Cerave', category:'moisturizer', size:'236 مل', price:25000, rating:4.8, reviews:126, type:'jar', inStock:true, isSpecialOffer:false, views:1, orderCount:0, description:'كريم مرطب غني بالسيراميدات وحمض الهيالورونيك، يرمم حاجز البشرة ويمنحها ترطيباً يدوم 24 ساعة.', ingredients:'Ceramides, Hyaluronic Acid, Glycerin', usage:'يوضع على الوجه والجسم صباحاً ومساءً.'},
     {id:'2', name:'رفيول حل نياسيناميد 10% + زنك', brand:'REVUELE', category:'serum', size:'30 مل', price:18000, rating:4.7, reviews:98, type:'bottle', inStock:true, isSpecialOffer:false, views:1, orderCount:0, description:'سيروم مركّز يقلل من ظهور المسام الواسعة ويوازن إفراز الدهون.', ingredients:'Niacinamide 10%, Zinc PCA', usage:'تُوضع نقاط على بشرة نظيفة مساءً.'},
@@ -1414,6 +1453,16 @@
   function findProduct(id) { return products.find(p => String(p.id) === String(id)); }
   function starIcon() { return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1z"/></svg>`; }
   function saveLocalState() { localStorage.setItem('qutn_cart', JSON.stringify(cart)); localStorage.setItem('qutn_wishlist', JSON.stringify([...wishlist])); }
+
+  function getBrandColor(brandName) {
+    if (brandsData[brandName] && brandsData[brandName].color) return brandsData[brandName].color;
+    return hashColor(brandName || 'Qutn');
+  }
+
+  function getBrandLogo(brandName) {
+    if (brandsData[brandName] && brandsData[brandName].logoUrl) return brandsData[brandName].logoUrl;
+    return '';
+  }
 
   function isInAppBrowser() {
     const ua = navigator.userAgent || navigator.vendor || window.opera || '';
@@ -1757,7 +1806,7 @@
 
     if (scope === 'brand') {
       lbl.textContent = 'اختيار الماركة / الشركة *';
-      const brands = Object.keys(brandColors);
+      const brands = Object.keys(brandsData);
       sel.innerHTML = brands.map(b => `<option value="${b}">${b}</option>`).join('');
     } else if (scope === 'category') {
       lbl.textContent = 'اختيار القسم *';
@@ -1870,6 +1919,109 @@
         </div>`).join('')}`;
   }
 
+  // ============ BRAND MANAGEMENT WITH LOGOS & FULL EDITING ============
+  function previewBrandLogoImg(url) {
+    const wrap = document.getElementById('adminBrandLogoPreviewWrap');
+    const img = document.getElementById('adminBrandLogoPreviewImg');
+    if (url) { img.src = url; wrap.style.display = 'block'; }
+    else { wrap.style.display = 'none'; }
+  }
+
+  function editAdminBrand(brandKey) {
+    const b = brandsData[brandKey];
+    if (!b) return;
+    document.getElementById('adminBrandOriginalKey').value = brandKey;
+    document.getElementById('adminBrandNameInput').value = b.name || brandKey;
+    document.getElementById('adminBrandColorInput').value = b.color || '#E85D8A';
+    document.getElementById('adminBrandLogoInput').value = b.logoUrl || '';
+    if (b.logoUrl) previewBrandLogoImg(b.logoUrl);
+    
+    document.getElementById('adminBrandFormTitle').textContent = '✏️ تعديل الماركة: ' + (b.name || brandKey);
+    document.getElementById('adminSaveBrandBtn').textContent = '💾 حفظ التعديلات';
+    document.getElementById('adminCancelBrandBtn').style.display = 'block';
+    window.scrollTo({ top: document.getElementById('adminSecBrands').offsetTop - 60, behavior: 'smooth' });
+  }
+
+  function cancelAdminBrandEdit() {
+    document.getElementById('adminBrandOriginalKey').value = '';
+    document.getElementById('adminBrandNameInput').value = '';
+    document.getElementById('adminBrandColorInput').value = '#E85D8A';
+    document.getElementById('adminBrandLogoInput').value = '';
+    document.getElementById('adminBrandLogoPreviewWrap').style.display = 'none';
+    document.getElementById('adminBrandFormTitle').textContent = '🏷️ إضافة ماركة جديدة';
+    document.getElementById('adminSaveBrandBtn').textContent = '+ إضافة الماركة للشريط';
+    document.getElementById('adminCancelBrandBtn').style.display = 'none';
+  }
+
+  async function handleSaveBrand(e) {
+    e.preventDefault();
+    if (!isCurrentUserAdmin()) return;
+    const originalKey = document.getElementById('adminBrandOriginalKey').value.trim();
+    const name = document.getElementById('adminBrandNameInput').value.trim();
+    const color = document.getElementById('adminBrandColorInput').value;
+    const logoUrl = document.getElementById('adminBrandLogoInput').value.trim();
+    if (!name) return;
+
+    if (originalKey && originalKey !== name) {
+      delete brandsData[originalKey];
+    }
+
+    brandsData[name] = { name, color, logoUrl };
+    renderAdminBrandsList();
+    renderBrandStrip();
+
+    if (db) {
+      try {
+        await db.collection('store_settings').doc('general').set({ brandsData }, { merge: true });
+        showToast(`تم حفظ وتحديث ماركة "${name}" بنجاح ✓`);
+      } catch (err) {
+        console.error(err);
+        showToast('حدث خطأ أثناء حفظ الماركة');
+      }
+    }
+    cancelAdminBrandEdit();
+  }
+
+  async function deleteAdminBrand(brandKey) {
+    if (!isCurrentUserAdmin()) return;
+    if (confirm(`هل أنتِ متأكدة من حذف ماركة "${brandKey}" من شريط الماركات؟`)) {
+      delete brandsData[brandKey];
+      renderAdminBrandsList();
+      renderBrandStrip();
+      if (db) {
+        try {
+          await db.collection('store_settings').doc('general').set({ brandsData }, { merge: true });
+          showToast('تم حذف الماركة بنجاح ✓');
+        } catch (err) { console.error(err); }
+      }
+    }
+  }
+
+  function renderAdminBrandsList() {
+    const container = document.getElementById('adminBrandsListGrid');
+    if (!container) return;
+    const keys = Object.keys(brandsData);
+    container.innerHTML = keys.map(k => {
+      const b = brandsData[k];
+      return `
+        <div style="background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="width:36px; height:36px; border-radius:8px; border:1px solid var(--line); background:#fff; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+              ${b.logoUrl ? `<img src="${b.logoUrl}" style="width:100%; height:100%; object-fit:contain;">` : `<span style="width:14px; height:14px; border-radius:50%; background:${b.color};"></span>`}
+            </div>
+            <div>
+              <div style="font-weight:800; font-size:13.5px;">${b.name || k}</div>
+              <div style="font-size:11px; color:var(--text-soft); font-family:monospace;">${b.color}</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button onclick="editAdminBrand('${k.replace(/'/g, "\\'")}')" style="background:#E0E7FF; color:#3730A3; padding:5px 10px; border-radius:8px; font-weight:800; font-size:11px;">تعديل ✏️</button>
+            <button onclick="deleteAdminBrand('${k.replace(/'/g, "\\'")}')" style="background:#FEE2E2; color:var(--red); padding:5px 10px; border-radius:8px; font-weight:800; font-size:11px;">حذف 🗑️</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
   // ============ STORE CUSTOMIZATION & SETTINGS ============
   async function handleSaveCustomization(e) {
     e.preventDefault();
@@ -1922,7 +2074,7 @@
     db.collection('store_settings').doc('general').onSnapshot(doc => {
       if (doc.exists) {
         storeSettings = { ...storeSettings, ...doc.data() };
-        if (storeSettings.brandColors) brandColors = { ...brandColors, ...storeSettings.brandColors };
+        if (storeSettings.brandsData) brandsData = { ...brandsData, ...storeSettings.brandsData };
         applyStoreSettings();
         renderPromoBanners();
         renderBrandStrip();
@@ -1941,7 +2093,7 @@
       }
     }, err => console.warn('Categories sync fallback:', err));
 
-    // 3. Products Listener & Seeding
+    // 3. Products Listener
     db.collection('products').onSnapshot(async snap => {
       if (snap.empty) {
         try {
@@ -1960,8 +2112,8 @@
       products = loaded;
 
       products.forEach(p => {
-        if (p.brand && !brandColors[p.brand]) {
-          brandColors[p.brand] = hashColor(p.brand);
+        if (p.brand && !brandsData[p.brand]) {
+          brandsData[p.brand] = { name: p.brand, color: hashColor(p.brand), logoUrl: '' };
         }
       });
 
@@ -1974,7 +2126,7 @@
     recordRealVisit();
   }
 
-  // ============ INLINE & ADMIN PRODUCT ACTIONS ============
+  // ============ INLINE PRODUCT ACTIONS ============
   async function quickEditPrice(id, currentPrice) {
     if (!isCurrentUserAdmin() || !db) return;
     const newPriceStr = prompt('تعديل السعر المباشر (د.ع):', currentPrice);
@@ -2098,50 +2250,8 @@
     else { box.style.display = 'none'; }
   }
 
-  // ============ BRANDS MANAGEMENT ============
-  async function handleAddBrand(e) {
-    e.preventDefault();
-    if (!isCurrentUserAdmin()) return;
-    const name = document.getElementById('newBrandName').value.trim();
-    const color = document.getElementById('newBrandColor').value;
-    if (!name) return;
-    brandColors[name] = color;
-    renderAdminBrandsList();
-    renderBrandStrip();
-    if (db) {
-      await db.collection('store_settings').doc('general').set({ brandColors }, { merge: true });
-    }
-    document.getElementById('newBrandName').value = '';
-    showToast(`تمت إضافة ماركة ${name} للشريط بنجاح ✓`);
-  }
-
-  async function handleDeleteBrand(name) {
-    if (!isCurrentUserAdmin()) return;
-    if (confirm(`حذف ماركة "${name}" من الشريط؟`)) {
-      delete brandColors[name];
-      renderAdminBrandsList();
-      renderBrandStrip();
-      if (db) {
-        await db.collection('store_settings').doc('general').set({ brandColors }, { merge: true });
-      }
-      showToast('تم حذف الماركة من الشريط');
-    }
-  }
-
-  function renderAdminBrandsList() {
-    const container = document.getElementById('adminBrandsListGrid');
-    if (!container) return;
-    const names = Object.keys(brandColors);
-    container.innerHTML = names.map(b => `
-      <div style="background:#fff; border:1px solid var(--line); border-radius:10px; padding:6px 12px; display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:800;">
-        <span style="width:12px; height:12px; border-radius:50%; background:${brandColors[b]};"></span>
-        <span>${b}</span>
-        <button onclick="handleDeleteBrand('${b.replace(/'/g, "\\'")}')" style="color:var(--red); font-size:11px; margin-inline-start:4px;">✕</button>
-      </div>`).join('');
-  }
-
   function switchAdminSection(sec) {
-    ['Stats', 'Cats', 'Products', 'Offers', 'Notifs', 'Brands', 'Design', 'Code'].forEach(k => {
+    ['Stats', 'Cats', 'Products', 'Offers', 'Brands', 'Notifs', 'Design', 'Code'].forEach(k => {
       const btn = document.getElementById('btnTabV' + k);
       const el = document.getElementById('adminSec' + k);
       const isTarget = (k.toLowerCase() === sec.toLowerCase());
@@ -2166,7 +2276,10 @@
     else if (currentView === 'wishlist') renderWishlist();
     else if (currentView === 'cart') renderCart();
     else if (currentView === 'checkout') renderCheckoutSummary();
-    else if (currentView === 'product' && currentProductId) openProduct(currentProductId);
+    else if (currentView === 'product' && currentProductId) {
+      const p = findProduct(currentProductId);
+      if (p) renderProductDetailDOM(p);
+    }
   }
 
   function renderHome() {
@@ -2197,12 +2310,22 @@
 
   function renderBrandStrip() {
     const strip = document.getElementById('brandStrip');
-    const brandNames = Object.keys(brandColors);
-    const allChip = `<div class="brand-chip all-chip ${homeActiveBrand === 'all' ? 'active' : ''}" onclick="selectHomeBrand('all')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-      الكل
-    </div>`;
-    strip.innerHTML = allChip + brandNames.map(b => `<div class="brand-chip ${homeActiveBrand === b ? 'active' : ''}" onclick="selectHomeBrand('${b}')">${b}</div>`).join('');
+    const brandKeys = Object.keys(brandsData);
+    const allChip = `
+      <div class="brand-chip all-chip ${homeActiveBrand === 'all' ? 'active' : ''}" onclick="selectHomeBrand('all')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        <span>الكل</span>
+      </div>`;
+      
+    strip.innerHTML = allChip + brandKeys.map(k => {
+      const b = brandsData[k];
+      const isActive = homeActiveBrand === k;
+      return `
+        <div class="brand-chip ${isActive ? 'active' : ''}" onclick="selectHomeBrand('${k.replace(/'/g, "\\'")}')">
+          ${b.logoUrl ? `<img class="brand-chip-img" src="${b.logoUrl}" alt="${b.name}">` : `<span class="brand-chip-dot" style="background:${b.color};"></span>`}
+          <span>${b.name || k}</span>
+        </div>`;
+    }).join('');
   }
 
   function renderOffers() {
@@ -2226,13 +2349,13 @@
     const isAdmin = isCurrentUserAdmin();
 
     el.innerHTML = list.map(p => {
-      const color = brandColors[p.brand] || hashColor(p.brand || 'Qutn');
+      const color = getBrandColor(p.brand);
       const discountPct = p.oldPrice ? Math.round((1 - p.price/p.oldPrice) * 100) : null;
       const isWished = wishlist.has(p.id);
       const inStock = (p.inStock !== false);
 
       return `
-        <div class="product-card" onclick="openProduct('${p.id}')">
+        <div class="product-card" onclick="openProduct('${p.id}', true)">
           <button class="wish-btn ${isWished ? 'active' : ''}" onclick="event.stopPropagation(); toggleWishlist('${p.id}')">
             <svg viewBox="0 0 24 24" fill="${isWished ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.5-4.9-10-9.5C.5 7.8 2.7 4 6.5 4 9 4 11 5.5 12 7c1-1.5 3-3 5.5-3 3.8 0 6 3.8 4.5 7.5C19.5 16.1 12 21 12 21Z"/></svg>
           </button>
@@ -2271,20 +2394,9 @@
     renderCurrentActiveView();
   }
 
-  // ============ PRODUCT DETAILS ============
-  async function openProduct(id) {
-    currentProductId = id;
-    pdQty = 1;
-    const p = findProduct(id);
-    if (!p) return;
-
-    if (db) {
-      db.collection('products').doc(String(id)).set({
-        views: firebase.firestore.FieldValue.increment(1)
-      }, { merge: true }).catch(e => console.warn(e));
-    }
-
-    const color = brandColors[p.brand] || hashColor(p.brand || 'Qutn');
+  // ============ PRODUCT DETAILS (SCROLL & INFINITE LOOP FIXED) ============
+  function renderProductDetailDOM(p) {
+    const color = getBrandColor(p.brand);
     const pdImgEl = document.getElementById('pdImage');
     pdImgEl.style.background = color + '18';
     pdImgEl.innerHTML = p.imageUrl ? `<img src="${p.imageUrl}">` : (icons[p.type] || icons.bottle)(color);
@@ -2310,14 +2422,31 @@
     document.getElementById('pdQtyVal').textContent = pdQty;
 
     document.getElementById('pdAddBtn').onclick = () => {
-      if (inStock) addToCart(id, false, pdQty);
+      if (inStock) addToCart(p.id, false, pdQty);
       else showToast('عذراً، المنتج غير متوفر حالياً');
     };
+  }
 
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    document.getElementById('view-product').classList.add('active');
-    currentView = 'product';
-    window.scrollTo({top:0, behavior:'instant'});
+  function openProduct(id, isUserClick = false) {
+    currentProductId = id;
+    pdQty = 1;
+    const p = findProduct(id);
+    if (!p) return;
+
+    if (isUserClick && db) {
+      db.collection('products').doc(String(id)).set({
+        views: firebase.firestore.FieldValue.increment(1)
+      }, { merge: true }).catch(e => console.warn(e));
+    }
+
+    renderProductDetailDOM(p);
+
+    if (isUserClick) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById('view-product').classList.add('active');
+      currentView = 'product';
+      window.scrollTo({top: 0, behavior: 'instant'});
+    }
   }
 
   function goBackFromProduct() { if (listingMode) showListingView(); else showView('home'); }
@@ -2387,7 +2516,7 @@
       const p = findProduct(id);
       if (!p) return '';
       const qty = cart[id];
-      const color = brandColors[p.brand] || hashColor(p.brand || 'Qutn');
+      const color = getBrandColor(p.brand);
       return `
         <div class="cart-item">
           <div class="thumb" style="background:${color}18;">
@@ -2501,6 +2630,7 @@
       } else {
         renderRealAnalyticsView();
         renderAdminCategoriesList();
+        renderAdminBrandsList();
       }
     }
   }
