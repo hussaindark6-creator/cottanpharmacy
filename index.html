@@ -803,7 +803,7 @@
   </div>
 </div>
 
-<!-- ============ CART VIEW (WITH PROMO CODE SUPPORT) ============ -->
+<!-- ============ CART VIEW ============ -->
 <div class="view" id="view-cart">
   <div class="wrap">
     <div class="section-head" style="margin-top:14px;">
@@ -1534,7 +1534,7 @@
       db = firebase.firestore();
       isFirebaseConfigured = true;
 
-      // Force LOCAL persistence for Safari & iOS devices
+      // Ensure persistence is set at startup (not inside the click handler)
       auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(err => {
         console.warn("Persistence set fallback:", err);
       });
@@ -1986,17 +1986,19 @@
     const topOrdersEl = document.getElementById('adminTopOrderedList');
     if (topOrdersEl) {
       const topOrdered = [...products].filter(p => (p.orderCount || 0) > 0).sort((a,b) => (b.orderCount || 0) - (a.orderCount || 0)).slice(0, 5);
-      if (topOrdered.length === 0) {
-        topOrdersEl.innerHTML = `<div class="no-results" style="padding:20px 0;">لا توجد طلبات مسجلة حتى الآن.</div>`;
-      } else {
-        topOrdersEl.innerHTML = topOrdered.map((p, idx) => `
-          <div class="admin-rank-item">
-            <div style="display:flex; align-items:center; gap:8px;">
-              <span class="admin-rank-badge">${idx + 1}</span>
-              <span style="font-weight:700;">${sanitizeText(p.name)} (${sanitizeText(p.brand)})</span>
-            </div>
-            <span class="mono" style="font-weight:800; color:var(--accent);">${p.orderCount} طلب شراء</span>
-          </div>`).join('');
+      if (topOrdersEl) {
+        if (topOrdered.length === 0) {
+          topOrdersEl.innerHTML = `<div class="no-results" style="padding:20px 0;">لا توجد طلبات مسجلة حتى الآن.</div>`;
+        } else {
+          topOrdersEl.innerHTML = topOrdered.map((p, idx) => `
+            <div class="admin-rank-item">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="admin-rank-badge">${idx + 1}</span>
+                <span style="font-weight:700;">${sanitizeText(p.name)} (${sanitizeText(p.brand)})</span>
+              </div>
+              <span class="mono" style="font-weight:800; color:var(--accent);">${p.orderCount} طلب شراء</span>
+            </div>`).join('');
+        }
       }
     }
 
@@ -2518,7 +2520,7 @@
 
     try {
       await apiFetch("/api/admin/settings", { method: "POST", body: JSON.stringify(newSettings) });
-      if (db) await db.collection('store_settings').doc('general').set(newSettings, { merge: true });
+      if (db) await db.collection('store_settings').doc('general').set({ brandsData }, { merge: true });
       showToast('تم حفظ وتطبيق جميع التعديلات سحابياً بنجاح ✓');
     } catch (err) {
       console.error(err);
@@ -3218,7 +3220,7 @@
     renderProductGrid('listingGrid', list);
   }
 
-  // ============ ACCOUNT & AUTH (FIXED FOR SAFARI & PERSISTENCE) ============
+  // ============ ACCOUNT & AUTH (SAFARI SYNCHRONOUS POPUP FIX) ============
   function updateUserHeaderProfile() {
     const chipAvatar = document.getElementById('userChipAvatar');
     const chipName = document.getElementById('userChipName');
@@ -3275,7 +3277,7 @@
     }
   }
 
-  async function signInWithGoogle() {
+  function signInWithGoogle() {
     if (!auth) {
       showToast('خدمة تسجيل الدخول غير مهيأة');
       return;
@@ -3287,31 +3289,28 @@
       return;
     }
 
-    try {
-      // Ensure persistence is set to LOCAL
-      await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-      const provider = new firebase.auth.GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
 
-      // Direct Popup (Keeps parent window open, prevents Safari session drops)
-      const res = await auth.signInWithPopup(provider);
-      if (res && res.user) {
-        currentUser = res.user;
-        showToast(`أهلاً بكِ ${sanitizeText(currentUser.displayName || '')} 🌸`);
-        updateUserHeaderProfile();
-        renderAccountView();
-        updateAdminInterfaceState();
-      }
-    } catch (e) {
-      console.error("Google Auth Error:", e);
-      if (e.code === 'auth/popup-blocked') {
-        showToast('يرجى السماح بالنوافذ المنبثقة (Popups) في إعدادات سفاري');
-      } else if (e.code === 'auth/unauthorized-domain') {
-        showToast('⚠️ يرجى إضافة دومين الموقع في قائمة Authorized Domains في Firebase');
-      } else if (e.code !== 'auth/popup-closed-by-user') {
-        showToast('تعذر تسجيل الدخول (' + (e.code || 'يرجى المحاولة مجدداً') + ')');
-      }
-    }
+    // Open popup synchronously on user click to prevent Safari popup blocker
+    auth.signInWithPopup(provider)
+      .then(res => {
+        if (res && res.user) {
+          currentUser = res.user;
+          showToast(`أهلاً بكِ ${sanitizeText(currentUser.displayName || '')} 🌸`);
+          updateUserHeaderProfile();
+          renderAccountView();
+          updateAdminInterfaceState();
+        }
+      })
+      .catch(e => {
+        console.error("Google Auth Error:", e);
+        if (e.code === 'auth/unauthorized-domain') {
+          showToast('⚠️ يرجى إضافة دومين الموقع في قائمة Authorized Domains في Firebase');
+        } else if (e.code !== 'auth/popup-closed-by-user') {
+          showToast('تعذر تسجيل الدخول (' + (e.code || 'يرجى المحاولة مجدداً') + ')');
+        }
+      });
   }
 
   async function handleSignOut() {
