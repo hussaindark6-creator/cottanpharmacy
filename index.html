@@ -711,7 +711,7 @@
   </div>
 </div>
 
-<!-- ============ PRODUCT DETAIL VIEW (SCROLLING FIXED) ============ -->
+<!-- ============ PRODUCT DETAIL VIEW ============ -->
 <div class="view" id="view-product">
   <div class="wrap">
     <div class="pd-back" onclick="goBackFromProduct()">
@@ -794,7 +794,7 @@
       </div>
     </div>
     <div id="checkoutSummaryBlock"></div>
-    <button class="checkout-btn" onclick="confirmOrder()">
+    <button class="checkout-btn" id="confirmOrderBtn" onclick="confirmOrder()">
       <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.7 14.2c-.2.6-1.4 1.2-1.9 1.2-.5.1-1.1.1-1.8-.1-.4-.1-1-.3-1.7-.6-3-1.3-4.9-4.3-5.1-4.5-.1-.2-1.2-1.6-1.2-3s.8-2.2 1.1-2.5c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5.2.5.8 1.9.8 2.1.1.2.1.3 0 .5-.1.2-.1.3-.3.5-.1.2-.3.4-.4.5-.2.2-.3.4-.1.7.2.3.9 1.5 2 2.4 1.3 1.2 2.4 1.5 2.8 1.7.3.2.5.1.7-.1l.9-1c.2-.3.4-.2.7-.1l1.8.9c.3.1.5.2.5.4.1.2.1.7-.1 1.3Z"/></svg>
       تأكيد الطلب وحفظه سحابياً
     </button>
@@ -1038,7 +1038,7 @@
               </select>
             </div>
           </div>
-          <button type="submit" class="admin-btn-save" style="background:#b01e4a;">⚡ تطبيق الخصم فورياً وحفظه</button>
+          <button type="submit" class="admin-btn-save" id="adminApplyDiscountBtn" style="background:#b01e4a;">⚡ تطبيق الخصم فورياً وحفظه</button>
         </form>
       </div>
 
@@ -1069,7 +1069,7 @@
             <label>رابط صورة العرض (اختياري)</label>
             <input type="url" id="promoCardImgUrl" placeholder="https://...">
           </div>
-          <button type="submit" class="admin-btn-save">💾 حفظ بطاقة العرض سحابياً</button>
+          <button type="submit" class="admin-btn-save" id="adminSavePromoCardBtn">💾 حفظ بطاقة العرض سحابياً</button>
         </form>
       </div>
     </div>
@@ -1129,7 +1129,7 @@
               <option value="urgent">تحديث هام ⚡</option>
             </select>
           </div>
-          <button type="submit" class="admin-btn-save" style="background:#2563EB;">🚀 إرسال الإشعار فوراً</button>
+          <button type="submit" class="admin-btn-save" id="adminSendNotifBtn" style="background:#2563EB;">🚀 إرسال الإشعار فوراً</button>
         </form>
       </div>
 
@@ -1146,11 +1146,11 @@
           <legend>🚚 إعدادات وتكلفة التوصيل لجميع المحافظات</legend>
           <div style="display:flex; gap:10px;">
             <div class="form-field" style="flex:1;">
-              <label>سعر التوصيل العادي (د.ع)</label>
+              <label>سعر التوصيل العادي (د.ع) *</label>
               <input type="number" id="adminDeliveryStandard" value="4000" min="0" required>
             </div>
             <div class="form-field" style="flex:1;">
-              <label>سعر التوصيل السريع (د.ع)</label>
+              <label>سعر التوصيل السريع (د.ع) *</label>
               <input type="number" id="adminDeliveryExpress" value="8000" min="0" required>
             </div>
           </div>
@@ -1187,7 +1187,7 @@
             <input type="url" id="adminBannerImgInput" placeholder="https://...">
           </div>
         </fieldset>
-        <button type="submit" class="admin-btn-save">✨ حفظ وتطبيق جميع التعديلات سحابياً</button>
+        <button type="submit" class="admin-btn-save" id="adminSaveDesignBtn">✨ حفظ وتطبيق جميع التعديلات سحابياً</button>
       </form>
     </div>
 
@@ -1261,11 +1261,11 @@
       <form id="consultForm" onsubmit="handleConsultSubmit(event)">
         <div style="display:flex; gap:10px;">
           <div class="form-field" style="flex:1.6;">
-            <label>الاسم الكامل</label>
+            <label>الاسم الكامل *</label>
             <input type="text" id="consultName" placeholder="مثال: سارة علي" required>
           </div>
           <div class="form-field" style="flex:1;">
-            <label>العمر</label>
+            <label>العمر *</label>
             <input type="number" id="consultAge" placeholder="25" required min="1" max="100">
           </div>
         </div>
@@ -1281,11 +1281,11 @@
         </div>
 
         <div class="form-field">
-          <label>نوع البشرة أو المشكلة بالتفصيل</label>
+          <label>نوع البشرة أو المشكلة بالتفصيل *</label>
           <textarea id="consultDesc" rows="3" placeholder="صفي مشكلة بشرتك أو اسألي عن روتين محدد..." required></textarea>
         </div>
 
-        <button type="submit" class="consult-submit-btn">
+        <button type="submit" class="consult-submit-btn" id="consultSubmitBtn">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.7 14.2c-.2.6-1.4 1.2-1.9 1.2-.5.1-1.1.1-1.8-.1-.4-.1-1-.3-1.7-.6-3-1.3-4.9-4.3-5.1-4.5-.1-.2-1.2-1.6-1.2-3s.8-2.2 1.1-2.5c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5.2.5.8 1.9.8 2.1.1.2.1.3 0 .5-.1.2-.1.3-.3.5-.1.2-.3.4-.4.5-.2.2-.3.4-.1.7.2.3.9 1.5 2 2.4 1.3 1.2 2.4 1.5 2.8 1.7.3.2.5.1.7-.1l.9-1c.2-.3.4-.2.7-.1l1.8.9c.3.1.5.2.5.4.1.2.1.7-.1 1.3Z"/></svg>
           إرسال الاستشارة ومتابعتها على واتساب
         </button>
@@ -1321,7 +1321,7 @@
     <span class="badge-count" id="bnCartBadge" style="display:none;">0</span>
   </button>
   <button class="bn-item" onclick="showView('admin')" id="bn-admin" style="display:none; color:#F59E0B;">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     <span class="lbl">الأدمن</span>
   </button>
 </nav>
@@ -1356,6 +1356,59 @@
     console.warn("Firebase initialization error:", err);
   }
 
+  // ============ SECURITY & SANITIZATION (XSS PREVENTION) ============
+  function sanitizeText(str) {
+    if (typeof str !== 'string') return str == null ? '' : String(str);
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function sanitizeUrl(url) {
+    if (!url || typeof url !== 'string') return '';
+    const clean = url.trim();
+    if (/^https?:\/\//i.test(clean) || clean.startsWith('/') || clean.startsWith('./') || clean.startsWith('data:image/')) {
+      return encodeURI(clean).replace(/"/g, '%22').replace(/'/g, '%27').replace(/</g, '%3C').replace(/>/g, '%3E');
+    }
+    return '';
+  }
+
+  // ============ STRICT AUTHENTICATION VERIFICATION ============
+  function isCurrentUserAdmin() {
+    const user = auth ? auth.currentUser : currentUser;
+    return !!(user && user.email && user.email.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase());
+  }
+
+  function assertAdmin() {
+    if (!isFirebaseConfigured || !auth) {
+      showToast('خطأ: لم يتم ضبط إعدادات Firebase');
+      return false;
+    }
+    const user = auth.currentUser;
+    if (!user || !user.email || user.email.toLowerCase().trim() !== ADMIN_EMAIL.toLowerCase()) {
+      showToast('⚠️ غير مصرح: هذه العملية مخصصة للمشرف فقط.');
+      console.warn('Unauthorized action blocked.');
+      return false;
+    }
+    return true;
+  }
+
+  // ============ RATE LIMITING & ACTION LOCKER ============
+  const actionLocks = new Map();
+  function lockAction(actionKey, cooldownMs = 1500) {
+    const now = Date.now();
+    const last = actionLocks.get(actionKey) || 0;
+    if (now - last < cooldownMs) {
+      showToast('⏳ يرجى الانتظار لحظة قبل المحاولة مجدداً...');
+      return false;
+    }
+    actionLocks.set(actionKey, now);
+    return true;
+  }
+
   const icons = {
     bottle: c => `<svg viewBox="0 0 24 24" fill="none"><path d="M10 2h4v3.2l1.4 1.6c.4.45.6 1 .6 1.6V20a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V8.4c0-.6.2-1.15.6-1.6L9 5.2V2Z" fill="${c}" fill-opacity=".14" stroke="${c}" stroke-width="1.5"/><rect x="9" y="11" width="6" height="8.4" rx="0.8" fill="${c}" fill-opacity=".26"/></svg>`,
     jar: c => `<svg viewBox="0 0 24 24" fill="none"><rect x="5" y="9" width="14" height="12" rx="2.6" fill="${c}" fill-opacity=".14" stroke="${c}" stroke-width="1.5"/><rect x="6.4" y="11" width="11.2" height="8.4" rx="1.4" fill="${c}" fill-opacity=".26"/><rect x="4.4" y="6" width="15.2" height="3.4" rx="1.4" fill="${c}" fill-opacity=".3" stroke="${c}" stroke-width="1.3"/></svg>`,
@@ -1380,7 +1433,6 @@
     return `hsl(${Math.abs(hash) % 360}, 50%, 62%)`;
   }
 
-  // قاعدة بيانات الماركات والشعارات الافتراضية
   let brandsData = {
     'Cerave': { name: 'Cerave', color: '#5FAE6E', logoUrl: '' },
     'Simple': { name: 'Simple', color: '#C97F79', logoUrl: '' },
@@ -1445,22 +1497,18 @@
     ]
   };
 
-  function isCurrentUserAdmin() {
-    return !!(currentUser && currentUser.email && currentUser.email.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase());
-  }
-
-  function fmtPrice(n) { return (n || 0).toLocaleString('en-US') + ' د.ع'; }
+  function fmtPrice(n) { return (Number(n) || 0).toLocaleString('en-US') + ' د.ع'; }
   function findProduct(id) { return products.find(p => String(p.id) === String(id)); }
   function starIcon() { return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1z"/></svg>`; }
   function saveLocalState() { localStorage.setItem('qutn_cart', JSON.stringify(cart)); localStorage.setItem('qutn_wishlist', JSON.stringify([...wishlist])); }
 
   function getBrandColor(brandName) {
-    if (brandsData[brandName] && brandsData[brandName].color) return brandsData[brandName].color;
+    if (brandsData[brandName] && brandsData[brandName].color) return sanitizeText(brandsData[brandName].color);
     return hashColor(brandName || 'Qutn');
   }
 
   function getBrandLogo(brandName) {
-    if (brandsData[brandName] && brandsData[brandName].logoUrl) return brandsData[brandName].logoUrl;
+    if (brandsData[brandName] && brandsData[brandName].logoUrl) return sanitizeUrl(brandsData[brandName].logoUrl);
     return '';
   }
 
@@ -1556,7 +1604,7 @@
           <div class="admin-rank-item">
             <div style="display:flex; align-items:center; gap:8px;">
               <span class="admin-rank-badge">${idx + 1}</span>
-              <span style="font-weight:700;">${p.name} (${p.brand})</span>
+              <span style="font-weight:700;">${sanitizeText(p.name)} (${sanitizeText(p.brand)})</span>
             </div>
             <span class="mono" style="font-weight:800; color:var(--accent);">${p.orderCount} طلب شراء</span>
           </div>`).join('');
@@ -1573,7 +1621,7 @@
           <div class="admin-rank-item">
             <div style="display:flex; align-items:center; gap:8px;">
               <span class="admin-rank-badge">${idx + 1}</span>
-              <span style="font-weight:700;">${p.name}</span>
+              <span style="font-weight:700;">${sanitizeText(p.name)}</span>
             </div>
             <span class="mono" style="font-weight:800; color:#4B5563;">${p.views} مشاهدة</span>
           </div>`).join('');
@@ -1613,10 +1661,10 @@
           return `
             <div class="notif-item">
               <div class="notif-item-header">
-                <span class="notif-item-title">${n.title}</span>
-                <span class="notif-item-time mono">${timeStr}</span>
+                <span class="notif-item-title">${sanitizeText(n.title)}</span>
+                <span class="notif-item-time mono">${sanitizeText(timeStr)}</span>
               </div>
-              <p class="notif-item-desc">${n.body}</p>
+              <p class="notif-item-desc">${sanitizeText(n.body)}</p>
             </div>`;
         }).join('');
       }
@@ -1627,10 +1675,10 @@
       adminHistory.innerHTML = notifications.map(n => `
         <div style="background:#fff; border:1px solid var(--line); border-radius:10px; padding:10px; display:flex; justify-content:space-between; align-items:center;">
           <div>
-            <div style="font-weight:800; font-size:13px; color:#b01e4a;">${n.title}</div>
-            <div style="font-size:12px; color:var(--text-soft);">${n.body}</div>
+            <div style="font-weight:800; font-size:13px; color:#b01e4a;">${sanitizeText(n.title)}</div>
+            <div style="font-size:12px; color:var(--text-soft);">${sanitizeText(n.body)}</div>
           </div>
-          <button onclick="deleteNotification('${n.id}')" style="color:var(--red); font-size:12px; font-weight:800;">حذف 🗑️</button>
+          <button onclick="deleteNotification('${sanitizeText(n.id)}')" style="color:var(--red); font-size:12px; font-weight:800;">حذف 🗑️</button>
         </div>`).join('');
     }
   }
@@ -1646,14 +1694,23 @@
 
   async function handleSendBroadcastNotification(e) {
     e.preventDefault();
-    if (!isCurrentUserAdmin() || !db) return;
+    if (!assertAdmin()) return;
+    if (!lockAction('sendBroadcastNotif', 2000)) return;
+
     const title = document.getElementById('notifTitleInput').value.trim();
     const body = document.getElementById('notifBodyInput').value.trim();
     const type = document.getElementById('notifTypeInput').value;
 
+    if (!title || !body) {
+      showToast('يرجى تعبئة عنوان ونص الإشعار بالكامل');
+      return;
+    }
+
     try {
       await db.collection('notifications').add({
-        title, body, type,
+        title: sanitizeText(title),
+        body: sanitizeText(body),
+        type: sanitizeText(type),
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
       document.getElementById('notifTitleInput').value = '';
@@ -1666,9 +1723,9 @@
   }
 
   async function deleteNotification(id) {
-    if (!isCurrentUserAdmin() || !db) return;
+    if (!assertAdmin()) return;
     if (confirm('حذف هذا الإشعار نهائياً؟')) {
-      await db.collection('notifications').doc(id).delete();
+      await db.collection('notifications').doc(String(id)).delete();
       showToast('تم حذف الإشعار بنجاح ✓');
     }
   }
@@ -1682,19 +1739,20 @@
 
     container.innerHTML = categories.map(c => {
       const count = products.filter(p => p.category === c.id).length;
+      const cleanImg = sanitizeUrl(c.imageUrl);
       return `
-        <div class="modern-cat-card" onclick="openCategory('${c.id}')">
+        <div class="modern-cat-card" onclick="openCategory('${sanitizeText(c.id)}')">
           <div class="modern-cat-icon">
-            ${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.label}">` : (catIcons[c.icon] || catIcons.jar)('var(--accent)')}
+            ${cleanImg ? `<img src="${cleanImg}" alt="${sanitizeText(c.label)}">` : (catIcons[c.icon] || catIcons.jar)('var(--accent)')}
           </div>
-          <h3 class="modern-cat-title">${c.label}</h3>
+          <h3 class="modern-cat-title">${sanitizeText(c.label)}</h3>
           <span class="modern-cat-count mono">${count} منتج</span>
         </div>`;
     }).join('');
 
     const catSelect = document.getElementById('adminProdCat');
     if (catSelect) {
-      catSelect.innerHTML = categories.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
+      catSelect.innerHTML = categories.map(c => `<option value="${sanitizeText(c.id)}">${sanitizeText(c.label)}</option>`).join('');
     }
   }
 
@@ -1703,20 +1761,21 @@
     if (!container) return;
     container.innerHTML = categories.map(c => {
       const count = products.filter(p => p.category === c.id).length;
+      const cleanImg = sanitizeUrl(c.imageUrl);
       return `
         <div style="background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between;">
           <div style="display:flex; align-items:center; gap:10px;">
             <div style="width:36px; height:36px; border-radius:8px; background:var(--surface); display:flex; align-items:center; justify-content:center; overflow:hidden;">
-              ${c.imageUrl ? `<img src="${c.imageUrl}">` : (catIcons[c.icon] || catIcons.jar)('var(--accent)')}
+              ${cleanImg ? `<img src="${cleanImg}">` : (catIcons[c.icon] || catIcons.jar)('var(--accent)')}
             </div>
             <div>
-              <div style="font-weight:800; font-size:13.5px;">${c.label} (${c.id})</div>
+              <div style="font-weight:800; font-size:13.5px;">${sanitizeText(c.label)} (${sanitizeText(c.id)})</div>
               <div style="font-size:11.5px; color:var(--text-soft);">${count} منتج مرتبط</div>
             </div>
           </div>
           <div style="display:flex; gap:6px;">
-            <button onclick="editAdminCategory('${c.id}')" style="background:#E0E7FF; color:#3730A3; padding:5px 10px; border-radius:8px; font-weight:800; font-size:11px;">تعديل ✏️</button>
-            <button onclick="deleteAdminCategory('${c.id}', '${c.label}')" style="background:#FEE2E2; color:var(--red); padding:5px 10px; border-radius:8px; font-weight:800; font-size:11px;">حذف 🗑️</button>
+            <button onclick="editAdminCategory('${sanitizeText(c.id)}')" style="background:#E0E7FF; color:#3730A3; padding:5px 10px; border-radius:8px; font-weight:800; font-size:11px;">تعديل ✏️</button>
+            <button onclick="deleteAdminCategory('${sanitizeText(c.id)}', '${sanitizeText(c.label)}')" style="background:#FEE2E2; color:var(--red); padding:5px 10px; border-radius:8px; font-weight:800; font-size:11px;">حذف 🗑️</button>
           </div>
         </div>`;
     }).join('');
@@ -1725,7 +1784,8 @@
   function previewAdminCatImg(url) {
     const box = document.getElementById('adminCatImgPreviewBox');
     const img = document.getElementById('adminCatImgPreviewEl');
-    if (url) { img.src = url; box.style.display = 'block'; }
+    const cleanUrl = sanitizeUrl(url);
+    if (cleanUrl) { img.src = cleanUrl; box.style.display = 'block'; }
     else { box.style.display = 'none'; }
   }
 
@@ -1756,14 +1816,21 @@
 
   async function handleAdminCategorySave(e) {
     e.preventDefault();
-    if (!isCurrentUserAdmin() || !db) return;
+    if (!assertAdmin()) return;
+    if (!lockAction('saveAdminCat', 1200)) return;
+
     const catKey = document.getElementById('adminCatKeyId').value.trim();
-    const id = document.getElementById('adminCatIdInput').value.trim().toLowerCase();
+    const id = document.getElementById('adminCatIdInput').value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
     const label = document.getElementById('adminCatLabel').value.trim();
-    const imageUrl = document.getElementById('adminCatImgUrl').value.trim();
+    const imageUrl = sanitizeUrl(document.getElementById('adminCatImgUrl').value.trim());
     const icon = document.getElementById('adminCatIconSelect').value;
 
-    const payload = { id: catKey || id, label, imageUrl, icon };
+    if (!id || !label) {
+      showToast('يرجى كتابة اسم القسم والمعرف بشكل صحيح');
+      return;
+    }
+
+    const payload = { id: catKey || id, label: sanitizeText(label), imageUrl, icon: sanitizeText(icon) };
 
     try {
       await db.collection('categories').doc(payload.id).set(payload, { merge: true });
@@ -1776,10 +1843,10 @@
   }
 
   async function deleteAdminCategory(catId, catLabel) {
-    if (!isCurrentUserAdmin() || !db) return;
+    if (!assertAdmin()) return;
     if (confirm(`هل أنتِ متأكدة من حذف القسم "${catLabel}"؟`)) {
       try {
-        await db.collection('categories').doc(catId).delete();
+        await db.collection('categories').doc(String(catId)).delete();
         showToast('تم حذف القسم بنجاح ✓');
       } catch (e) {
         console.error(e);
@@ -1807,23 +1874,30 @@
     if (scope === 'brand') {
       lbl.textContent = 'اختيار الماركة / الشركة *';
       const brands = Object.keys(brandsData);
-      sel.innerHTML = brands.map(b => `<option value="${b}">${b}</option>`).join('');
+      sel.innerHTML = brands.map(b => `<option value="${sanitizeText(b)}">${sanitizeText(b)}</option>`).join('');
     } else if (scope === 'category') {
       lbl.textContent = 'اختيار القسم *';
-      sel.innerHTML = categories.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
+      sel.innerHTML = categories.map(c => `<option value="${sanitizeText(c.id)}">${sanitizeText(c.label)}</option>`).join('');
     } else if (scope === 'product') {
       lbl.textContent = 'اختيار المنتج المحدد *';
-      sel.innerHTML = products.map(p => `<option value="${p.id}">${p.name} (${fmtPrice(p.price)})</option>`).join('');
+      sel.innerHTML = products.map(p => `<option value="${sanitizeText(p.id)}">${sanitizeText(p.name)} (${fmtPrice(p.price)})</option>`).join('');
     }
   }
 
   async function handleApplyBulkDiscount(e) {
     e.preventDefault();
-    if (!isCurrentUserAdmin() || !db) return;
+    if (!assertAdmin()) return;
+    if (!lockAction('bulkDiscount', 2000)) return;
+
     const scope = document.getElementById('discountScope').value;
     const target = document.getElementById('discountTargetSelect').value;
     const pct = Number(document.getElementById('discountPercentage').value);
     const action = document.getElementById('discountActionType').value;
+
+    if (action === 'apply' && (isNaN(pct) || pct < 1 || pct > 90)) {
+      showToast('يرجى إدخال نسبة خصم صحيحة بين 1% و 90%');
+      return;
+    }
 
     let targetProducts = [];
     if (scope === 'all') targetProducts = products;
@@ -1842,7 +1916,7 @@
         const docRef = db.collection('products').doc(String(p.id));
         if (action === 'apply') {
           const originalPrice = p.oldPrice || p.price;
-          const discountedPrice = Math.round(originalPrice * (1 - pct / 100));
+          const discountedPrice = Math.max(500, Math.round(originalPrice * (1 - pct / 100)));
           batch.set(docRef, {
             price: discountedPrice,
             oldPrice: originalPrice,
@@ -1875,15 +1949,27 @@
 
   async function handleSavePromoCard(e) {
     e.preventDefault();
-    if (!isCurrentUserAdmin() || !db) return;
+    if (!assertAdmin()) return;
+    if (!lockAction('savePromoCard', 1200)) return;
+
     const idx = Number(document.getElementById('promoCardIndex').value);
     if (!storeSettings.promoCards) storeSettings.promoCards = [{}, {}];
 
+    const title = document.getElementById('promoCardTitle').value.trim();
+    const desc = document.getElementById('promoCardDesc').value.trim();
+    const discount = document.getElementById('promoCardDiscountText').value.trim();
+    const img = sanitizeUrl(document.getElementById('promoCardImgUrl').value.trim());
+
+    if (!title || !desc || !discount) {
+      showToast('يرجى تعبئة كافة حقول بطاقة العرض');
+      return;
+    }
+
     storeSettings.promoCards[idx] = {
-      title: document.getElementById('promoCardTitle').value.trim(),
-      desc: document.getElementById('promoCardDesc').value.trim(),
-      discount: document.getElementById('promoCardDiscountText').value.trim(),
-      img: document.getElementById('promoCardImgUrl').value.trim()
+      title: sanitizeText(title),
+      desc: sanitizeText(desc),
+      discount: sanitizeText(discount),
+      img: img
     };
 
     try {
@@ -1907,23 +1993,27 @@
 
     el.innerHTML = `
       <div class="section-head"><span></span><h2>عروض مميزة 🎁</h2></div>
-      ${cards.map(c => `
-        <div class="promo-banner">
-          <div class="promo-thumb">${c.img ? `<img src="${c.img}">` : icons.bottle('#E85D8A')}</div>
-          <div class="promo-body">
-            <h3>${c.title}</h3>
-            <p>${c.desc}</p>
-            <div class="promo-discount">${c.discount}</div>
-            <button class="promo-cta" onclick="showView('offers')">تسوقي الآن</button>
-          </div>
-        </div>`).join('')}`;
+      ${cards.map(c => {
+        const cleanImg = sanitizeUrl(c.img);
+        return `
+          <div class="promo-banner">
+            <div class="promo-thumb">${cleanImg ? `<img src="${cleanImg}">` : icons.bottle('#E85D8A')}</div>
+            <div class="promo-body">
+              <h3>${sanitizeText(c.title)}</h3>
+              <p>${sanitizeText(c.desc)}</p>
+              <div class="promo-discount">${sanitizeText(c.discount)}</div>
+              <button class="promo-cta" onclick="showView('offers')">تسوقي الآن</button>
+            </div>
+          </div>`;
+      }).join('')}`;
   }
 
   // ============ BRAND MANAGEMENT WITH LOGOS & FULL EDITING ============
   function previewBrandLogoImg(url) {
     const wrap = document.getElementById('adminBrandLogoPreviewWrap');
     const img = document.getElementById('adminBrandLogoPreviewImg');
-    if (url) { img.src = url; wrap.style.display = 'block'; }
+    const cleanUrl = sanitizeUrl(url);
+    if (cleanUrl) { img.src = cleanUrl; wrap.style.display = 'block'; }
     else { wrap.style.display = 'none'; }
   }
 
@@ -1955,18 +2045,23 @@
 
   async function handleSaveBrand(e) {
     e.preventDefault();
-    if (!isCurrentUserAdmin()) return;
+    if (!assertAdmin()) return;
+    if (!lockAction('saveBrand', 1200)) return;
+
     const originalKey = document.getElementById('adminBrandOriginalKey').value.trim();
     const name = document.getElementById('adminBrandNameInput').value.trim();
     const color = document.getElementById('adminBrandColorInput').value;
-    const logoUrl = document.getElementById('adminBrandLogoInput').value.trim();
-    if (!name) return;
+    const logoUrl = sanitizeUrl(document.getElementById('adminBrandLogoInput').value.trim());
+    if (!name) {
+      showToast('يرجى كتابة اسم الماركة');
+      return;
+    }
 
     if (originalKey && originalKey !== name) {
       delete brandsData[originalKey];
     }
 
-    brandsData[name] = { name, color, logoUrl };
+    brandsData[name] = { name: sanitizeText(name), color: sanitizeText(color), logoUrl };
     renderAdminBrandsList();
     renderBrandStrip();
 
@@ -1983,7 +2078,7 @@
   }
 
   async function deleteAdminBrand(brandKey) {
-    if (!isCurrentUserAdmin()) return;
+    if (!assertAdmin()) return;
     if (confirm(`هل أنتِ متأكدة من حذف ماركة "${brandKey}" من شريط الماركات؟`)) {
       delete brandsData[brandKey];
       renderAdminBrandsList();
@@ -2003,20 +2098,21 @@
     const keys = Object.keys(brandsData);
     container.innerHTML = keys.map(k => {
       const b = brandsData[k];
+      const cleanLogo = sanitizeUrl(b.logoUrl);
       return `
         <div style="background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between;">
           <div style="display:flex; align-items:center; gap:10px;">
             <div style="width:36px; height:36px; border-radius:8px; border:1px solid var(--line); background:#fff; display:flex; align-items:center; justify-content:center; overflow:hidden;">
-              ${b.logoUrl ? `<img src="${b.logoUrl}" style="width:100%; height:100%; object-fit:contain;">` : `<span style="width:14px; height:14px; border-radius:50%; background:${b.color};"></span>`}
+              ${cleanLogo ? `<img src="${cleanLogo}" style="width:100%; height:100%; object-fit:contain;">` : `<span style="width:14px; height:14px; border-radius:50%; background:${sanitizeText(b.color)};"></span>`}
             </div>
             <div>
-              <div style="font-weight:800; font-size:13.5px;">${b.name || k}</div>
-              <div style="font-size:11px; color:var(--text-soft); font-family:monospace;">${b.color}</div>
+              <div style="font-weight:800; font-size:13.5px;">${sanitizeText(b.name || k)}</div>
+              <div style="font-size:11px; color:var(--text-soft); font-family:monospace;">${sanitizeText(b.color)}</div>
             </div>
           </div>
           <div style="display:flex; gap:6px;">
-            <button onclick="editAdminBrand('${k.replace(/'/g, "\\'")}')" style="background:#E0E7FF; color:#3730A3; padding:5px 10px; border-radius:8px; font-weight:800; font-size:11px;">تعديل ✏️</button>
-            <button onclick="deleteAdminBrand('${k.replace(/'/g, "\\'")}')" style="background:#FEE2E2; color:var(--red); padding:5px 10px; border-radius:8px; font-weight:800; font-size:11px;">حذف 🗑️</button>
+            <button onclick="editAdminBrand('${sanitizeText(k)}')" style="background:#E0E7FF; color:#3730A3; padding:5px 10px; border-radius:8px; font-weight:800; font-size:11px;">تعديل ✏️</button>
+            <button onclick="deleteAdminBrand('${sanitizeText(k)}')" style="background:#FEE2E2; color:var(--red); padding:5px 10px; border-radius:8px; font-weight:800; font-size:11px;">حذف 🗑️</button>
           </div>
         </div>`;
     }).join('');
@@ -2025,17 +2121,26 @@
   // ============ STORE CUSTOMIZATION & SETTINGS ============
   async function handleSaveCustomization(e) {
     e.preventDefault();
-    if (!isCurrentUserAdmin() || !db) return;
+    if (!assertAdmin()) return;
+    if (!lockAction('saveCustomization', 1500)) return;
+
+    const deliveryStd = Number(document.getElementById('adminDeliveryStandard').value);
+    const deliveryExp = Number(document.getElementById('adminDeliveryExpress').value);
+
+    if (isNaN(deliveryStd) || deliveryStd < 0 || isNaN(deliveryExp) || deliveryExp < 0) {
+      showToast('يرجى التأكد من كتابة أسعار توصيل صحيحة (أرقام موجبة)');
+      return;
+    }
 
     const newSettings = {
-      deliveryFeeStandard: Number(document.getElementById('adminDeliveryStandard').value) || 4000,
-      deliveryFeeExpress: Number(document.getElementById('adminDeliveryExpress').value) || 8000,
+      deliveryFeeStandard: deliveryStd,
+      deliveryFeeExpress: deliveryExp,
       showAnnouncement: document.getElementById('adminShowAnnouncement').checked,
-      announcementText: document.getElementById('adminAnnouncementText').value.trim(),
-      heroMainTitle: document.getElementById('adminHeroMainTitle').value.trim() || 'صيدلية القطن',
-      heroSubTitle: document.getElementById('adminHeroSubTitle').value.trim(),
-      heroDescTitle: document.getElementById('adminHeroDescTitle').value.trim(),
-      bannerImgUrl: document.getElementById('adminBannerImgInput').value.trim() || 'https://imgdb.io/i/EQ4D9ag.png',
+      announcementText: sanitizeText(document.getElementById('adminAnnouncementText').value.trim()),
+      heroMainTitle: sanitizeText(document.getElementById('adminHeroMainTitle').value.trim()) || 'صيدلية القطن',
+      heroSubTitle: sanitizeText(document.getElementById('adminHeroSubTitle').value.trim()),
+      heroDescTitle: sanitizeText(document.getElementById('adminHeroDescTitle').value.trim()),
+      bannerImgUrl: sanitizeUrl(document.getElementById('adminBannerImgInput').value.trim()) || 'https://imgdb.io/i/EQ4D9ag.png',
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
@@ -2064,13 +2169,12 @@
     if (heroMainEl && storeSettings.heroMainTitle) heroMainEl.textContent = storeSettings.heroMainTitle;
     if (heroSubEl && storeSettings.heroSubTitle) heroSubEl.textContent = storeSettings.heroSubTitle;
     if (heroDescEl && storeSettings.heroDescTitle) heroDescEl.textContent = storeSettings.heroDescTitle;
-    if (heroImgEl && storeSettings.bannerImgUrl) heroImgEl.src = storeSettings.bannerImgUrl;
+    if (heroImgEl && storeSettings.bannerImgUrl) heroImgEl.src = sanitizeUrl(storeSettings.bannerImgUrl);
   }
 
   function initFirestoreSync() {
     if (!isFirebaseConfigured || !db) return;
 
-    // 1. Settings Listener
     db.collection('store_settings').doc('general').onSnapshot(doc => {
       if (doc.exists) {
         storeSettings = { ...storeSettings, ...doc.data() };
@@ -2081,7 +2185,6 @@
       }
     }, err => console.warn('Settings sync fallback:', err));
 
-    // 2. Categories Listener
     db.collection('categories').onSnapshot(snap => {
       if (!snap.empty) {
         const loaded = [];
@@ -2093,7 +2196,6 @@
       }
     }, err => console.warn('Categories sync fallback:', err));
 
-    // 3. Products Listener
     db.collection('products').onSnapshot(async snap => {
       if (snap.empty) {
         try {
@@ -2128,12 +2230,12 @@
 
   // ============ INLINE PRODUCT ACTIONS ============
   async function quickEditPrice(id, currentPrice) {
-    if (!isCurrentUserAdmin() || !db) return;
+    if (!assertAdmin()) return;
     const newPriceStr = prompt('تعديل السعر المباشر (د.ع):', currentPrice);
     if (newPriceStr === null) return;
     const newPrice = Number(newPriceStr.trim());
     if (isNaN(newPrice) || newPrice <= 0) {
-      showToast('يرجى إدخال سعر صحيح');
+      showToast('يرجى إدخال سعر صحيح أكبر من صفر');
       return;
     }
     await db.collection('products').doc(String(id)).set({ price: newPrice }, { merge: true });
@@ -2141,7 +2243,7 @@
   }
 
   async function quickToggleStock(id) {
-    if (!isCurrentUserAdmin() || !db) return;
+    if (!assertAdmin()) return;
     const p = findProduct(id);
     if (!p) return;
     const newStock = (p.inStock === false) ? true : false;
@@ -2196,20 +2298,41 @@
 
   async function handleAdminProductSave(e) {
     e.preventDefault();
-    if (!isCurrentUserAdmin() || !db) return;
+    if (!assertAdmin()) return;
+    if (!lockAction('saveProductAdmin', 1200)) return;
+
     const docId = document.getElementById('adminProdDocId').value.trim();
+    const name = document.getElementById('adminProdName').value.trim();
+    const brand = document.getElementById('adminProdBrand').value.trim();
+    const price = Number(document.getElementById('adminProdPrice').value);
+    const oldPriceVal = document.getElementById('adminProdOldPrice').value.trim();
+    const oldPrice = oldPriceVal ? Number(oldPriceVal) : null;
+
+    if (!name || !brand) {
+      showToast('يرجى كتابة اسم المنتج والماركة');
+      return;
+    }
+    if (isNaN(price) || price <= 0) {
+      showToast('يرجى إدخال سعر صحيح أكبر من صفر');
+      return;
+    }
+    if (oldPrice !== null && (isNaN(oldPrice) || oldPrice <= 0)) {
+      showToast('السعر قبل الخصم يجب أن يكون رقماً موجباً');
+      return;
+    }
+
     const payload = {
-      name: document.getElementById('adminProdName').value.trim(),
-      brand: document.getElementById('adminProdBrand').value.trim(),
-      category: document.getElementById('adminProdCat').value,
-      size: document.getElementById('adminProdSize').value.trim() || 'عبوة قياسية',
-      type: document.getElementById('adminProdType').value,
-      price: Number(document.getElementById('adminProdPrice').value) || 0,
-      oldPrice: document.getElementById('adminProdOldPrice').value ? Number(document.getElementById('adminProdOldPrice').value) : null,
-      imageUrl: document.getElementById('adminProdImgUrl').value.trim(),
-      description: document.getElementById('adminProdDesc').value.trim(),
-      ingredients: document.getElementById('adminProdIng').value.trim(),
-      usage: document.getElementById('adminProdUsage').value.trim(),
+      name: sanitizeText(name),
+      brand: sanitizeText(brand),
+      category: sanitizeText(document.getElementById('adminProdCat').value),
+      size: sanitizeText(document.getElementById('adminProdSize').value.trim() || 'عبوة قياسية'),
+      type: sanitizeText(document.getElementById('adminProdType').value),
+      price: price,
+      oldPrice: oldPrice,
+      imageUrl: sanitizeUrl(document.getElementById('adminProdImgUrl').value.trim()),
+      description: sanitizeText(document.getElementById('adminProdDesc').value.trim()),
+      ingredients: sanitizeText(document.getElementById('adminProdIng').value.trim()),
+      usage: sanitizeText(document.getElementById('adminProdUsage').value.trim()),
       inStock: document.getElementById('adminProdInStock').checked,
       isSpecialOffer: document.getElementById('adminProdIsOffer').checked,
       rating: 4.8,
@@ -2236,18 +2359,11 @@
   }
 
   async function deleteProductConfirm(id, name) {
-    if (!isCurrentUserAdmin() || !db) return;
+    if (!assertAdmin()) return;
     if (confirm(`هل أنتِ متأكدة من حذف المنتج "${name}" نهائياً من قاعدة البيانات؟`)) {
       await db.collection('products').doc(String(id)).delete();
       showToast('تم حذف المنتج بنجاح ✓');
     }
-  }
-
-  function previewAdminProdImg(url) {
-    const box = document.getElementById('adminProdImgPreviewBox');
-    const img = document.getElementById('adminProdImgPreviewEl');
-    if (url) { img.src = url; box.style.display = 'block'; }
-    else { box.style.display = 'none'; }
   }
 
   function switchAdminSection(sec) {
@@ -2320,10 +2436,11 @@
     strip.innerHTML = allChip + brandKeys.map(k => {
       const b = brandsData[k];
       const isActive = homeActiveBrand === k;
+      const cleanLogo = sanitizeUrl(b.logoUrl);
       return `
-        <div class="brand-chip ${isActive ? 'active' : ''}" onclick="selectHomeBrand('${k.replace(/'/g, "\\'")}')">
-          ${b.logoUrl ? `<img class="brand-chip-img" src="${b.logoUrl}" alt="${b.name}">` : `<span class="brand-chip-dot" style="background:${b.color};"></span>`}
-          <span>${b.name || k}</span>
+        <div class="brand-chip ${isActive ? 'active' : ''}" onclick="selectHomeBrand('${sanitizeText(k)}')">
+          ${cleanLogo ? `<img class="brand-chip-img" src="${cleanLogo}" alt="${sanitizeText(b.name || k)}">` : `<span class="brand-chip-dot" style="background:${sanitizeText(b.color)};"></span>`}
+          <span>${sanitizeText(b.name || k)}</span>
         </div>`;
     }).join('');
   }
@@ -2343,7 +2460,7 @@
     const el = document.getElementById(targetId);
     if (!el) return;
     if (list.length === 0) {
-      el.innerHTML = `<div class="no-results">${emptyMsg || 'لا توجد منتجات مطابقة حالياً.'}</div>`;
+      el.innerHTML = `<div class="no-results">${sanitizeText(emptyMsg) || 'لا توجد منتجات مطابقة حالياً.'}</div>`;
       return;
     }
     const isAdmin = isCurrentUserAdmin();
@@ -2353,35 +2470,36 @@
       const discountPct = p.oldPrice ? Math.round((1 - p.price/p.oldPrice) * 100) : null;
       const isWished = wishlist.has(p.id);
       const inStock = (p.inStock !== false);
+      const cleanImg = sanitizeUrl(p.imageUrl);
 
       return `
-        <div class="product-card" onclick="openProduct('${p.id}', true)">
-          <button class="wish-btn ${isWished ? 'active' : ''}" onclick="event.stopPropagation(); toggleWishlist('${p.id}')">
+        <div class="product-card" onclick="openProduct('${sanitizeText(p.id)}', true)">
+          <button class="wish-btn ${isWished ? 'active' : ''}" onclick="event.stopPropagation(); toggleWishlist('${sanitizeText(p.id)}')">
             <svg viewBox="0 0 24 24" fill="${isWished ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.5-4.9-10-9.5C.5 7.8 2.7 4 6.5 4 9 4 11 5.5 12 7c1-1.5 3-3 5.5-3 3.8 0 6 3.8 4.5 7.5C19.5 16.1 12 21 12 21Z"/></svg>
           </button>
           ${discountPct ? `<span class="discount-badge">خصم ${discountPct}%</span>` : ''}
           ${!inStock ? `<span class="discount-badge" style="background:#EF4444; left:auto; right:12px; top:48px;">نفذت الكمية</span>` : ''}
           
           <div class="product-thumb" style="background:${color}18;">
-            ${p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.name}" loading="lazy">` : (icons[p.type] || icons.bottle)(color)}
+            ${cleanImg ? `<img src="${cleanImg}" alt="${sanitizeText(p.name)}" loading="lazy">` : (icons[p.type] || icons.bottle)(color)}
           </div>
           <div class="p-rating">${starIcon()} ${p.rating || 4.8} (${p.reviews || 80})</div>
-          <div class="p-name">${p.name}</div>
-          <div class="p-size">${p.size || ''}</div>
+          <div class="p-name">${sanitizeText(p.name)}</div>
+          <div class="p-size">${sanitizeText(p.size || '')}</div>
           <div class="p-price-row">
             <span class="p-price mono">${fmtPrice(p.price)}</span>
             ${p.oldPrice ? `<span class="p-oldprice mono">${fmtPrice(p.oldPrice)}</span>` : ''}
           </div>
-          <button class="add-cart-btn" style="${!inStock ? 'opacity:0.6; pointer-events:none;' : ''}" onclick="event.stopPropagation(); addToCart('${p.id}')">
+          <button class="add-cart-btn" style="${!inStock ? 'opacity:0.6; pointer-events:none;' : ''}" onclick="event.stopPropagation(); addToCart('${sanitizeText(p.id)}')">
             ${inStock ? 'أضف إلى السلة' : 'غير متوفر'}
           </button>
 
           ${isAdmin ? `
             <div class="admin-card-actions" onclick="event.stopPropagation()">
-              <button class="btn-admin-stock ${inStock ? 'is-in' : 'is-out'}" onclick="quickToggleStock('${p.id}')">${inStock ? 'متوفر 🟢' : 'نفذت 🔴'}</button>
-              <button class="btn-admin-price" onclick="quickEditPrice('${p.id}', ${p.price})">السعر 💰</button>
-              <button class="btn-admin-edit" onclick="editProductInAdmin('${p.id}')">تعديل ✏️</button>
-              <button class="btn-admin-del" onclick="deleteProductConfirm('${p.id}', '${p.name.replace(/'/g, "\\'")}')">🗑️</button>
+              <button class="btn-admin-stock ${inStock ? 'is-in' : 'is-out'}" onclick="quickToggleStock('${sanitizeText(p.id)}')">${inStock ? 'متوفر 🟢' : 'نفذت 🔴'}</button>
+              <button class="btn-admin-price" onclick="quickEditPrice('${sanitizeText(p.id)}', ${p.price})">السعر 💰</button>
+              <button class="btn-admin-edit" onclick="editProductInAdmin('${sanitizeText(p.id)}')">تعديل ✏️</button>
+              <button class="btn-admin-del" onclick="deleteProductConfirm('${sanitizeText(p.id)}', '${sanitizeText(p.name)}')">🗑️</button>
             </div>` : ''}
         </div>`;
     }).join('');
@@ -2394,12 +2512,13 @@
     renderCurrentActiveView();
   }
 
-  // ============ PRODUCT DETAILS (SCROLL & INFINITE LOOP FIXED) ============
+  // ============ PRODUCT DETAILS ============
   function renderProductDetailDOM(p) {
     const color = getBrandColor(p.brand);
     const pdImgEl = document.getElementById('pdImage');
     pdImgEl.style.background = color + '18';
-    pdImgEl.innerHTML = p.imageUrl ? `<img src="${p.imageUrl}">` : (icons[p.type] || icons.bottle)(color);
+    const cleanImg = sanitizeUrl(p.imageUrl);
+    pdImgEl.innerHTML = cleanImg ? `<img src="${cleanImg}">` : (icons[p.type] || icons.bottle)(color);
 
     document.getElementById('pdBrand').textContent = p.brand || '';
     document.getElementById('pdName').textContent = p.name + (p.size ? ' — ' + p.size : '');
@@ -2517,19 +2636,20 @@
       if (!p) return '';
       const qty = cart[id];
       const color = getBrandColor(p.brand);
+      const cleanImg = sanitizeUrl(p.imageUrl);
       return `
         <div class="cart-item">
           <div class="thumb" style="background:${color}18;">
-            ${p.imageUrl ? `<img src="${p.imageUrl}">` : (icons[p.type] || icons.bottle)(color)}
+            ${cleanImg ? `<img src="${cleanImg}">` : (icons[p.type] || icons.bottle)(color)}
           </div>
           <div class="info">
-            <div class="name">${p.name}</div>
-            <div class="brand">${p.brand || ''} · ${p.size || ''}</div>
+            <div class="name">${sanitizeText(p.name)}</div>
+            <div class="brand">${sanitizeText(p.brand || '')} · ${sanitizeText(p.size || '')}</div>
             <div class="cart-qty-row">
-              <button class="cart-qty-btn" onclick="changeCartQty('${p.id}', -1)">−</button>
+              <button class="cart-qty-btn" onclick="changeCartQty('${sanitizeText(p.id)}', -1)">−</button>
               <span class="cart-qty-val mono">${qty}</span>
-              <button class="cart-qty-btn" onclick="changeCartQty('${p.id}', 1)">+</button>
-              <span class="cart-remove" onclick="removeCartItem('${p.id}')">حذف</span>
+              <button class="cart-qty-btn" onclick="changeCartQty('${sanitizeText(p.id)}', 1)">+</button>
+              <span class="cart-remove" onclick="removeCartItem('${sanitizeText(p.id)}')">حذف</span>
             </div>
           </div>
           <span class="p-price mono">${fmtPrice(p.price * qty)}</span>
@@ -2562,19 +2682,30 @@
   }
 
   async function confirmOrder() {
+    if (!lockAction('confirmOrder', 2500)) return;
+
     const name = document.getElementById('custName').value.trim();
     const phone = document.getElementById('custPhone').value.trim();
     const address = document.getElementById('custAddress').value.trim();
+    
     if (!name || !phone || !address) {
       showToast('يرجى تعبئة الاسم والهاتف والعنوان أولاً');
       return;
     }
+    if (phone.length < 8) {
+      showToast('يرجى كتابة رقم هاتف صحيح');
+      return;
+    }
+
     const ids = Object.keys(cart);
     if (ids.length === 0) { showToast('سلتك فارغة'); return; }
 
+    const confirmBtn = document.getElementById('confirmOrderBtn');
+    if (confirmBtn) confirmBtn.disabled = true;
+
     const itemObjects = ids.map(id => {
       const p = findProduct(id);
-      return p ? { id: p.id, name: p.name, brand: p.brand, size: p.size, price: p.price, quantity: cart[id] } : null;
+      return p ? { id: p.id, name: sanitizeText(p.name), brand: sanitizeText(p.brand), size: sanitizeText(p.size), price: p.price, quantity: cart[id] } : null;
     }).filter(Boolean);
 
     const fee = (deliveryMethod === 'express') ? (storeSettings.deliveryFeeExpress || 8000) : (storeSettings.deliveryFeeStandard || 4000);
@@ -2583,8 +2714,13 @@
     if (db) {
       try {
         await db.collection('orders').add({
-          customerName: name, customerPhone: phone, customerAddress: address,
-          deliveryMethod, items: itemObjects, totalPrice: grandTotal, status: 'pending',
+          customerName: sanitizeText(name),
+          customerPhone: sanitizeText(phone),
+          customerAddress: sanitizeText(address),
+          deliveryMethod,
+          items: itemObjects,
+          totalPrice: grandTotal,
+          status: 'pending',
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
@@ -2603,6 +2739,7 @@
     cart = {};
     updateCartBadge();
     saveLocalState();
+    if (confirmBtn) confirmBtn.disabled = false;
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank');
     showToast('تم تسجيل وحفظ الطلب بنجاح ✓');
     showView('home');
@@ -2680,11 +2817,12 @@
 
     if (currentUser) {
       const rawName = currentUser.displayName || currentUser.email || 'حسابي';
-      const firstName = rawName.split(' ')[0].split('@')[0];
+      const firstName = sanitizeText(rawName.split(' ')[0].split('@')[0]);
       if (chipName) chipName.textContent = firstName;
       if (bnAccountLbl) bnAccountLbl.textContent = firstName;
       if (logoutBtn) logoutBtn.style.display = 'flex';
-      if (chipAvatar) chipAvatar.innerHTML = currentUser.photoURL ? `<img src="${currentUser.photoURL}">` : `<span style="font-size:12px; font-weight:900; color:var(--accent);">${firstName.charAt(0).toUpperCase()}</span>`;
+      const cleanPhoto = sanitizeUrl(currentUser.photoURL);
+      if (chipAvatar) chipAvatar.innerHTML = cleanPhoto ? `<img src="${cleanPhoto}">` : `<span style="font-size:12px; font-weight:900; color:var(--accent);">${firstName.charAt(0).toUpperCase()}</span>`;
     } else {
       if (chipName) chipName.textContent = 'دخول';
       if (bnAccountLbl) bnAccountLbl.textContent = 'حسابي';
@@ -2699,13 +2837,14 @@
 
     if (currentUser) {
       const isAdmin = isCurrentUserAdmin();
+      const cleanPhoto = sanitizeUrl(currentUser.photoURL);
       container.innerHTML = `
         <div class="account-card">
           <div class="user-profile-header">
-            <div class="user-avatar"><img src="${currentUser.photoURL || ''}"></div>
+            <div class="user-avatar"><img src="${cleanPhoto}"></div>
             <div class="user-info">
-              <h3>${currentUser.displayName || currentUser.email} ${isAdmin ? '⭐ (مشرف المتجر)' : ''}</h3>
-              <p>${currentUser.email || ''}</p>
+              <h3>${sanitizeText(currentUser.displayName || currentUser.email)} ${isAdmin ? '⭐ (مشرف المتجر)' : ''}</h3>
+              <p>${sanitizeText(currentUser.email || '')}</p>
               <div class="sync-indicator"><span class="sync-dot"></span><span>البيانات متزامنة سحابياً</span></div>
             </div>
           </div>
@@ -2737,7 +2876,7 @@
       const provider = new firebase.auth.GoogleAuthProvider();
       const res = await auth.signInWithPopup(provider);
       currentUser = res.user;
-      showToast(`أهلاً بكِ ${currentUser.displayName || ''} 🌸`);
+      showToast(`أهلاً بكِ ${sanitizeText(currentUser.displayName || '')} 🌸`);
     } catch (e) {
       if (e.code !== 'auth/popup-closed-by-user') {
         showToast('تعذر تسجيل الدخول عبر Google');
@@ -2751,6 +2890,7 @@
     updateUserHeaderProfile();
     renderAccountView();
     updateAdminInterfaceState();
+    showToast('تم تسجيل الخروج بنجاح');
   }
 
   if (isFirebaseConfigured) {
@@ -2779,10 +2919,18 @@
   }
   function handleConsultSubmit(e) {
     e.preventDefault();
+    if (!lockAction('consultSubmit', 2000)) return;
+
     const name = document.getElementById('consultName').value.trim();
     const age = document.getElementById('consultAge').value.trim();
     const cond = document.getElementById('consultCondition').value;
     const desc = document.getElementById('consultDesc').value.trim();
+
+    if (!name || !age || !desc) {
+      showToast('يرجى تعبئة كافة حقول الاستشارة');
+      return;
+    }
+
     const msg = encodeURIComponent(`🩺 استشارة صيدلانية - صيدلية القطن:\nالاسم: ${name}\nالعمر: ${age}\nالحالة: ${cond}\nالاستفسار: ${desc}`);
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`, '_blank');
     closeConsultModal();
