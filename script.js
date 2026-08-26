@@ -1572,10 +1572,10 @@ function renderProductDetailDOM(p) {
   };
 }
 
-// ================= دالة فتح تفاصيل المنتج مع حفظ موضع التمرير =================
+// ================= دالة فتح تفاصيل المنتج =================
 function openProduct(id, isUserClick = false) {
-  // 1. حفظ موضع الشاشة والصفحة الحالية قبل الدخول للمنتج
   if (isUserClick) {
+    // 1. حفظ الصفحة السابقة وموضع الشاشة بدقة
     previousViewBeforeProduct = (currentView !== 'product') ? currentView : 'home';
     previousScrollBeforeProduct = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
   }
@@ -1597,38 +1597,49 @@ function openProduct(id, isUserClick = false) {
   renderProductDetailDOM(p);
 
   if (isUserClick) {
+    // إيقاف التمرير الانسيابي لحظياً لفتح صفحة المنتج من القمة فوراً بدون وميض
+    document.documentElement.style.scrollBehavior = 'auto';
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     const pView = document.getElementById('view-product');
     if (pView) {
       pView.classList.add('active');
       currentView = 'product';
-      window.scrollTo({top: 0, behavior: 'instant'});
+      window.scrollTo(0, 0);
     }
+    requestAnimationFrame(() => {
+      document.documentElement.style.scrollBehavior = '';
+    });
   }
 }
 
-// ================= دالة الرجوع من المنتج (العودة لنفس المكان السابق) =================
+// ================= دالة الرجوع السلسة بدون أي كلتش أو وميض =================
 function goBackFromProduct() {
   const targetView = previousViewBeforeProduct || 'home';
+  const targetScroll = previousScrollBeforeProduct || 0;
   
-  // إظهار الصفحة السابقة التي كان فيها المستخدم
+  // 1. إيقاف الـ scroll-behavior مؤقتاً لمنع الارتجاج والقفز البصري
+  document.documentElement.style.scrollBehavior = 'auto';
+
+  // 2. إظهار الصفحة السابقة
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   const targetEl = document.getElementById('view-' + targetView);
   if (targetEl) targetEl.classList.add('active');
   currentView = targetView;
 
-  // تحديث حالة الأزرار في الشريط السفلي
+  // 3. تحديث الشريط السفلي
   ['home', 'wishlist', 'categories', 'orders', 'cart', 'account', 'admin'].forEach(k => {
     const el = document.getElementById('bn-' + k);
     if (el) el.classList.toggle('active', targetView === k);
   });
 
-  renderCurrentActiveView();
+  // 4. استعادة موضع الشاشة فورياً في نفس الفريم (قبل أن يلاحظ المستخدم أي انتقال)
+  window.scrollTo(0, targetScroll);
 
-  // إعادة الشاشة فورياً لنفس مكان المنتج بدون القفز للأعلى
-  setTimeout(() => {
-    window.scrollTo({ top: previousScrollBeforeProduct, behavior: 'instant' });
-  }, 10);
+  // 5. إعادة الوضع الطبيعي في الفريم التالي بسلاسة تامة
+  requestAnimationFrame(() => {
+    window.scrollTo(0, targetScroll);
+    document.documentElement.style.scrollBehavior = '';
+  });
 }
 
 function switchPdTab(tab) {
