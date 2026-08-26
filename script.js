@@ -26,7 +26,6 @@ try {
     db = firebase.firestore();
     isFirebaseConfigured = true;
 
-    // Set persistence to LOCAL for reliable iOS/Safari sessions
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(err => {
       console.warn("Persistence fallback:", err);
     });
@@ -110,23 +109,23 @@ async function apiFetch(endpoint, options = {}) {
   }
 }
 
-// ================= ICONS & GRAPHICS =================
+// ================= ICONS & GRAPHICS (WITH STRICT SIZING) =================
 const icons = {
-  bottle: c => `<svg viewBox="0 0 24 24" fill="none"><path d="M10 2h4v3.2l1.4 1.6c.4.45.6 1 .6 1.6V20a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V8.4c0-.6.2-1.15.6-1.6L9 5.2V2Z" fill="${c}" fill-opacity=".14" stroke="${c}" stroke-width="1.5"/><rect x="9" y="11" width="6" height="8.4" rx="0.8" fill="${c}" fill-opacity=".26"/></svg>`,
-  jar: c => `<svg viewBox="0 0 24 24" fill="none"><rect x="5" y="9" width="14" height="12" rx="2.6" fill="${c}" fill-opacity=".14" stroke="${c}" stroke-width="1.5"/><rect x="6.4" y="11" width="11.2" height="8.4" rx="1.4" fill="${c}" fill-opacity=".26"/><rect x="4.4" y="6" width="15.2" height="3.4" rx="1.4" fill="${c}" fill-opacity=".3" stroke="${c}" stroke-width="1.3"/></svg>`,
-  tube: c => `<svg viewBox="0 0 24 24" fill="none"><path d="M8 3h8l1 4.5c.3 1.3.5 2.6.5 4V19a2 2 0 0 1-2 2H8.5a2 2 0 0 1-2-2v-7.5c0-1.4.2-2.7.5-4L8 3Z" fill="${c}" fill-opacity=".14" stroke="${c}" stroke-width="1.5"/><rect x="7.6" y="13" width="8.8" height="6.4" rx="1.2" fill="${c}" fill-opacity=".26"/></svg>`,
-  spray: c => `<svg viewBox="0 0 24 24" fill="none"><rect x="8" y="10" width="9" height="11.4" rx="2" fill="${c}" fill-opacity=".14" stroke="${c}" stroke-width="1.5"/><rect x="9.2" y="12" width="6.6" height="7.6" rx="1" fill="${c}" fill-opacity=".26"/><path d="M11 10V7.4a1.6 1.6 0 0 1 1.6-1.6h1.4M11.5 3.6h4" stroke="${c}" stroke-width="1.5" stroke-linecap="round"/></svg>`
+  bottle: c => `<svg viewBox="0 0 24 24" width="48" height="48" style="max-width:100%;max-height:100%;" fill="none"><path d="M10 2h4v3.2l1.4 1.6c.4.45.6 1 .6 1.6V20a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V8.4c0-.6.2-1.15.6-1.6L9 5.2V2Z" fill="${c}" fill-opacity=".14" stroke="${c}" stroke-width="1.5"/><rect x="9" y="11" width="6" height="8.4" rx="0.8" fill="${c}" fill-opacity=".26"/></svg>`,
+  jar: c => `<svg viewBox="0 0 24 24" width="48" height="48" style="max-width:100%;max-height:100%;" fill="none"><rect x="5" y="9" width="14" height="12" rx="2.6" fill="${c}" fill-opacity=".14" stroke="${c}" stroke-width="1.5"/><rect x="6.4" y="11" width="11.2" height="8.4" rx="1.4" fill="${c}" fill-opacity=".26"/><rect x="4.4" y="6" width="15.2" height="3.4" rx="1.4" fill="${c}" fill-opacity=".3" stroke="${c}" stroke-width="1.3"/></svg>`,
+  tube: c => `<svg viewBox="0 0 24 24" width="48" height="48" style="max-width:100%;max-height:100%;" fill="none"><path d="M8 3h8l1 4.5c.3 1.3.5 2.6.5 4V19a2 2 0 0 1-2 2H8.5a2 2 0 0 1-2-2v-7.5c0-1.4.2-2.7.5-4L8 3Z" fill="${c}" fill-opacity=".14" stroke="${c}" stroke-width="1.5"/><rect x="7.6" y="13" width="8.8" height="6.4" rx="1.2" fill="${c}" fill-opacity=".26"/></svg>`,
+  spray: c => `<svg viewBox="0 0 24 24" width="48" height="48" style="max-width:100%;max-height:100%;" fill="none"><rect x="8" y="10" width="9" height="11.4" rx="2" fill="${c}" fill-opacity=".14" stroke="${c}" stroke-width="1.5"/><rect x="9.2" y="12" width="6.6" height="7.6" rx="1" fill="${c}" fill-opacity=".26"/><path d="M11 10V7.4a1.6 1.6 0 0 1 1.6-1.6h1.4M11.5 3.6h4" stroke="${c}" stroke-width="1.5" stroke-linecap="round"/></svg>`
 };
 
 const catIcons = {
-  hair: c => `<svg viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.8"><path d="M6 20c1-4-1-7-1-10a7 7 0 0 1 14 0c0 3-2 6-1 10"/><path d="M9 20v-3M15 20v-3"/></svg>`,
-  baby: c => `<svg viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.8"><circle cx="12" cy="13" r="7.5"/><path d="M9.5 12h.01M14.5 12h.01"/><path d="M10 15.5c.7.7 1.3 1 2 1s1.3-.3 2-1"/></svg>`,
-  intimate: c => `<svg viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.8"><path d="M12 3c1.5 3 4 5 7 6-1 5-4 9-7 12-3-3-6-7-7-12 3-1 5.5-3 7-6Z"/><circle cx="12" cy="13" r="2.5"/></svg>`,
-  jar: c => `<svg viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.8"><rect x="5" y="9" width="14" height="12" rx="2.6"/><rect x="4.4" y="6" width="15.2" height="3.4" rx="1.4"/></svg>`,
-  bottle: c => `<svg viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.8"><path d="M10 2h4v3.2l1.4 1.6c.4.45.6 1 .6 1.6V20a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V8.4c0-.6.2-1.15.6-1.6L9 5.2V2Z"/></svg>`,
-  sunscreen: c => `<svg viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.8"><rect x="8" y="6" width="8" height="15" rx="2"/><path d="M10 6V4.4a2 2 0 0 1 4 0V6"/></svg>`,
-  body: c => `<svg viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.8"><circle cx="12" cy="5" r="2.3"/><path d="M7 21l1.5-8L6 9.5 8 8l4 2 4-2 2 1.5-2.5 3.5L17 21"/></svg>`,
-  face: c => `<svg viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M9 10h.01M15 10h.01M9 15c1 1 5 1 6 0"/></svg>`,
+  hair: c => `<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="${c}" stroke-width="1.8"><path d="M6 20c1-4-1-7-1-10a7 7 0 0 1 14 0c0 3-2 6-1 10"/><path d="M9 20v-3M15 20v-3"/></svg>`,
+  baby: c => `<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="${c}" stroke-width="1.8"><circle cx="12" cy="13" r="7.5"/><path d="M9.5 12h.01M14.5 12h.01"/><path d="M10 15.5c.7.7 1.3 1 2 1s1.3-.3 2-1"/></svg>`,
+  intimate: c => `<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="${c}" stroke-width="1.8"><path d="M12 3c1.5 3 4 5 7 6-1 5-4 9-7 12-3-3-6-7-7-12 3-1 5.5-3 7-6Z"/><circle cx="12" cy="13" r="2.5"/></svg>`,
+  jar: c => `<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="${c}" stroke-width="1.8"><rect x="5" y="9" width="14" height="12" rx="2.6"/><rect x="4.4" y="6" width="15.2" height="3.4" rx="1.4"/></svg>`,
+  bottle: c => `<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="${c}" stroke-width="1.8"><path d="M10 2h4v3.2l1.4 1.6c.4.45.6 1 .6 1.6V20a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V8.4c0-.6.2-1.15.6-1.6L9 5.2V2Z"/></svg>`,
+  sunscreen: c => `<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="${c}" stroke-width="1.8"><rect x="8" y="6" width="8" height="15" rx="2"/><path d="M10 6V4.4a2 2 0 0 1 4 0V6"/></svg>`,
+  body: c => `<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="${c}" stroke-width="1.8"><circle cx="12" cy="5" r="2.3"/><path d="M7 21l1.5-8L6 9.5 8 8l4 2 4-2 2 1.5-2.5 3.5L17 21"/></svg>`,
+  face: c => `<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="${c}" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M9 10h.01M15 10h.01M9 15c1 1 5 1 6 0"/></svg>`,
 };
 
 function hashColor(name) {
@@ -213,7 +212,7 @@ let storeSettings = {
 
 function fmtPrice(n) { return (Number(n) || 0).toLocaleString('en-US') + ' د.ع'; }
 function findProduct(id) { return products.find(p => String(p.id) === String(id)); }
-function starIcon() { return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1z"/></svg>`; }
+function starIcon() { return `<svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" style="width:12px;height:12px;"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1z"/></svg>`; }
 function saveLocalState() {
   localStorage.setItem('qutn_cart', JSON.stringify(cart));
   localStorage.setItem('qutn_wishlist', JSON.stringify([...wishlist]));
@@ -349,7 +348,7 @@ async function deleteAdminCoupon(id) {
   }
 }
 
-// ================= TELEGRAM BOT NOTIFICATIONS =================
+// ================= TELEGRAM BOT SETTINGS =================
 async function handleSaveTelegramSettings(e) {
   e.preventDefault();
   if (!assertAdmin()) return;
@@ -681,7 +680,7 @@ function renderModernCategories() {
     return `
       <div class="modern-cat-card" onclick="openCategory('${sanitizeText(c.id)}')">
         <div class="modern-cat-img-wrap">
-          ${cleanImg ? `<img src="${cleanImg}" alt="${sanitizeText(c.label)}">` : (catIcons[c.icon] || catIcons.jar)('var(--accent)')}
+          ${cleanImg ? `<img src="${cleanImg}" alt="${sanitizeText(c.label)}">` : (catIcons[c.icon] || catIcons.jar)('var(--accent, #E85D8A)')}
         </div>
         <div class="modern-cat-info">
           <h3 class="modern-cat-title">${sanitizeText(c.label)}</h3>
@@ -706,7 +705,7 @@ function renderAdminCategoriesList() {
       <div style="background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between;">
         <div style="display:flex; align-items:center; gap:10px;">
           <div style="width:42px; height:42px; border-radius:8px; background:var(--surface); display:flex; align-items:center; justify-content:center; overflow:hidden;">
-            ${cleanImg ? `<img src="${cleanImg}" style="width:100%; height:100%; object-fit:cover;">` : (catIcons[c.icon] || catIcons.jar)('var(--accent)')}
+            ${cleanImg ? `<img src="${cleanImg}" style="width:100%; height:100%; object-fit:cover;">` : (catIcons[c.icon] || catIcons.jar)('var(--accent, #E85D8A)')}
           </div>
           <div>
             <div style="font-weight:800; font-size:13.5px;">${sanitizeText(c.label)} (${sanitizeText(c.id)})</div>
@@ -915,7 +914,7 @@ function renderPromoBanners() {
       const cleanImg = sanitizeUrl(c.img);
       return `
         <div class="promo-banner">
-          <div class="promo-thumb">${cleanImg ? `<img src="${cleanImg}">` : icons.bottle('var(--accent)')}</div>
+          <div class="promo-thumb">${cleanImg ? `<img src="${cleanImg}">` : icons.bottle('var(--accent, #E85D8A)')}</div>
           <div class="promo-body">
             <h3>${sanitizeText(c.title)}</h3>
             <p>${sanitizeText(c.desc)}</p>
@@ -1412,7 +1411,7 @@ function renderBrandStrip() {
   const brandKeys = Object.keys(brandsData);
   const allChip = `
     <div class="brand-chip all-chip ${homeActiveBrand === 'all' ? 'active' : ''}" onclick="selectHomeBrand('all')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
       <span>الكل</span>
     </div>`;
     
@@ -1499,7 +1498,7 @@ function renderProductGrid(targetId, list, emptyMsg) {
     return `
       <div class="product-card" onclick="openProduct('${sanitizeText(p.id)}', true)">
         <button class="wish-btn ${isWished ? 'active' : ''}" onclick="event.stopPropagation(); toggleWishlist('${sanitizeText(p.id)}')">
-          <svg viewBox="0 0 24 24" fill="${isWished ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.5-4.9-10-9.5C.5 7.8 2.7 4 6.5 4 9 4 11 5.5 12 7c1-1.5 3-3 5.5-3 3.8 0 6 3.8 4.5 7.5C19.5 16.1 12 21 12 21Z"/></svg>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="${isWished ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M12 21s-7.5-4.9-10-9.5C.5 7.8 2.7 4 6.5 4 9 4 11 5.5 12 7c1-1.5 3-3 5.5-3 3.8 0 6 3.8 4.5 7.5C19.5 16.1 12 21 12 21Z"/></svg>
         </button>
         ${discountPct ? `<span class="discount-badge">خصم ${discountPct}%</span>` : ''}
         ${!inStock ? `<span class="discount-badge" style="background:#EF4444; left:auto; right:12px; top:48px;">نفذت الكمية</span>` : ''}
@@ -1556,7 +1555,7 @@ function renderProductDetailDOM(p) {
   const stockEl = document.getElementById('pdStock');
   const inStock = (p.inStock !== false);
   stockEl.className = inStock ? 'pd-stock' : 'pd-stock out';
-  stockEl.innerHTML = inStock ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 13l4 4L19 7"/></svg><span>متوفر بالمخزون</span>` : `<span>نفذت الكمية حالياً</span>`;
+  stockEl.innerHTML = inStock ? `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" style="width:18px;height:18px;"><path d="M5 13l4 4L19 7"/></svg><span>متوفر بالمخزون</span>` : `<span>نفذت الكمية حالياً</span>`;
 
   document.getElementById('pdTabDesc').textContent = p.description || 'منتج أصلي معتمد من صيدلية القطن.';
   document.getElementById('pdTabIng').textContent = p.ingredients || 'تركيبة غنية ومفحوصة جلدياً.';
@@ -1959,7 +1958,7 @@ function renderListing() {
   renderProductGrid('listingGrid', list);
 }
 
-// ================= ACCOUNT & AUTH =================
+// ================= ACCOUNT & AUTH (STRICT SIZED USER ICON) =================
 function updateUserHeaderProfile() {
   const chipAvatar = document.getElementById('userChipAvatar');
   const chipName = document.getElementById('userChipName');
@@ -1975,15 +1974,16 @@ function updateUserHeaderProfile() {
     const cleanPhoto = sanitizeUrl(currentUser.photoURL);
     if (chipAvatar) {
       chipAvatar.innerHTML = cleanPhoto 
-        ? `<img src="${cleanPhoto}">` 
-        : `<span style="font-size:12px; font-weight:900; color:var(--accent);">${firstName.charAt(0).toUpperCase()}</span>`;
+        ? `<img src="${cleanPhoto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` 
+        : `<span style="font-size:12px; font-weight:900; color:var(--accent, #E85D8A);">${firstName.charAt(0).toUpperCase()}</span>`;
     }
   } else {
     if (chipName) chipName.textContent = 'دخول';
     if (bnAccountLbl) bnAccountLbl.textContent = 'حسابي';
     if (logoutBtn) logoutBtn.style.display = 'none';
     if (chipAvatar) {
-      chipAvatar.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>`;
+      // تم تحديد width و height صراحةً لمنع أي تمدد عشوائي
+      chipAvatar.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;display:block;"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>`;
     }
   }
 }
@@ -2148,7 +2148,6 @@ window.addEventListener('DOMContentLoaded', () => {
   updateUserHeaderProfile();
   initFirestoreSync();
 
-  // If opening on the dedicated admin page
   if (window.location.pathname.includes('admin.html')) {
     fetchRealAnalytics();
     fetchAdminCoupons();
