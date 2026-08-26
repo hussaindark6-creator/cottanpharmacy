@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 
-<!-- Firebase SDKs (Compat version v9.22.1) -->
+<!-- Firebase SDKs (Compat v9.22.1) -->
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
@@ -44,8 +44,8 @@
     --green: #16A34A;
     --red: #DC2626;
     --blue: #2563EB;
-    --shadow-soft: 0 4px 20px rgba(232, 93, 138, 0.08);
-    --shadow-hover: 0 10px 26px rgba(232, 93, 138, 0.16);
+    --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 10px 26px rgba(0, 0, 0, 0.12);
     --radius-lg: 20px;
     --radius-md: 16px;
     --radius-sm: 12px;
@@ -125,7 +125,7 @@
   .logo-mark { width: 34px; height: 34px; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); }
   
   .header-actions { display: flex; align-items: center; gap: 4px; }
-  .badge-count { position: absolute; top: -1px; left: -1px; background: var(--accent); color: #fff; font-size: 10px; font-weight: 800; min-width: 17px; height: 17px; border-radius: 999px; display: flex; align-items: center; justify-content: center; padding: 0 4px; box-shadow: 0 2px 6px rgba(232,93,138,0.4); }
+  .badge-count { position: absolute; top: -1px; left: -1px; background: var(--accent); color: #fff; font-size: 10px; font-weight: 800; min-width: 17px; height: 17px; border-radius: 999px; display: flex; align-items: center; justify-content: center; padding: 0 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
 
   .user-header-chip {
     display: flex;
@@ -170,7 +170,7 @@
 
   .search-wrap { padding: 6px 0 10px; }
   .search-bar { display: flex; align-items: center; gap: 10px; background: #fff; border: 1.5px solid var(--line); border-radius: 999px; padding: 10px 16px; transition: border-color .2s, box-shadow .2s; }
-  .search-bar:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(232,93,138,0.12); }
+  .search-bar:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--surface); }
   .search-bar input { border: none; outline: none; flex: 1; font-family: inherit; font-size: 13.5px; background: transparent; color: var(--ink); }
   .search-bar svg { width: 18px; height: 18px; color: var(--text-soft); flex-shrink: 0; }
 
@@ -510,7 +510,7 @@
   .admin-stat-grid-v { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
   @media (min-width: 640px) { .admin-stat-grid-v { grid-template-columns: repeat(4, 1fr); gap: 16px; } }
   .admin-stat-card-v { background: #FFFFFF; border: 1.5px solid var(--line); border-radius: var(--radius-md); padding: 16px 14px; text-align: center; box-shadow: var(--shadow-soft); }
-  .admin-stat-card-v .num { font-size: 26px; font-weight: 900; color: var(--rose-deep); }
+  .admin-stat-card-v .num { font-size: 24px; font-weight: 900; color: var(--rose-deep); }
   .admin-stat-card-v .lbl { font-size: 12px; font-weight: 700; color: var(--text-soft); margin-top: 2px; }
 
   .admin-chart-wrap { background: #fff; border: 1.5px solid var(--line); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow-soft); }
@@ -890,7 +890,7 @@
   </div>
 </div>
 
-<!-- ============ FULL-SCREEN ADMIN VIEW (ALL 11 TABS COMPREHENSIVE) ============ -->
+<!-- ============ FULL-SCREEN ADMIN VIEW ============ -->
 <div class="view" id="view-admin">
   <div class="wrap">
     <div class="admin-view-header">
@@ -903,7 +903,7 @@
 
     <!-- Admin Tabs Navigation -->
     <div class="admin-tabs-nav-view">
-      <button class="admin-tab-btn-v active" id="btnTabVStats" onclick="switchAdminSection('stats')">📊 الإحصائيات الحقيقية</button>
+      <button class="admin-tab-btn-v active" id="btnTabVStats" onclick="switchAdminSection('stats')">📊 الإحصائيات والأرباح</button>
       <button class="admin-tab-btn-v" id="btnTabVCoupons" onclick="switchAdminSection('coupons')">🎟️ إدارة أكواد الخصم</button>
       <button class="admin-tab-btn-v" id="btnTabVTelegram" onclick="switchAdminSection('telegram')">✈️ إشعارات تلغرام</button>
       <button class="admin-tab-btn-v" id="btnTabVAudit" onclick="switchAdminSection('audit')">🛡️ سجل العمليات والحماية</button>
@@ -916,24 +916,24 @@
       <button class="admin-tab-btn-v" id="btnTabVCode" onclick="switchAdminSection('code')">📋 نسخ الكود</button>
     </div>
 
-    <!-- 1. REAL ANALYTICS SECTION -->
+    <!-- 1. REAL ANALYTICS & REVENUE SECTION -->
     <div id="adminSecStats">
       <div class="admin-stat-grid-v">
         <div class="admin-stat-card-v">
-          <div class="num mono" id="statDailyVisits">0</div>
-          <div class="lbl">زيارات اليوم الفعلية</div>
+          <div class="num mono" id="statDailyRevenue">0 د.ع</div>
+          <div class="lbl">💰 مبيعات اليوم الفعلية</div>
         </div>
         <div class="admin-stat-card-v">
-          <div class="num mono" id="statTotalProdsV">0</div>
-          <div class="lbl">إجمالي المنتجات</div>
+          <div class="num mono" id="statMonthlyRevenue">0 د.ع</div>
+          <div class="lbl">📅 مبيعات هذا الشهر</div>
+        </div>
+        <div class="admin-stat-card-v">
+          <div class="num mono" id="statDailyVisits">0</div>
+          <div class="lbl">👁️ زيارات اليوم الحقيقية</div>
         </div>
         <div class="admin-stat-card-v">
           <div class="num mono" id="statTotalOrdersV">0</div>
-          <div class="lbl">الطلبات المسجلة</div>
-        </div>
-        <div class="admin-stat-card-v">
-          <div class="num mono" id="statActiveOffersV">0</div>
-          <div class="lbl">العروض النشطة</div>
+          <div class="lbl">📦 إجمالي الطلبات المسجلة</div>
         </div>
       </div>
 
@@ -1337,7 +1337,7 @@
           <div style="display:flex; align-items:center; justify-content:space-between; gap:14px; background:#F9FAFB; padding:12px 14px; border-radius:12px;">
             <div>
               <div style="font-weight:800; font-size:13.5px; color:var(--ink);">اللون الرئيسي للموقع</div>
-              <div style="font-size:11.5px; color:var(--text-soft);">سيتم تطبيق هذا اللون فورياً على كافة الأزرار، الأيقونات، والهوية</div>
+              <div style="font-size:11.5px; color:var(--text-soft);">سيتم تطبيق هذا اللون فورياً وسحابياً على كافة الأزرار، الأيقونات، والهوية</div>
             </div>
             <input type="color" id="adminPrimaryColorPicker" value="#E85D8A" style="width:54px; height:42px; padding:2px; cursor:pointer; border-radius:8px; border:1px solid #D1D5DB;">
           </div>
@@ -1365,21 +1365,21 @@
           <legend>📱 إدارة وسائل التواصل وروابط الصيدلية</legend>
           <div class="form-field">
             <label>رقم الواتساب الرسمي لاستقبال الطلبات (مع الرمز الدولي بدون +) *</label>
-            <input type="text" id="adminSocialWhatsappInput" placeholder="مثال: 9647700000000" required>
+            <input type="text" id="adminSocialWhatsappInput" value="9647813703288" placeholder="مثال: 9647813703288" required>
           </div>
           <div style="display:flex; gap:10px;">
             <div class="form-field" style="flex:1;">
               <label>رابط أو يوزر التلغرام</label>
-              <input type="text" id="adminSocialTelegramInput" placeholder="https://t.me/yourchannel">
+              <input type="text" id="adminSocialTelegramInput" placeholder="https://t.me/cottanpharmacy">
             </div>
             <div class="form-field" style="flex:1;">
               <label>رابط الإنستغرام</label>
-              <input type="text" id="adminSocialInstagramInput" placeholder="https://instagram.com/yourpage">
+              <input type="text" id="adminSocialInstagramInput" placeholder="https://instagram.com/cottanpharmacy">
             </div>
           </div>
           <div class="form-field">
             <label>رقم هاتف الاتصال المباشر</label>
-            <input type="text" id="adminSocialPhoneInput" placeholder="07xxxxxxxxx">
+            <input type="text" id="adminSocialPhoneInput" value="07813703288" placeholder="07813703288">
           </div>
         </fieldset>
 
@@ -1578,7 +1578,7 @@
     <span class="badge-count" id="bnCartBadge" style="display:none;">0</span>
   </button>
   <button class="bn-item" onclick="showView('admin')" id="bn-admin" style="display:none; color:#F59E0B;">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     <span class="lbl">الأدمن</span>
   </button>
 </nav>
@@ -1587,11 +1587,11 @@
 
 <script>
   // ==========================================================
-  //  CONFIG & BACKEND URL (WITH PROTECTED CUSTOM API KEY)
+  //  CONFIG & BACKEND URL
   // ==========================================================
   const WORKER_API_BASE = "https://cottanbackend.hussaindark6.workers.dev";
   const ADMIN_EMAIL = "hussaindark6@gmail.com";
-  let WHATSAPP_NUMBER = "9647700000000";
+  let WHATSAPP_NUMBER = "9647813703288";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDXAp6CTcq3OlN2egGOj5Yg8jK5wUsR6Uc",
@@ -1612,16 +1612,16 @@
       db = firebase.firestore();
       isFirebaseConfigured = true;
 
-      // Force LOCAL persistence at startup
+      // Set persistence to LOCAL for reliable Safari/iOS sessions
       auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(err => {
-        console.warn("Persistence set fallback:", err);
+        console.warn("Persistence fallback:", err);
       });
     }
   } catch (err) {
-    console.warn("Firebase initialization error:", err);
+    console.warn("Firebase init error:", err);
   }
 
-  // ============ SECURITY & SANITIZATION (XSS PREVENTION) ============
+  // ============ SECURITY & SANITIZATION ============
   function sanitizeText(str) {
     if (typeof str !== 'string') return str == null ? '' : String(str);
     return str
@@ -1666,7 +1666,6 @@
     return true;
   }
 
-  // ============ IN-APP BROWSER DETECTOR ============
   function isInAppBrowser() {
     const ua = navigator.userAgent || navigator.vendor || window.opera || '';
     return (
@@ -1674,7 +1673,6 @@
     );
   }
 
-  // ============ SECURE API CLIENT (WITH BEARER TOKEN) ============
   async function apiFetch(endpoint, options = {}) {
     const headers = {
       "Content-Type": "application/json",
@@ -1772,6 +1770,8 @@
 
   let totalOrdersCount = 0;
   let todayVisitsCount = 0;
+  let todayRevenue = 0;
+  let monthlyRevenue = 0;
   let weeklyVisitsData = [];
 
   let storeSettings = {
@@ -1782,10 +1782,10 @@
     showPharmacistBanner: true,
     pharmacistCtaTitle: 'استشر الصيدلي مجاناً 🩺',
     pharmacistCtaDesc: 'تحدثي مع الصيدلي المختص مباشرة للحصول على تشخيص دقيق لروتينك وروشتتك',
-    socialWhatsapp: '9647700000000',
+    socialWhatsapp: '9647813703288',
     socialTelegram: 'https://t.me/cottanpharmacy',
     socialInstagram: 'https://instagram.com/cottanpharmacy',
-    socialPhone: '07700000000',
+    socialPhone: '07813703288',
     deliveryFeeStandard: 4000,
     deliveryFeeExpress: 8000,
     heroMainTitle: 'صيدلية القطن',
@@ -1811,14 +1811,13 @@
     return hashColor(brandName || 'Qutn');
   }
 
-  // ============ DYNAMIC THEME COLOR ENGINE ============
+  // ============ DYNAMIC THEME ENGINE ============
   function applyDynamicThemeColor(hexColor) {
     if (!hexColor || !/^#[0-9A-F]{6}$/i.test(hexColor)) return;
     const root = document.documentElement;
     root.style.setProperty('--accent', hexColor);
     root.style.setProperty('--rose-deep', hexColor);
     
-    // Generate soft background tint
     const r = parseInt(hexColor.slice(1,3), 16);
     const g = parseInt(hexColor.slice(3,5), 16);
     const b = parseInt(hexColor.slice(5,7), 16);
@@ -1830,7 +1829,7 @@
     root.style.setProperty('--accent-dark', `rgb(${Math.max(0, r-30)}, ${Math.max(0, g-30)}, ${Math.max(0, b-30)})`);
   }
 
-  // ============ PROMO CODES LOGIC (SERVER VALIDATION) ============
+  // ============ PROMO CODES LOGIC ============
   async function applyPromoCode(code) {
     if (!code || !code.trim()) {
       showToast('يرجى كتابة كود الخصم أولاً');
@@ -1974,7 +1973,7 @@
     }
   }
 
-  // ============ AUDIT LOGS VIEWER & SECURITY SETTINGS ============
+  // ============ AUDIT LOGS & SECURITY SETTINGS ============
   async function fetchAuditLogs() {
     const res = await apiFetch("/api/admin/logs");
     const tbody = document.getElementById('adminAuditLogsTbody');
@@ -2008,7 +2007,7 @@
     showToast('تم حفظ سياسات الحماية بنجاح ✓');
   }
 
-  // ============ REAL DYNAMIC ANALYTICS ============
+  // ============ REAL DYNAMIC ANALYTICS & REVENUE ============
   async function recordRealVisit() {
     const today = new Date().toISOString().split('T')[0];
     const visitKey = 'visited_' + today;
@@ -2025,14 +2024,39 @@
         }
       }
       fetchRealAnalytics();
-    } catch (e) { console.warn("Analytics visit tracking error:", e); }
+    } catch (e) { console.warn("Analytics visit error:", e); }
   }
 
   async function fetchRealAnalytics() {
     if (!isFirebaseConfigured || !db) return;
     try {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const currentMonthStr = todayStr.substring(0, 7); // YYYY-MM
+
+      let dRev = 0;
+      let mRev = 0;
+
+      // Calculate revenue from Firestore orders & local orders
       const ordersSnap = await db.collection('orders').get();
-      totalOrdersCount = ordersSnap.size;
+      totalOrdersCount = Math.max(ordersSnap.size, myOrders.length);
+
+      ordersSnap.forEach(doc => {
+        const o = doc.data();
+        const oTotal = Number(o.total || o.verifiedTotal || 0);
+        const oDate = o.createdAt && o.createdAt.toDate ? o.createdAt.toDate().toISOString() : (o.date || '');
+        if (oDate.startsWith(todayStr)) dRev += oTotal;
+        if (oDate.startsWith(currentMonthStr)) mRev += oTotal;
+      });
+
+      // Also merge local storage orders if any exist
+      myOrders.forEach(o => {
+        const oTotal = Number(o.total || 0);
+        if (o.date && o.date.includes(todayStr)) dRev = Math.max(dRev, oTotal);
+        if (o.date && o.date.includes(currentMonthStr)) mRev = Math.max(mRev, oTotal);
+      });
+
+      todayRevenue = dRev;
+      monthlyRevenue = mRev;
 
       const last7Days = [];
       for (let i = 6; i >= 0; i--) {
@@ -2045,8 +2069,7 @@
       const visitsMap = {};
       visitsSnap.forEach(doc => { visitsMap[doc.id] = (doc.data().visits || 0); });
 
-      const today = new Date().toISOString().split('T')[0];
-      todayVisitsCount = visitsMap[today] || 0;
+      todayVisitsCount = visitsMap[todayStr] || 0;
 
       const dayNames = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
       weeklyVisitsData = last7Days.map(dateStr => {
@@ -2063,15 +2086,15 @@
   }
 
   function renderRealAnalyticsView() {
+    const statDailyRev = document.getElementById('statDailyRevenue');
+    const statMonthlyRev = document.getElementById('statMonthlyRevenue');
     const statVisits = document.getElementById('statDailyVisits');
     const statOrders = document.getElementById('statTotalOrdersV');
-    const statProds = document.getElementById('statTotalProdsV');
-    const statOffers = document.getElementById('statActiveOffersV');
 
+    if (statDailyRev) statDailyRev.textContent = fmtPrice(todayRevenue);
+    if (statMonthlyRev) statMonthlyRev.textContent = fmtPrice(monthlyRevenue);
     if (statVisits) statVisits.textContent = todayVisitsCount;
     if (statOrders) statOrders.textContent = totalOrdersCount;
-    if (statProds) statProds.textContent = products.length;
-    if (statOffers) statOffers.textContent = products.filter(p => p.oldPrice || p.isSpecialOffer).length;
 
     const chartContainer = document.getElementById('adminRealChartBars');
     if (chartContainer && weeklyVisitsData.length > 0) {
@@ -2230,7 +2253,7 @@
     }
   }
 
-  // ============ CATEGORIES CRUD & MODERN RENDERING ============
+  // ============ CATEGORIES CRUD & RENDERING ============
   function renderModernCategories() {
     const container = document.getElementById('catRowFull');
     const totalCountEl = document.getElementById('categoriesTotalCount');
@@ -2612,7 +2635,7 @@
       showPharmacistBanner: document.getElementById('adminShowPharmacistBanner').checked,
       pharmacistCtaTitle: sanitizeText(document.getElementById('adminPharmacistTitleInput').value.trim()) || 'استشر الصيدلي مجاناً 🩺',
       pharmacistCtaDesc: sanitizeText(document.getElementById('adminPharmacistDescInput').value.trim()) || 'تحدثي مع الصيدلي المختص مباشرة للحصول على تشخيص دقيق لروتينك وروشتتك',
-      socialWhatsapp: sanitizeText(document.getElementById('adminSocialWhatsappInput').value.trim()) || '9647700000000',
+      socialWhatsapp: sanitizeText(document.getElementById('adminSocialWhatsappInput').value.trim()) || '9647813703288',
       socialTelegram: sanitizeText(document.getElementById('adminSocialTelegramInput').value.trim()),
       socialInstagram: sanitizeText(document.getElementById('adminSocialInstagramInput').value.trim()),
       socialPhone: sanitizeText(document.getElementById('adminSocialPhoneInput').value.trim()),
@@ -2654,15 +2677,28 @@
     const pharmWrap = document.getElementById('homePharmacistCtaWrap');
     const drawerPharmBtn = document.getElementById('drawerConsultBtn');
 
-    if (annEl) annEl.style.display = (storeSettings.showAnnouncement !== false) ? 'flex' : 'none';
-    if (annTextEl && storeSettings.announcementText) annTextEl.textContent = storeSettings.announcementText;
+    // Announcement Bar Fix
+    if (annEl) {
+      const isVisible = (storeSettings.showAnnouncement === true || storeSettings.showAnnouncement === 'true' || storeSettings.showAnnouncement === undefined);
+      annEl.style.display = isVisible ? 'flex' : 'none';
+    }
+    if (annTextEl && storeSettings.announcementText) {
+      annTextEl.textContent = storeSettings.announcementText;
+    }
     if (heroMainEl && storeSettings.heroMainTitle) heroMainEl.textContent = storeSettings.heroMainTitle;
     if (heroSubEl && storeSettings.heroSubTitle) heroSubEl.textContent = storeSettings.heroSubTitle;
     if (heroDescEl && storeSettings.heroDescTitle) heroDescEl.textContent = storeSettings.heroDescTitle;
     if (heroImgEl && storeSettings.bannerImgUrl) heroImgEl.src = sanitizeUrl(storeSettings.bannerImgUrl);
 
-    if (pharmWrap) pharmWrap.style.display = (storeSettings.showPharmacistBanner !== false) ? 'block' : 'none';
-    if (drawerPharmBtn) drawerPharmBtn.style.display = (storeSettings.showPharmacistBanner !== false) ? 'flex' : 'none';
+    // Pharmacist Consultation Banner Toggle Fix
+    if (pharmWrap) {
+      const isPharmVisible = (storeSettings.showPharmacistBanner === true || storeSettings.showPharmacistBanner === 'true' || storeSettings.showPharmacistBanner === undefined);
+      pharmWrap.style.display = isPharmVisible ? 'block' : 'none';
+    }
+    if (drawerPharmBtn) {
+      const isPharmVisible = (storeSettings.showPharmacistBanner === true || storeSettings.showPharmacistBanner === 'true' || storeSettings.showPharmacistBanner === undefined);
+      drawerPharmBtn.style.display = isPharmVisible ? 'flex' : 'none';
+    }
     if (document.getElementById('pharmacistCtaTitle') && storeSettings.pharmacistCtaTitle) {
       document.getElementById('pharmacistCtaTitle').textContent = storeSettings.pharmacistCtaTitle;
     }
@@ -3258,7 +3294,8 @@
       <div class="summary-row"><span>رسوم التوصيل</span><span class="mono">${fmtPrice(fee)}</span></div>
       <div class="summary-row total"><span>الإجمالي</span><span class="mono">${fmtPrice(finalTotal)}</span></div>`;
   }
-// ============ CONFIRM ORDER & SUCCESS MODAL ============
+
+  // ============ CONFIRM ORDER & SUCCESS MODAL ============
   async function confirmOrder() {
     if (!lockAction('confirmOrder', 2500)) return;
 
@@ -3326,6 +3363,14 @@
       };
       myOrders.unshift(newOrderObj);
 
+      // Save to Firestore if available
+      if (db) {
+        db.collection('orders').doc(orderId).set({
+          ...newOrderObj,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(e => console.warn(e));
+      }
+
       const lines = itemObjects.map(item => `${item.name} × ${item.quantity}`);
       const deliveryLabel = deliveryMethod === 'express' ? `سريع (${fmtPrice(storeSettings.deliveryFeeExpress || 8000)})` : `عادي (${fmtPrice(storeSettings.deliveryFeeStandard || 4000)})`;
       const promoInfo = appliedPromo ? `كود الخصم: ${appliedPromo.code} (-${fmtPrice(appliedPromo.discountAmount)})\n` : '';
@@ -3370,12 +3415,11 @@
     if (successModal) successModal.classList.remove('open');
     showView('orders');
   }
-
   // ============ NAVIGATION ============
   function showView(name) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     const target = document.getElementById('view-' + name);
-    if(target) target.classList.add('active');
+    if (target) target.classList.add('active');
     currentView = name;
     closeMenu();
     window.scrollTo({top: 0, behavior: 'instant'});
@@ -3386,12 +3430,13 @@
     });
 
     renderCurrentActiveView();
+
     if (name === 'admin') {
       if (!isCurrentUserAdmin()) {
         showView('home');
-        showToast('هذا القسم مخصص للمشرف فقط');
+        showToast('هذا القسم مخصص للمشرف فقط ⚠️');
       } else {
-        renderRealAnalyticsView();
+        fetchRealAnalytics();
         fetchAdminCoupons();
         fetchAuditLogs();
         renderAdminCategoriesList();
@@ -3400,43 +3445,77 @@
     }
   }
 
-  function openMenu() { document.getElementById('menuDrawer').classList.add('open'); document.getElementById('menuOverlay').classList.add('open'); }
-  function closeMenu() { document.getElementById('menuDrawer').classList.remove('open'); document.getElementById('menuOverlay').classList.remove('open'); }
-  function openWhatsapp() { window.open(`https://wa.me/${storeSettings.socialWhatsapp || WHATSAPP_NUMBER}`, '_blank'); }
+  function openMenu() {
+    document.getElementById('menuDrawer').classList.add('open');
+    document.getElementById('menuOverlay').classList.add('open');
+  }
 
-  function openCategory(catId) { listingMode = 'category'; listingValue = catId; listingCatActive = catId; renderListing(); showListingView(); }
-  function openBestSellers() { listingMode = 'bestsellers'; listingValue = null; listingCatActive = 'all'; renderListing(); showListingView(); }
+  function closeMenu() {
+    document.getElementById('menuDrawer').classList.remove('open');
+    document.getElementById('menuOverlay').classList.remove('open');
+  }
+
+  function openWhatsapp() {
+    const targetNumber = storeSettings.socialWhatsapp || WHATSAPP_NUMBER || "9647813703288";
+    window.open(`https://wa.me/${targetNumber}`, '_blank');
+  }
+
+  function openCategory(catId) {
+    listingMode = 'category';
+    listingValue = catId;
+    listingCatActive = catId;
+    renderListing();
+    showListingView();
+  }
+
+  function openBestSellers() {
+    listingMode = 'bestsellers';
+    listingValue = null;
+    listingCatActive = 'all';
+    renderListing();
+    showListingView();
+  }
+
   function onSearch(val) {
     const term = val.trim();
     if (!term) return;
-    listingMode = 'search'; listingValue = term; listingCatActive = 'all'; renderListing(); showListingView();
+    listingMode = 'search';
+    listingValue = term;
+    listingCatActive = 'all';
+    renderListing();
+    showListingView();
   }
 
   function showListingView() {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.getElementById('view-listing').classList.add('active');
     currentView = 'listing';
-    window.scrollTo({top:0, behavior:'instant'});
+    window.scrollTo({top: 0, behavior: 'instant'});
   }
 
   function renderListing() {
-    const titles = { category: (categories.find(c => c.id === listingValue) || {}).label, search: `نتائج "${listingValue}"`, bestsellers: 'الأكثر مبيعاً 🔥' };
+    const titles = {
+      category: (categories.find(c => c.id === listingValue) || {}).label,
+      search: `نتائج البحث عن: "${listingValue}"`,
+      bestsellers: 'الأكثر مبيعاً 🔥'
+    };
     document.getElementById('listingTitle').textContent = titles[listingMode] || 'المنتجات';
 
     let list = products.slice();
-    if (listingMode === 'category') list = list.filter(p => p.category === listingValue);
-    else if (listingMode === 'search') {
+    if (listingMode === 'category') {
+      list = list.filter(p => p.category === listingValue);
+    } else if (listingMode === 'search') {
       const t = listingValue.toLowerCase();
       list = list.filter(p => p.name.toLowerCase().includes(t) || (p.brand && p.brand.toLowerCase().includes(t)));
     } else if (listingMode === 'bestsellers') {
-      list = list.sort((a,b) => (b.orderCount || 0) - (a.orderCount || 0));
+      list = list.sort((a, b) => (b.orderCount || 0) - (a.orderCount || 0));
     }
 
     document.getElementById('listingCount').textContent = list.length + ' منتج';
     renderProductGrid('listingGrid', list);
   }
 
-  // ============ ACCOUNT & AUTH (SAFARI SYNCHRONOUS POPUP FIX) ============
+  // ============ ACCOUNT & AUTH (SAFARI SYNCHRONOUS POPUP) ============
   function updateUserHeaderProfile() {
     const chipAvatar = document.getElementById('userChipAvatar');
     const chipName = document.getElementById('userChipName');
@@ -3450,12 +3529,18 @@
       if (bnAccountLbl) bnAccountLbl.textContent = firstName;
       if (logoutBtn) logoutBtn.style.display = 'flex';
       const cleanPhoto = sanitizeUrl(currentUser.photoURL);
-      if (chipAvatar) chipAvatar.innerHTML = cleanPhoto ? `<img src="${cleanPhoto}">` : `<span style="font-size:12px; font-weight:900; color:var(--accent);">${firstName.charAt(0).toUpperCase()}</span>`;
+      if (chipAvatar) {
+        chipAvatar.innerHTML = cleanPhoto 
+          ? `<img src="${cleanPhoto}">` 
+          : `<span style="font-size:12px; font-weight:900; color:var(--accent);">${firstName.charAt(0).toUpperCase()}</span>`;
+      }
     } else {
       if (chipName) chipName.textContent = 'دخول';
       if (bnAccountLbl) bnAccountLbl.textContent = 'حسابي';
       if (logoutBtn) logoutBtn.style.display = 'none';
-      if (chipAvatar) chipAvatar.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>`;
+      if (chipAvatar) {
+        chipAvatar.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>`;
+      }
     }
   }
 
@@ -3469,7 +3554,7 @@
       container.innerHTML = `
         <div class="account-card">
           <div class="user-profile-header">
-            <div class="user-avatar"><img src="${cleanPhoto}"></div>
+            <div class="user-avatar"><img src="${cleanPhoto || 'https://imgdb.io/i/EQ4D9ag.png'}"></div>
             <div class="user-info">
               <h3>${sanitizeText(currentUser.displayName || currentUser.email)} ${isAdmin ? '⭐ (مشرف المتجر)' : ''}</h3>
               <p>${sanitizeText(currentUser.email || '')}</p>
@@ -3485,7 +3570,7 @@
         <div class="account-card">
           <div style="font-size:38px; margin-bottom:8px;">🌸</div>
           <h3 style="font-size:17px; font-weight:900; margin:0 0 6px;">مرحباً بك في صيدلية القطن</h3>
-          <p style="font-size:12.5px; color:var(--text-soft); margin:0 0 20px;">سجلي الدخول بنقرة واحدة لحفظ منتجاتك المفضلة ومزامنة سلتك:</p>
+          <p style="font-size:12.5px; color:var(--text-soft); margin:0 0 20px;">سجلي الدخول بنقرة واحدة لحفظ منتجاتك المفضلة ومتابعة طلباتكِ:</p>
           <button class="auth-btn-google" onclick="signInWithGoogle()">
             <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
             تسجيل الدخول المباشر عبر Google
@@ -3499,7 +3584,7 @@
       showToast('خدمة تسجيل الدخول غير مهيأة');
       return;
     }
-    // Block In-App Browsers (Telegram / Instagram / TikTok)
+    // Block In-App Browsers
     if (isInAppBrowser()) {
       const modal = document.getElementById('iabModal');
       if (modal) modal.classList.add('open');
@@ -3509,7 +3594,7 @@
     const provider = new firebase.auth.GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
 
-    // Open popup synchronously on user click to prevent Safari popup blocker
+    // Open popup synchronously on user click (prevents Safari popup blocker)
     auth.signInWithPopup(provider)
       .then(res => {
         if (res && res.user) {
@@ -3556,13 +3641,20 @@
   }
 
   // ============ CONSULT MODAL ============
-  function openConsultModal() { document.getElementById('consultModal').classList.add('open'); }
-  function closeConsultModal() { document.getElementById('consultModal').classList.remove('open'); }
+  function openConsultModal() {
+    document.getElementById('consultModal').classList.add('open');
+  }
+
+  function closeConsultModal() {
+    document.getElementById('consultModal').classList.remove('open');
+  }
+
   function selectConsultCondition(btn) {
     document.querySelectorAll('.consult-toggle-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('consultCondition').value = btn.getAttribute('data-val');
   }
+
   function handleConsultSubmit(e) {
     e.preventDefault();
     if (!lockAction('consultSubmit', 2000)) return;
@@ -3577,8 +3669,9 @@
       return;
     }
 
-    const msg = encodeURIComponent(`🩺 استشارة صيدلانية - صيدلية القطن:\nالاسم: ${name}\nالعمر: ${age}\nالحالة: ${cond}\nالاستفسار: ${desc}`);
-    window.open(`https://wa.me/${storeSettings.socialWhatsapp || WHATSAPP_NUMBER}?text=${msg}`, '_blank');
+    const targetPhone = storeSettings.socialWhatsapp || WHATSAPP_NUMBER || "9647813703288";
+    const msg = encodeURIComponent(`🩺 *استشارة صيدلانية - صيدلية القطن:*\nالاسم: ${name}\nالعمر: ${age}\nالحالة: ${cond}\nالاستفسار: ${desc}`);
+    window.open(`https://wa.me/${targetPhone}?text=${msg}`, '_blank');
     closeConsultModal();
   }
 
@@ -3597,7 +3690,7 @@
     toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
   }
 
-  // ============ INITIALIZE ============
+  // ============ INITIALIZE APPLICATION ============
   renderHome();
   renderModernCategories();
   updateCartBadge();
