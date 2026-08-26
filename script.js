@@ -182,6 +182,10 @@ let listingMode = null, listingValue = null, listingCatActive = 'all';
 let currentProductId = null, pdQty = 1, pdActiveTab = 'desc', deliveryMethod = 'standard';
 let appliedPromo = null;
 
+// المتغيرات الذكية لحفظ موضع الشاشة والصفحة السابقة عند الدخول للمنتج
+let previousViewBeforeProduct = 'home';
+let previousScrollBeforeProduct = 0;
+
 let totalOrdersCount = 0;
 let todayVisitsCount = 0;
 let todayRevenue = 0;
@@ -349,7 +353,7 @@ async function deleteAdminCoupon(id) {
   }
 }
 
-// ================= TELEGRAM BOT SETTINGS =================
+// ================= TELEGRAM BOT NOTIFICATIONS =================
 async function handleSaveTelegramSettings(e) {
   e.preventDefault();
   if (!assertAdmin()) return;
@@ -1568,7 +1572,14 @@ function renderProductDetailDOM(p) {
   };
 }
 
+// ================= دالة فتح تفاصيل المنتج مع حفظ موضع التمرير =================
 function openProduct(id, isUserClick = false) {
+  // 1. حفظ موضع الشاشة والصفحة الحالية قبل الدخول للمنتج
+  if (isUserClick) {
+    previousViewBeforeProduct = (currentView !== 'product') ? currentView : 'home';
+    previousScrollBeforeProduct = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+  }
+
   currentProductId = id;
   pdQty = 1;
   const p = findProduct(id);
@@ -1596,7 +1607,30 @@ function openProduct(id, isUserClick = false) {
   }
 }
 
-function goBackFromProduct() { if (listingMode) showListingView(); else showView('home'); }
+// ================= دالة الرجوع من المنتج (العودة لنفس المكان السابق) =================
+function goBackFromProduct() {
+  const targetView = previousViewBeforeProduct || 'home';
+  
+  // إظهار الصفحة السابقة التي كان فيها المستخدم
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const targetEl = document.getElementById('view-' + targetView);
+  if (targetEl) targetEl.classList.add('active');
+  currentView = targetView;
+
+  // تحديث حالة الأزرار في الشريط السفلي
+  ['home', 'wishlist', 'categories', 'orders', 'cart', 'account', 'admin'].forEach(k => {
+    const el = document.getElementById('bn-' + k);
+    if (el) el.classList.toggle('active', targetView === k);
+  });
+
+  renderCurrentActiveView();
+
+  // إعادة الشاشة فورياً لنفس مكان المنتج بدون القفز للأعلى
+  setTimeout(() => {
+    window.scrollTo({ top: previousScrollBeforeProduct, behavior: 'instant' });
+  }, 10);
+}
+
 function switchPdTab(tab) {
   pdActiveTab = tab;
   document.querySelectorAll('.pd-tab').forEach((el,i) => el.classList.toggle('active', ['desc','ing','use'][i] === tab));
@@ -1607,6 +1641,7 @@ function switchPdTab(tab) {
   if (iTab) iTab.classList.toggle('active', tab === 'ing');
   if (uTab) uTab.classList.toggle('active', tab === 'use');
 }
+
 function changePdQty(delta) {
   pdQty = Math.max(1, pdQty + delta);
   const qtyEl = document.getElementById('pdQtyVal');
@@ -1620,6 +1655,7 @@ function addToCart(id, silent = false, quantity = 1) {
   saveLocalState();
   if (!silent) showToast('تمت الإضافة للسلة ✓');
 }
+
 function changeCartQty(id, delta) {
   if (!cart[id]) return;
   cart[id] += delta;
@@ -1628,12 +1664,14 @@ function changeCartQty(id, delta) {
   saveLocalState();
   renderCart();
 }
+
 function removeCartItem(id) {
   delete cart[id];
   updateCartBadge();
   saveLocalState();
   renderCart();
 }
+
 function updateCartBadge() {
   const count = Object.values(cart).reduce((s, q) => s + q, 0);
   const b1 = document.getElementById('cartBadge');
@@ -1641,6 +1679,7 @@ function updateCartBadge() {
   if (b1) { b1.style.display = count > 0 ? 'flex' : 'none'; b1.textContent = count; }
   if (b2) { b2.style.display = count > 0 ? 'flex' : 'none'; b2.textContent = count; }
 }
+
 function getCartSubtotal() {
   return Object.keys(cart).reduce((sum, id) => {
     const p = findProduct(id);
