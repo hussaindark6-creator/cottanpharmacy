@@ -35,7 +35,7 @@
     .view { display: none !important; }
     .view.active { display: block !important; }
 
-    /* إخفاء تام للنوافذ المنبثقة حتى لا تتسرب في أسفل الصفحة */
+    /* إخفاء تام للنوافذ المنبثقة حتى لا تتسرب في أسفل الصفحة عند السكرول */
     .notif-modal-overlay, .success-modal-overlay, .iab-modal, .consult-modal-overlay, .welcome-modal-overlay, .admin-quick-modal-overlay {
       display: none !important;
       position: fixed;
@@ -59,16 +59,16 @@
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
   </style>
 
-  <!-- External Stylesheet -->
+  <!-- Main External Stylesheet -->
   <link rel="stylesheet" href="style.css">
 
-  <!-- Firebase SDKs -->
+  <!-- Firebase SDKs (Compat v9.22.1) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
 
-  <!-- Cloudflare Turnstile & Analytics -->
+  <!-- Cloudflare Turnstile & Google Analytics -->
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-QC29GK2MDW"></script>
   <script>
@@ -236,7 +236,7 @@
       </div>
     </div>
 
-    <!-- Smart Skin-Type & Concern Filters -->
+    <!-- Smart Skin-Type & Concern Filters (شريط فلاتر البشرة الديناميكي) -->
     <section class="wrap section">
       <div class="section-head">
         <h2>عناية مخصصة حسب نوع بشرتك 💧</h2>
@@ -284,7 +284,7 @@
     </div>
   </div>
 
-  <!-- ============ 3. CATEGORIES GRID VIEW ============ -->
+  <!-- ============ 3. MODERN FULL-COVER CATEGORIES GRID VIEW ============ -->
   <div class="view" id="view-categories">
     <div class="wrap">
       <div class="section-head" style="margin-top:16px;">
@@ -329,7 +329,7 @@
     </div>
   </div>
 
-  <!-- ============ 7. PRODUCT DETAIL VIEW ============ -->
+  <!-- ============ 7. PRODUCT DETAIL VIEW (WITH DEEP LINK, REVIEWS & CROSS-SELLING) ============ -->
   <div class="view" id="view-product">
     <div class="wrap">
       <div style="display:flex; align-items:center; justify-content:space-between; padding-top:6px;">
@@ -455,7 +455,7 @@
     </div>
   </div>
 
-  <!-- ============ MODALS & POPUPS (مغلقة تماماً بالـ display: none) ============ -->
+  <!-- ============ MODALS & POPUPS ============ -->
   <!-- 1. Smart Welcome Discount Popup -->
   <div class="welcome-modal-overlay" id="welcomeOfferModal">
     <div class="welcome-card">
@@ -471,7 +471,7 @@
     </div>
   </div>
 
-  <!-- 2. Admin Quick Editor Modal (المشرف فقط) -->
+  <!-- 2. Admin Quick Editor Modal -->
   <div class="admin-quick-modal-overlay" id="adminQuickEditModal">
     <div class="admin-quick-card">
       <div class="consult-header">
@@ -500,15 +500,7 @@
         </div>
         <div class="form-field">
           <label>نوع البشرة / المشكلة المستهدفة</label>
-          <select id="quickEditProdSkinType">
-            <option value="all">جميع أنواع البشرة</option>
-            <option value="oily">بشرة دهنية ومختلطة</option>
-            <option value="dry">بشرة جافة وشديدة الجفاف</option>
-            <option value="sensitive">بشرة حساسة ومتهيجة</option>
-            <option value="acne">علاج حب الشباب والمسام</option>
-            <option value="brightening">تفتيح وتصبغات</option>
-            <option value="hydration">ترطيب عميق وترميم</option>
-          </select>
+          <select id="quickEditProdSkinType"></select>
         </div>
         <button class="admin-btn-save" onclick="saveAdminQuickEdit()">💾 حفظ التعديلات فورياً</button>
       </div>
@@ -617,7 +609,7 @@
     </div>
   </div>
 
-  <!-- Admin Quick Floating Action Button -->
+  <!-- Admin Quick Floating Action Button (+ إضافة منتج فوري للمشرف) -->
   <button id="adminFloatingAddBtn" class="admin-float-btn" style="display:none;" onclick="openAdminQuickAddModal()" title="إضافة منتج سريع">
     <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
   </button>
@@ -634,7 +626,7 @@
       <span class="lbl" id="bnAccountLbl">حسابي</span>
     </button>
     <button class="bn-item" onclick="showView('orders')" id="bn-orders">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
       <span class="lbl">طلباتي</span>
     </button>
     <button class="bn-item active" onclick="showView('home')" id="bn-home">
