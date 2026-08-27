@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Complete Embedded Admin Styles (تنسيقات مدمجة تضمن ثبات اللوحة وسرعتها 100%) -->
+  <!-- Complete Embedded Admin Styles (تنسيقات مدمجة تضمن ثبات لوحة التحكم بنسبة 100%) -->
   <style>
     :root {
       --ink: #1F2937; --text-soft: #6B7280; --paper: #FFFFFF; --surface: #FFF0F3;
@@ -152,11 +152,10 @@
       <p>مرحباً بك يا مشرف (hussaindark6@gmail.com) — إدارة حقيقية بالكامل ومربوطة بـ Cloudflare Worker و Firebase.</p>
     </div>
 
-    <!-- ADMIN TABS NAVIGATION (الـ 13 قسماً بالكامل) -->
+    <!-- ADMIN TABS NAVIGATION (الـ 12 قسماً بالكامل مع مطابقة 100% للـ IDs) -->
     <div class="admin-tabs-nav-view">
       <button class="admin-tab-btn-v active" id="btnTabVStats" onclick="switchAdminSection('stats')">📊 الإحصائيات والأرباح</button>
       <button class="admin-tab-btn-v" id="btnTabVOrders" onclick="switchAdminSection('orders')">📦 إدارة الطلبات والشحن</button>
-      <button class="admin-tab-btn-v" id="btnTabVSkin" onclick="switchAdminSection('skin')">🌿 فلاتر نوع البشرة</button>
       <button class="admin-tab-btn-v" id="btnTabVCoupons" onclick="switchAdminSection('coupons')">🎟️ إدارة أكواد الخصم</button>
       <button class="admin-tab-btn-v" id="btnTabVTelegram" onclick="switchAdminSection('telegram')">✈️ إشعارات تلغرام</button>
       <button class="admin-tab-btn-v" id="btnTabVAudit" onclick="switchAdminSection('audit')">🛡️ سجل العمليات والحماية</button>
@@ -231,34 +230,7 @@
       </div>
     </div>
 
-    <!-- 3. SKIN TYPES & CONCERN FILTERS MANAGEMENT (القسم الجديد لإدارة فلاتر البشرة) -->
-    <div id="adminSecSkin" style="display:none;">
-      <div class="admin-fieldset">
-        <legend id="adminSkinTypeFormTitle">🌿 إضافة / تعديل فلتر نوع بشرة جديد</legend>
-        <form id="adminSkinTypeForm" onsubmit="handleAdminSkinTypeSave(event)">
-          <input type="hidden" id="adminSkinTypeDocId" value="">
-          <div style="display:flex; gap:10px;">
-            <div class="form-field" style="flex:1.5;">
-              <label>اسم الفلتر بالعربي مع الإيموجي *</label>
-              <input type="text" id="adminSkinTypeName" placeholder="مثال: بشرة دهنية ومختلطة 🫧" required>
-            </div>
-            <div class="form-field" style="flex:1;">
-              <label>المعرف الإنجليزي (ID / Slug) *</label>
-              <input type="text" id="adminSkinTypeIdInput" placeholder="مثال: oily" required>
-            </div>
-          </div>
-          <button type="submit" class="admin-btn-save" id="adminSaveSkinBtn">💾 حفظ فلتر البشرة وتفعيله بالمتجر</button>
-          <button type="button" onclick="resetAdminSkinTypeForm()" style="width:100%; margin-top:8px; font-size:13px; font-weight:700; color:var(--text-soft); padding:8px;">إلغاء ومسح الحقول</button>
-        </form>
-      </div>
-
-      <div class="admin-fieldset">
-        <legend>قائمة فلاتر نوع ومشاكل البشرة المفعلة حالياً في المتجر</legend>
-        <div id="adminSkinTypesListGrid" style="display:flex; flex-direction:column; gap:8px;"></div>
-      </div>
-    </div>
-
-    <!-- 4. PROMO CODES / COUPONS MANAGEMENT -->
+    <!-- 3. PROMO CODES / COUPONS MANAGEMENT -->
     <div id="adminSecCoupons" style="display:none;">
       <div class="admin-fieldset">
         <legend id="adminCouponFormTitle">🎟️ إضافة كود خصم جديد (Server-Side Promo Code)</legend>
@@ -311,7 +283,7 @@
       </div>
     </div>
 
-    <!-- 5. TELEGRAM BOT NOTIFICATIONS SETTINGS -->
+    <!-- 4. TELEGRAM BOT NOTIFICATIONS SETTINGS -->
     <div id="adminSecTelegram" style="display:none;">
       <div class="admin-fieldset">
         <legend>✈️ إعدادات ربط التلغرام (Telegram Bot Instant Webhook)</legend>
@@ -333,7 +305,7 @@
       </div>
     </div>
 
-    <!-- 6. AUDIT LOGS & RATE LIMITING SECTION -->
+    <!-- 5. AUDIT LOGS & RATE LIMITING SECTION -->
     <div id="adminSecAudit" style="display:none;">
       <div class="admin-fieldset">
         <legend>🛡️ إعدادات الحماية ومعدل الطلبات (Rate Limiting)</legend>
@@ -374,7 +346,7 @@
       </div>
     </div>
 
-    <!-- 7. CATEGORY MANAGEMENT SECTION -->
+    <!-- 6. CATEGORY MANAGEMENT SECTION -->
     <div id="adminSecCats" style="display:none;">
       <div class="admin-fieldset">
         <legend id="adminCatFormTitle">إضافة قسم رئيسي جديد</legend>
@@ -419,7 +391,7 @@
       </div>
     </div>
 
-    <!-- 8. PRODUCT MANAGEMENT SECTION -->
+    <!-- 7. PRODUCT MANAGEMENT SECTION (مع خيار شكل العبوة المستعاد بالكامل) -->
     <div id="adminSecProducts" style="display:none;">
       <div class="admin-fieldset">
         <legend id="adminFormModeTitleV">إضافة منتج أو دواء جديد</legend>
@@ -441,12 +413,17 @@
           </div>
           <div style="display:flex; gap:10px;">
             <div class="form-field" style="flex:1;">
-              <label>نوع البشرة / المشكلة المستهدفة</label>
-              <select id="adminProdSkinType"></select>
-            </div>
-            <div class="form-field" style="flex:1;">
               <label>الحجم / العبوة</label>
               <input type="text" id="adminProdSize" placeholder="236 مل">
+            </div>
+            <div class="form-field" style="flex:1;">
+              <label>نوع وشكل العبوة (الأيقونة) *</label>
+              <select id="adminProdType">
+                <option value="bottle">زجاجة 🧴 (Bottle)</option>
+                <option value="jar">مرطبان 🍯 (Jar)</option>
+                <option value="tube">أنبوب 🧪 (Tube)</option>
+                <option value="spray">بخاخ 💨 (Spray)</option>
+              </select>
             </div>
           </div>
           <div style="display:flex; gap:10px;">
@@ -494,7 +471,7 @@
       </div>
     </div>
 
-    <!-- 9. ADVANCED DISCOUNTS & OFFERS SECTION -->
+    <!-- 8. ADVANCED DISCOUNTS & OFFERS SECTION -->
     <div id="adminSecOffers" style="display:none;">
       <div class="admin-fieldset">
         <legend>🎯 تطبيق خصم ذكي مجمع (Bulk Discount Rule)</legend>
@@ -560,7 +537,7 @@
       </div>
     </div>
 
-    <!-- 10. BRAND MANAGEMENT SECTION -->
+    <!-- 9. BRAND MANAGEMENT SECTION -->
     <div id="adminSecBrands" style="display:none;">
       <div class="admin-fieldset">
         <legend id="adminBrandFormTitle">🏷️ إضافة ماركة جديدة</legend>
@@ -594,7 +571,7 @@
       </div>
     </div>
 
-    <!-- 11. NOTIFICATIONS BROADCAST SECTION -->
+    <!-- 10. NOTIFICATIONS BROADCAST SECTION -->
     <div id="adminSecNotifs" style="display:none;">
       <div class="admin-fieldset">
         <legend>📢 إرسال إشعار وتنبيه عام لجميع مستخدمي الموقع</legend>
@@ -625,7 +602,7 @@
       </div>
     </div>
 
-    <!-- 12. THEME CUSTOMIZATION, SOCIAL & DELIVERY SECTION -->
+    <!-- 11. THEME CUSTOMIZATION, SOCIAL & DELIVERY SECTION -->
     <div id="adminSecDesign" style="display:none;">
       <form onsubmit="handleSaveCustomization(event)">
         <!-- Full Website Theme Color Customizer -->
@@ -732,7 +709,7 @@
       </form>
     </div>
 
-    <!-- 13. COPY CODE TOOL -->
+    <!-- 12. COPY CODE TOOL -->
     <div id="adminSecCode" style="display:none;">
       <div class="admin-copy-code-box">
         <h3>📋 أداة نسخ كود الموقع المحدث بالكامل</h3>
