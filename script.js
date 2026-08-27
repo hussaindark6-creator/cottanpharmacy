@@ -136,18 +136,6 @@ function hashColor(name) {
 }
 
 // ================= STORE STATE & DEFAULT DATA =================
-let skinTypes = [
-  { id: 'all', label: 'الكل ✨' },
-  { id: 'oily', label: 'دهنية ومختلطة 🫧' },
-  { id: 'dry', label: 'جافة 🧴' },
-  { id: 'sensitive', label: 'حساسة 🌿' },
-  { id: 'acne', label: 'حب الشباب 🎯' },
-  { id: 'brightening', label: 'تفتيح وتصبغات 🌸' },
-  { id: 'hydration', label: 'ترطيب عميق 💧' }
-];
-
-let activeSkinFilter = 'all';
-
 let brandsData = {
   'Cerave': { name: 'Cerave', color: '#5FAE6E', logoUrl: '' },
   'Simple': { name: 'Simple', color: '#C97F79', logoUrl: '' },
@@ -177,10 +165,10 @@ let categories = [
 ];
 
 const initialDefaultProducts = [
-  { id: '1', name: 'كريم سيرافي مرطب للبشرة الجافة', brand: 'Cerave', category: 'moisturizer', skinType: 'dry', size: '236 مل', price: 25000, rating: 4.8, reviews: 126, type: 'jar', inStock: true, isSpecialOffer: false, views: 1, orderCount: 0, description: 'كريم مرطب غني بالسيراميدات وحمض الهيالورونيك، يرمم حاجز البشرة ويمنحها ترطيباً يدوم 24 ساعة.', ingredients: 'Ceramides, Hyaluronic Acid, Glycerin', usage: 'يوضع على الوجه والجسم صباحاً ومساءً.' },
-  { id: '2', name: 'رفيول حل نياسيناميد 10% + زنك', brand: 'REVUELE', category: 'serum', skinType: 'acne', size: '30 مل', price: 18000, rating: 4.7, reviews: 98, type: 'bottle', inStock: true, isSpecialOffer: false, views: 1, orderCount: 0, description: 'سيروم مركّز يقلل من ظهور المسام الواسعة ويوازن إفراز الدهون.', ingredients: 'Niacinamide 10%, Zinc PCA', usage: 'تُوضع نقاط على بشرة نظيفة مساءً.' },
-  { id: '3', name: 'غسول سيمبل للبشرة الحساسة', brand: 'Simple', category: 'face', skinType: 'sensitive', size: '150 مل', price: 12000, rating: 4.6, reviews: 82, type: 'tube', inStock: true, isSpecialOffer: false, views: 1, orderCount: 0, description: 'غسول لطيف خالٍ من الصابون والعطور، ينظف البشرة بعمق دون تجفيفها.', ingredients: 'Glycerin, Panthenol, Vitamin B5', usage: 'يُدلّك على بشرة مبللة ثم يُشطف.' },
-  { id: '4', name: 'كوزمو واقي شمس SPF50 PA+++', brand: 'COSMO', category: 'sunscreen', skinType: 'all', size: '50 مل', price: 19000, rating: 4.8, reviews: 90, type: 'tube', inStock: true, isSpecialOffer: false, views: 1, orderCount: 0, description: 'واقي شمس خفيف غير دهني بحماية عريضة، يمتص بسرعة.', ingredients: 'Zinc Oxide, Titanium Dioxide, Vitamin E', usage: 'يوضع صباحاً ويجدد كل ساعتين إلى 3 ساعات.' }
+  { id: '1', name: 'كريم سيرافي مرطب للبشرة الجافة', brand: 'Cerave', category: 'moisturizer', size: '236 مل', price: 25000, rating: 4.8, reviews: 126, type: 'jar', inStock: true, isSpecialOffer: false, views: 1, orderCount: 0, description: 'كريم مرطب غني بالسيراميدات وحمض الهيالورونيك، يرمم حاجز البشرة ويمنحها ترطيباً يدوم 24 ساعة.', ingredients: 'Ceramides, Hyaluronic Acid, Glycerin', usage: 'يوضع على الوجه والجسم صباحاً ومساءً.' },
+  { id: '2', name: 'رفيول حل نياسيناميد 10% + زنك', brand: 'REVUELE', category: 'serum', size: '30 مل', price: 18000, rating: 4.7, reviews: 98, type: 'bottle', inStock: true, isSpecialOffer: false, views: 1, orderCount: 0, description: 'سيروم مركّز يقلل من ظهور المسام الواسعة ويوازن إفراز الدهون.', ingredients: 'Niacinamide 10%, Zinc PCA', usage: 'تُوضع نقاط على بشرة نظيفة مساءً.' },
+  { id: '3', name: 'غسول سيمبل للبشرة الحساسة', brand: 'Simple', category: 'face', size: '150 مل', price: 12000, rating: 4.6, reviews: 82, type: 'tube', inStock: true, isSpecialOffer: false, views: 1, orderCount: 0, description: 'غسول لطيف خالٍ من الصابون والعطور، ينظف البشرة بعمق دون تجفيفها.', ingredients: 'Glycerin, Panthenol, Vitamin B5', usage: 'يُدلّك على بشرة مبللة ثم يُشطف.' },
+  { id: '4', name: 'كوزمو واقي شمس SPF50 PA+++', brand: 'COSMO', category: 'sunscreen', size: '50 مل', price: 19000, rating: 4.8, reviews: 90, type: 'tube', inStock: true, isSpecialOffer: false, views: 1, orderCount: 0, description: 'واقي شمس خفيف غير دهني بحماية عريضة، يمتص بسرعة.', ingredients: 'Zinc Oxide, Titanium Dioxide, Vitamin E', usage: 'يوضع صباحاً ويجدد كل ساعتين إلى 3 ساعات.' }
 ];
 
 let products = [...initialDefaultProducts];
@@ -195,7 +183,7 @@ let listingMode = null, listingValue = null, listingCatActive = 'all';
 let currentProductId = null, pdQty = 1, pdActiveTab = 'desc', deliveryMethod = 'standard';
 let appliedPromo = null;
 
-// نظام حفظ موضع الشاشة والصفحة السابقة
+// نظام حفظ موضع الشاشة
 let previousViewBeforeProduct = 'home';
 let previousScrollBeforeProduct = 0;
 
@@ -205,28 +193,31 @@ let todayRevenue = 0;
 let monthlyRevenue = 0;
 let weeklyVisitsData = [];
 
-let storeSettings = {
-  primaryColor: '#E85D8A',
-  bannerImgUrl: 'https://imgdb.io/i/EQ4D9ag.png',
-  announcementText: '✨ توصيل مجاني للطلبات فوق 50,000 د.ع لجميع محافظات العراق 🌸',
-  showAnnouncement: true,
-  showPharmacistBanner: true,
-  pharmacistCtaTitle: 'استشر الصيدلي مجاناً 🩺',
-  pharmacistCtaDesc: 'تحدثي مع الصيدلي المختص مباشرة للحصول على تشخيص دقيق لروتينك وروشتتك',
-  socialWhatsapp: '9647813703288',
-  socialTelegram: 'https://t.me/cottanpharmacy',
-  socialInstagram: 'https://instagram.com/cottanpharmacy',
-  socialPhone: '07813703288',
-  deliveryFeeStandard: 4000,
-  deliveryFeeExpress: 8000,
-  heroMainTitle: 'صيدلية القطن',
-  heroSubTitle: 'نحن هنا لتحسين بشرتك',
-  heroDescTitle: 'منتجات أصلية لعناية صحية وجمال طبيعي',
-  promoCards: [
-    { title: 'عرض خاص من دوف', desc: 'عناية ناعمة وترطيب عميق لبشرتك', discount: 'خصم حتى 25%', img: '' },
-    { title: 'عروض السيرومات العلاجية', desc: 'تغذية وإشراقة طبيعية لمظهر صحي', discount: 'خصم حتى 30%', img: '' }
-  ]
-};
+let storeSettings = JSON.parse(localStorage.getItem('qutn_store_settings') || '{}');
+if (!storeSettings.primaryColor) {
+  storeSettings = {
+    primaryColor: '#E85D8A',
+    bannerImgUrl: 'https://imgdb.io/i/EQ4D9ag.png',
+    announcementText: '✨ توصيل مجاني للطلبات فوق 50,000 د.ع لجميع محافظات العراق 🌸',
+    showAnnouncement: true,
+    showPharmacistBanner: true,
+    pharmacistCtaTitle: 'استشر الصيدلي مجاناً 🩺',
+    pharmacistCtaDesc: 'تحدثي مع الصيدلي المختص مباشرة للحصول على تشخيص دقيق لروتينك وروشتتك',
+    socialWhatsapp: '9647813703288',
+    socialTelegram: 'https://t.me/cottanpharmacy',
+    socialInstagram: 'https://instagram.com/cottanpharmacy',
+    socialPhone: '07813703288',
+    deliveryFeeStandard: 4000,
+    deliveryFeeExpress: 8000,
+    heroMainTitle: 'صيدلية القطن',
+    heroSubTitle: 'نحن هنا لتحسين بشرتك',
+    heroDescTitle: 'منتجات أصلية لعناية صحية وجمال طبيعي',
+    promoCards: [
+      { title: 'عرض خاص من دوف', desc: 'عناية ناعمة وترطيب عميق لبشرتك', discount: 'خصم حتى 25%', img: '' },
+      { title: 'عروض السيرومات العلاجية', desc: 'تغذية وإشراقة طبيعية لمظهر صحي', discount: 'خصم حتى 30%', img: '' }
+    ]
+  };
+}
 
 function fmtPrice(n) { return (Number(n) || 0).toLocaleString('en-US') + ' د.ع'; }
 function findProduct(id) { return products.find(p => String(p.id) === String(id)); }
@@ -236,7 +227,7 @@ function saveLocalState() {
   localStorage.setItem('qutn_wishlist', JSON.stringify([...wishlist]));
   localStorage.setItem('qutn_my_orders', JSON.stringify(myOrders));
   localStorage.setItem('qutn_reviews', JSON.stringify(productReviews));
-  localStorage.setItem('qutn_skin_types', JSON.stringify(skinTypes));
+  localStorage.setItem('qutn_store_settings', JSON.stringify(storeSettings));
 }
 
 function getBrandColor(brandName) {
@@ -683,124 +674,7 @@ async function deleteNotification(id) {
   }
 }
 
-// ================= FEATURE 1: SKIN TYPES & CONCERN CRUD =================
-function renderSkinTypeFilters() {
-  const strip = document.getElementById('skinTypeFilterStrip');
-  if (!strip) return;
-
-  strip.innerHTML = skinTypes.map(st => `
-    <button class="skin-filter-chip ${activeSkinFilter === st.id ? 'active' : ''}" onclick="selectSkinFilter('${sanitizeText(st.id)}')">
-      ${sanitizeText(st.label)}
-    </button>
-  `).join('');
-}
-
-function selectSkinFilter(filterId) {
-  activeSkinFilter = filterId;
-  renderSkinTypeFilters();
-  renderHomeProductGrid();
-}
-
-function renderAdminSkinTypesList() {
-  const container = document.getElementById('adminSkinTypesListGrid');
-  if (!container) return;
-  
-  container.innerHTML = skinTypes.map(st => `
-    <div style="background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between;">
-      <div style="font-weight:800; font-size:13.5px;">
-        ${sanitizeText(st.label)} <span class="mono" style="font-size:11px; color:var(--text-soft);">(${sanitizeText(st.id)})</span>
-      </div>
-      ${st.id !== 'all' ? `
-        <div style="display:flex; gap:6px;">
-          <button onclick="editAdminSkinType('${sanitizeText(st.id)}')" style="background:#E0E7FF; color:#3730A3; padding:5px 10px; border-radius:8px; font-weight:800; font-size:11px;">تعديل ✏️</button>
-          <button onclick="deleteAdminSkinType('${sanitizeText(st.id)}', '${sanitizeText(st.label)}')" style="background:#FEE2E2; color:var(--red); padding:5px 10px; border-radius:8px; font-weight:800; font-size:11px;">حذف 🗑️</button>
-        </div>
-      ` : '<span style="font-size:11px; color:var(--text-soft); font-weight:700;">(افتراضي)</span>'}
-    </div>
-  `).join('');
-
-  // تحديث خيارات نوع البشرة في فورم إضافة وتعديل المنتجات
-  const prodSkinSelect = document.getElementById('adminProdSkinType');
-  const quickSkinSelect = document.getElementById('quickEditProdSkinType');
-  const optionsHtml = skinTypes.map(st => `<option value="${sanitizeText(st.id)}">${sanitizeText(st.label)}</option>`).join('');
-  
-  if (prodSkinSelect) prodSkinSelect.innerHTML = optionsHtml;
-  if (quickSkinSelect) quickSkinSelect.innerHTML = optionsHtml;
-}
-
-function resetAdminSkinTypeForm() {
-  const docInput = document.getElementById('adminSkinTypeDocId');
-  if (docInput) docInput.value = '';
-  document.getElementById('adminSkinTypeName').value = '';
-  const idInput = document.getElementById('adminSkinTypeIdInput');
-  idInput.value = '';
-  idInput.disabled = false;
-  document.getElementById('adminSkinTypeFormTitle').textContent = '🌿 إضافة / تعديل فلتر نوع بشرة جديد';
-  document.getElementById('adminSaveSkinBtn').textContent = '💾 حفظ فلتر البشرة وتفعيله بالمتجر';
-}
-
-function editAdminSkinType(id) {
-  const st = skinTypes.find(item => item.id === id);
-  if (!st) return;
-  document.getElementById('adminSkinTypeDocId').value = st.id;
-  document.getElementById('adminSkinTypeName').value = st.label;
-  const idInput = document.getElementById('adminSkinTypeIdInput');
-  idInput.value = st.id;
-  idInput.disabled = true;
-  document.getElementById('adminSkinTypeFormTitle').textContent = 'تعديل فلتر: ' + st.label;
-  document.getElementById('adminSaveSkinBtn').textContent = '💾 حفظ تعديلات الفلتر';
-}
-
-async function handleAdminSkinTypeSave(e) {
-  e.preventDefault();
-  if (!assertAdmin()) return;
-  if (!lockAction('saveSkinType', 1200)) return;
-
-  const docId = document.getElementById('adminSkinTypeDocId').value.trim();
-  const label = document.getElementById('adminSkinTypeName').value.trim();
-  const id = document.getElementById('adminSkinTypeIdInput').value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
-
-  if (!label || (!docId && !id)) {
-    showToast('يرجى تعبئة الاسم والمعرف بشكل صحيح');
-    return;
-  }
-
-  const targetId = docId || id;
-  const index = skinTypes.findIndex(item => item.id === targetId);
-
-  if (index > -1) {
-    skinTypes[index].label = sanitizeText(label);
-  } else {
-    skinTypes.push({ id: targetId, label: sanitizeText(label) });
-  }
-
-  saveLocalState();
-  renderAdminSkinTypesList();
-  renderSkinTypeFilters();
-
-  if (db) {
-    await db.collection('store_settings').doc('general').set({ skinTypes }, { merge: true });
-  }
-
-  showToast('تم حفظ فلتر البشرة وتفعيله بالمتجر ✓');
-  resetAdminSkinTypeForm();
-}
-
-async function deleteAdminSkinType(id, label) {
-  if (!assertAdmin()) return;
-  if (confirm(`هل أنتِ متأكدة من حذف فلتر "${label}"؟`)) {
-    skinTypes = skinTypes.filter(st => st.id !== id);
-    saveLocalState();
-    renderAdminSkinTypesList();
-    renderSkinTypeFilters();
-    if (db) {
-      await db.collection('store_settings').doc('general').set({ skinTypes }, { merge: true });
-    }
-    showToast('تم حذف فلتر البشرة بنجاح ✓');
-  }
-}
-
-// ================= FEATURE 2: REALTIME ORDERS & TELEGRAM EXCEL =================
+// ================= REALTIME ORDERS & EXCEL TELEGRAM REPORT =================
 async function fetchAdminOrdersList() {
   if (!isFirebaseConfigured || !db) return;
   try {
@@ -1060,7 +934,42 @@ function applyWelcomeAndShop() {
   showToast('تسوقي الآن واستخدمي كود QUTN10 في السلة ✨');
 }
 
-// ================= CATEGORIES CRUD =================
+// ================= CATEGORIES & DROPDOWNS POPULATION (SEPARATED & SAFE) =================
+function renderModernCategories() {
+  const container = document.getElementById('catRowFull');
+  const totalCountEl = document.getElementById('categoriesTotalCount');
+  if (totalCountEl) totalCountEl.textContent = `${categories.length} أقسام معتمدة`;
+  
+  if (container) {
+    container.innerHTML = categories.map(c => {
+      const count = products.filter(p => p.category === c.id).length;
+      const cleanImg = sanitizeUrl(c.imageUrl);
+      return `
+        <div class="modern-cat-card" onclick="openCategory('${sanitizeText(c.id)}')">
+          <div class="modern-cat-img-wrap">
+            ${cleanImg ? `<img src="${cleanImg}" alt="${sanitizeText(c.label)}">` : (catIcons[c.icon] || catIcons.jar)('var(--accent, #E85D8A)')}
+          </div>
+          <div class="modern-cat-info">
+            <h3 class="modern-cat-title">${sanitizeText(c.label)}</h3>
+            <span class="modern-cat-count mono">${count} منتج</span>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ملء القوائم المنسدلة في صفحة الأدمن والنافذة السريعة بشكل مستقل
+  populateCategoryDropdowns();
+}
+
+function populateCategoryDropdowns() {
+  const prodCatSelect = document.getElementById('adminProdCat');
+  const quickCatSelect = document.getElementById('quickEditProdCat');
+  const optionsHtml = categories.map(c => `<option value="${sanitizeText(c.id)}">${sanitizeText(c.label)}</option>`).join('');
+
+  if (prodCatSelect) prodCatSelect.innerHTML = optionsHtml;
+  if (quickCatSelect) quickCatSelect.innerHTML = optionsHtml;
+}
+
 function renderAdminCategoriesList() {
   const container = document.getElementById('adminCategoriesListGrid');
   if (!container) return;
@@ -1143,6 +1052,7 @@ async function handleAdminCategorySave(e) {
     if (db) await db.collection('categories').doc(payload.id).set(payload, { merge: true });
     showToast('تم حفظ القسم بنجاح في قاعدة البيانات ✓');
     resetAdminCatForm();
+    populateCategoryDropdowns();
   } catch (err) {
     console.error(err);
     showToast('حدث خطأ أثناء حفظ القسم');
@@ -1156,6 +1066,7 @@ async function deleteAdminCategory(catId, catLabel) {
       await apiFetch(`/api/admin/categories/${catId}`, { method: "DELETE" });
       if (db) await db.collection('categories').doc(String(catId)).delete();
       showToast('تم حذف القسم بنجاح ✓');
+      populateCategoryDropdowns();
     } catch (e) {
       console.error(e);
       showToast('حدث خطأ أثناء حذف القسم');
@@ -1401,16 +1312,42 @@ function renderAdminBrandsList() {
 }
 
 // ================= PRODUCT MANAGEMENT & ON-CARD ACTIONS =================
+async function quickEditPrice(id, currentPrice) {
+  if (!assertAdmin()) return;
+  const newPriceStr = prompt('تعديل السعر المباشر (د.ع):', currentPrice);
+  if (newPriceStr === null) return;
+  const newPrice = Number(newPriceStr.trim());
+  if (isNaN(newPrice) || newPrice <= 0) {
+    showToast('يرجى إدخال سعر صحيح أكبر من صفر');
+    return;
+  }
+  await apiFetch("/api/admin/products", { method: "POST", body: JSON.stringify({ id, price: newPrice }) });
+  if (db) await db.collection('products').doc(String(id)).set({ price: newPrice }, { merge: true });
+  showToast('تم تحديث السعر فورياً ✓');
+}
+
+async function quickToggleStock(id) {
+  if (!assertAdmin()) return;
+  const p = findProduct(id);
+  if (!p) return;
+  const newStock = (p.inStock === false) ? true : false;
+  await apiFetch("/api/admin/products", { method: "POST", body: JSON.stringify({ id, inStock: newStock }) });
+  if (db) await db.collection('products').doc(String(id)).set({ inStock: newStock }, { merge: true });
+  showToast(newStock ? 'تم التعيين: متوفر 🟢' : 'تم التعيين: نفذت الكمية 🔴');
+}
+
 function openAdminQuickEditModal(id) {
   if (!assertAdmin()) return;
   const p = findProduct(id);
   if (!p) return;
+  populateCategoryDropdowns();
   document.getElementById('quickEditProdId').value = p.id;
   document.getElementById('quickEditProdName').value = p.name || '';
   document.getElementById('quickEditProdBrand').value = p.brand || '';
   document.getElementById('quickEditProdPrice').value = p.price || '';
+  document.getElementById('quickEditProdCat').value = p.category || (categories[0] ? categories[0].id : 'face');
+  document.getElementById('quickEditProdType').value = p.type || 'bottle';
   document.getElementById('quickEditProdImg').value = p.imageUrl || '';
-  document.getElementById('quickEditProdSkinType').value = p.skinType || 'all';
   document.getElementById('adminQuickEditModal').classList.add('open');
 }
 
@@ -1425,15 +1362,16 @@ async function saveAdminQuickEdit() {
   const name = document.getElementById('quickEditProdName').value.trim();
   const brand = document.getElementById('quickEditProdBrand').value.trim();
   const price = Number(document.getElementById('quickEditProdPrice').value);
+  const category = document.getElementById('quickEditProdCat').value;
+  const type = document.getElementById('quickEditProdType').value;
   const imageUrl = sanitizeUrl(document.getElementById('quickEditProdImg').value.trim());
-  const skinType = document.getElementById('quickEditProdSkinType').value;
 
   if (!name || !brand || isNaN(price) || price <= 0) {
     showToast('يرجى التأكد من كتابة الاسم والماركة والسعر بشكل صحيح');
     return;
   }
 
-  const updates = { name: sanitizeText(name), brand: sanitizeText(brand), price, imageUrl, skinType };
+  const updates = { name: sanitizeText(name), brand: sanitizeText(brand), price, category, type, imageUrl };
   await apiFetch("/api/admin/products", { method: "POST", body: JSON.stringify({ id, ...updates }) });
   if (db) await db.collection('products').doc(String(id)).set(updates, { merge: true });
   closeAdminQuickEditModal();
@@ -1487,12 +1425,13 @@ function editProductInAdmin(id) {
     return;
   }
 
+  populateCategoryDropdowns();
   document.getElementById('adminProdDocId').value = p.id;
   document.getElementById('adminProdName').value = p.name || '';
   document.getElementById('adminProdBrand').value = p.brand || '';
   document.getElementById('adminProdCat').value = p.category || (categories[0] ? categories[0].id : 'face');
-  document.getElementById('adminProdSkinType').value = p.skinType || 'all';
   document.getElementById('adminProdSize').value = p.size || '';
+  document.getElementById('adminProdType').value = p.type || 'bottle';
   document.getElementById('adminProdPrice').value = p.price || '';
   document.getElementById('adminProdOldPrice').value = p.oldPrice || '';
   document.getElementById('adminProdImgUrl').value = p.imageUrl || '';
@@ -1533,7 +1472,7 @@ async function handleAdminProductSave(e) {
     name: sanitizeText(name),
     brand: sanitizeText(brand),
     category: sanitizeText(document.getElementById('adminProdCat').value),
-    skinType: sanitizeText(document.getElementById('adminProdSkinType').value || 'all'),
+    type: sanitizeText(document.getElementById('adminProdType').value || 'bottle'),
     size: sanitizeText(document.getElementById('adminProdSize').value.trim() || 'عبوة قياسية'),
     price: price,
     oldPrice: oldPrice,
@@ -1577,9 +1516,9 @@ async function deleteProductConfirm(id, name) {
   }
 }
 
-// ================= ADMIN TABS CONTROLLER (FIXED 13 TABS) =================
+// ================= ADMIN TABS CONTROLLER (12 TABS MATCHED) =================
 function switchAdminSection(sec) {
-  const sections = ['Stats', 'Orders', 'Skin', 'Coupons', 'Telegram', 'Audit', 'Cats', 'Products', 'Offers', 'Brands', 'Notifs', 'Design', 'Code'];
+  const sections = ['Stats', 'Orders', 'Coupons', 'Telegram', 'Audit', 'Cats', 'Products', 'Offers', 'Brands', 'Notifs', 'Design', 'Code'];
   
   sections.forEach(k => {
     const btn = document.getElementById('btnTabV' + k);
@@ -1591,9 +1530,9 @@ function switchAdminSection(sec) {
 
   if (sec === 'stats') fetchRealAnalytics();
   if (sec === 'orders') fetchAdminOrdersList();
-  if (sec === 'skin') renderAdminSkinTypesList();
   if (sec === 'coupons') fetchAdminCoupons();
   if (sec === 'audit') fetchAuditLogs();
+  if (sec === 'products') populateCategoryDropdowns();
   if (sec === 'offers') {
     updateDiscountTargetOptions();
     loadPromoCardToEdit(0);
@@ -1602,46 +1541,58 @@ function switchAdminSection(sec) {
   if (sec === 'brands') renderAdminBrandsList();
 }
 
-// ================= STORE CUSTOMIZATION =================
+// ================= SAFE THEME & STORE CUSTOMIZATION (INSTANT DUAL SYNC) =================
 async function handleSaveCustomization(e) {
   e.preventDefault();
   if (!assertAdmin()) return;
-  if (!lockAction('saveCustomization', 1500)) return;
+  if (!lockAction('saveCustomization', 1200)) return;
 
-  const deliveryStd = Number(document.getElementById('adminDeliveryStandard').value);
-  const deliveryExp = Number(document.getElementById('adminDeliveryExpress').value);
-  const primaryColor = document.getElementById('adminPrimaryColorPicker').value;
+  // قراءة آمنة لجميع الحقول مع قيم افتراضية تمنع انهيار الجافاسكريبت
+  const getVal = (id, defaultVal = '') => {
+    const el = document.getElementById(id);
+    return el ? el.value.trim() : defaultVal;
+  };
+  const getChecked = (id, defaultVal = false) => {
+    const el = document.getElementById(id);
+    return el ? el.checked : defaultVal;
+  };
+
+  const primaryColor = getVal('adminPrimaryColorPicker', storeSettings.primaryColor || '#E85D8A');
+  const deliveryStd = Number(getVal('adminDeliveryStandard', 4000));
+  const deliveryExp = Number(getVal('adminDeliveryExpress', 8000));
 
   const newSettings = {
     primaryColor: primaryColor,
     deliveryFeeStandard: deliveryStd,
     deliveryFeeExpress: deliveryExp,
-    showAnnouncement: document.getElementById('adminShowAnnouncement').checked,
-    announcementText: sanitizeText(document.getElementById('adminAnnouncementText').value.trim()),
-    showPharmacistBanner: document.getElementById('adminShowPharmacistBanner').checked,
-    pharmacistCtaTitle: sanitizeText(document.getElementById('adminPharmacistTitleInput').value.trim()) || 'استشر الصيدلي مجاناً 🩺',
-    pharmacistCtaDesc: sanitizeText(document.getElementById('adminPharmacistDescInput').value.trim()) || 'تحدثي مع الصيدلي المختص مباشرة للحصول على تشخيص دقيق لروتينك وروشتتك',
-    socialWhatsapp: sanitizeText(document.getElementById('adminSocialWhatsappInput').value.trim()) || '9647813703288',
-    socialTelegram: sanitizeText(document.getElementById('adminSocialTelegramInput').value.trim()),
-    socialInstagram: sanitizeText(document.getElementById('adminSocialInstagramInput').value.trim()),
-    socialPhone: sanitizeText(document.getElementById('adminSocialPhoneInput').value.trim()),
-    heroMainTitle: sanitizeText(document.getElementById('adminHeroMainTitle').value.trim()) || 'صيدلية القطن',
-    heroSubTitle: sanitizeText(document.getElementById('adminHeroSubTitle').value.trim()),
-    heroDescTitle: sanitizeText(document.getElementById('adminHeroDescTitle').value.trim()),
-    bannerImgUrl: sanitizeUrl(document.getElementById('adminBannerImgInput').value.trim()) || 'https://imgdb.io/i/EQ4D9ag.png',
+    showAnnouncement: getChecked('adminShowAnnouncement', true),
+    announcementText: sanitizeText(getVal('adminAnnouncementText', '✨ توصيل مجاني للطلبات فوق 50,000 د.ع لجميع محافظات العراق 🌸')),
+    showPharmacistBanner: getChecked('adminShowPharmacistBanner', true),
+    pharmacistCtaTitle: sanitizeText(getVal('adminPharmacistTitleInput', 'استشر الصيدلي مجاناً 🩺')),
+    pharmacistCtaDesc: sanitizeText(getVal('adminPharmacistDescInput', 'تحدثي مع الصيدلي المختص مباشرة للحصول على تشخيص دقيق لروتينك وروشتتك')),
+    socialWhatsapp: sanitizeText(getVal('adminSocialWhatsappInput', '9647813703288')),
+    socialTelegram: sanitizeText(getVal('adminSocialTelegramInput', '')),
+    socialInstagram: sanitizeText(getVal('adminSocialInstagramInput', '')),
+    socialPhone: sanitizeText(getVal('adminSocialPhoneInput', '07813703288')),
+    heroMainTitle: sanitizeText(getVal('adminHeroMainTitle', 'صيدلية القطن')),
+    heroSubTitle: sanitizeText(getVal('adminHeroSubTitle', 'نحن هنا لتحسين بشرتك')),
+    heroDescTitle: sanitizeText(getVal('adminHeroDescTitle', 'منتجات أصلية لعناية صحية وجمال طبيعي')),
+    bannerImgUrl: sanitizeUrl(getVal('adminBannerImgInput', 'https://imgdb.io/i/EQ4D9ag.png')),
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
 
+  // 1. التطبيق والحفظ اللحظي المباشر في المتصفح والذاكرة
   storeSettings = { ...storeSettings, ...newSettings };
+  saveLocalState();
   applyStoreSettings();
+  showToast('تم تطبيق وحفظ اللون والتعديلات فورياً! ✨');
 
+  // 2. الحفظ السحابي في Cloudflare Worker و Firebase
   try {
     await apiFetch("/api/admin/settings", { method: "POST", body: JSON.stringify(newSettings) });
     if (db) await db.collection('store_settings').doc('general').set(newSettings, { merge: true });
-    showToast('تم حفظ وتطبيق جميع التعديلات ولون الموقع سحابياً بنجاح ✓');
   } catch (err) {
-    console.error(err);
-    showToast('حدث خطأ أثناء حفظ الإعدادات');
+    console.warn("Cloud settings sync fallback:", err);
   }
 }
 
@@ -1708,11 +1659,7 @@ function initFirestoreSync() {
     if (doc.exists) {
       storeSettings = { ...storeSettings, ...doc.data() };
       if (storeSettings.brandsData) brandsData = { ...brandsData, ...storeSettings.brandsData };
-      if (storeSettings.skinTypes) {
-        skinTypes = storeSettings.skinTypes;
-        renderSkinTypeFilters();
-        renderAdminSkinTypesList();
-      }
+      saveLocalState();
       applyStoreSettings();
       renderPromoBanners();
       renderBrandStrip();
@@ -1726,6 +1673,7 @@ function initFirestoreSync() {
       categories = loaded;
       renderModernCategories();
       renderAdminCategoriesList();
+      populateCategoryDropdowns();
       updateDiscountTargetOptions();
     }
   }, err => console.warn('Categories sync fallback:', err));
@@ -1779,7 +1727,6 @@ function renderCurrentActiveView() {
 }
 
 function renderHome() {
-  renderSkinTypeFilters();
   renderBrandStrip();
   renderHomeProductGrid();
   renderPromoBanners();
@@ -1791,13 +1738,6 @@ function renderHomeProductGrid() {
   if (!title) return;
   
   let list = products.slice();
-  
-  // تصفية حسب نوع البشرة
-  if (activeSkinFilter !== 'all') {
-    list = list.filter(p => p.skinType === activeSkinFilter || p.skinType === 'all');
-  }
-
-  // تصفية حسب الماركة
   if (homeActiveBrand === 'all') {
     title.textContent = 'الأكثر مبيعاً 🔥';
     list = list.sort((a,b) => (b.orderCount || 0) - (a.orderCount || 0));
@@ -2617,6 +2557,7 @@ function showToast(msg) {
 window.addEventListener('DOMContentLoaded', () => {
   renderHome();
   renderModernCategories();
+  populateCategoryDropdowns();
   updateCartBadge();
   renderAccountView();
   updateUserHeaderProfile();
@@ -2631,7 +2572,6 @@ window.addEventListener('DOMContentLoaded', () => {
   if (window.location.pathname.includes('admin.html')) {
     fetchRealAnalytics();
     fetchAdminOrdersList();
-    renderAdminSkinTypesList();
     fetchAdminCoupons();
     fetchAuditLogs();
     renderAdminCategoriesList();
