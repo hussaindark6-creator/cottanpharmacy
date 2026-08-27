@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Complete Embedded Admin Styles (تنسيقات مدمجة تضمن بقاء لوحة التحكم سريعة وثابتة) -->
+  <!-- Complete Embedded Admin Styles (تنسيقات مدمجة تضمن ثبات اللوحة وسرعتها 100%) -->
   <style>
     :root {
       --ink: #1F2937; --text-soft: #6B7280; --paper: #FFFFFF; --surface: #FFF0F3;
@@ -97,7 +97,7 @@
     .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--accent); color: #fff; padding: 12px 24px; border-radius: 999px; font-weight: 800; font-size: 13px; z-index: 200; box-shadow: 0 10px 26px rgba(0,0,0,0.2); opacity: 0; transition: transform .25s, opacity .25s; pointer-events: none; text-align: center; white-space: nowrap; max-width: 90vw; }
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
-    /* Admin Auth Gate Locked Screen */
+    /* Admin Auth Gate Screen */
     #adminAuthGateModal { display: none; position: fixed; inset: 0; background: rgba(17, 24, 39, 0.95); z-index: 999; align-items: center; justify-content: center; padding: 20px; }
     #adminAuthGateModal.locked { display: flex; }
     .admin-gate-card { background: #fff; border-radius: var(--radius-lg); padding: 32px 24px; max-width: 440px; width: 100%; text-align: center; box-shadow: 0 20px 45px rgba(0,0,0,0.3); }
@@ -152,7 +152,7 @@
       <p>مرحباً بك يا مشرف (hussaindark6@gmail.com) — إدارة حقيقية بالكامل ومربوطة بـ Cloudflare Worker و Firebase.</p>
     </div>
 
-    <!-- ADMIN TABS NAVIGATION (الـ 12 قسماً بالكامل) -->
+    <!-- ADMIN TABS NAVIGATION (مطابقة 100% مع أسماء الدوال في script.js) -->
     <div class="admin-tabs-nav-view">
       <button class="admin-tab-btn-v active" id="btnTabVStats" onclick="switchAdminSection('stats')">📊 الإحصائيات والأرباح</button>
       <button class="admin-tab-btn-v" id="btnTabVOrders" onclick="switchAdminSection('orders')">📦 إدارة الطلبات والشحن</button>
@@ -160,7 +160,7 @@
       <button class="admin-tab-btn-v" id="btnTabVTelegram" onclick="switchAdminSection('telegram')">✈️ إشعارات تلغرام</button>
       <button class="admin-tab-btn-v" id="btnTabVAudit" onclick="switchAdminSection('audit')">🛡️ سجل العمليات والحماية</button>
       <button class="admin-tab-btn-v" id="btnTabVCats" onclick="switchAdminSection('cats')">🗂️ إدارة الأقسام</button>
-      <button class="admin-tab-btn-v" id="btnTabVProds" onclick="switchAdminSection('products')">💊 إدارة المنتجات والأدوية</button>
+      <button class="admin-tab-btn-v" id="btnTabVProducts" onclick="switchAdminSection('products')">💊 إدارة المنتجات والأدوية</button>
       <button class="admin-tab-btn-v" id="btnTabVOffers" onclick="switchAdminSection('offers')">🎁 إدارة الخصومات والعروض</button>
       <button class="admin-tab-btn-v" id="btnTabVBrands" onclick="switchAdminSection('brands')">🏷️ إدارة الماركات والشعارات</button>
       <button class="admin-tab-btn-v" id="btnTabVNotifs" onclick="switchAdminSection('notifs')">📢 إرسال إشعار للمستخدمين</button>
@@ -208,7 +208,7 @@
       </div>
     </div>
 
-    <!-- 2. ORDERS MANAGEMENT & EXCEL EXPORT (قسم إدارة وتتبع الطلبات الجديد) -->
+    <!-- 2. ORDERS MANAGEMENT & EXCEL EXPORT SECTION -->
     <div id="adminSecOrders" style="display:none;">
       <div class="admin-fieldset">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
