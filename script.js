@@ -195,7 +195,7 @@ let listingMode = null, listingValue = null, listingCatActive = 'all';
 let currentProductId = null, pdQty = 1, pdActiveTab = 'desc', deliveryMethod = 'standard';
 let appliedPromo = null;
 
-// نظام حفظ موضع الشاشة
+// نظام حفظ موضع الشاشة والصفحة السابقة
 let previousViewBeforeProduct = 'home';
 let previousScrollBeforeProduct = 0;
 
@@ -367,7 +367,7 @@ async function deleteAdminCoupon(id) {
   }
 }
 
-// ================= TELEGRAM BOT SETTINGS =================
+// ================= TELEGRAM BOT NOTIFICATIONS =================
 async function handleSaveTelegramSettings(e) {
   e.preventDefault();
   if (!assertAdmin()) return;
@@ -1250,6 +1250,31 @@ async function deleteProductConfirm(id, name) {
   }
 }
 
+// ================= ADMIN TABS CONTROLLER (FIXED & FULLY MATCHED) =================
+function switchAdminSection(sec) {
+  // مطابقة الـ 12 قسماً بالكامل لمنع أي أخطاء برمجية
+  const sections = ['Stats', 'Orders', 'Coupons', 'Telegram', 'Audit', 'Cats', 'Products', 'Offers', 'Brands', 'Notifs', 'Design', 'Code'];
+  
+  sections.forEach(k => {
+    const btn = document.getElementById('btnTabV' + k);
+    const el = document.getElementById('adminSec' + k);
+    const isTarget = (k.toLowerCase() === sec.toLowerCase());
+    if (btn) btn.classList.toggle('active', isTarget);
+    if (el) el.style.display = isTarget ? 'block' : 'none';
+  });
+
+  if (sec === 'stats') fetchRealAnalytics();
+  if (sec === 'orders') fetchAdminOrdersList();
+  if (sec === 'coupons') fetchAdminCoupons();
+  if (sec === 'audit') fetchAuditLogs();
+  if (sec === 'offers') {
+    updateDiscountTargetOptions();
+    loadPromoCardToEdit(0);
+  }
+  if (sec === 'cats') renderAdminCategoriesList();
+  if (sec === 'brands') renderAdminBrandsList();
+}
+
 // ================= REALTIME ORDERS & EXCEL EXPORT =================
 async function fetchAdminOrdersList() {
   if (!isFirebaseConfigured || !db) return;
@@ -1698,7 +1723,7 @@ function renderProductDetailDOM(p) {
   document.getElementById('pdTabIng').textContent = p.ingredients || 'تركيبة غنية ومفحوصة جلدياً.';
   document.getElementById('pdTabUse').textContent = p.usage || 'يُوضع على بشرة نظيفة وفق الإرشادات.';
   
-  // Render reviews & cross selling
+  // تفعيل التقييمات والمنتجات المقترحة
   renderProductReviews(p.id);
   renderCrossSelling(p);
 
@@ -2257,7 +2282,6 @@ function updateAdminInterfaceState() {
   if (bnAdmin) bnAdmin.style.display = isAdmin ? 'flex' : 'none';
   if (floatAddBtn) floatAddBtn.style.display = isAdmin ? 'flex' : 'none';
 
-  // قفل لوحة التحكم وحمايتها إذا فُتحت admin.html من مستخدم عادي
   if (adminGate) {
     if (isAdmin) {
       adminGate.classList.remove('locked');
@@ -2331,7 +2355,7 @@ window.addEventListener('DOMContentLoaded', () => {
   checkAndShowWelcomeModal();
   checkUrlHashForProduct();
 
-  // تفعيل التتبع المباشر للروابط
+  // تفعيل التتبع المباشر للروابط (Deep Linking)
   window.addEventListener('hashchange', checkUrlHashForProduct);
 
   // تهيئة لوحة التحكم عند فتح صفحة admin.html
