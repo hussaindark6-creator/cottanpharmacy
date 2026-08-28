@@ -807,6 +807,32 @@ header {
   border-radius: 999px; 
 }
 
+.badge-low-stock {
+  position: absolute;
+  top: 40px;
+  left: 12px;
+  z-index: 2;
+  background: #F59E0B;
+  color: #fff;
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
+.badge-out-stock {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+  background: #EF4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
 .product-thumb { 
   aspect-ratio: 1/1; 
   width: 100%; 
@@ -901,6 +927,121 @@ header {
 
 .add-cart-btn:hover { 
   background: var(--accent-dark); 
+}
+
+/* ==========================================================
+   PRODUCT BUNDLES & SAVINGS PACKS (نظام حزم التوفير)
+   ========================================================== */
+.bundle-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin: 14px 0;
+}
+
+@media (min-width: 640px) {
+  .bundle-grid { grid-template-columns: repeat(2, 1fr); gap: 18px; }
+}
+
+.bundle-card {
+  background: #fff;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  box-shadow: var(--shadow-soft);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  transition: all .25s ease;
+}
+
+.bundle-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent);
+  box-shadow: var(--shadow-hover);
+}
+
+.bundle-savings-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 4px 10px;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.bundle-thumb-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 12px;
+  margin-bottom: 12px;
+  min-height: 120px;
+}
+
+.bundle-thumb-item {
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.bundle-thumb-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bundle-plus-icon {
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--accent);
+}
+
+.bundle-title {
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--ink);
+  margin: 0 0 4px;
+}
+
+.bundle-desc {
+  font-size: 12px;
+  color: var(--text-soft);
+  line-height: 1.4;
+  margin-bottom: 10px;
+}
+
+.bundle-items-list {
+  background: var(--surface);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 11.5px;
+  color: var(--ink);
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.bundle-price-box {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: auto;
+  margin-bottom: 10px;
 }
 
 /* ==========================================================
@@ -1268,7 +1409,7 @@ header {
 }
 
 /* ==========================================================
-   PRODUCT DETAIL, REVIEWS & CROSS-SELLING
+   PRODUCT DETAIL, STAR-ONLY RATING & CROSS-SELLING
    ========================================================== */
 .share-btn {
   display: inline-flex;
@@ -1334,6 +1475,12 @@ header {
   color: var(--text-soft); 
   font-weight: 700; 
   margin-bottom: 12px; 
+}
+
+.pd-rating svg { 
+  width: 12px; 
+  height: 12px; 
+  color: var(--gold); 
 }
 
 .pd-price-row { 
@@ -1415,16 +1562,42 @@ header {
   display: block; 
 }
 
-.review-item {
+/* Quick Star-Only Rating Row */
+.star-rating-box {
   background: var(--surface);
-  border-radius: 12px;
-  padding: 12px;
-  margin-bottom: 8px;
-  border: 1px solid var(--line);
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+  text-align: center;
+  margin-bottom: 14px;
 }
 
-.review-author { font-weight: 800; font-size: 12.5px; color: var(--ink); display: flex; justify-content: space-between; }
-.review-text { font-size: 12px; color: var(--text-soft); margin-top: 4px; }
+.star-rating-box h4 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--rose-deep);
+}
+
+.star-rating-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  direction: ltr;
+}
+
+.star-btn {
+  font-size: 28px;
+  color: #D1D5DB;
+  transition: transform .15s, color .15s;
+  cursor: pointer;
+}
+
+.star-btn.hovered, .star-btn.active {
+  color: var(--gold);
+  transform: scale(1.15);
+}
 
 .pd-qty-row { 
   display: flex; 
@@ -1473,7 +1646,7 @@ header {
 }
 
 /* ==========================================================
-   CART & CHECKOUT
+   CART & CHECKOUT (WITH AUTOFILL PROMPT)
    ========================================================== */
 .cart-item { 
   display: flex; 
@@ -1589,6 +1762,20 @@ header {
   gap: 8px; 
   margin-top: 18px; 
   box-shadow: 0 4px 16px rgba(0,0,0,0.1); 
+}
+
+.autofill-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  color: #1D4ED8;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 12px;
 }
 
 .form-field { 
@@ -1741,7 +1928,8 @@ header {
 /* ==========================================================
    MODALS: STRICT DISPLAY NONE FOR TOTAL PROTECTION
    ========================================================== */
-.welcome-modal-overlay, .admin-quick-modal-overlay, .notif-modal-overlay, .success-modal-overlay, .iab-modal, .consult-modal-overlay {
+.welcome-modal-overlay, .admin-quick-modal-overlay, .notif-modal-overlay, 
+.success-modal-overlay, .iab-modal, .consult-modal-overlay, .receipt-modal-overlay {
   display: none !important;
   position: fixed;
   inset: 0;
@@ -1753,11 +1941,13 @@ header {
   padding: 20px;
 }
 
-.welcome-modal-overlay.open, .admin-quick-modal-overlay.open, .notif-modal-overlay.open, .success-modal-overlay.open, .iab-modal.open, .consult-modal-overlay.open {
+.welcome-modal-overlay.open, .admin-quick-modal-overlay.open, .notif-modal-overlay.open, 
+.success-modal-overlay.open, .iab-modal.open, .consult-modal-overlay.open, .receipt-modal-overlay.open {
   display: flex !important;
 }
 
-.welcome-card, .admin-quick-card, .consult-modal-card, .notif-modal-card, .success-card, .iab-content {
+.welcome-card, .admin-quick-card, .consult-modal-card, .notif-modal-card, 
+.success-card, .iab-content, .receipt-modal-card {
   background: #fff;
   border-radius: var(--radius-lg);
   padding: 28px 22px;
@@ -1823,6 +2013,98 @@ header {
 .iab-close-btn { width: 100%; background: var(--accent); color: #fff; font-weight: 800; font-size: 14px; padding: 12px; border-radius: 999px; margin-top: 14px; }
 
 /* ==========================================================
+   80mm THERMAL RECEIPT MODAL & PRINT STYLES
+   ========================================================== */
+.receipt-modal-card {
+  max-width: 380px;
+  padding: 16px;
+  background: #fff;
+  text-align: right;
+}
+
+.receipt-print-area {
+  background: #fff;
+  color: #000;
+  font-family: 'IBM Plex Mono', 'Cairo', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  padding: 10px 4px;
+}
+
+.receipt-header {
+  text-align: center;
+  border-bottom: 1.5px dashed #000;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+}
+
+.receipt-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.receipt-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0;
+}
+
+.receipt-table th {
+  border-bottom: 1px dashed #000;
+  padding: 4px 0;
+  text-align: right;
+  font-size: 11px;
+}
+
+.receipt-table td {
+  padding: 4px 0;
+  font-size: 11px;
+}
+
+.receipt-divider {
+  border-top: 1.5px dashed #000;
+  margin: 8px 0;
+}
+
+.receipt-footer {
+  text-align: center;
+  font-size: 10.5px;
+  margin-top: 10px;
+}
+
+/* Hide everything else during printing */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .receipt-print-area, .receipt-print-area * {
+    visibility: visible;
+  }
+  .receipt-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 78mm;
+    margin: 0 auto;
+    padding: 0;
+  }
+  .receipt-modal-overlay {
+    background: none !important;
+    position: static !important;
+  }
+  .receipt-modal-card {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* ==========================================================
    BOTTOM NAV & WHATSAPP FAB
    ========================================================== */
 .bottom-nav { 
@@ -1885,7 +2167,7 @@ header {
 }
 
 /* ==========================================================
-   SEAMLESS ZERO-STUTTER VIEW TRANSITIONS
+   VIEW TRANSITIONS
    ========================================================== */
 .view { 
   display: none !important; 
@@ -1926,7 +2208,7 @@ header {
 }
 
 /* ==========================================================
-   ADMIN PANEL VIEW STYLES
+   ADMIN PANEL VIEW STYLES & REPORT FILTER BARS
    ========================================================== */
 .admin-nav-header { background: #111827; color: #fff; padding: 14px 0; border-bottom: 1px solid #374151; position: sticky; top: 0; z-index: 100; }
 .admin-nav-wrap { display: flex; align-items: center; justify-content: space-between; }
@@ -1943,6 +2225,18 @@ header {
 .admin-tab-btn-v { padding: 10px 16px; border-radius: 12px; background: #E5E7EB; color: #4B5563; font-size: 13px; font-weight: 800; white-space: nowrap; cursor: pointer; transition: all .15s; }
 .admin-tab-btn-v:hover { background: #D1D5DB; }
 .admin-tab-btn-v.active { background: var(--accent); color: #fff; box-shadow: 0 4px 12px rgba(232, 93, 138, 0.3); }
+
+.admin-report-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  padding: 12px;
+  border-radius: 14px;
+  margin-bottom: 14px;
+  align-items: center;
+}
 
 .admin-stat-grid-v { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
 @media (min-width: 640px) { .admin-stat-grid-v { grid-template-columns: repeat(4, 1fr); gap: 16px; } }
