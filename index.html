@@ -58,7 +58,7 @@
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
   </style>
 
-  <!-- External Stylesheet -->
+  <!-- Complete External Stylesheet -->
   <link rel="stylesheet" href="style.css">
 
   <!-- Firebase SDKs (Compat v9.22.1) -->
@@ -111,6 +111,10 @@
       <button class="menu-link" onclick="showView('categories')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
         الأقسام والتصنيفات
+      </button>
+      <button class="menu-link" onclick="showView('bundles')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        حزم وبكجات التوفير 🎁
       </button>
       <button class="menu-link" onclick="showView('orders')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
@@ -235,6 +239,15 @@
       </div>
     </div>
 
+    <!-- Product Bundles Section (حزم وبكجات التوفير في الرئيسية) -->
+    <section class="wrap section" id="homeBundlesSection" style="display:none;">
+      <div class="section-head">
+        <span class="see-all" onclick="showView('bundles')">عرض كل البكجات</span>
+        <h2>🎁 حزم وبكجات التوفير المميزة</h2>
+      </div>
+      <div class="bundle-grid" id="homeBundlesGrid"></div>
+    </section>
+
     <!-- Shop by Brand Section -->
     <section class="wrap section">
       <div class="section-head">
@@ -253,7 +266,7 @@
       <div class="product-grid" id="bestSellersGrid"></div>
     </section>
 
-    <!-- Promo Banners Section -->
+    <!-- Promo Banners Section (Dynamic Promo Cards) -->
     <section class="wrap section" id="promoBannersSection">
       <div id="promoBanners"></div>
     </section>
@@ -287,7 +300,23 @@
     </div>
   </div>
 
-  <!-- ============ 4. MY ORDERS VIEW ("طلباتي") ============ -->
+  <!-- ============ 4. BUNDLES VIEW (واجهة حزم وبكجات التوفير) ============ -->
+  <div class="view" id="view-bundles">
+    <div class="wrap">
+      <div class="pd-back" onclick="showView('home')">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
+        رجوع للرئيسية
+      </div>
+      <div class="section-head" style="margin-top:10px;">
+        <span class="mono" id="allBundlesCount" style="font-size:12px; color:var(--text-soft);"></span>
+        <h2>حزم وبكجات التوفير المتكاملة 🎁</h2>
+      </div>
+      <p style="font-size:13px; color:var(--text-soft); margin-top:-6px; margin-bottom:14px;">مجموعات علاجية متكاملة مختارة بعناية من الصيدلي مع خصم توفيري إضافي:</p>
+      <div class="bundle-grid" id="allBundlesGrid"></div>
+    </div>
+  </div>
+
+  <!-- ============ 5. MY ORDERS VIEW ("طلباتي") ============ -->
   <div class="view" id="view-orders">
     <div class="wrap">
       <div class="section-head" style="margin-top:16px;">
@@ -298,7 +327,7 @@
     </div>
   </div>
 
-  <!-- ============ 5. OFFERS VIEW ============ -->
+  <!-- ============ 6. OFFERS VIEW ============ -->
   <div class="view" id="view-offers">
     <div class="wrap">
       <div class="section-head" style="margin-top:14px;">
@@ -309,7 +338,7 @@
     </div>
   </div>
 
-  <!-- ============ 6. WISHLIST VIEW ============ -->
+  <!-- ============ 7. WISHLIST VIEW ============ -->
   <div class="view" id="view-wishlist">
     <div class="wrap">
       <div class="section-head" style="margin-top:14px;">
@@ -320,7 +349,7 @@
     </div>
   </div>
 
-  <!-- ============ 7. PRODUCT DETAIL VIEW (WITH DEEP LINK, REVIEWS & CROSS-SELLING) ============ -->
+  <!-- ============ 8. PRODUCT DETAIL VIEW (STAR-ONLY RATING & CROSS-SELLING) ============ -->
   <div class="view" id="view-product">
     <div class="wrap">
       <div style="display:flex; align-items:center; justify-content:space-between; padding-top:6px;">
@@ -353,8 +382,21 @@
       <div class="pd-tab-content active" id="pdTabDesc"></div>
       <div class="pd-tab-content" id="pdTabIng"></div>
       <div class="pd-tab-content" id="pdTabUse"></div>
+      
+      <!-- Star-Only Quick Rating Tab -->
       <div class="pd-tab-content" id="pdTabReviews">
-        <div id="pdReviewsContainer"></div>
+        <div class="star-rating-box">
+          <h4>تقييم المنتج السريع ⭐</h4>
+          <p style="font-size:12px; color:var(--text-soft); margin:0 0 8px;">اضغطي على النجمة لتقييم المنتج بنقرة واحدة:</p>
+          <div class="star-rating-row" id="starRatingRow">
+            <span class="star-btn" data-star="1" onclick="rateProductInstant(1)">★</span>
+            <span class="star-btn" data-star="2" onclick="rateProductInstant(2)">★</span>
+            <span class="star-btn" data-star="3" onclick="rateProductInstant(3)">★</span>
+            <span class="star-btn" data-star="4" onclick="rateProductInstant(4)">★</span>
+            <span class="star-btn" data-star="5" onclick="rateProductInstant(5)">★</span>
+          </div>
+          <div id="instantRatingMsg" style="font-size:11.5px; font-weight:800; color:var(--accent); margin-top:8px;"></div>
+        </div>
       </div>
 
       <div class="pd-qty-row">
@@ -379,7 +421,7 @@
     </div>
   </div>
 
-  <!-- ============ 8. CART VIEW ============ -->
+  <!-- ============ 9. CART VIEW ============ -->
   <div class="view" id="view-cart">
     <div class="wrap">
       <div class="section-head" style="margin-top:14px;">
@@ -398,7 +440,7 @@
     </div>
   </div>
 
-  <!-- ============ 9. CHECKOUT VIEW ============ -->
+  <!-- ============ 10. CHECKOUT VIEW (WITH SMART AUTOFILL) ============ -->
   <div class="view" id="view-checkout">
     <div class="wrap">
       <div class="pd-back" onclick="showView('cart')">
@@ -409,17 +451,24 @@
         <span></span>
         <h2>إتمام الطلب</h2>
       </div>
+
+      <!-- Smart Customer Autofill Notification -->
+      <div id="autofillNoticeBox" style="display:none;" class="autofill-indicator">
+        <span>✨ تم ملء بياناتكِ المحفوظة تلقائياً</span>
+        <button type="button" onclick="clearSavedCustomerData()" style="color:#DC2626; font-size:11.5px; font-weight:800; text-decoration:underline;">مسح/تعديل</button>
+      </div>
+
       <div class="form-field">
         <label>الاسم الكامل *</label>
-        <input type="text" id="custName" placeholder="مثال: سارة أحمد">
+        <input type="text" id="custName" placeholder="مثال: سارة أحمد" required>
       </div>
       <div class="form-field">
         <label>رقم الهاتف *</label>
-        <input type="tel" id="custPhone" placeholder="07xxxxxxxxx">
+        <input type="tel" id="custPhone" placeholder="07xxxxxxxxx" required>
       </div>
       <div class="form-field">
         <label>العنوان بالتفصيل *</label>
-        <textarea id="custAddress" rows="3" placeholder="المحافظة، المنطقة، أقرب نقطة دالة..."></textarea>
+        <textarea id="custAddress" rows="3" placeholder="المحافظة، المنطقة، أقرب نقطة دالة..." required></textarea>
       </div>
       <div class="form-field">
         <label>طريقة التوصيل</label>
@@ -435,7 +484,7 @@
     </div>
   </div>
 
-  <!-- ============ 10. ACCOUNT VIEW ============ -->
+  <!-- ============ 11. ACCOUNT VIEW ============ -->
   <div class="view" id="view-account">
     <div class="wrap">
       <div class="section-head" style="margin-top:14px;">
@@ -446,7 +495,7 @@
     </div>
   </div>
 
-  <!-- ============ MODALS & POPUPS (مغلقة تماماً بالـ display: none) ============ -->
+  <!-- ============ MODALS & POPUPS ============ -->
   <!-- 1. Smart Welcome Discount Popup -->
   <div class="welcome-modal-overlay" id="welcomeOfferModal">
     <div class="welcome-card">
@@ -462,7 +511,7 @@
     </div>
   </div>
 
-  <!-- 2. Admin Quick Editor Modal (تعديل سريع للمشرف) -->
+  <!-- 2. Admin Quick Editor Modal -->
   <div class="admin-quick-modal-overlay" id="adminQuickEditModal">
     <div class="admin-quick-card">
       <div class="consult-header">
@@ -634,6 +683,10 @@
     <button class="bn-item active" onclick="showView('home')" id="bn-home">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/></svg>
       <span class="lbl">الرئيسية</span>
+    </button>
+    <button class="bn-item" onclick="showView('bundles')" id="bn-bundles">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+      <span class="lbl">البكجات</span>
     </button>
     <button class="bn-item" onclick="showView('categories')" id="bn-categories">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
