@@ -2175,7 +2175,15 @@ async function confirmOrder() {
     confirmBtn.textContent = 'جاري تأكيد الطلب...';
   }
 
-  const itemsPayload = ids.map(id => ({ id, quantity: cart[id] }));
+  const itemsPayload = ids.map(id => {
+  const p = findProduct(id);
+  return {
+    id: id,
+    name: p ? p.name : 'منتج',
+    price: p ? p.price : 0,
+    quantity: cart[id]
+  };
+});
 
   try {
     const response = await apiFetch("/api/orders", {
