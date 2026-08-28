@@ -110,7 +110,7 @@ async function apiFetch(endpoint, options = {}) {
   }
 }
 
-// ================= ICONS & GRAPHICS (STRICT INLINE SIZING) =================
+// ================= ICONS & GRAPHICS =================
 const icons = {
   bottle: c => `<svg viewBox="0 0 24 24" width="48" height="48" style="width:48px;height:48px;max-width:100%;max-height:100%;" fill="none"><path d="M10 2h4v3.2l1.4 1.6c.4.45.6 1 .6 1.6V20a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V8.4c0-.6.2-1.15.6-1.6L9 5.2V2Z" fill="${c}" fill-opacity=".14" stroke="${c}" stroke-width="1.5"/><rect x="9" y="11" width="6" height="8.4" rx="0.8" fill="${c}" fill-opacity=".26"/></svg>`,
   jar: c => `<svg viewBox="0 0 24 24" width="48" height="48" style="width:48px;height:48px;max-width:100%;max-height:100%;" fill="none"><rect x="5" y="9" width="14" height="12" rx="2.6" fill="${c}" fill-opacity=".14" stroke="${c}" stroke-width="1.5"/><rect x="6.4" y="11" width="11.2" height="8.4" rx="1.4" fill="${c}" fill-opacity=".26"/><rect x="4.4" y="6" width="15.2" height="3.4" rx="1.4" fill="${c}" fill-opacity=".3" stroke="${c}" stroke-width="1.3"/></svg>`,
@@ -172,16 +172,29 @@ const initialDefaultProducts = [
 ];
 
 let products = [...initialDefaultProducts];
+let bundles = [
+  {
+    id: 'b1',
+    title: 'بكج النضارة والترطيب العميق',
+    description: 'كريم سيرافي المرطب + سيروم رفيول نياسيناميد 10% لبشرة مشرقة وصحية',
+    oldPrice: 43000,
+    price: 35000,
+    savingsBadge: 'وفر 8,000 د.ع 💸',
+    productIds: ['1', '2'],
+    imageUrl: ''
+  }
+];
+
 let notifications = [];
 let cart = JSON.parse(localStorage.getItem('qutn_cart') || '{}');
 let wishlist = new Set(JSON.parse(localStorage.getItem('qutn_wishlist') || '[]'));
 let readNotifs = new Set(JSON.parse(localStorage.getItem('qutn_read_notifs') || '[]'));
 let myOrders = JSON.parse(localStorage.getItem('qutn_my_orders') || '[]');
-let productReviews = JSON.parse(localStorage.getItem('qutn_reviews') || '{}');
 let currentView = 'home';
 let listingMode = null, listingValue = null, listingCatActive = 'all';
 let currentProductId = null, pdQty = 1, pdActiveTab = 'desc', deliveryMethod = 'standard';
 let appliedPromo = null;
+let isLowStockFilterActive = false;
 
 // نظام حفظ موضع الشاشة
 let previousViewBeforeProduct = 'home';
@@ -213,20 +226,21 @@ if (!storeSettings.primaryColor) {
     heroSubTitle: 'نحن هنا لتحسين بشرتك',
     heroDescTitle: 'منتجات أصلية لعناية صحية وجمال طبيعي',
     promoCards: [
-      { title: 'عرض خاص من دوف', desc: 'عناية ناعمة وترطيب عميق لبشرتك', discount: 'خصم حتى 25%', img: '' },
-      { title: 'عروض السيرومات العلاجية', desc: 'تغذية وإشراقة طبيعية لمظهر صحي', discount: 'خصم حتى 30%', img: '' }
+      { id: 'pc_1', title: 'عرض خاص من دوف', desc: 'عناية ناعمة وترطيب عميق لبشرتك', discount: 'خصم حتى 25%', img: '' },
+      { id: 'pc_2', title: 'عروض السيرومات العلاجية', desc: 'تغذية وإشراقة طبيعية لمظهر صحي', discount: 'خصم حتى 30%', img: '' }
     ]
   };
 }
 
 function fmtPrice(n) { return (Number(n) || 0).toLocaleString('en-US') + ' د.ع'; }
 function findProduct(id) { return products.find(p => String(p.id) === String(id)); }
+function findBundle(id) { return bundles.find(b => String(b.id) === String(id)); }
 function starIcon() { return `<svg viewBox="0 0 24 24" width="12" height="12" style="width:12px;height:12px;" fill="currentColor"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1z"/></svg>`; }
+
 function saveLocalState() {
   localStorage.setItem('qutn_cart', JSON.stringify(cart));
   localStorage.setItem('qutn_wishlist', JSON.stringify([...wishlist]));
   localStorage.setItem('qutn_my_orders', JSON.stringify(myOrders));
-  localStorage.setItem('qutn_reviews', JSON.stringify(productReviews));
   localStorage.setItem('qutn_store_settings', JSON.stringify(storeSettings));
 }
 
@@ -326,8 +340,7 @@ function renderAdminCouponsList(coupons) {
 
 async function handleAdminCouponSave(e) {
   e.preventDefault();
-  if (!assertAdmin()) return;
-  if (!lockAction('saveCoupon', 1500)) return;
+  if (!assertAdmin() || !lockAction('saveCoupon', 1500)) return;
 
   const payload = {
     code: document.getElementById('couponCodeInput').value.trim().toUpperCase(),
@@ -341,6 +354,9 @@ async function handleAdminCouponSave(e) {
 
   const res = await apiFetch("/api/admin/coupons", { method: "POST", body: JSON.stringify(payload) });
   if (res && res.success) {
+    if (db) {
+      await db.collection('coupons').doc(res.coupon ? res.coupon.id : payload.code).set(payload, { merge: true });
+    }
     showToast('تم حفظ كود الخصم وتفعيله سحابياً بنجاح! 🎉');
     document.getElementById('couponCodeInput').value = '';
     document.getElementById('couponValueInput').value = '';
@@ -354,727 +370,326 @@ async function deleteAdminCoupon(id) {
   if (!assertAdmin()) return;
   if (confirm('هل أنتِ متأكدة من حذف هذا الكوبون نهائياً؟')) {
     await apiFetch(`/api/admin/coupons/${id}`, { method: "DELETE" });
+    if (db) await db.collection('coupons').doc(String(id)).delete();
     fetchAdminCoupons();
     showToast('تم حذف الكوبون بنجاح ✓');
   }
 }
 
-// ================= TELEGRAM BOT NOTIFICATIONS =================
-async function handleSaveTelegramSettings(e) {
-  e.preventDefault();
-  if (!assertAdmin()) return;
-  const botToken = document.getElementById('teleBotTokenInput').value.trim();
-  const chatId = document.getElementById('teleChatIdInput').value.trim();
-
-  await apiFetch("/api/admin/settings", {
-    method: "POST",
-    body: JSON.stringify({ telegramConfig: { botToken, chatId, enabled: true } })
-  });
-  showToast('تم حفظ إعدادات التلغرام بنجاح ✓');
-}
-
-async function testTelegramBotNotification() {
-  if (!assertAdmin()) return;
-  const botToken = document.getElementById('teleBotTokenInput').value.trim();
-  const chatId = document.getElementById('teleChatIdInput').value.trim();
-
-  if (!botToken || !chatId) {
-    showToast('يرجى إدخال Bot Token و Chat ID أولاً');
-    return;
-  }
-
-  showToast('جاري إرسال إشعار تجريبي إلى التلغرام...');
-  const res = await apiFetch("/api/admin/telegram/test", {
-    method: "POST",
-    body: JSON.stringify({ botToken, chatId })
-  });
-
-  if (res && res.success) {
-    showToast(res.message);
-  } else {
-    showToast((res && res.message) || 'تعذر إرسال الإشعار، تحققي من صحة التوكن ورقم الشات');
-  }
-}
-
-// ================= AUDIT LOGS & SECURITY =================
-async function fetchAuditLogs() {
-  const res = await apiFetch("/api/admin/logs");
-  const tbody = document.getElementById('adminAuditLogsTbody');
-  if (!tbody) return;
-
-  if (res && res.logs && res.logs.length > 0) {
-    tbody.innerHTML = res.logs.map(log => `
-      <tr>
-        <td><span class="log-badge">${sanitizeText(log.action)}</span></td>
-        <td>${sanitizeText(log.details)}</td>
-        <td>${sanitizeText(log.adminEmail)}</td>
-        <td class="mono" style="font-size:10px;">${new Date(log.timestamp).toLocaleTimeString('ar-IQ')}</td>
-        <td class="mono" style="font-size:10px;">${sanitizeText(log.ip)}</td>
-      </tr>
-    `).join('');
-  } else {
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:14px;">لا توجد سجلات بعد.</td></tr>`;
-  }
-}
-
-async function handleSaveSecuritySettings(e) {
-  e.preventDefault();
-  if (!assertAdmin()) return;
-  const maxOrdersPerHour = Number(document.getElementById('secMaxOrdersHour').value);
-  const maxRequestsPerMin = Number(document.getElementById('secMaxReqsMin').value);
-
-  await apiFetch("/api/admin/settings", {
-    method: "POST",
-    body: JSON.stringify({ rateLimits: { maxOrdersPerHour, maxRequestsPerMin } })
-  });
-  showToast('تم حفظ سياسات الحماية بنجاح ✓');
-}
-
-// ================= REAL DYNAMIC ANALYTICS =================
-async function recordRealVisit() {
-  const today = new Date().toISOString().split('T')[0];
-  const visitKey = 'visited_' + today;
-  
-  try {
-    if (!sessionStorage.getItem(visitKey)) {
-      sessionStorage.setItem(visitKey, '1');
-      await apiFetch("/api/analytics/visit", { method: "POST" });
-      if (db) {
-        await db.collection('analytics_daily').doc(today).set({
-          visits: firebase.firestore.FieldValue.increment(1),
-          date: today
-        }, { merge: true });
-      }
-    }
-    fetchRealAnalytics();
-  } catch (e) { console.warn("Analytics visit error:", e); }
-}
-
-async function fetchRealAnalytics() {
-  if (!isFirebaseConfigured || !db) return;
-  try {
-    const todayStr = new Date().toISOString().split('T')[0];
-    const currentMonthStr = todayStr.substring(0, 7);
-
-    let dRev = 0;
-    let mRev = 0;
-
-    const ordersSnap = await db.collection('orders').get();
-    totalOrdersCount = Math.max(ordersSnap.size, myOrders.length);
-
-    ordersSnap.forEach(doc => {
-      const o = doc.data();
-      const oTotal = Number(o.total || o.verifiedTotal || 0);
-      const oDate = o.createdAt && o.createdAt.toDate ? o.createdAt.toDate().toISOString() : (o.date || '');
-      if (oDate.startsWith(todayStr)) dRev += oTotal;
-      if (oDate.startsWith(currentMonthStr)) mRev += oTotal;
-    });
-
-    myOrders.forEach(o => {
-      const oTotal = Number(o.total || 0);
-      if (o.date && o.date.includes(todayStr)) dRev = Math.max(dRev, oTotal);
-      if (o.date && o.date.includes(currentMonthStr)) mRev = Math.max(mRev, oTotal);
-    });
-
-    todayRevenue = dRev;
-    monthlyRevenue = mRev;
-
-    const last7Days = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      last7Days.push(d.toISOString().split('T')[0]);
-    }
-    
-    const visitsSnap = await db.collection('analytics_daily').get();
-    const visitsMap = {};
-    visitsSnap.forEach(doc => { visitsMap[doc.id] = (doc.data().visits || 0); });
-
-    todayVisitsCount = visitsMap[todayStr] || 0;
-
-    const dayNames = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-    weeklyVisitsData = last7Days.map(dateStr => {
-      const dObj = new Date(dateStr);
-      return {
-        date: dateStr,
-        day: dayNames[dObj.getDay()],
-        visits: visitsMap[dateStr] || 0
-      };
-    });
-
-    renderRealAnalyticsView();
-  } catch (e) { console.warn("Error fetching analytics:", e); }
-}
-
-function renderRealAnalyticsView() {
-  const statDailyRev = document.getElementById('statDailyRevenue');
-  const statMonthlyRev = document.getElementById('statMonthlyRevenue');
-  const statVisits = document.getElementById('statDailyVisits');
-  const statOrders = document.getElementById('statTotalOrdersV');
-
-  if (statDailyRev) statDailyRev.textContent = fmtPrice(todayRevenue);
-  if (statMonthlyRev) statMonthlyRev.textContent = fmtPrice(monthlyRevenue);
-  if (statVisits) statVisits.textContent = todayVisitsCount;
-  if (statOrders) statOrders.textContent = totalOrdersCount;
-
-  const chartContainer = document.getElementById('adminRealChartBars');
-  if (chartContainer && weeklyVisitsData.length > 0) {
-    const maxVisits = Math.max(...weeklyVisitsData.map(v => v.visits), 1);
-    chartContainer.innerHTML = weeklyVisitsData.map(d => {
-      const pct = (d.visits > 0) ? Math.round((d.visits / maxVisits) * 90) + 10 : 4;
-      return `
-        <div class="chart-bar-col">
-          <span class="mono" style="font-size:10px; font-weight:800; color:var(--accent);">${d.visits > 0 ? d.visits : '0'}</span>
-          <div class="chart-bar-fill" style="height: ${pct}%;"></div>
-          <span class="chart-bar-lbl">${d.day}</span>
-        </div>`;
-    }).join('');
-  }
-
-  const topOrdersEl = document.getElementById('adminTopOrderedList');
-  if (topOrdersEl) {
-    const topOrdered = [...products].filter(p => (p.orderCount || 0) > 0).sort((a,b) => (b.orderCount || 0) - (a.orderCount || 0)).slice(0, 5);
-    if (topOrdered.length === 0) {
-      topOrdersEl.innerHTML = `<div class="no-results" style="padding:20px 0;">لا توجد طلبات مسجلة حتى الآن.</div>`;
-    } else {
-      topOrdersEl.innerHTML = topOrdered.map((p, idx) => `
-        <div class="admin-rank-item">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span class="admin-rank-badge">${idx + 1}</span>
-            <span style="font-weight:700;">${sanitizeText(p.name)} (${sanitizeText(p.brand)})</span>
-          </div>
-          <span class="mono" style="font-weight:800; color:var(--accent);">${p.orderCount} طلب شراء</span>
-        </div>`).join('');
-    }
-  }
-
-  const topViewsEl = document.getElementById('adminTopViewedList');
-  if (topViewsEl) {
-    const topViewed = [...products].filter(p => (p.views || 0) > 0).sort((a,b) => (b.views || 0) - (a.views || 0)).slice(0, 5);
-    if (topViewed.length === 0) {
-      topViewsEl.innerHTML = `<div class="no-results" style="padding:20px 0;">لا توجد مشاهدات مسجلة اليوم بعد.</div>`;
-    } else {
-      topViewsEl.innerHTML = topViewed.map((p, idx) => `
-        <div class="admin-rank-item">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span class="admin-rank-badge">${idx + 1}</span>
-            <span style="font-weight:700;">${sanitizeText(p.name)}</span>
-          </div>
-          <span class="mono" style="font-weight:800; color:#4B5563;">${p.views} مشاهدة</span>
-        </div>`).join('');
-    }
-  }
-}
-
-// ================= IN-APP NOTIFICATIONS =================
-function listenToNotifications() {
-  if (!isFirebaseConfigured || !db) return;
-  db.collection('notifications').orderBy('createdAt', 'desc').limit(20).onSnapshot(snap => {
-    notifications = [];
-    snap.forEach(doc => notifications.push({ id: doc.id, ...doc.data() }));
-    renderNotifications();
-  }, err => console.warn("Notifications listener error:", err));
-}
-
-function renderNotifications() {
-  const unreadCount = notifications.filter(n => !readNotifs.has(n.id)).length;
-  const badge = document.getElementById('notifBadge');
-  if (badge) {
-    badge.style.display = unreadCount > 0 ? 'flex' : 'none';
-    badge.textContent = unreadCount;
-  }
-
-  const listEl = document.getElementById('notifList');
-  if (listEl) {
-    if (notifications.length === 0) {
-      listEl.innerHTML = `<div class="no-results" style="padding:30px 0;">لا توجد إشعارات جديدة حالياً 🌸</div>`;
-    } else {
-      listEl.innerHTML = notifications.map(n => {
-        const timeStr = n.createdAt && n.createdAt.toDate ? n.createdAt.toDate().toLocaleDateString('ar-IQ', {hour:'2-digit', minute:'2-digit'}) : 'الآن';
-        return `
-          <div class="notif-item">
-            <div class="notif-item-header">
-              <span class="notif-item-title">${sanitizeText(n.title)}</span>
-              <span class="notif-item-time mono">${sanitizeText(timeStr)}</span>
-            </div>
-            <p class="notif-item-desc">${sanitizeText(n.body)}</p>
-          </div>`;
-      }).join('');
-    }
-  }
-
-  const adminHistory = document.getElementById('adminNotifsHistoryList');
-  if (adminHistory) {
-    adminHistory.innerHTML = notifications.map(n => `
-      <div style="background:#fff; border:1px solid var(--line); border-radius:10px; padding:10px; display:flex; justify-content:space-between; align-items:center;">
-        <div>
-          <div style="font-weight:800; font-size:13px; color:var(--rose-deep);">${sanitizeText(n.title)}</div>
-          <div style="font-size:12px; color:var(--text-soft);">${sanitizeText(n.body)}</div>
-        </div>
-        <button onclick="deleteNotification('${sanitizeText(n.id)}')" style="color:var(--red); font-size:12px; font-weight:800;">حذف 🗑️</button>
-      </div>`).join('');
-  }
-}
-
-function openNotifModal() {
-  const modal = document.getElementById('notifModal');
-  if (modal) modal.classList.add('open');
-  notifications.forEach(n => readNotifs.add(n.id));
-  localStorage.setItem('qutn_read_notifs', JSON.stringify([...readNotifs]));
-  renderNotifications();
-}
-
-function closeNotifModal() { 
-  const modal = document.getElementById('notifModal');
-  if (modal) modal.classList.remove('open'); 
-}
-
-async function handleSendBroadcastNotification(e) {
-  e.preventDefault();
-  if (!assertAdmin()) return;
-  if (!lockAction('sendBroadcastNotif', 2000)) return;
-
-  const title = document.getElementById('notifTitleInput').value.trim();
-  const body = document.getElementById('notifBodyInput').value.trim();
-  const type = document.getElementById('notifTypeInput').value;
-
-  if (!title || !body) {
-    showToast('يرجى تعبئة عنوان ونص الإشعار بالكامل');
-    return;
-  }
-
-  try {
-    await apiFetch("/api/admin/notifications", {
-      method: "POST",
-      body: JSON.stringify({ title, body, type })
-    });
-    if (db) {
-      await db.collection('notifications').add({
-        title: sanitizeText(title),
-        body: sanitizeText(body),
-        type: sanitizeText(type),
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-    }
-    document.getElementById('notifTitleInput').value = '';
-    document.getElementById('notifBodyInput').value = '';
-    showToast('🚀 تم إرسال الإشعار لجميع المستخدمين بنجاح!');
-  } catch (err) {
-    console.error(err);
-    showToast('حدث خطأ أثناء إرسال الإشعار');
-  }
-}
-
-async function deleteNotification(id) {
-  if (!assertAdmin()) return;
-  if (confirm('حذف هذا الإشعار نهائياً؟')) {
-    await apiFetch(`/api/admin/notifications/${id}`, { method: "DELETE" });
-    if (db) await db.collection('notifications').doc(String(id)).delete();
-    showToast('تم حذف الإشعار بنجاح ✓');
-  }
-}
-
-// ================= REALTIME ORDERS & EXCEL TELEGRAM REPORT =================
-async function fetchAdminOrdersList() {
-  if (!isFirebaseConfigured || !db) return;
-  try {
-    const snap = await db.collection('orders').orderBy('createdAt', 'desc').limit(50).get();
-    const orders = [];
-    snap.forEach(d => orders.push({ id: d.id, ...d.data() }));
-    renderAdminOrdersList(orders);
-  } catch (e) {
-    console.warn(e);
-  }
-}
-
-function renderAdminOrdersList(orders) {
-  const container = document.getElementById('adminOrdersManageContainer');
+// ================= PRODUCT BUNDLES SYSTEM (نظام حزم وبكجات التوفير) =================
+function populateBundleProductsChecklist() {
+  const container = document.getElementById('bundleProductsChecklist');
   if (!container) return;
-  if (orders.length === 0) {
-    container.innerHTML = `<div class="no-results" style="padding:20px 0;">لا توجد طلبات مسجلة حتى الآن.</div>`;
+  container.innerHTML = products.map(p => `
+    <label style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:700; margin-bottom:6px; cursor:pointer;">
+      <input type="checkbox" value="${p.id}" class="bundle-prod-cb" style="width:16px; height:16px;">
+      <span>${sanitizeText(p.name)} (${fmtPrice(p.price)})</span>
+    </label>
+  `).join('');
+}
+
+function renderHomeBundles() {
+  const sec = document.getElementById('homeBundlesSection');
+  const grid = document.getElementById('homeBundlesGrid');
+  if (!sec || !grid) return;
+
+  if (bundles.length === 0) {
+    sec.style.display = 'none';
     return;
   }
 
-  container.innerHTML = orders.map(ord => `
-    <div class="admin-order-manage-card">
-      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed var(--line); padding-bottom:8px; margin-bottom:8px;">
-        <span class="order-card-id mono">#${sanitizeText(ord.id)}</span>
-        <select class="admin-order-status-select" onchange="updateOrderStatus('${sanitizeText(ord.id)}', this.value)">
-          <option value="قيد المعالجة والتجهيز 🚚" ${ord.status === 'قيد المعالجة والتجهيز 🚚' ? 'selected' : ''}>قيد التجهيز 🚚</option>
-          <option value="تم الشحن مع المندوب 🛵" ${ord.status === 'تم الشحن مع المندوب 🛵' ? 'selected' : ''}>تم الشحن مع المندوب 🛵</option>
-          <option value="تم التسليم بنجاح ✅" ${ord.status === 'تم التسليم بنجاح ✅' ? 'selected' : ''}>تم التسليم بنجاح ✅</option>
-          <option value="طلب ملغي ❌" ${ord.status === 'طلب ملغي ❌' ? 'selected' : ''}>طلب ملغي ❌</option>
-        </select>
+  sec.style.display = 'block';
+  grid.innerHTML = bundles.map(b => renderBundleCardHTML(b)).join('');
+}
+
+function renderAllBundles() {
+  const grid = document.getElementById('allBundlesGrid');
+  const countEl = document.getElementById('allBundlesCount');
+  if (countEl) countEl.textContent = bundles.length + ' بكجات توفير';
+  if (!grid) return;
+
+  if (bundles.length === 0) {
+    grid.innerHTML = `<div class="no-results">لا توجد بكجات توفير متاحة حالياً 🌸</div>`;
+    return;
+  }
+
+  grid.innerHTML = bundles.map(b => renderBundleCardHTML(b)).join('');
+}
+
+function renderBundleCardHTML(b) {
+  const includedProds = (b.productIds || []).map(pid => findProduct(pid)).filter(Boolean);
+  const cleanImg = sanitizeUrl(b.imageUrl);
+
+  return `
+    <div class="bundle-card">
+      <span class="bundle-savings-badge">${sanitizeText(b.savingsBadge || 'توفير فوري 💸')}</span>
+      
+      <div class="bundle-thumb-row">
+        ${cleanImg ? `<img src="${cleanImg}" style="max-height:100px; object-fit:contain;">` : 
+          includedProds.map((p, idx) => `
+            <div class="bundle-thumb-item">
+              ${p.imageUrl ? `<img src="${sanitizeUrl(p.imageUrl)}">` : icons[p.type || 'bottle'](getBrandColor(p.brand))}
+            </div>
+            ${idx < includedProds.length - 1 ? '<span class="bundle-plus-icon">+</span>' : ''}
+          `).join('')
+        }
       </div>
-      <div style="font-size:12px; color:var(--text-soft); margin-bottom:6px;">
-        التاريخ: <span class="mono">${sanitizeText(ord.date)}</span> · الزبون: <b>${sanitizeText(ord.name)}</b> (${sanitizeText(ord.phone)})
+
+      <h3 class="bundle-title">${sanitizeText(b.title)}</h3>
+      <p class="bundle-desc">${sanitizeText(b.description)}</p>
+
+      <div class="bundle-items-list">
+        <b>مكونات البكج:</b>
+        ${includedProds.map(p => `<span>• ${sanitizeText(p.name)} (${sanitizeText(p.brand)})</span>`).join('')}
       </div>
-      <div style="font-size:12px; color:var(--text-soft); margin-bottom:6px;">
-        العنوان: ${sanitizeText(ord.address)} (${ord.deliveryMethod === 'express' ? 'توصيل سريع' : 'توصيل عادي'})
+
+      <div class="bundle-price-box">
+        <div>
+          <span class="p-price mono" style="font-size:17px; color:var(--rose-deep);">${fmtPrice(b.price)}</span>
+          ${b.oldPrice ? `<span class="p-oldprice mono" style="margin-inline-start:6px;">${fmtPrice(b.oldPrice)}</span>` : ''}
+        </div>
       </div>
-      <div style="font-size:12px; color:var(--ink); margin-bottom:6px;">
-        ${(ord.items || []).map(it => `• ${sanitizeText(it.name)} × ${it.quantity} (${fmtPrice(it.price * it.quantity)})`).join('<br>')}
+
+      <button class="add-cart-btn" onclick="addBundleToCart('${sanitizeText(b.id)}')">
+        🎁 أضف البكج كاملاً للسلة
+      </button>
+    </div>
+  `;
+}
+
+function addBundleToCart(bundleId) {
+  const cartKey = 'bundle_' + bundleId;
+  cart[cartKey] = (cart[cartKey] || 0) + 1;
+  updateCartBadge();
+  saveLocalState();
+  showToast('تمت إضافة البكج كاملاً للسلة بتخفيض التوفير! 🎁');
+}
+
+function renderAdminBundlesList() {
+  const container = document.getElementById('adminBundlesListGrid');
+  if (!container) return;
+  if (bundles.length === 0) {
+    container.innerHTML = `<div class="no-results" style="padding:16px 0;">لا توجد بكجات مسجلة بعد.</div>`;
+    return;
+  }
+
+  container.innerHTML = bundles.map(b => `
+    <div style="background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <div style="font-weight:900; font-size:14px; color:var(--ink);">
+          🎁 ${sanitizeText(b.title)} 
+          <span class="log-badge" style="background:#DCFCE7; color:#16A34A;">${fmtPrice(b.price)}</span>
+          ${b.oldPrice ? `<span style="font-size:11px; color:var(--text-soft); text-decoration:line-through; margin-inline-start:4px;">${fmtPrice(b.oldPrice)}</span>` : ''}
+        </div>
+        <div style="font-size:11.5px; color:var(--text-soft); margin-top:2px;">
+          ${sanitizeText(b.description)} · ${(b.productIds || []).length} منتجات مرتبطة
+        </div>
       </div>
-      <div style="font-weight:900; font-size:14px; color:var(--rose-deep); text-align:left;">
-        الإجمالي: ${fmtPrice(ord.total)}
+      <div style="display:flex; gap:6px;">
+        <button onclick="editAdminBundle('${sanitizeText(b.id)}')" style="background:#E0E7FF; color:#3730A3; padding:5px 10px; border-radius:8px; font-weight:800; font-size:11px;">تعديل ✏️</button>
+        <button onclick="deleteAdminBundle('${sanitizeText(b.id)}')" style="background:#FEE2E2; color:var(--red); padding:5px 10px; border-radius:8px; font-weight:800; font-size:11px;">حذف 🗑️</button>
       </div>
     </div>
   `).join('');
 }
 
-async function updateOrderStatus(orderId, newStatus) {
-  if (!assertAdmin()) return;
-  if (db) {
-    await db.collection('orders').doc(String(orderId)).set({ status: newStatus }, { merge: true });
-    showToast(`تم تحديث حالة الطلب #${orderId} إلى: ${newStatus}`);
-  }
-}
+function editAdminBundle(bundleId) {
+  const b = findBundle(bundleId);
+  if (!b) return;
+  document.getElementById('bundleDocId').value = b.id;
+  document.getElementById('bundleTitleInput').value = b.title || '';
+  document.getElementById('bundleDescInput').value = b.description || '';
+  document.getElementById('bundleOldPriceInput').value = b.oldPrice || '';
+  document.getElementById('bundlePriceInput').value = b.price || '';
+  document.getElementById('bundleSavingsInput').value = b.savingsBadge || '';
+  document.getElementById('bundleImgInput').value = b.imageUrl || '';
 
-// دالة توليد التقرير الشامل والمفصل
-async function buildDetailedOrdersCSV() {
-  let orders = [];
-  if (db) {
-    const snap = await db.collection('orders').orderBy('createdAt', 'desc').get();
-    snap.forEach(d => orders.push(d.data()));
-  }
-  if (orders.length === 0) orders = myOrders;
-
-  let csv = "رقم الطلب,التاريخ والوقت,الشهر,اسم العميل,رقم الهاتف,العنوان الكامل,طريقة التوصيل,حالة الطلب,تفاصيل المنتجات المطلوبة,إجمالي الطلب (د.ع)\n";
-  let totalRevenueSum = 0;
-
-  orders.forEach(o => {
-    const orderTotal = Number(o.total || 0);
-    totalRevenueSum += orderTotal;
-
-    const itemsFormatted = (o.items || []).map(it => `${it.name} (العدد: ${it.quantity} | السعر: ${it.price || 0})`).join(" + ");
-    const monthName = o.date ? o.date.split(" ")[1] || o.date.split("-")[1] || "غير محدد" : "غير محدد";
-
-    csv += `"${o.id}","${o.date || ''}","${monthName}","${o.name || ''}","${o.phone || ''}","${(o.address || '').replace(/"/g, '""')}","${o.deliveryMethod === 'express' ? 'توصيل سريع' : 'توصيل عادي'}","${o.status || ''}","${itemsFormatted.replace(/"/g, '""')}","${orderTotal}"\n`;
+  document.querySelectorAll('.bundle-prod-cb').forEach(cb => {
+    cb.checked = (b.productIds || []).includes(cb.value);
   });
 
-  // سطر التلخيص النهائي في قاع الإكسل
-  csv += `\n"الملخص الإجمالي","إجمالي عدد الطلبات: ${orders.length}","","","","","","","المجموع الكلي لكافة المبيعات:","${totalRevenueSum} د.ع"\n`;
-
-  return { csv, totalOrders: orders.length, totalRevenue: totalRevenueSum };
+  document.getElementById('adminBundleFormTitle').textContent = '✏️ تعديل البكج: ' + b.title;
+  document.getElementById('btnSaveBundle').textContent = '💾 حفظ تعديلات البكج';
 }
 
-// إرسال الإكسل مباشرة إلى محادثة التلغرام
-async function sendOrdersReportToTelegram() {
-  if (!assertAdmin()) return;
-  if (!lockAction('sendTeleReport', 3000)) return;
-
-  showToast('جاري إنشاء التقرير المفصل وإرساله إلى التلغرام...');
-  try {
-    const report = await buildDetailedOrdersCSV();
-    const dateStr = new Date().toLocaleDateString('ar-IQ').replace(/\//g, '-');
-    const filename = `تقرير_مبيعات_صيدلية_القطن_${dateStr}.csv`;
-    const caption = `📊 *تقرير مبيعات صيدلية القطن المفصل*\n📅 التاريخ: ${dateStr}\n📦 إجمالي الطلبات: ${report.totalOrders}\n💰 إجمالي الإيرادات: *${report.totalRevenue.toLocaleString()} د.ع*`;
-
-    const res = await apiFetch("/api/admin/telegram/send-report", {
-      method: "POST",
-      body: JSON.stringify({
-        csvData: report.csv,
-        filename,
-        caption
-      })
-    });
-
-    if (res && res.success) {
-      showToast(res.message);
-    } else {
-      showToast((res && res.message) || 'تعذر إرسال الملف للتلي، جاري التنزيل المباشر على جهازك...');
-      exportOrdersToCSV();
-    }
-  } catch (err) {
-    console.error(err);
-    showToast('حدث خطأ أثناء إرسال التقرير');
-  }
+function resetAdminBundleForm() {
+  if (!document.getElementById('bundleDocId')) return;
+  document.getElementById('bundleDocId').value = '';
+  document.getElementById('bundleTitleInput').value = '';
+  document.getElementById('bundleDescInput').value = '';
+  document.getElementById('bundleOldPriceInput').value = '';
+  document.getElementById('bundlePriceInput').value = '';
+  document.getElementById('bundleSavingsInput').value = 'وفر 15,000 د.ع 💸';
+  document.getElementById('bundleImgInput').value = '';
+  document.querySelectorAll('.bundle-prod-cb').forEach(cb => cb.checked = false);
+  document.getElementById('adminBundleFormTitle').textContent = '🎁 إضافة حزمة / بكج توفير جديد';
+  document.getElementById('btnSaveBundle').textContent = '💾 حفظ وتفعيل البكج في المتجر';
 }
 
-// تنزيل ملف الإكسل المباشر على الجهاز
-async function exportOrdersToCSV() {
-  if (!assertAdmin()) return;
-  showToast('جاري تصدير وتحميل ملف المبيعات...');
-  try {
-    const report = await buildDetailedOrdersCSV();
-    const blob = new Blob(["\uFEFF" + report.csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `تقرير_مبيعات_صيدلية_القطن_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showToast('تم تنزيل ملف Excel بنجاح! 📊');
-  } catch (e) {
-    console.error(e);
-    showToast('حدث خطأ أثناء تصدير التقرير');
-  }
-}
-
-// ================= DEEP LINKING & SHARING =================
-function shareCurrentProduct() {
-  if (!currentProductId) return;
-  const p = findProduct(currentProductId);
-  const shareUrl = `${window.location.origin}${window.location.pathname}#p=${currentProductId}`;
-  
-  if (navigator.share) {
-    navigator.share({
-      title: p ? p.name : 'صيدلية القطن',
-      text: `شاهد ${p ? p.name : 'هذا المنتج'} في صيدلية القطن:`,
-      url: shareUrl
-    }).catch(() => {});
-  } else {
-    navigator.clipboard.writeText(shareUrl).then(() => {
-      showToast('📋 تم نسخ رابط المنتج المباشر بنجاح!');
-    });
-  }
-}
-
-function checkUrlHashForProduct() {
-  const hash = window.location.hash;
-  if (hash && hash.startsWith('#p=')) {
-    const pId = hash.replace('#p=', '');
-    if (pId && findProduct(pId)) {
-      setTimeout(() => openProduct(pId, true), 200);
-    }
-  }
-}
-
-// ================= REVIEWS & CROSS-SELLING =================
-function renderCrossSelling(currentP) {
-  const grid = document.getElementById('pdSuggestedGrid');
-  if (!grid || !currentP) return;
-
-  const suggestions = products
-    .filter(p => p.id !== currentP.id && (p.brand === currentP.brand || p.category !== currentP.category))
-    .slice(0, 4);
-
-  renderProductGrid('pdSuggestedGrid', suggestions);
-}
-
-function renderProductReviews(productId) {
-  const container = document.getElementById('pdReviewsContainer');
-  if (!container) return;
-
-  const reviews = productReviews[productId] || [
-    { author: 'مريم خ.', stars: 5, text: 'منتج أصلي ورائع جداً، لاحظت فرقاً ببشرتي من أول أسبوع!' },
-    { author: 'هدى أ.', stars: 5, text: 'توصيل سريع وتغليف ممتاز شكراً صيدلية القطن 🌸' }
-  ];
-
-  container.innerHTML = `
-    <div class="review-form" style="background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:14px; text-align:right;">
-      <h4 style="margin:0 0 8px; font-size:13.5px; font-weight:800;">أضيفي تقييمك وتجربتكِ للمنتج ⭐</h4>
-      <form onsubmit="submitProductReview(event)">
-        <div style="display:flex; gap:8px; margin-bottom:8px;">
-          <input type="text" id="reviewAuthorInput" placeholder="اسمكِ الكريم" style="flex:1; padding:8px; border:1px solid var(--line); border-radius:8px;" required>
-          <select id="reviewStarsInput" style="flex:0.8; padding:8px; border:1px solid var(--line); border-radius:8px;">
-            <option value="5">⭐⭐⭐⭐⭐ (5/5)</option>
-            <option value="4">⭐⭐⭐⭐ (4/5)</option>
-            <option value="3">⭐⭐⭐ (3/5)</option>
-          </select>
-        </div>
-        <textarea id="reviewTextInput" rows="2" placeholder="اكتبي رأيك بكل صراحة..." style="width:100%; padding:8px; border:1px solid var(--line); border-radius:8px;" required></textarea>
-        <button type="submit" style="background:var(--accent); color:#fff; font-weight:800; font-size:12px; padding:8px 18px; border-radius:999px; margin-top:6px;">إرسال التقييم</button>
-      </form>
-    </div>
-    <div class="reviews-list">
-      ${reviews.map(r => `
-        <div class="review-item">
-          <div class="review-author">
-            <span>${sanitizeText(r.author)}</span>
-            <span style="color:var(--gold);">★ ${r.stars}</span>
-          </div>
-          <div class="review-text">${sanitizeText(r.text)}</div>
-        </div>
-      `).join('')}
-    </div>
-  `;
-}
-
-function submitProductReview(e) {
+async function handleAdminBundleSave(e) {
   e.preventDefault();
-  const author = document.getElementById('reviewAuthorInput').value.trim();
-  const stars = Number(document.getElementById('reviewStarsInput').value);
-  const text = document.getElementById('reviewTextInput').value.trim();
+  if (!assertAdmin() || !lockAction('saveBundle', 1500)) return;
 
-  if (!author || !text || !currentProductId) return;
+  const docId = document.getElementById('bundleDocId').value.trim();
+  const title = document.getElementById('bundleTitleInput').value.trim();
+  const desc = document.getElementById('bundleDescInput').value.trim();
+  const oldPrice = Number(document.getElementById('bundleOldPriceInput').value);
+  const price = Number(document.getElementById('bundlePriceInput').value);
+  const savings = document.getElementById('bundleSavingsInput').value.trim();
+  const img = sanitizeUrl(document.getElementById('bundleImgInput').value.trim());
 
-  if (!productReviews[currentProductId]) productReviews[currentProductId] = [];
-  productReviews[currentProductId].unshift({ author: sanitizeText(author), stars, text: sanitizeText(text) });
-  saveLocalState();
-  renderProductReviews(currentProductId);
-  showToast('شكراً لمشاركتكِ تقييمك للمنتج 🌸');
-}
+  const selectedProdIds = Array.from(document.querySelectorAll('.bundle-prod-cb:checked')).map(cb => cb.value);
 
-// ================= SMART WELCOME DISCOUNT MODAL =================
-function checkAndShowWelcomeModal() {
-  if (!localStorage.getItem('qutn_welcomed')) {
-    setTimeout(() => {
-      const m = document.getElementById('welcomeOfferModal');
-      if (m) m.classList.add('open');
-    }, 2500);
-  }
-}
-
-function closeWelcomeModal() {
-  const m = document.getElementById('welcomeOfferModal');
-  if (m) m.classList.remove('open');
-  localStorage.setItem('qutn_welcomed', '1');
-}
-
-function copyWelcomeCode() {
-  navigator.clipboard.writeText('QUTN10').then(() => {
-    showToast('تم نسخ كود الخصم (QUTN10) بنجاح!');
-  });
-}
-
-function applyWelcomeAndShop() {
-  closeWelcomeModal();
-  showToast('تسوقي الآن واستخدمي كود QUTN10 في السلة ✨');
-}
-
-// ================= CATEGORIES & DROPDOWNS POPULATION (SEPARATED & SAFE) =================
-function renderModernCategories() {
-  const container = document.getElementById('catRowFull');
-  const totalCountEl = document.getElementById('categoriesTotalCount');
-  if (totalCountEl) totalCountEl.textContent = `${categories.length} أقسام معتمدة`;
-  
-  if (container) {
-    container.innerHTML = categories.map(c => {
-      const count = products.filter(p => p.category === c.id).length;
-      const cleanImg = sanitizeUrl(c.imageUrl);
-      return `
-        <div class="modern-cat-card" onclick="openCategory('${sanitizeText(c.id)}')">
-          <div class="modern-cat-img-wrap">
-            ${cleanImg ? `<img src="${cleanImg}" alt="${sanitizeText(c.label)}">` : (catIcons[c.icon] || catIcons.jar)('var(--accent, #E85D8A)')}
-          </div>
-          <div class="modern-cat-info">
-            <h3 class="modern-cat-title">${sanitizeText(c.label)}</h3>
-            <span class="modern-cat-count mono">${count} منتج</span>
-          </div>
-        </div>`;
-    }).join('');
-  }
-
-  // ملء القوائم المنسدلة في صفحة الأدمن والنافذة السريعة بشكل مستقل
-  populateCategoryDropdowns();
-}
-
-function populateCategoryDropdowns() {
-  const prodCatSelect = document.getElementById('adminProdCat');
-  const quickCatSelect = document.getElementById('quickEditProdCat');
-  const optionsHtml = categories.map(c => `<option value="${sanitizeText(c.id)}">${sanitizeText(c.label)}</option>`).join('');
-
-  if (prodCatSelect) prodCatSelect.innerHTML = optionsHtml;
-  if (quickCatSelect) quickCatSelect.innerHTML = optionsHtml;
-}
-
-function renderAdminCategoriesList() {
-  const container = document.getElementById('adminCategoriesListGrid');
-  if (!container) return;
-  container.innerHTML = categories.map(c => {
-    const count = products.filter(p => p.category === c.id).length;
-    const cleanImg = sanitizeUrl(c.imageUrl);
-    return `
-      <div style="background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between;">
-        <div style="display:flex; align-items:center; gap:10px;">
-          <div style="width:42px; height:42px; border-radius:8px; background:var(--surface); display:flex; align-items:center; justify-content:center; overflow:hidden;">
-            ${cleanImg ? `<img src="${cleanImg}" style="width:100%; height:100%; object-fit:cover;">` : (catIcons[c.icon] || catIcons.jar)('var(--accent, #E85D8A)')}
-          </div>
-          <div>
-            <div style="font-weight:800; font-size:13.5px;">${sanitizeText(c.label)} (${sanitizeText(c.id)})</div>
-            <div style="font-size:11.5px; color:var(--text-soft);">${count} منتج مرتبط</div>
-          </div>
-        </div>
-        <div style="display:flex; gap:6px;">
-          <button onclick="editAdminCategory('${sanitizeText(c.id)}')" style="background:#E0E7FF; color:#3730A3; padding:5px 10px; border-radius:8px; font-weight:800; font-size:11px;">تعديل ✏️</button>
-          <button onclick="deleteAdminCategory('${sanitizeText(c.id)}', '${sanitizeText(c.label)}')" style="background:#FEE2E2; color:var(--red); padding:5px 10px; border-radius:8px; font-weight:800; font-size:11px;">حذف 🗑️</button>
-        </div>
-      </div>`;
-  }).join('');
-}
-
-function previewAdminCatImg(url) {
-  const box = document.getElementById('adminCatImgPreviewBox');
-  const img = document.getElementById('adminCatImgPreviewEl');
-  const cleanUrl = sanitizeUrl(url);
-  if (cleanUrl && box && img) { img.src = cleanUrl; box.style.display = 'block'; }
-  else if (box) { box.style.display = 'none'; }
-}
-
-function resetAdminCatForm() {
-  if (!document.getElementById('adminCatKeyId')) return;
-  document.getElementById('adminCatKeyId').value = '';
-  document.getElementById('adminCatLabel').value = '';
-  document.getElementById('adminCatIdInput').value = '';
-  document.getElementById('adminCatIdInput').disabled = false;
-  document.getElementById('adminCatImgUrl').value = '';
-  document.getElementById('adminCatImgPreviewBox').style.display = 'none';
-  document.getElementById('adminCatFormTitle').textContent = 'إضافة قسم رئيسي جديد';
-  document.getElementById('adminSaveCatBtn').textContent = '💾 حفظ القسم في قاعدة البيانات';
-}
-
-function editAdminCategory(catId) {
-  const c = categories.find(item => item.id === catId);
-  if (!c) return;
-  document.getElementById('adminCatKeyId').value = c.id;
-  document.getElementById('adminCatLabel').value = c.label;
-  document.getElementById('adminCatIdInput').value = c.id;
-  document.getElementById('adminCatIdInput').disabled = true;
-  document.getElementById('adminCatImgUrl').value = c.imageUrl || '';
-  document.getElementById('adminCatIconSelect').value = c.icon || 'jar';
-  if (c.imageUrl) previewAdminCatImg(c.imageUrl);
-  document.getElementById('adminCatFormTitle').textContent = 'تعديل القسم: ' + c.label;
-  document.getElementById('adminSaveCatBtn').textContent = '💾 حفظ تعديلات القسم';
-}
-
-async function handleAdminCategorySave(e) {
-  e.preventDefault();
-  if (!assertAdmin()) return;
-  if (!lockAction('saveAdminCat', 1200)) return;
-
-  const catKey = document.getElementById('adminCatKeyId').value.trim();
-  const id = document.getElementById('adminCatIdInput').value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
-  const label = document.getElementById('adminCatLabel').value.trim();
-  const imageUrl = sanitizeUrl(document.getElementById('adminCatImgUrl').value.trim());
-  const icon = document.getElementById('adminCatIconSelect').value;
-
-  if (!id || !label) {
-    showToast('يرجى كتابة اسم القسم والمعرف بشكل صحيح');
+  if (!title || !desc || isNaN(price) || price <= 0) {
+    showToast('يرجى التأكد من ملء جميع الحقول الإلزامية');
     return;
   }
 
-  const payload = { id: catKey || id, label: sanitizeText(label), imageUrl, icon: sanitizeText(icon) };
+  const payload = {
+    id: docId || ('b_' + Date.now()),
+    title: sanitizeText(title),
+    description: sanitizeText(desc),
+    oldPrice: oldPrice || null,
+    price: price,
+    savingsBadge: sanitizeText(savings),
+    imageUrl: img,
+    productIds: selectedProdIds
+  };
 
-  try {
-    await apiFetch("/api/admin/categories", { method: "POST", body: JSON.stringify(payload) });
-    if (db) await db.collection('categories').doc(payload.id).set(payload, { merge: true });
-    showToast('تم حفظ القسم بنجاح في قاعدة البيانات ✓');
-    resetAdminCatForm();
-    populateCategoryDropdowns();
-  } catch (err) {
-    console.error(err);
-    showToast('حدث خطأ أثناء حفظ القسم');
+  const idx = bundles.findIndex(b => b.id === payload.id);
+  if (idx > -1) bundles[idx] = payload;
+  else bundles.unshift(payload);
+
+  if (db) {
+    await db.collection('bundles').doc(payload.id).set(payload, { merge: true });
   }
+
+  renderAdminBundlesList();
+  renderHomeBundles();
+  renderAllBundles();
+  resetAdminBundleForm();
+  showToast('تم حفظ بكج التوفير بنجاح! 🎁');
 }
 
-async function deleteAdminCategory(catId, catLabel) {
+async function deleteAdminBundle(id) {
   if (!assertAdmin()) return;
-  if (confirm(`هل أنتِ متأكدة من حذف القسم "${catLabel}"؟`)) {
-    try {
-      await apiFetch(`/api/admin/categories/${catId}`, { method: "DELETE" });
-      if (db) await db.collection('categories').doc(String(catId)).delete();
-      showToast('تم حذف القسم بنجاح ✓');
-      populateCategoryDropdowns();
-    } catch (e) {
-      console.error(e);
-      showToast('حدث خطأ أثناء حذف القسم');
-    }
+  if (confirm('هل أنتِ متأكدة من حذف هذا البكج؟')) {
+    bundles = bundles.filter(b => b.id !== id);
+    if (db) await db.collection('bundles').doc(String(id)).delete();
+    renderAdminBundlesList();
+    renderHomeBundles();
+    renderAllBundles();
+    showToast('تم حذف البكج بنجاح ✓');
   }
 }
 
-// ================= DISCOUNTS, BULK RULES & PROMO CARDS =================
+// ================= THERMAL RECEIPT PRINTING (80mm) =================
+function openReceiptModal(orderId) {
+  const ord = myOrders.find(o => String(o.id) === String(orderId)) || (window.adminLastOrdersList && window.adminLastOrdersList.find(o => String(o.id) === String(orderId)));
+  if (!ord) {
+    showToast('تعذر العثور على بيانات الطلب');
+    return;
+  }
+
+  document.getElementById('recOrderId').textContent = '#' + ord.id;
+  document.getElementById('recOrderDate').textContent = ord.date || '';
+  document.getElementById('recCustName').textContent = ord.name || '';
+  document.getElementById('recCustPhone').textContent = ord.phone || '';
+  document.getElementById('recCustAddress').textContent = ord.address || '';
+  document.getElementById('recDeliveryType').textContent = (ord.deliveryMethod === 'express') ? 'توصيل سريع 🛵' : 'توصيل عادي 🚚';
+  document.getElementById('recStorePhone').textContent = storeSettings.socialPhone || '07813703288';
+
+  const tbody = document.getElementById('recItemsTbody');
+  if (tbody) {
+    tbody.innerHTML = (ord.items || []).map(it => `
+      <tr>
+        <td>${sanitizeText(it.name)} ${it.isBundle ? '🎁' : ''}</td>
+        <td style="text-align:center;">${it.quantity}</td>
+        <td class="mono" style="text-align:left;">${fmtPrice(it.price * it.quantity)}</td>
+      </tr>
+    `).join('');
+  }
+
+  const delFee = (ord.deliveryMethod === 'express') ? (storeSettings.deliveryFeeExpress || 8000) : (storeSettings.deliveryFeeStandard || 4000);
+  document.getElementById('recDeliveryFee').textContent = fmtPrice(delFee);
+  document.getElementById('recGrandTotal').textContent = fmtPrice(ord.total);
+
+  const discRow = document.getElementById('recDiscountRow');
+  if (discRow) discRow.style.display = 'none';
+
+  const modal = document.getElementById('thermalReceiptModal');
+  if (modal) modal.classList.add('open');
+}
+
+function closeReceiptModal() {
+  const modal = document.getElementById('thermalReceiptModal');
+  if (modal) modal.classList.remove('open');
+}
+
+// ================= SMART STAR-ONLY RATING =================
+function rateProductInstant(stars) {
+  if (!currentProductId) return;
+  const p = findProduct(currentProductId);
+  if (!p) return;
+
+  const ratedKey = 'rated_' + currentProductId;
+  if (localStorage.getItem(ratedKey)) {
+    showToast('لقد قمتِ بتقييم هذا المنتج مسبقاً ⭐');
+    return;
+  }
+  localStorage.setItem(ratedKey, String(stars));
+
+  const currentTotal = (p.rating || 4.8) * (p.reviews || 80);
+  const newReviews = (p.reviews || 80) + 1;
+  const newRating = Number(((currentTotal + stars) / newReviews).toFixed(1));
+  p.rating = newRating;
+  p.reviews = newReviews;
+
+  if (db) {
+    db.collection('products').doc(String(currentProductId)).set({ rating: newRating, reviews: newReviews }, { merge: true }).catch(console.warn);
+  }
+
+  document.querySelectorAll('.star-btn').forEach((btn, idx) => {
+    btn.classList.toggle('active', idx < stars);
+  });
+  const msgEl = document.getElementById('instantRatingMsg');
+  if (msgEl) msgEl.textContent = `تم تسجيل تقييمك (${stars} نجوم) بنجاح! شكراً لكِ 🌸`;
+  showToast(`تم تقييم المنتج بـ ${stars} نجوم ⭐`);
+  saveLocalState();
+  renderProductDetailDOM(p);
+}
+
+// ================= SMART AUTOFILL =================
+function checkAndAutofillCustomer() {
+  const saved = JSON.parse(localStorage.getItem('qutn_customer_saved') || 'null');
+  const noticeBox = document.getElementById('autofillNoticeBox');
+  if (saved) {
+    const nameEl = document.getElementById('custName');
+    const phoneEl = document.getElementById('custPhone');
+    const addrEl = document.getElementById('custAddress');
+    if (nameEl && !nameEl.value) nameEl.value = saved.name || '';
+    if (phoneEl && !phoneEl.value) phoneEl.value = saved.phone || '';
+    if (addrEl && !addrEl.value) addrEl.value = saved.address || '';
+    if (noticeBox) noticeBox.style.display = 'flex';
+  } else {
+    if (noticeBox) noticeBox.style.display = 'none';
+  }
+}
+
+function clearSavedCustomerData() {
+  localStorage.removeItem('qutn_customer_saved');
+  const nameEl = document.getElementById('custName');
+  const phoneEl = document.getElementById('custPhone');
+  const addrEl = document.getElementById('custAddress');
+  if (nameEl) nameEl.value = '';
+  if (phoneEl) phoneEl.value = '';
+  if (addrEl) addrEl.value = '';
+  const noticeBox = document.getElementById('autofillNoticeBox');
+  if (noticeBox) noticeBox.style.display = 'none';
+  showToast('تم مسح البيانات المحفوظة');
+}
+
+// ================= BULK DISCOUNTS ENGINE (WITH DIRECT FIRESTORE PRICE SYNC) =================
 function updateDiscountTargetOptions() {
   const scopeEl = document.getElementById('discountScope');
   if (!scopeEl) return;
@@ -1107,8 +722,7 @@ function updateDiscountTargetOptions() {
 
 async function handleApplyBulkDiscount(e) {
   e.preventDefault();
-  if (!assertAdmin()) return;
-  if (!lockAction('bulkDiscount', 2000)) return;
+  if (!assertAdmin() || !lockAction('bulkDiscount', 2000)) return;
 
   const scope = document.getElementById('discountScope').value;
   const target = document.getElementById('discountTargetSelect').value;
@@ -1120,70 +734,173 @@ async function handleApplyBulkDiscount(e) {
     return;
   }
 
-  try {
-    await apiFetch("/api/admin/discounts/bulk", {
-      method: "POST",
-      body: JSON.stringify({ scope, target, percentage: pct, action })
-    });
-    showToast(action === 'apply' ? `تم تطبيق خصم ${pct}% بنجاح عبر السيرفر ✓` : `تم إلغاء الخصم واسترجاع الأسعار الأصلية ✓`);
-  } catch (err) {
-    console.error(err);
-    showToast('حدث خطأ أثناء تطبيق الخصم');
+  let targetProducts = [];
+  if (scope === 'all') targetProducts = products.slice();
+  else if (scope === 'brand') targetProducts = products.filter(p => p.brand === target);
+  else if (scope === 'category') targetProducts = products.filter(p => p.category === target);
+  else if (scope === 'product') targetProducts = products.filter(p => String(p.id) === String(target));
+
+  if (targetProducts.length === 0) {
+    showToast('لم يتم العثور على منتجات مطابقة');
+    return;
   }
+
+  showToast('جاري تطبيق الخصم وتحديث أسعار المنتجات...');
+  const batch = db ? db.batch() : null;
+
+  targetProducts.forEach(p => {
+    if (action === 'apply') {
+      const originalPrice = p.oldPrice || p.price;
+      const newPrice = Math.round(originalPrice * (1 - pct / 100));
+      p.oldPrice = originalPrice;
+      p.price = newPrice;
+      p.isSpecialOffer = true;
+    } else {
+      if (p.oldPrice) {
+        p.price = p.oldPrice;
+        p.oldPrice = null;
+        p.isSpecialOffer = false;
+      }
+    }
+    if (batch && p.id) {
+      const docRef = db.collection('products').doc(String(p.id));
+      batch.set(docRef, { price: p.price, oldPrice: p.oldPrice || null, isSpecialOffer: !!p.isSpecialOffer }, { merge: true });
+    }
+  });
+
+  if (batch) {
+    try { await batch.commit(); } catch (err) { console.warn("Batch commit warning:", err); }
+  }
+
+  saveLocalState();
+  renderCurrentActiveView();
+
+  await apiFetch("/api/admin/discounts/bulk", {
+    method: "POST",
+    body: JSON.stringify({ scope, target, percentage: pct, action })
+  });
+
+  showToast(action === 'apply' ? `تم تطبيق خصم ${pct}% على ${targetProducts.length} منتج فورياً! ✓` : `تم استرجاع الأسعار الأصلية بنجاح ✓`);
 }
 
-function loadPromoCardToEdit(idx) {
-  const card = (storeSettings.promoCards && storeSettings.promoCards[idx]) || {};
-  if (!document.getElementById('promoCardTitle')) return;
+// ================= DYNAMIC PROMO CARDS (CRUD) =================
+function renderPromoCardsListAdmin() {
+  const container = document.getElementById('adminPromoCardsListGrid');
+  if (!container) return;
+  const cards = storeSettings.promoCards || [];
+
+  if (cards.length === 0) {
+    container.innerHTML = `<div class="no-results" style="padding:14px 0;">لا توجد بطاقات عروض نشطة.</div>`;
+    return;
+  }
+
+  container.innerHTML = cards.map(c => `
+    <div style="background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:40px; height:40px; border-radius:8px; background:var(--surface); display:flex; align-items:center; justify-content:center; overflow:hidden;">
+          ${c.img ? `<img src="${sanitizeUrl(c.img)}" style="width:100%; height:100%; object-fit:cover;">` : icons.bottle('var(--accent)')}
+        </div>
+        <div>
+          <div style="font-weight:900; font-size:13.5px;">${sanitizeText(c.title)} <span class="log-badge">${sanitizeText(c.discount)}</span></div>
+          <div style="font-size:11.5px; color:var(--text-soft);">${sanitizeText(c.desc)}</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button onclick="editPromoCard('${sanitizeText(c.id)}')" style="background:#E0E7FF; color:#3730A3; padding:5px 10px; border-radius:8px; font-weight:800; font-size:11px;">تعديل ✏️</button>
+        <button onclick="deletePromoCard('${sanitizeText(c.id)}')" style="background:#FEE2E2; color:var(--red); padding:5px 10px; border-radius:8px; font-weight:800; font-size:11px;">حذف 🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function editPromoCard(cardId) {
+  const card = (storeSettings.promoCards || []).find(c => c.id === cardId);
+  if (!card) return;
+  document.getElementById('promoCardDocId').value = card.id;
   document.getElementById('promoCardTitle').value = card.title || '';
   document.getElementById('promoCardDesc').value = card.desc || '';
   document.getElementById('promoCardDiscountText').value = card.discount || '';
   document.getElementById('promoCardImgUrl').value = card.img || '';
+
+  document.getElementById('adminPromoCardFormTitle').textContent = '✏️ تعديل بطاقة العرض: ' + card.title;
+  document.getElementById('adminSavePromoCardBtn').textContent = '💾 حفظ تعديلات البطاقة';
+}
+
+function resetPromoCardForm() {
+  if (!document.getElementById('promoCardDocId')) return;
+  document.getElementById('promoCardDocId').value = '';
+  document.getElementById('promoCardTitle').value = '';
+  document.getElementById('promoCardDesc').value = '';
+  document.getElementById('promoCardDiscountText').value = '';
+  document.getElementById('promoCardImgUrl').value = '';
+  document.getElementById('adminPromoCardFormTitle').textContent = '🎁 إضافة بطاقة عرض مميزة';
+  document.getElementById('adminSavePromoCardBtn').textContent = '💾 حفظ بطاقة العرض سحابياً';
 }
 
 async function handleSavePromoCard(e) {
   e.preventDefault();
-  if (!assertAdmin()) return;
-  if (!lockAction('savePromoCard', 1200)) return;
+  if (!assertAdmin() || !lockAction('savePromoCard', 1200)) return;
 
-  const idx = Number(document.getElementById('promoCardIndex').value);
-  if (!storeSettings.promoCards) storeSettings.promoCards = [{}, {}];
-
+  const docId = document.getElementById('promoCardDocId').value.trim();
   const title = document.getElementById('promoCardTitle').value.trim();
   const desc = document.getElementById('promoCardDesc').value.trim();
   const discount = document.getElementById('promoCardDiscountText').value.trim();
   const img = sanitizeUrl(document.getElementById('promoCardImgUrl').value.trim());
 
   if (!title || !desc || !discount) {
-    showToast('يرجى تعبئة كافة حقول بطاقة العرض');
+    showToast('يرجى تعبئة كافة الحقول المطلوبة');
     return;
   }
 
-  storeSettings.promoCards[idx] = {
+  if (!storeSettings.promoCards) storeSettings.promoCards = [];
+
+  const cardObj = {
+    id: docId || ('pc_' + Date.now()),
     title: sanitizeText(title),
     desc: sanitizeText(desc),
     discount: sanitizeText(discount),
     img: img
   };
 
+  const idx = storeSettings.promoCards.findIndex(c => c.id === cardObj.id);
+  if (idx > -1) storeSettings.promoCards[idx] = cardObj;
+  else storeSettings.promoCards.unshift(cardObj);
+
+  saveLocalState();
+  renderPromoCardsListAdmin();
+  renderPromoBanners();
+
   try {
     await apiFetch("/api/admin/settings", { method: "POST", body: JSON.stringify({ promoCards: storeSettings.promoCards }) });
     if (db) await db.collection('store_settings').doc('general').set({ promoCards: storeSettings.promoCards }, { merge: true });
-    renderPromoBanners();
     showToast('تم حفظ بطاقة العرض بنجاح ✓');
+    resetPromoCardForm();
   } catch (err) {
     console.error(err);
-    showToast('حدث خطأ أثناء حفظ البطاقة');
+  }
+}
+
+async function deletePromoCard(cardId) {
+  if (!assertAdmin()) return;
+  if (confirm('هل أنتِ متأكدة من حذف هذه البطاقة؟')) {
+    storeSettings.promoCards = (storeSettings.promoCards || []).filter(c => c.id !== cardId);
+    saveLocalState();
+    renderPromoCardsListAdmin();
+    renderPromoBanners();
+    if (db) await db.collection('store_settings').doc('general').set({ promoCards: storeSettings.promoCards }, { merge: true });
+    showToast('تم حذف بطاقة العرض بنجاح ✓');
   }
 }
 
 function renderPromoBanners() {
   const el = document.getElementById('promoBanners');
   if (!el) return;
-  const cards = storeSettings.promoCards || [
-    { title: 'عرض خاص من دوف', desc: 'عناية ناعمة وترطيب عميق لبشرتك', discount: 'خصم حتى 25%' },
-    { title: 'عروض السيرومات العلاجية', desc: 'تغذية وإشراقة طبيعية لمظهر صحي', discount: 'خصم حتى 30%' }
-  ];
+  const cards = storeSettings.promoCards || [];
+
+  if (cards.length === 0) {
+    el.innerHTML = '';
+    return;
+  }
 
   el.innerHTML = `
     <div class="section-head"><span></span><h2>عروض مميزة 🎁</h2></div>
@@ -1202,116 +919,315 @@ function renderPromoBanners() {
     }).join('')}`;
 }
 
-// ================= BRANDS MANAGEMENT =================
-function previewBrandLogoImg(url) {
-  const wrap = document.getElementById('adminBrandLogoPreviewWrap');
-  const img = document.getElementById('adminBrandLogoPreviewImg');
-  const cleanUrl = sanitizeUrl(url);
-  if (cleanUrl && wrap && img) { img.src = cleanUrl; wrap.style.display = 'block'; }
-  else if (wrap) { wrap.style.display = 'none'; }
+// ================= REAL ANALYTICS & LOGS =================
+async function recordRealVisit() {
+  const today = new Date().toISOString().split('T')[0];
+  const visitKey = 'visited_' + today;
+  try {
+    if (!sessionStorage.getItem(visitKey)) {
+      sessionStorage.setItem(visitKey, '1');
+      await apiFetch("/api/analytics/visit", { method: "POST" });
+      if (db) {
+        await db.collection('analytics_daily').doc(today).set({
+          visits: firebase.firestore.FieldValue.increment(1),
+          date: today
+        }, { merge: true });
+      }
+    }
+    fetchRealAnalytics();
+  } catch (e) { console.warn(e); }
 }
 
-function editAdminBrand(brandKey) {
-  const b = brandsData[brandKey];
-  if (!b) return;
-  document.getElementById('adminBrandOriginalKey').value = brandKey;
-  document.getElementById('adminBrandNameInput').value = b.name || brandKey;
-  document.getElementById('adminBrandColorInput').value = b.color || '#E85D8A';
-  document.getElementById('adminBrandLogoInput').value = b.logoUrl || '';
-  if (b.logoUrl) previewBrandLogoImg(b.logoUrl);
-  
-  document.getElementById('adminBrandFormTitle').textContent = '✏️ تعديل الماركة: ' + (b.name || brandKey);
-  document.getElementById('adminSaveBrandBtn').textContent = '💾 حفظ التعديلات';
-  document.getElementById('adminCancelBrandBtn').style.display = 'block';
-  window.scrollTo({ top: document.getElementById('adminSecBrands').offsetTop - 60, behavior: 'smooth' });
+async function fetchRealAnalytics() {
+  if (!isFirebaseConfigured || !db) return;
+  try {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const currentMonthStr = todayStr.substring(0, 7);
+
+    let dRev = 0, mRev = 0;
+    const ordersSnap = await db.collection('orders').get();
+    totalOrdersCount = Math.max(ordersSnap.size, myOrders.length);
+
+    ordersSnap.forEach(doc => {
+      const o = doc.data();
+      const oTotal = Number(o.total || o.verifiedTotal || 0);
+      const oDate = o.createdAt && o.createdAt.toDate ? o.createdAt.toDate().toISOString() : (o.date || '');
+      if (oDate.startsWith(todayStr)) dRev += oTotal;
+      if (oDate.startsWith(currentMonthStr)) mRev += oTotal;
+    });
+
+    todayRevenue = dRev;
+    monthlyRevenue = mRev;
+
+    const last7Days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      last7Days.push(d.toISOString().split('T')[0]);
+    }
+    
+    const visitsSnap = await db.collection('analytics_daily').get();
+    const visitsMap = {};
+    visitsSnap.forEach(doc => { visitsMap[doc.id] = (doc.data().visits || 0); });
+
+    todayVisitsCount = visitsMap[todayStr] || 0;
+
+    const dayNames = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    weeklyVisitsData = last7Days.map(dateStr => {
+      const dObj = new Date(dateStr);
+      return {
+        date: dateStr,
+        day: dayNames[dObj.getDay()],
+        visits: visitsMap[dateStr] || 0
+      };
+    });
+
+    renderRealAnalyticsView();
+  } catch (e) { console.warn(e); }
 }
 
-function cancelAdminBrandEdit() {
-  if (!document.getElementById('adminBrandOriginalKey')) return;
-  document.getElementById('adminBrandOriginalKey').value = '';
-  document.getElementById('adminBrandNameInput').value = '';
-  document.getElementById('adminBrandColorInput').value = '#E85D8A';
-  document.getElementById('adminBrandLogoInput').value = '';
-  document.getElementById('adminBrandLogoPreviewWrap').style.display = 'none';
-  document.getElementById('adminBrandFormTitle').textContent = '🏷️ إضافة ماركة جديدة';
-  document.getElementById('adminSaveBrandBtn').textContent = '+ إضافة الماركة للشريط';
-  document.getElementById('adminCancelBrandBtn').style.display = 'none';
+function renderRealAnalyticsView() {
+  const statDailyRev = document.getElementById('statDailyRevenue');
+  const statMonthlyRev = document.getElementById('statMonthlyRevenue');
+  const statVisits = document.getElementById('statDailyVisits');
+  const statOrders = document.getElementById('statTotalOrdersV');
+
+  if (statDailyRev) statDailyRev.textContent = fmtPrice(todayRevenue);
+  if (statMonthlyRev) statMonthlyRev.textContent = fmtPrice(monthlyRevenue);
+  if (statVisits) statVisits.textContent = todayVisitsCount;
+  if (statOrders) statOrders.textContent = totalOrdersCount;
+
+  const chartContainer = document.getElementById('adminRealChartBars');
+  if (chartContainer && weeklyVisitsData.length > 0) {
+    const maxVisits = Math.max(...weeklyVisitsData.map(v => v.visits), 1);
+    chartContainer.innerHTML = weeklyVisitsData.map(d => {
+      const pct = (d.visits > 0) ? Math.round((d.visits / maxVisits) * 90) + 10 : 4;
+      return `
+        <div class="chart-bar-col">
+          <span class="mono" style="font-size:10px; font-weight:800; color:var(--accent);">${d.visits > 0 ? d.visits : '0'}</span>
+          <div class="chart-bar-fill" style="height: ${pct}%;"></div>
+          <span class="chart-bar-lbl">${d.day}</span>
+        </div>`;
+    }).join('');
+  }
+
+  const topOrdersEl = document.getElementById('adminTopOrderedList');
+  if (topOrdersEl) {
+    const topOrdered = [...products].filter(p => (p.orderCount || 0) > 0).sort((a,b) => (b.orderCount || 0) - (a.orderCount || 0)).slice(0, 5);
+    topOrdersEl.innerHTML = topOrdered.length === 0 ? `<div class="no-results" style="padding:20px 0;">لا توجد طلبات مسجلة حتى الآن.</div>` : 
+      topOrdered.map((p, idx) => `
+        <div class="admin-rank-item">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="admin-rank-badge">${idx + 1}</span>
+            <span style="font-weight:700;">${sanitizeText(p.name)} (${sanitizeText(p.brand)})</span>
+          </div>
+          <span class="mono" style="font-weight:800; color:var(--accent);">${p.orderCount} طلب</span>
+        </div>`).join('');
+  }
+
+  const topViewsEl = document.getElementById('adminTopViewedList');
+  if (topViewsEl) {
+    const topViewed = [...products].filter(p => (p.views || 0) > 0).sort((a,b) => (b.views || 0) - (a.views || 0)).slice(0, 5);
+    topViewsEl.innerHTML = topViewed.length === 0 ? `<div class="no-results" style="padding:20px 0;">لا توجد مشاهدات مسجلة اليوم بعد.</div>` :
+      topViewed.map((p, idx) => `
+        <div class="admin-rank-item">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="admin-rank-badge">${idx + 1}</span>
+            <span style="font-weight:700;">${sanitizeText(p.name)}</span>
+          </div>
+          <span class="mono" style="font-weight:800; color:#4B5563;">${p.views} مشاهدة</span>
+        </div>`).join('');
+  }
 }
 
-async function handleSaveBrand(e) {
-  e.preventDefault();
-  if (!assertAdmin()) return;
-  if (!lockAction('saveBrand', 1200)) return;
+// ================= ORDERS MANAGEMENT & FILTERED EXCEL / TELEGRAM REPORT =================
+async function fetchAdminOrdersList() {
+  if (!isFirebaseConfigured || !db) return;
+  try {
+    const snap = await db.collection('orders').orderBy('createdAt', 'desc').limit(100).get();
+    const orders = [];
+    snap.forEach(d => orders.push({ id: d.id, ...d.data() }));
+    window.adminLastOrdersList = orders;
+    renderAdminOrdersList(orders);
+  } catch (e) { console.warn(e); }
+}
 
-  const originalKey = document.getElementById('adminBrandOriginalKey').value.trim();
-  const name = document.getElementById('adminBrandNameInput').value.trim();
-  const color = document.getElementById('adminBrandColorInput').value;
-  const logoUrl = sanitizeUrl(document.getElementById('adminBrandLogoInput').value.trim());
-  if (!name) {
-    showToast('يرجى كتابة اسم الماركة');
+function renderAdminOrdersList(orders) {
+  const container = document.getElementById('adminOrdersManageContainer');
+  if (!container) return;
+  if (orders.length === 0) {
+    container.innerHTML = `<div class="no-results" style="padding:20px 0;">لا توجد طلبات مسجلة حتى الآن.</div>`;
     return;
   }
 
-  if (originalKey && originalKey !== name) {
-    delete brandsData[originalKey];
+  container.innerHTML = orders.map(ord => `
+    <div class="admin-order-manage-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed var(--line); padding-bottom:8px; margin-bottom:8px;">
+        <span class="order-card-id mono">#${sanitizeText(ord.id)}</span>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <button type="button" onclick="openReceiptModal('${sanitizeText(ord.id)}')" style="background:#10B981; color:#fff; font-size:11px; font-weight:800; padding:5px 10px; border-radius:8px;">🖨️ طباعة وصل</button>
+          <select class="admin-order-status-select" onchange="updateOrderStatus('${sanitizeText(ord.id)}', this.value)">
+            <option value="قيد المعالجة والتجهيز 🚚" ${ord.status === 'قيد المعالجة والتجهيز 🚚' ? 'selected' : ''}>قيد التجهيز 🚚</option>
+            <option value="تم الشحن مع المندوب 🛵" ${ord.status === 'تم الشحن مع المندوب 🛵' ? 'selected' : ''}>تم الشحن 🛵</option>
+            <option value="تم التسليم بنجاح ✅" ${ord.status === 'تم التسليم بنجاح ✅' ? 'selected' : ''}>تم التسليم ✅</option>
+            <option value="طلب ملغي ❌" ${ord.status === 'طلب ملغي ❌' ? 'selected' : ''}>طلب ملغي ❌</option>
+          </select>
+        </div>
+      </div>
+      <div style="font-size:12px; color:var(--text-soft); margin-bottom:6px;">
+        التاريخ: <span class="mono">${sanitizeText(ord.date)}</span> · الزبون: <b>${sanitizeText(ord.name)}</b> (${sanitizeText(ord.phone)})
+      </div>
+      <div style="font-size:12px; color:var(--text-soft); margin-bottom:6px;">
+        العنوان: ${sanitizeText(ord.address)} (${ord.deliveryMethod === 'express' ? 'توصيل سريع' : 'توصيل عادي'})
+      </div>
+      <div style="font-size:12px; color:var(--ink); margin-bottom:6px;">
+        ${(ord.items || []).map(it => `• ${it.isBundle ? '🎁 [بكج] ' : ''}${sanitizeText(it.name)} × ${it.quantity} (${fmtPrice(it.price * it.quantity)})`).join('<br>')}
+      </div>
+      <div style="font-weight:900; font-size:14px; color:var(--rose-deep); text-align:left;">
+        الإجمالي: ${fmtPrice(ord.total)}
+      </div>
+    </div>
+  `).join('');
+}
+
+async function updateOrderStatus(orderId, newStatus) {
+  if (!assertAdmin()) return;
+  if (db) {
+    await db.collection('orders').doc(String(orderId)).set({ status: newStatus }, { merge: true });
+    showToast(`تم تحديث حالة الطلب #${orderId} إلى: ${newStatus}`);
   }
+}
 
-  brandsData[name] = { name: sanitizeText(name), color: sanitizeText(color), logoUrl };
-  renderAdminBrandsList();
-  renderBrandStrip();
+// دالة تصفية وبناء تقرير المبيعات المفصل مع حسابات التوصيل
+async function buildDetailedOrdersCSV() {
+  let orders = window.adminLastOrdersList || [];
+  if (orders.length === 0 && db) {
+    const snap = await db.collection('orders').orderBy('createdAt', 'desc').get();
+    snap.forEach(d => orders.push(d.data()));
+  }
+  if (orders.length === 0) orders = myOrders;
 
+  const timeFilter = document.getElementById('reportTimeRange') ? document.getElementById('reportTimeRange').value : 'all';
+  const statusFilter = document.getElementById('reportStatusFilter') ? document.getElementById('reportStatusFilter').value : 'all';
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split('T')[0];
+  const monthStr = todayStr.substring(0, 7);
+
+  // تطبيق الفلاتر
+  let filtered = orders.filter(o => {
+    const oDate = o.createdAt && o.createdAt.toDate ? o.createdAt.toDate().toISOString() : (o.date || '');
+    if (timeFilter === 'today' && !oDate.startsWith(todayStr)) return false;
+    if (timeFilter === 'yesterday' && !oDate.startsWith(yesterdayStr)) return false;
+    if (timeFilter === 'month' && !oDate.startsWith(monthStr)) return false;
+
+    if (statusFilter === 'delivered' && !(o.status && o.status.includes('التسليم'))) return false;
+    if (statusFilter === 'shipping' && !(o.status && o.status.includes('الشحن'))) return false;
+    if (statusFilter === 'processing' && !(o.status && o.status.includes('المعالجة'))) return false;
+    if (statusFilter === 'cancelled' && !(o.status && o.status.includes('ملغي'))) return false;
+
+    return true;
+  });
+
+  let csv = "رقم الطلب,التاريخ والوقت,اسم العميل,رقم الهاتف,العنوان الكامل,نوع التوصيل,حالة الطلب,المنتجات المطلوبة,مبلغ التحصيل من الزبون (COD),أجرة التوصيل المستقطعة,صافي المستحق للصيدلية\n";
+  
+  let totalCOD = 0;
+  let totalDelivery = 0;
+  let totalNetStore = 0;
+
+  filtered.forEach(o => {
+    const orderTotal = Number(o.total || 0);
+    const delFee = (o.deliveryMethod === 'express') ? (storeSettings.deliveryFeeExpress || 8000) : (storeSettings.deliveryFeeStandard || 4000);
+    const netStore = Math.max(0, orderTotal - delFee);
+
+    totalCOD += orderTotal;
+    totalDelivery += delFee;
+    totalNetStore += netStore;
+
+    const itemsFormatted = (o.items || []).map(it => `${it.name} (×${it.quantity})`).join(" + ");
+    csv += `"${o.id}","${o.date || ''}","${o.name || ''}","${o.phone || ''}","${(o.address || '').replace(/"/g, '""')}","${o.deliveryMethod === 'express' ? 'توصيل سريع' : 'توصيل عادي'}","${o.status || ''}","${itemsFormatted.replace(/"/g, '""')}","${orderTotal} د.ع","${delFee} د.ع","${netStore} د.ع"\n`;
+  });
+
+  csv += `\n"المجاميع النهائية","إجمالي الطلبات: ${filtered.length}","","","","","","","المجموع: ${totalCOD} د.ع","أجور الشحن: ${totalDelivery} د.ع","صافي الصيدلية: ${totalNetStore} د.ع"\n`;
+
+  return {
+    csv,
+    totalOrders: filtered.length,
+    totalRevenue: totalCOD,
+    totalDelivery,
+    totalNetStore
+  };
+}
+
+async function sendOrdersReportToTelegram() {
+  if (!assertAdmin() || !lockAction('sendTeleReport', 3000)) return;
+
+  showToast('جاري إنشاء التقرير المفصل وإرساله إلى التلغرام...');
   try {
-    await apiFetch("/api/admin/settings", { method: "POST", body: JSON.stringify({ brandsData }) });
-    if (db) await db.collection('store_settings').doc('general').set({ brandsData }, { merge: true });
-    showToast(`تم حفظ وتحديث ماركة "${name}" بنجاح ✓`);
+    const report = await buildDetailedOrdersCSV();
+    const dateStr = new Date().toLocaleDateString('ar-IQ').replace(/\//g, '-');
+    const filename = `تقرير_مبيعات_صيدلية_القطن_${dateStr}.csv`;
+
+    const caption = `📊 *كشف مبيعات صيدلية القطن الشامل*\n` +
+                    `📅 *التاريخ:* ${dateStr}\n` +
+                    `━━━━━━━━━━━━━━━━━━━\n` +
+                    `📦 *إجمالي الطلبات:* ${report.totalOrders} طلب\n` +
+                    `💰 *مجموع المبالغ المحصلة (COD):* *${report.totalRevenue.toLocaleString()} د.ع*\n` +
+                    `🚚 *مجموع أجور الشحن المستقطعة:* ${report.totalDelivery.toLocaleString()} د.ع\n` +
+                    `🌸 *صافي المستحق للصيدلية:* *${report.totalNetStore.toLocaleString()} د.ع*\n` +
+                    `━━━━━━━━━━━━━━━━━━━\n` +
+                    `📎 *ملف الإكسل المفصل مرفق أدناه للمطابقة المحاسبية.*`;
+
+    const res = await apiFetch("/api/admin/telegram/send-report", {
+      method: "POST",
+      body: JSON.stringify({ csvData: report.csv, filename, caption })
+    });
+
+    if (res && res.success) {
+      showToast(res.message);
+    } else {
+      showToast('تعذر إرسال الملف للتلي، جاري التنزيل المباشر...');
+      exportOrdersToCSV();
+    }
   } catch (err) {
     console.error(err);
-    showToast('حدث خطأ أثناء حفظ الماركة');
+    showToast('حدث خطأ أثناء إرسال التقرير');
   }
-  cancelAdminBrandEdit();
 }
 
-async function deleteAdminBrand(brandKey) {
+async function exportOrdersToCSV() {
   if (!assertAdmin()) return;
-  if (confirm(`هل أنتِ متأكدة من حذف ماركة "${brandKey}" من شريط الماركات؟`)) {
-    delete brandsData[brandKey];
-    renderAdminBrandsList();
-    renderBrandStrip();
-    try {
-      await apiFetch("/api/admin/settings", { method: "POST", body: JSON.stringify({ brandsData }) });
-      if (db) await db.collection('store_settings').doc('general').set({ brandsData }, { merge: true });
-      showToast('تم حذف الماركة بنجاح ✓');
-    } catch (err) { console.error(err); }
+  showToast('جاري تصدير وتحميل ملف المبيعات...');
+  try {
+    const report = await buildDetailedOrdersCSV();
+    const blob = new Blob(["\uFEFF" + report.csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `تقرير_مبيعات_صيدلية_القطن_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('تم تنزيل ملف Excel بنجاح! 📊');
+  } catch (e) {
+    console.error(e);
   }
-}
-
-function renderAdminBrandsList() {
-  const container = document.getElementById('adminBrandsListGrid');
-  if (!container) return;
-  const keys = Object.keys(brandsData);
-  container.innerHTML = keys.map(k => {
-    const b = brandsData[k];
-    const cleanLogo = sanitizeUrl(b.logoUrl);
-    return `
-      <div style="background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between;">
-        <div style="display:flex; align-items:center; gap:10px;">
-          <div style="width:36px; height:36px; border-radius:8px; border:1px solid var(--line); background:#fff; display:flex; align-items:center; justify-content:center; overflow:hidden;">
-            ${cleanLogo ? `<img src="${cleanLogo}" style="width:100%; height:100%; object-fit:contain;">` : `<span style="width:14px; height:14px; border-radius:50%; background:${sanitizeText(b.color)};"></span>`}
-          </div>
-          <div>
-            <div style="font-weight:800; font-size:13.5px;">${sanitizeText(b.name || k)}</div>
-            <div style="font-size:11px; color:var(--text-soft); font-family:monospace;">${sanitizeText(b.color)}</div>
-          </div>
-        </div>
-        <div style="display:flex; gap:6px;">
-          <button onclick="editAdminBrand('${sanitizeText(k)}')" style="background:#E0E7FF; color:#3730A3; padding:5px 10px; border-radius:8px; font-weight:800; font-size:11px;">تعديل ✏️</button>
-          <button onclick="deleteAdminBrand('${sanitizeText(k)}')" style="background:#FEE2E2; color:var(--red); padding:5px 10px; border-radius:8px; font-weight:800; font-size:11px;">حذف 🗑️</button>
-        </div>
-      </div>`;
-  }).join('');
 }
 
 // ================= PRODUCT MANAGEMENT & ON-CARD ACTIONS =================
+function toggleLowStockFilter() {
+  isLowStockFilterActive = !isLowStockFilterActive;
+  const btn = document.getElementById('btnFilterLowStock');
+  if (btn) {
+    btn.style.background = isLowStockFilterActive ? '#DC2626' : '#FEF3C7';
+    btn.style.color = isLowStockFilterActive ? '#fff' : '#B45309';
+    btn.textContent = isLowStockFilterActive ? '✕ إلغاء فلتر النواقص' : '⚠️ عرض المنتجات النافذة فقط';
+  }
+  renderCurrentActiveView();
+}
+
 async function quickEditPrice(id, currentPrice) {
   if (!assertAdmin()) return;
   const newPriceStr = prompt('تعديل السعر المباشر (د.ع):', currentPrice);
@@ -1367,7 +1283,7 @@ async function saveAdminQuickEdit() {
   const imageUrl = sanitizeUrl(document.getElementById('quickEditProdImg').value.trim());
 
   if (!name || !brand || isNaN(price) || price <= 0) {
-    showToast('يرجى التأكد من كتابة الاسم والماركة والسعر بشكل صحيح');
+    showToast('يرجى التأكد من كتابة الاسم والماركة والسعر');
     return;
   }
 
@@ -1414,43 +1330,9 @@ function resetAdminProductForm() {
   document.getElementById('adminSaveProdBtn').textContent = '💾 حفظ المنتج في قاعدة البيانات';
 }
 
-function editProductInAdmin(id) {
-  const p = findProduct(id);
-  if (!p) return;
-  
-  if (window.location.pathname.includes('admin.html')) {
-    switchAdminSection('products');
-  } else {
-    window.location.href = 'admin.html';
-    return;
-  }
-
-  populateCategoryDropdowns();
-  document.getElementById('adminProdDocId').value = p.id;
-  document.getElementById('adminProdName').value = p.name || '';
-  document.getElementById('adminProdBrand').value = p.brand || '';
-  document.getElementById('adminProdCat').value = p.category || (categories[0] ? categories[0].id : 'face');
-  document.getElementById('adminProdSize').value = p.size || '';
-  document.getElementById('adminProdType').value = p.type || 'bottle';
-  document.getElementById('adminProdPrice').value = p.price || '';
-  document.getElementById('adminProdOldPrice').value = p.oldPrice || '';
-  document.getElementById('adminProdImgUrl').value = p.imageUrl || '';
-  document.getElementById('adminProdDesc').value = p.description || '';
-  document.getElementById('adminProdIng').value = p.ingredients || '';
-  document.getElementById('adminProdUsage').value = p.usage || '';
-  document.getElementById('adminProdInStock').checked = (p.inStock !== false);
-  document.getElementById('adminProdIsOffer').checked = !!(p.isSpecialOffer || p.oldPrice);
-
-  if (p.imageUrl) previewAdminProdImg(p.imageUrl);
-  document.getElementById('adminFormModeTitleV').textContent = 'تعديل المنتج: ' + p.name;
-  document.getElementById('adminSaveProdBtn').textContent = '💾 حفظ التعديلات سحابياً';
-  window.scrollTo({top: 0, behavior: 'smooth'});
-}
-
 async function handleAdminProductSave(e) {
   e.preventDefault();
-  if (!assertAdmin()) return;
-  if (!lockAction('saveProductAdmin', 1200)) return;
+  if (!assertAdmin() || !lockAction('saveProductAdmin', 1200)) return;
 
   const docId = document.getElementById('adminProdDocId').value.trim();
   const name = document.getElementById('adminProdName').value.trim();
@@ -1459,12 +1341,8 @@ async function handleAdminProductSave(e) {
   const oldPriceVal = document.getElementById('adminProdOldPrice').value.trim();
   const oldPrice = oldPriceVal ? Number(oldPriceVal) : null;
 
-  if (!name || !brand) {
-    showToast('يرجى كتابة اسم المنتج والماركة');
-    return;
-  }
-  if (isNaN(price) || price <= 0) {
-    showToast('يرجى إدخال سعر صحيح أكبر من صفر');
+  if (!name || !brand || isNaN(price) || price <= 0) {
+    showToast('يرجى التأكد من كتابة الاسم والماركة والسعر');
     return;
   }
 
@@ -1509,16 +1387,16 @@ async function handleAdminProductSave(e) {
 
 async function deleteProductConfirm(id, name) {
   if (!assertAdmin()) return;
-  if (confirm(`هل أنتِ متأكدة من حذف المنتج "${name}" نهائياً من قاعدة البيانات؟`)) {
+  if (confirm(`هل أنتِ متأكدة من حذف المنتج "${name}" نهائياً؟`)) {
     await apiFetch(`/api/admin/products/${id}`, { method: "DELETE" });
     if (db) await db.collection('products').doc(String(id)).delete();
     showToast('تم حذف المنتج بنجاح ✓');
   }
 }
 
-// ================= ADMIN TABS CONTROLLER (12 TABS MATCHED) =================
+// ================= ADMIN TABS CONTROLLER (13 TABS MATCHED) =================
 function switchAdminSection(sec) {
-  const sections = ['Stats', 'Orders', 'Coupons', 'Telegram', 'Audit', 'Cats', 'Products', 'Offers', 'Brands', 'Notifs', 'Design', 'Code'];
+  const sections = ['Stats', 'Orders', 'Coupons', 'Bundles', 'Telegram', 'Audit', 'Cats', 'Products', 'Offers', 'Brands', 'Notifs', 'Design', 'Code'];
   
   sections.forEach(k => {
     const btn = document.getElementById('btnTabV' + k);
@@ -1531,499 +1409,18 @@ function switchAdminSection(sec) {
   if (sec === 'stats') fetchRealAnalytics();
   if (sec === 'orders') fetchAdminOrdersList();
   if (sec === 'coupons') fetchAdminCoupons();
+  if (sec === 'bundles') {
+    populateBundleProductsChecklist();
+    renderAdminBundlesList();
+  }
   if (sec === 'audit') fetchAuditLogs();
   if (sec === 'products') populateCategoryDropdowns();
   if (sec === 'offers') {
     updateDiscountTargetOptions();
-    loadPromoCardToEdit(0);
+    renderPromoCardsListAdmin();
   }
   if (sec === 'cats') renderAdminCategoriesList();
   if (sec === 'brands') renderAdminBrandsList();
-}
-
-// ================= SAFE THEME & STORE CUSTOMIZATION (INSTANT DUAL SYNC) =================
-async function handleSaveCustomization(e) {
-  e.preventDefault();
-  if (!assertAdmin()) return;
-  if (!lockAction('saveCustomization', 1200)) return;
-
-  // قراءة آمنة لجميع الحقول مع قيم افتراضية تمنع انهيار الجافاسكريبت
-  const getVal = (id, defaultVal = '') => {
-    const el = document.getElementById(id);
-    return el ? el.value.trim() : defaultVal;
-  };
-  const getChecked = (id, defaultVal = false) => {
-    const el = document.getElementById(id);
-    return el ? el.checked : defaultVal;
-  };
-
-  const primaryColor = getVal('adminPrimaryColorPicker', storeSettings.primaryColor || '#E85D8A');
-  const deliveryStd = Number(getVal('adminDeliveryStandard', 4000));
-  const deliveryExp = Number(getVal('adminDeliveryExpress', 8000));
-
-  const newSettings = {
-    primaryColor: primaryColor,
-    deliveryFeeStandard: deliveryStd,
-    deliveryFeeExpress: deliveryExp,
-    showAnnouncement: getChecked('adminShowAnnouncement', true),
-    announcementText: sanitizeText(getVal('adminAnnouncementText', '✨ توصيل مجاني للطلبات فوق 50,000 د.ع لجميع محافظات العراق 🌸')),
-    showPharmacistBanner: getChecked('adminShowPharmacistBanner', true),
-    pharmacistCtaTitle: sanitizeText(getVal('adminPharmacistTitleInput', 'استشر الصيدلي مجاناً 🩺')),
-    pharmacistCtaDesc: sanitizeText(getVal('adminPharmacistDescInput', 'تحدثي مع الصيدلي المختص مباشرة للحصول على تشخيص دقيق لروتينك وروشتتك')),
-    socialWhatsapp: sanitizeText(getVal('adminSocialWhatsappInput', '9647813703288')),
-    socialTelegram: sanitizeText(getVal('adminSocialTelegramInput', '')),
-    socialInstagram: sanitizeText(getVal('adminSocialInstagramInput', '')),
-    socialPhone: sanitizeText(getVal('adminSocialPhoneInput', '07813703288')),
-    heroMainTitle: sanitizeText(getVal('adminHeroMainTitle', 'صيدلية القطن')),
-    heroSubTitle: sanitizeText(getVal('adminHeroSubTitle', 'نحن هنا لتحسين بشرتك')),
-    heroDescTitle: sanitizeText(getVal('adminHeroDescTitle', 'منتجات أصلية لعناية صحية وجمال طبيعي')),
-    bannerImgUrl: sanitizeUrl(getVal('adminBannerImgInput', 'https://imgdb.io/i/EQ4D9ag.png')),
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-  };
-
-  // 1. التطبيق والحفظ اللحظي المباشر في المتصفح والذاكرة
-  storeSettings = { ...storeSettings, ...newSettings };
-  saveLocalState();
-  applyStoreSettings();
-  showToast('تم تطبيق وحفظ اللون والتعديلات فورياً! ✨');
-
-  // 2. الحفظ السحابي في Cloudflare Worker و Firebase
-  try {
-    await apiFetch("/api/admin/settings", { method: "POST", body: JSON.stringify(newSettings) });
-    if (db) await db.collection('store_settings').doc('general').set(newSettings, { merge: true });
-  } catch (err) {
-    console.warn("Cloud settings sync fallback:", err);
-  }
-}
-
-function applyStoreSettings() {
-  if (storeSettings.primaryColor) {
-    applyDynamicThemeColor(storeSettings.primaryColor);
-    const colorPicker = document.getElementById('adminPrimaryColorPicker');
-    if (colorPicker) colorPicker.value = storeSettings.primaryColor;
-  }
-
-  if (storeSettings.socialWhatsapp) WHATSAPP_NUMBER = storeSettings.socialWhatsapp;
-
-  const annEl = document.getElementById('announcementBar');
-  const annTextEl = document.getElementById('announcementText');
-  const heroMainEl = document.getElementById('heroMainTitle');
-  const heroSubEl = document.getElementById('heroSubTitle');
-  const heroDescEl = document.getElementById('heroDescTitle');
-  const heroImgEl = document.getElementById('primaryHeroBannerImg');
-  const pharmWrap = document.getElementById('homePharmacistCtaWrap');
-  const drawerPharmBtn = document.getElementById('drawerConsultBtn');
-
-  if (annEl) {
-    const isVisible = (storeSettings.showAnnouncement === true || storeSettings.showAnnouncement === 'true' || storeSettings.showAnnouncement === undefined);
-    annEl.style.display = isVisible ? 'flex' : 'none';
-  }
-  if (annTextEl && storeSettings.announcementText) {
-    annTextEl.textContent = storeSettings.announcementText;
-  }
-  if (heroMainEl && storeSettings.heroMainTitle) heroMainEl.textContent = storeSettings.heroMainTitle;
-  if (heroSubEl && storeSettings.heroSubTitle) heroSubEl.textContent = storeSettings.heroSubTitle;
-  if (heroDescEl && storeSettings.heroDescTitle) heroDescEl.textContent = storeSettings.heroDescTitle;
-  if (heroImgEl && storeSettings.bannerImgUrl) heroImgEl.src = sanitizeUrl(storeSettings.bannerImgUrl);
-
-  if (pharmWrap) {
-    const isPharmVisible = (storeSettings.showPharmacistBanner === true || storeSettings.showPharmacistBanner === 'true' || storeSettings.showPharmacistBanner === undefined);
-    pharmWrap.style.display = isPharmVisible ? 'block' : 'none';
-  }
-  if (drawerPharmBtn) {
-    const isPharmVisible = (storeSettings.showPharmacistBanner === true || storeSettings.showPharmacistBanner === 'true' || storeSettings.showPharmacistBanner === undefined);
-    drawerPharmBtn.style.display = isPharmVisible ? 'flex' : 'none';
-  }
-  if (document.getElementById('pharmacistCtaTitle') && storeSettings.pharmacistCtaTitle) {
-    document.getElementById('pharmacistCtaTitle').textContent = storeSettings.pharmacistCtaTitle;
-  }
-  if (document.getElementById('pharmacistCtaDesc') && storeSettings.pharmacistCtaDesc) {
-    document.getElementById('pharmacistCtaDesc').textContent = storeSettings.pharmacistCtaDesc;
-  }
-
-  const wLink = document.getElementById('drawerSocialWhatsapp');
-  const tLink = document.getElementById('drawerSocialTelegram');
-  const iLink = document.getElementById('drawerSocialInstagram');
-  const pLink = document.getElementById('drawerSocialPhone');
-
-  if (wLink) wLink.href = `https://wa.me/${storeSettings.socialWhatsapp || WHATSAPP_NUMBER}`;
-  if (tLink) tLink.href = storeSettings.socialTelegram || '#';
-  if (iLink) iLink.href = storeSettings.socialInstagram || '#';
-  if (pLink) pLink.href = `tel:${storeSettings.socialPhone || ''}`;
-}
-
-function initFirestoreSync() {
-  if (!isFirebaseConfigured || !db) return;
-
-  db.collection('store_settings').doc('general').onSnapshot(doc => {
-    if (doc.exists) {
-      storeSettings = { ...storeSettings, ...doc.data() };
-      if (storeSettings.brandsData) brandsData = { ...brandsData, ...storeSettings.brandsData };
-      saveLocalState();
-      applyStoreSettings();
-      renderPromoBanners();
-      renderBrandStrip();
-    }
-  }, err => console.warn('Settings sync fallback:', err));
-
-  db.collection('categories').onSnapshot(snap => {
-    if (!snap.empty) {
-      const loaded = [];
-      snap.forEach(d => loaded.push({ id: d.id, ...d.data() }));
-      categories = loaded;
-      renderModernCategories();
-      renderAdminCategoriesList();
-      populateCategoryDropdowns();
-      updateDiscountTargetOptions();
-    }
-  }, err => console.warn('Categories sync fallback:', err));
-
-  db.collection('products').onSnapshot(async snap => {
-    if (snap.empty) {
-      try {
-        const batch = db.batch();
-        initialDefaultProducts.forEach(item => {
-          const docRef = db.collection('products').doc(String(item.id));
-          batch.set(docRef, item);
-        });
-        await batch.commit();
-      } catch (e) { console.warn("Seeding skipped:", e); }
-      return;
-    }
-
-    const loaded = [];
-    snap.forEach(doc => loaded.push({ id: doc.id, ...doc.data() }));
-    products = loaded;
-
-    products.forEach(p => {
-      if (p.brand && !brandsData[p.brand]) {
-        brandsData[p.brand] = { name: p.brand, color: hashColor(p.brand), logoUrl: '' };
-      }
-    });
-
-    renderCurrentActiveView();
-    renderModernCategories();
-    fetchRealAnalytics();
-  }, err => console.warn('Firestore products listener fallback:', err));
-
-  listenToNotifications();
-  recordRealVisit();
-}
-
-// ================= CUSTOMER VIEW RENDERING =================
-function renderCurrentActiveView() {
-  if (currentView === 'home') renderHome();
-  else if (currentView === 'listing') renderListing();
-  else if (currentView === 'categories') renderModernCategories();
-  else if (currentView === 'orders') renderMyOrders();
-  else if (currentView === 'offers') renderOffers();
-  else if (currentView === 'wishlist') renderWishlist();
-  else if (currentView === 'cart') renderCart();
-  else if (currentView === 'checkout') renderCheckoutSummary();
-  else if (currentView === 'product' && currentProductId) {
-    const p = findProduct(currentProductId);
-    if (p) renderProductDetailDOM(p);
-  }
-}
-
-function renderHome() {
-  renderBrandStrip();
-  renderHomeProductGrid();
-  renderPromoBanners();
-}
-
-let homeActiveBrand = 'all';
-function renderHomeProductGrid() {
-  const title = document.getElementById('homeGridTitle');
-  if (!title) return;
-  
-  let list = products.slice();
-  if (homeActiveBrand === 'all') {
-    title.textContent = 'الأكثر مبيعاً 🔥';
-    list = list.sort((a,b) => (b.orderCount || 0) - (a.orderCount || 0));
-  } else {
-    title.textContent = 'منتجات ' + homeActiveBrand;
-    list = list.filter(p => p.brand === homeActiveBrand);
-  }
-
-  renderProductGrid('bestSellersGrid', list);
-}
-
-function selectHomeBrand(brand) {
-  homeActiveBrand = brand;
-  renderBrandStrip();
-  renderHomeProductGrid();
-}
-
-function renderBrandStrip() {
-  const strip = document.getElementById('brandStrip');
-  if (!strip) return;
-  const brandKeys = Object.keys(brandsData);
-  const allChip = `
-    <div class="brand-chip all-chip ${homeActiveBrand === 'all' ? 'active' : ''}" onclick="selectHomeBrand('all')">
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-      <span>الكل</span>
-    </div>`;
-    
-  strip.innerHTML = allChip + brandKeys.map(k => {
-    const b = brandsData[k];
-    const isActive = homeActiveBrand === k;
-    const cleanLogo = sanitizeUrl(b.logoUrl);
-    return `
-      <div class="brand-chip ${isActive ? 'active' : ''}" onclick="selectHomeBrand('${sanitizeText(k)}')">
-        ${cleanLogo ? `<img class="brand-chip-img" src="${cleanLogo}" alt="${sanitizeText(b.name || k)}">` : `<span class="brand-chip-dot" style="background:${sanitizeText(b.color)};"></span>`}
-        <span>${sanitizeText(b.name || k)}</span>
-      </div>`;
-  }).join('');
-}
-
-function renderOffers() {
-  const discounted = products.filter(p => p.oldPrice || p.isSpecialOffer);
-  const countEl = document.getElementById('offersCount');
-  if (countEl) countEl.textContent = discounted.length + ' عرض';
-  renderProductGrid('offersGrid', discounted);
-}
-
-function renderWishlist() {
-  const list = products.filter(p => wishlist.has(p.id));
-  renderProductGrid('wishlistGrid', list, 'قائمتك المفضلة فارغة حالياً 🌸');
-}
-
-function renderMyOrders() {
-  const container = document.getElementById('myOrdersContainer');
-  const countEl = document.getElementById('myOrdersCount');
-  if (countEl) countEl.textContent = myOrders.length + ' طلب';
-  if (!container) return;
-
-  if (myOrders.length === 0) {
-    container.innerHTML = `<div class="no-results" style="padding:40px 16px;">لا توجد لديكِ طلبات مسجلة حتى الآن 🌸<br><button onclick="showView('home')" style="margin-top:14px; background:var(--accent); color:#fff; font-weight:800; font-size:12.5px; padding:8px 20px; border-radius:999px;">تصفح المنتجات</button></div>`;
-    return;
-  }
-
-  container.innerHTML = myOrders.map(ord => {
-    const isStep1Done = true;
-    const isStep2Done = ord.status && ord.status.includes('الشحن');
-    const isStep3Done = ord.status && ord.status.includes('التسليم');
-
-    return `
-      <div class="order-card">
-        <div class="order-card-header">
-          <span class="order-card-id mono">#${sanitizeText(ord.id)}</span>
-          <span class="order-card-status">${sanitizeText(ord.status || 'قيد المعالجة والتجهيز 🚚')}</span>
-        </div>
-        
-        <!-- Timeline Tracker -->
-        <div class="order-tracker-timeline">
-          <div class="order-step ${isStep1Done ? 'done' : ''}">
-            <div class="order-step-dot">1</div>
-            <span>تم الطلب</span>
-          </div>
-          <div class="order-step ${isStep2Done ? 'done active' : (isStep1Done ? 'active' : '')}">
-            <div class="order-step-dot">2</div>
-            <span>خرج للتوصيل</span>
-          </div>
-          <div class="order-step ${isStep3Done ? 'done' : ''}">
-            <div class="order-step-dot">3</div>
-            <span>تم التسليم</span>
-          </div>
-        </div>
-
-        <div style="font-size:11.5px; color:var(--text-soft); margin-bottom:8px;">
-          التاريخ: <span class="mono">${sanitizeText(ord.date)}</span> · العنوان: ${sanitizeText(ord.address)}
-        </div>
-        <div style="background:var(--surface); border-radius:10px; padding:10px; margin-bottom:8px;">
-          ${(ord.items || []).map(it => `
-            <div class="order-item-row">
-              <span>• ${sanitizeText(it.name)} × ${it.quantity}</span>
-              <span class="mono">${fmtPrice(it.price * it.quantity)}</span>
-            </div>
-          `).join('')}
-        </div>
-        <div class="order-card-footer">
-          <span>المجموع الكلي:</span>
-          <span class="mono" style="color:var(--rose-deep); font-size:16px;">${fmtPrice(ord.total)}</span>
-        </div>
-      </div>
-    `;
-  }).join('');
-}
-
-function renderProductGrid(targetId, list, emptyMsg) {
-  const el = document.getElementById(targetId);
-  if (!el) return;
-  if (list.length === 0) {
-    el.innerHTML = `<div class="no-results">${sanitizeText(emptyMsg) || 'لا توجد منتجات مطابقة حالياً.'}</div>`;
-    return;
-  }
-  
-  const isAdmin = isCurrentUserAdmin();
-
-  el.innerHTML = list.map(p => {
-    const color = getBrandColor(p.brand);
-    const discountPct = p.oldPrice ? Math.round((1 - p.price/p.oldPrice) * 100) : null;
-    const isWished = wishlist.has(p.id);
-    const inStock = (p.inStock !== false);
-    const cleanImg = sanitizeUrl(p.imageUrl);
-
-    return `
-      <div class="product-card" onclick="openProduct('${sanitizeText(p.id)}', true)">
-        <button class="wish-btn ${isWished ? 'active' : ''}" onclick="event.stopPropagation(); toggleWishlist('${sanitizeText(p.id)}')">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="${isWished ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M12 21s-7.5-4.9-10-9.5C.5 7.8 2.7 4 6.5 4 9 4 11 5.5 12 7c1-1.5 3-3 5.5-3 3.8 0 6 3.8 4.5 7.5C19.5 16.1 12 21 12 21Z"/></svg>
-        </button>
-        ${discountPct ? `<span class="discount-badge">خصم ${discountPct}%</span>` : ''}
-        ${!inStock ? `<span class="discount-badge" style="background:#EF4444; left:auto; right:12px; top:48px;">نفذت الكمية</span>` : ''}
-        
-        <div class="product-thumb" style="background:${color}18;">
-          ${cleanImg ? `<img src="${cleanImg}" alt="${sanitizeText(p.name)}" loading="lazy">` : (icons[p.type] || icons.bottle)(color)}
-        </div>
-        <div class="p-rating">${starIcon()} ${p.rating || 4.8} (${p.reviews || 80})</div>
-        <div class="p-name">${sanitizeText(p.name)}</div>
-        <div class="p-size">${sanitizeText(p.size || '')}</div>
-        <div class="p-price-row">
-          <span class="p-price mono">${fmtPrice(p.price)}</span>
-          ${p.oldPrice ? `<span class="p-oldprice mono">${fmtPrice(p.oldPrice)}</span>` : ''}
-        </div>
-        <button class="add-cart-btn" style="${!inStock ? 'opacity:0.6; pointer-events:none;' : ''}" onclick="event.stopPropagation(); addToCart('${sanitizeText(p.id)}')">
-          ${inStock ? 'أضف إلى السلة' : 'غير متوفر'}
-        </button>
-
-        ${isAdmin ? `
-          <div class="admin-card-actions" onclick="event.stopPropagation()">
-            <button class="btn-admin-stock ${inStock ? 'is-in' : 'is-out'}" onclick="quickToggleStock('${sanitizeText(p.id)}')">${inStock ? 'متوفر 🟢' : 'نفذت 🔴'}</button>
-            <button class="btn-admin-price" onclick="quickEditPrice('${sanitizeText(p.id)}', ${p.price})">السعر 💰</button>
-            <button class="btn-admin-edit" onclick="openAdminQuickEditModal('${sanitizeText(p.id)}')">تعديل ✏️</button>
-            <button class="btn-admin-del" onclick="deleteProductConfirm('${sanitizeText(p.id)}', '${sanitizeText(p.name)}')">🗑️</button>
-          </div>` : ''}
-      </div>`;
-  }).join('');
-}
-
-function toggleWishlist(id) {
-  if (wishlist.has(id)) wishlist.delete(id);
-  else wishlist.add(id);
-  saveLocalState();
-  renderCurrentActiveView();
-}
-
-function renderProductDetailDOM(p) {
-  const color = getBrandColor(p.brand);
-  const pdImgEl = document.getElementById('pdImage');
-  if (!pdImgEl) return;
-  pdImgEl.style.background = color + '18';
-  const cleanImg = sanitizeUrl(p.imageUrl);
-  pdImgEl.innerHTML = cleanImg ? `<img src="${cleanImg}">` : (icons[p.type] || icons.bottle)(color);
-
-  document.getElementById('pdBrand').textContent = p.brand || '';
-  document.getElementById('pdName').textContent = p.name + (p.size ? ' — ' + p.size : '');
-  document.getElementById('pdRating').innerHTML = `${starIcon()} ${p.rating || 4.8} (${p.reviews || 80} تقييم)`;
-
-  const discountPct = p.oldPrice ? Math.round((1 - p.price/p.oldPrice) * 100) : null;
-  document.getElementById('pdPriceRow').innerHTML = `
-    <span class="pd-price mono">${fmtPrice(p.price)}</span>
-    ${p.oldPrice ? `<span class="pd-oldprice mono">${fmtPrice(p.oldPrice)}</span><span class="pd-discount">خصم ${discountPct}%</span>` : ''}`;
-
-  const stockEl = document.getElementById('pdStock');
-  const inStock = (p.inStock !== false);
-  stockEl.className = inStock ? 'pd-stock' : 'pd-stock out';
-  stockEl.innerHTML = inStock ? `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" style="width:18px;height:18px;"><path d="M5 13l4 4L19 7"/></svg><span>متوفر بالمخزون</span>` : `<span>نفذت الكمية حالياً</span>`;
-
-  document.getElementById('pdTabDesc').textContent = p.description || 'منتج أصلي معتمد من صيدلية القطن.';
-  document.getElementById('pdTabIng').textContent = p.ingredients || 'تركيبة غنية ومفحوصة جلدياً.';
-  document.getElementById('pdTabUse').textContent = p.usage || 'يُوضع على بشرة نظيفة وفق الإرشادات.';
-  
-  // تفعيل التقييمات والمنتجات المقترحة
-  renderProductReviews(p.id);
-  renderCrossSelling(p);
-
-  switchPdTab('desc');
-  document.getElementById('pdQtyVal').textContent = pdQty;
-
-  document.getElementById('pdAddBtn').onclick = () => {
-    if (inStock) addToCart(p.id, false, pdQty);
-    else showToast('عذراً، المنتج غير متوفر حالياً');
-  };
-}
-
-// ================= دالة فتح تفاصيل المنتج مع حفظ موضع التمرير =================
-function openProduct(id, isUserClick = false) {
-  if (isUserClick) {
-    previousViewBeforeProduct = (currentView !== 'product') ? currentView : 'home';
-    previousScrollBeforeProduct = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
-  }
-
-  currentProductId = id;
-  pdQty = 1;
-  const p = findProduct(id);
-  if (!p) return;
-
-  if (isUserClick) {
-    apiFetch(`/api/products/${id}/view`, { method: "POST" }).catch(() => {});
-    if (db) {
-      db.collection('products').doc(String(id)).set({
-        views: firebase.firestore.FieldValue.increment(1)
-      }, { merge: true }).catch(e => console.warn(e));
-    }
-  }
-
-  renderProductDetailDOM(p);
-
-  if (isUserClick) {
-    document.documentElement.style.scrollBehavior = 'auto';
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    const pView = document.getElementById('view-product');
-    if (pView) {
-      pView.classList.add('active');
-      currentView = 'product';
-      window.scrollTo(0, 0);
-    }
-    requestAnimationFrame(() => {
-      document.documentElement.style.scrollBehavior = '';
-    });
-  }
-}
-
-// ================= دالة الرجوع من المنتج (العودة لنفس المكان السابق بدون وميض) =================
-function goBackFromProduct() {
-  const targetView = previousViewBeforeProduct || 'home';
-  const targetScroll = previousScrollBeforeProduct || 0;
-  
-  document.documentElement.style.scrollBehavior = 'auto';
-
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  const targetEl = document.getElementById('view-' + targetView);
-  if (targetEl) targetEl.classList.add('active');
-  currentView = targetView;
-
-  ['home', 'wishlist', 'categories', 'orders', 'cart', 'account', 'admin'].forEach(k => {
-    const el = document.getElementById('bn-' + k);
-    if (el) el.classList.toggle('active', targetView === k);
-  });
-
-  window.scrollTo(0, targetScroll);
-
-  requestAnimationFrame(() => {
-    window.scrollTo(0, targetScroll);
-    document.documentElement.style.scrollBehavior = '';
-  });
-}
-
-function switchPdTab(tab) {
-  pdActiveTab = tab;
-  document.querySelectorAll('.pd-tab').forEach((el,i) => el.classList.toggle('active', ['desc','ing','use','reviews'][i] === tab));
-  const dTab = document.getElementById('pdTabDesc');
-  const iTab = document.getElementById('pdTabIng');
-  const uTab = document.getElementById('pdTabUse');
-  const rTab = document.getElementById('pdTabReviews');
-  if (dTab) dTab.classList.toggle('active', tab === 'desc');
-  if (iTab) iTab.classList.toggle('active', tab === 'ing');
-  if (uTab) uTab.classList.toggle('active', tab === 'use');
-  if (rTab) rTab.classList.toggle('active', tab === 'reviews');
-}
-
-function changePdQty(delta) {
-  pdQty = Math.max(1, pdQty + delta);
-  const qtyEl = document.getElementById('pdQtyVal');
-  if (qtyEl) qtyEl.textContent = pdQty;
 }
 
 // ================= CART & CHECKOUT =================
@@ -2060,8 +1457,14 @@ function updateCartBadge() {
 
 function getCartSubtotal() {
   return Object.keys(cart).reduce((sum, id) => {
-    const p = findProduct(id);
-    return sum + (p ? p.price * cart[id] : 0);
+    if (id.startsWith('bundle_')) {
+      const bId = id.replace('bundle_', '');
+      const b = findBundle(bId);
+      return sum + (b ? b.price * cart[id] : 0);
+    } else {
+      const p = findProduct(id);
+      return sum + (p ? p.price * cart[id] : 0);
+    }
   }, 0);
 }
 
@@ -2080,27 +1483,29 @@ function renderCart() {
   }
 
   listEl.innerHTML = ids.map(id => {
-    const p = findProduct(id);
-    if (!p) return '';
+    const isBundle = id.startsWith('bundle_');
+    const item = isBundle ? findBundle(id.replace('bundle_', '')) : findProduct(id);
+    if (!item) return '';
     const qty = cart[id];
-    const color = getBrandColor(p.brand);
-    const cleanImg = sanitizeUrl(p.imageUrl);
+    const cleanImg = sanitizeUrl(item.imageUrl);
+    const color = isBundle ? '#10B981' : getBrandColor(item.brand);
+
     return `
       <div class="cart-item">
         <div class="thumb" style="background:${color}18;">
-          ${cleanImg ? `<img src="${cleanImg}">` : (icons[p.type] || icons.bottle)(color)}
+          ${cleanImg ? `<img src="${cleanImg}">` : (icons[item.type || 'bottle'] || icons.bottle)(color)}
         </div>
         <div class="info">
-          <div class="name">${sanitizeText(p.name)}</div>
-          <div class="brand">${sanitizeText(p.brand || '')} · ${sanitizeText(p.size || '')}</div>
+          <div class="name">${isBundle ? '🎁 [بكج] ' : ''}${sanitizeText(item.name || item.title)}</div>
+          <div class="brand">${sanitizeText(item.brand || item.savingsBadge || '')}</div>
           <div class="cart-qty-row">
-            <button class="cart-qty-btn" onclick="changeCartQty('${sanitizeText(p.id)}', -1)">−</button>
+            <button class="cart-qty-btn" onclick="changeCartQty('${sanitizeText(id)}', -1)">−</button>
             <span class="cart-qty-val mono">${qty}</span>
-            <button class="cart-qty-btn" onclick="changeCartQty('${sanitizeText(p.id)}', 1)">+</button>
-            <span class="cart-remove" onclick="removeCartItem('${sanitizeText(p.id)}')">حذف</span>
+            <button class="cart-qty-btn" onclick="changeCartQty('${sanitizeText(id)}', 1)">+</button>
+            <span class="cart-remove" onclick="removeCartItem('${sanitizeText(id)}')">حذف</span>
           </div>
         </div>
-        <span class="p-price mono">${fmtPrice(p.price * qty)}</span>
+        <span class="p-price mono">${fmtPrice(item.price * qty)}</span>
       </div>`;
   }).join('');
 
@@ -2149,7 +1554,7 @@ function renderCheckoutSummary() {
     <div class="summary-row total"><span>الإجمالي</span><span class="mono">${fmtPrice(finalTotal)}</span></div>`;
 }
 
-// ================= CONFIRM ORDER (TELEGRAM & WHATSAPP) =================
+// ================= CONFIRM ORDER (WITH SMART AUTOFILL & WHATSAPP/TELEGRAM) =================
 async function confirmOrder() {
   if (!lockAction('confirmOrder', 2500)) return;
 
@@ -2175,15 +1580,21 @@ async function confirmOrder() {
     confirmBtn.textContent = 'جاري تأكيد الطلب...';
   }
 
+  // 1. الحفظ الذكي لبيانات الزبون لتسريع الطلبات القادمة
+  localStorage.setItem('qutn_customer_saved', JSON.stringify({ name, phone, address }));
+
+  // 2. إعداد مصفوفة الأصناف كاملة مع السعر والاسم لحساب الفاتورة بدقة
   const itemsPayload = ids.map(id => {
-  const p = findProduct(id);
-  return {
-    id: id,
-    name: p ? p.name : 'منتج',
-    price: p ? p.price : 0,
-    quantity: cart[id]
-  };
-});
+    const isBundle = id.startsWith('bundle_');
+    const item = isBundle ? findBundle(id.replace('bundle_', '')) : findProduct(id);
+    return {
+      id: id,
+      name: item ? (item.name || item.title) : 'منتج',
+      price: item ? item.price : 0,
+      quantity: cart[id],
+      isBundle: isBundle
+    };
+  });
 
   try {
     const response = await apiFetch("/api/orders", {
@@ -2206,11 +1617,6 @@ async function confirmOrder() {
       orderId = response.orderId;
     }
 
-    const itemObjects = ids.map(id => {
-      const p = findProduct(id);
-      return p ? { id: p.id, name: sanitizeText(p.name), brand: sanitizeText(p.brand), size: sanitizeText(p.size), price: p.price, quantity: cart[id] } : null;
-    }).filter(Boolean);
-
     const newOrderObj = {
       id: orderId,
       date: new Date().toLocaleDateString('ar-IQ', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
@@ -2218,7 +1624,7 @@ async function confirmOrder() {
       phone,
       address,
       deliveryMethod,
-      items: itemObjects,
+      items: itemsPayload,
       total: grandTotal,
       status: 'قيد المعالجة والتجهيز 🚚'
     };
@@ -2231,7 +1637,7 @@ async function confirmOrder() {
       }).catch(e => console.warn(e));
     }
 
-    const lines = itemObjects.map(item => `${item.name} × ${item.quantity}`);
+    const lines = itemsPayload.map(item => `${item.isBundle ? '🎁 ' : ''}${item.name} × ${item.quantity}`);
     const deliveryLabel = deliveryMethod === 'express' ? `سريع (${fmtPrice(storeSettings.deliveryFeeExpress || 8000)})` : `عادي (${fmtPrice(storeSettings.deliveryFeeStandard || 4000)})`;
     const promoInfo = appliedPromo ? `كود الخصم: ${appliedPromo.code} (-${fmtPrice(appliedPromo.discountAmount)})\n` : '';
     const msg = encodeURIComponent(`*طلب جديد - صيدلية القطن* 🌸\nرقم الطلب: #${orderId}\n\nالاسم: ${name}\nالهاتف: ${phone}\nالعنوان: ${address}\nالتوصيل: ${deliveryLabel}\n${promoInfo}\nالمنتجات المطلوبة:\n${lines.join('\n')}\n\nالإجمالي النهائي: ${fmtPrice(grandTotal)}`);
@@ -2274,7 +1680,7 @@ function closeSuccessModalAndGoOrders() {
   showView('orders');
 }
 
-// ================= NAVIGATION =================
+// ================= NAVIGATION & VIEW RENDERING =================
 function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   const target = document.getElementById('view-' + name);
@@ -2283,11 +1689,12 @@ function showView(name) {
   closeMenu();
   window.scrollTo({top: 0, behavior: 'instant'});
 
-  ['home', 'wishlist', 'categories', 'orders', 'cart', 'account', 'admin'].forEach(k => {
+  ['home', 'wishlist', 'categories', 'bundles', 'orders', 'cart', 'account', 'admin'].forEach(k => {
     const el = document.getElementById('bn-' + k);
     if (el) el.classList.toggle('active', name === k);
   });
 
+  if (name === 'checkout') checkAndAutofillCustomer();
   renderCurrentActiveView();
 }
 
@@ -2367,6 +1774,910 @@ function renderListing() {
   const countEl = document.getElementById('listingCount');
   if (countEl) countEl.textContent = list.length + ' منتج';
   renderProductGrid('listingGrid', list);
+}
+
+function renderCurrentActiveView() {
+  if (currentView === 'home') renderHome();
+  else if (currentView === 'listing') renderListing();
+  else if (currentView === 'categories') renderModernCategories();
+  else if (currentView === 'bundles') renderAllBundles();
+  else if (currentView === 'orders') renderMyOrders();
+  else if (currentView === 'offers') renderOffers();
+  else if (currentView === 'wishlist') renderWishlist();
+  else if (currentView === 'cart') renderCart();
+  else if (currentView === 'checkout') renderCheckoutSummary();
+  else if (currentView === 'product' && currentProductId) {
+    const p = findProduct(currentProductId);
+    if (p) renderProductDetailDOM(p);
+  }
+}
+
+function renderHome() {
+  renderBrandStrip();
+  renderHomeProductGrid();
+  renderHomeBundles();
+  renderPromoBanners();
+}
+
+let homeActiveBrand = 'all';
+function renderHomeProductGrid() {
+  const title = document.getElementById('homeGridTitle');
+  if (!title) return;
+  
+  let list = products.slice();
+  if (homeActiveBrand === 'all') {
+    title.textContent = 'الأكثر مبيعاً 🔥';
+    list = list.sort((a,b) => (b.orderCount || 0) - (a.orderCount || 0));
+  } else {
+    title.textContent = 'منتجات ' + homeActiveBrand;
+    list = list.filter(p => p.brand === homeActiveBrand);
+  }
+
+  renderProductGrid('bestSellersGrid', list);
+}
+
+function selectHomeBrand(brand) {
+  homeActiveBrand = brand;
+  renderBrandStrip();
+  renderHomeProductGrid();
+}
+
+function renderBrandStrip() {
+  const strip = document.getElementById('brandStrip');
+  if (!strip) return;
+  const brandKeys = Object.keys(brandsData);
+  const allChip = `
+    <div class="brand-chip all-chip ${homeActiveBrand === 'all' ? 'active' : ''}" onclick="selectHomeBrand('all')">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      <span>الكل</span>
+    </div>`;
+    
+  strip.innerHTML = allChip + brandKeys.map(k => {
+    const b = brandsData[k];
+    const isActive = homeActiveBrand === k;
+    const cleanLogo = sanitizeUrl(b.logoUrl);
+    return `
+      <div class="brand-chip ${isActive ? 'active' : ''}" onclick="selectHomeBrand('${sanitizeText(k)}')">
+        ${cleanLogo ? `<img class="brand-chip-img" src="${cleanLogo}" alt="${sanitizeText(b.name || k)}">` : `<span class="brand-chip-dot" style="background:${sanitizeText(b.color)};"></span>`}
+        <span>${sanitizeText(b.name || k)}</span>
+      </div>`;
+  }).join('');
+}
+
+function renderOffers() {
+  const discounted = products.filter(p => p.oldPrice || p.isSpecialOffer);
+  const countEl = document.getElementById('offersCount');
+  if (countEl) countEl.textContent = discounted.length + ' عرض';
+  renderProductGrid('offersGrid', discounted);
+}
+
+function renderWishlist() {
+  const list = products.filter(p => wishlist.has(p.id));
+  renderProductGrid('wishlistGrid', list, 'قائمتك المفضلة فارغة حالياً 🌸');
+}
+
+function renderMyOrders() {
+  const container = document.getElementById('myOrdersContainer');
+  const countEl = document.getElementById('myOrdersCount');
+  if (countEl) countEl.textContent = myOrders.length + ' طلب';
+  if (!container) return;
+
+  if (myOrders.length === 0) {
+    container.innerHTML = `<div class="no-results" style="padding:40px 16px;">لا توجد لديكِ طلبات مسجلة حتى الآن 🌸<br><button onclick="showView('home')" style="margin-top:14px; background:var(--accent); color:#fff; font-weight:800; font-size:12.5px; padding:8px 20px; border-radius:999px;">تصفح المنتجات</button></div>`;
+    return;
+  }
+
+  container.innerHTML = myOrders.map(ord => `
+    <div class="order-card">
+      <div class="order-card-header">
+        <span class="order-card-id mono">#${sanitizeText(ord.id)}</span>
+        <span class="order-card-status">${sanitizeText(ord.status || 'قيد المعالجة والتجهيز 🚚')}</span>
+      </div>
+      
+      <div class="order-tracker-timeline">
+        <div class="order-step done"><div class="order-step-dot">1</div><span>تم الطلب</span></div>
+        <div class="order-step ${ord.status && (ord.status.includes('الشحن') || ord.status.includes('التسليم')) ? 'done active' : ''}"><div class="order-step-dot">2</div><span>خرج للتوصيل</span></div>
+        <div class="order-step ${ord.status && ord.status.includes('التسليم') ? 'done' : ''}"><div class="order-step-dot">3</div><span>تم التسليم</span></div>
+      </div>
+
+      <div style="font-size:11.5px; color:var(--text-soft); margin-bottom:8px;">
+        التاريخ: <span class="mono">${sanitizeText(ord.date)}</span> · العنوان: ${sanitizeText(ord.address)}
+      </div>
+      <div style="background:var(--surface); border-radius:10px; padding:10px; margin-bottom:8px;">
+        ${(ord.items || []).map(it => `
+          <div class="order-item-row">
+            <span>• ${it.isBundle ? '🎁 ' : ''}${sanitizeText(it.name)} × ${it.quantity}</span>
+            <span class="mono">${fmtPrice(it.price * it.quantity)}</span>
+          </div>
+        `).join('')}
+      </div>
+      <div class="order-card-footer">
+        <span>المجموع الكلي:</span>
+        <span class="mono" style="color:var(--rose-deep); font-size:16px;">${fmtPrice(ord.total)}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderProductGrid(targetId, list, emptyMsg) {
+  const el = document.getElementById(targetId);
+  if (!el) return;
+
+  let displayList = list.slice();
+  if (isLowStockFilterActive) {
+    displayList = displayList.filter(p => p.inStock === false);
+  }
+
+  if (displayList.length === 0) {
+    el.innerHTML = `<div class="no-results">${sanitizeText(emptyMsg) || 'لا توجد منتجات مطابقة حالياً.'}</div>`;
+    return;
+  }
+  
+  const isAdmin = isCurrentUserAdmin();
+
+  el.innerHTML = displayList.map(p => {
+    const color = getBrandColor(p.brand);
+    const discountPct = p.oldPrice ? Math.round((1 - p.price/p.oldPrice) * 100) : null;
+    const isWished = wishlist.has(p.id);
+    const inStock = (p.inStock !== false);
+    const cleanImg = sanitizeUrl(p.imageUrl);
+
+    return `
+      <div class="product-card" onclick="openProduct('${sanitizeText(p.id)}', true)">
+        <button class="wish-btn ${isWished ? 'active' : ''}" onclick="event.stopPropagation(); toggleWishlist('${sanitizeText(p.id)}')">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="${isWished ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M12 21s-7.5-4.9-10-9.5C.5 7.8 2.7 4 6.5 4 9 4 11 5.5 12 7c1-1.5 3-3 5.5-3 3.8 0 6 3.8 4.5 7.5C19.5 16.1 12 21 12 21Z"/></svg>
+        </button>
+        ${discountPct ? `<span class="discount-badge">خصم ${discountPct}%</span>` : ''}
+        ${!inStock ? `<span class="badge-out-stock">نفذت الكمية</span>` : ''}
+        
+        <div class="product-thumb" style="background:${color}18;">
+          ${cleanImg ? `<img src="${cleanImg}" alt="${sanitizeText(p.name)}" loading="lazy">` : (icons[p.type] || icons.bottle)(color)}
+        </div>
+        <div class="p-rating">${starIcon()} ${p.rating || 4.8} (${p.reviews || 80})</div>
+        <div class="p-name">${sanitizeText(p.name)}</div>
+        <div class="p-size">${sanitizeText(p.size || '')}</div>
+        <div class="p-price-row">
+          <span class="p-price mono">${fmtPrice(p.price)}</span>
+          ${p.oldPrice ? `<span class="p-oldprice mono">${fmtPrice(p.oldPrice)}</span>` : ''}
+        </div>
+        <button class="add-cart-btn" style="${!inStock ? 'opacity:0.6; pointer-events:none;' : ''}" onclick="event.stopPropagation(); addToCart('${sanitizeText(p.id)}')">
+          ${inStock ? 'أضف إلى السلة' : 'غير متوفر'}
+        </button>
+
+        ${isAdmin ? `
+          <div class="admin-card-actions" onclick="event.stopPropagation()">
+            <button class="btn-admin-stock ${inStock ? 'is-in' : 'is-out'}" onclick="quickToggleStock('${sanitizeText(p.id)}')">${inStock ? 'متوفر 🟢' : 'نفذت 🔴'}</button>
+            <button class="btn-admin-price" onclick="quickEditPrice('${sanitizeText(p.id)}', ${p.price})">السعر 💰</button>
+            <button class="btn-admin-edit" onclick="openAdminQuickEditModal('${sanitizeText(p.id)}')">تعديل ✏️</button>
+            <button class="btn-admin-del" onclick="deleteProductConfirm('${sanitizeText(p.id)}', '${sanitizeText(p.name)}')">🗑️</button>
+          </div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+function toggleWishlist(id) {
+  if (wishlist.has(id)) wishlist.delete(id);
+  else wishlist.add(id);
+  saveLocalState();
+  renderCurrentActiveView();
+}
+
+function renderProductDetailDOM(p) {
+  const color = getBrandColor(p.brand);
+  const pdImgEl = document.getElementById('pdImage');
+  if (!pdImgEl) return;
+  pdImgEl.style.background = color + '18';
+  const cleanImg = sanitizeUrl(p.imageUrl);
+  pdImgEl.innerHTML = cleanImg ? `<img src="${cleanImg}">` : (icons[p.type] || icons.bottle)(color);
+
+  document.getElementById('pdBrand').textContent = p.brand || '';
+  document.getElementById('pdName').textContent = p.name + (p.size ? ' — ' + p.size : '');
+  document.getElementById('pdRating').innerHTML = `${starIcon()} ${p.rating || 4.8} (${p.reviews || 80} تقييم)`;
+
+  const discountPct = p.oldPrice ? Math.round((1 - p.price/p.oldPrice) * 100) : null;
+  document.getElementById('pdPriceRow').innerHTML = `
+    <span class="pd-price mono">${fmtPrice(p.price)}</span>
+    ${p.oldPrice ? `<span class="pd-oldprice mono">${fmtPrice(p.oldPrice)}</span><span class="pd-discount">خصم ${discountPct}%</span>` : ''}`;
+
+  const stockEl = document.getElementById('pdStock');
+  const inStock = (p.inStock !== false);
+  stockEl.className = inStock ? 'pd-stock' : 'pd-stock out';
+  stockEl.innerHTML = inStock ? `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" style="width:18px;height:18px;"><path d="M5 13l4 4L19 7"/></svg><span>متوفر بالمخزون</span>` : `<span>نفذت الكمية حالياً</span>`;
+
+  document.getElementById('pdTabDesc').textContent = p.description || 'منتج أصلي معتمد من صيدلية القطن.';
+  document.getElementById('pdTabIng').textContent = p.ingredients || 'تركيبة غنية ومفحوصة جلدياً.';
+  document.getElementById('pdTabUse').textContent = p.usage || 'يُوضع على بشرة نظيفة وفق الإرشادات.';
+  
+  // شريط النجوم السريع
+  const rated = localStorage.getItem('rated_' + p.id);
+  document.querySelectorAll('.star-btn').forEach((btn, idx) => {
+    btn.classList.toggle('active', rated && idx < Number(rated));
+  });
+  const msgEl = document.getElementById('instantRatingMsg');
+  if (msgEl) msgEl.textContent = rated ? `تقييمكِ المسجل: ${rated} نجوم ⭐` : '';
+
+  renderCrossSelling(p);
+  switchPdTab('desc');
+  document.getElementById('pdQtyVal').textContent = pdQty;
+
+  document.getElementById('pdAddBtn').onclick = () => {
+    if (inStock) addToCart(p.id, false, pdQty);
+    else showToast('عذراً، المنتج غير متوفر حالياً');
+  };
+}
+
+function openProduct(id, isUserClick = false) {
+  if (isUserClick) {
+    previousViewBeforeProduct = (currentView !== 'product') ? currentView : 'home';
+    previousScrollBeforeProduct = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+  }
+
+  currentProductId = id;
+  pdQty = 1;
+  const p = findProduct(id);
+  if (!p) return;
+
+  if (isUserClick) {
+    apiFetch(`/api/products/${id}/view`, { method: "POST" }).catch(() => {});
+    if (db) {
+      db.collection('products').doc(String(id)).set({
+        views: firebase.firestore.FieldValue.increment(1)
+      }, { merge: true }).catch(e => console.warn(e));
+    }
+  }
+
+  renderProductDetailDOM(p);
+
+  if (isUserClick) {
+    document.documentElement.style.scrollBehavior = 'auto';
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    const pView = document.getElementById('view-product');
+    if (pView) {
+      pView.classList.add('active');
+      currentView = 'product';
+      window.scrollTo(0, 0);
+    }
+    requestAnimationFrame(() => {
+      document.documentElement.style.scrollBehavior = '';
+    });
+  }
+}
+
+function goBackFromProduct() {
+  const targetView = previousViewBeforeProduct || 'home';
+  const targetScroll = previousScrollBeforeProduct || 0;
+  
+  document.documentElement.style.scrollBehavior = 'auto';
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const targetEl = document.getElementById('view-' + targetView);
+  if (targetEl) targetEl.classList.add('active');
+  currentView = targetView;
+
+  ['home', 'wishlist', 'categories', 'bundles', 'orders', 'cart', 'account', 'admin'].forEach(k => {
+    const el = document.getElementById('bn-' + k);
+    if (el) el.classList.toggle('active', targetView === k);
+  });
+
+  window.scrollTo(0, targetScroll);
+  requestAnimationFrame(() => {
+    window.scrollTo(0, targetScroll);
+    document.documentElement.style.scrollBehavior = '';
+  });
+}
+
+function switchPdTab(tab) {
+  pdActiveTab = tab;
+  document.querySelectorAll('.pd-tab').forEach((el,i) => el.classList.toggle('active', ['desc','ing','use','reviews'][i] === tab));
+  const dTab = document.getElementById('pdTabDesc');
+  const iTab = document.getElementById('pdTabIng');
+  const uTab = document.getElementById('pdTabUse');
+  const rTab = document.getElementById('pdTabReviews');
+  if (dTab) dTab.classList.toggle('active', tab === 'desc');
+  if (iTab) iTab.classList.toggle('active', tab === 'ing');
+  if (uTab) uTab.classList.toggle('active', tab === 'use');
+  if (rTab) rTab.classList.toggle('active', tab === 'reviews');
+}
+
+function changePdQty(delta) {
+  pdQty = Math.max(1, pdQty + delta);
+  const qtyEl = document.getElementById('pdQtyVal');
+  if (qtyEl) qtyEl.textContent = pdQty;
+}
+
+function renderCrossSelling(currentP) {
+  const grid = document.getElementById('pdSuggestedGrid');
+  if (!grid || !currentP) return;
+
+  const suggestions = products
+    .filter(p => p.id !== currentP.id && (p.brand === currentP.brand || p.category !== currentP.category))
+    .slice(0, 4);
+
+  renderProductGrid('pdSuggestedGrid', suggestions);
+}
+
+// ================= MODERN CATEGORIES =================
+function renderModernCategories() {
+  const container = document.getElementById('catRowFull');
+  const totalCountEl = document.getElementById('categoriesTotalCount');
+  if (totalCountEl) totalCountEl.textContent = `${categories.length} أقسام معتمدة`;
+  
+  if (container) {
+    container.innerHTML = categories.map(c => {
+      const count = products.filter(p => p.category === c.id).length;
+      const cleanImg = sanitizeUrl(c.imageUrl);
+      return `
+        <div class="modern-cat-card" onclick="openCategory('${sanitizeText(c.id)}')">
+          <div class="modern-cat-img-wrap">
+            ${cleanImg ? `<img src="${cleanImg}" alt="${sanitizeText(c.label)}">` : (catIcons[c.icon] || catIcons.jar)('var(--accent, #E85D8A)')}
+          </div>
+          <div class="modern-cat-info">
+            <h3 class="modern-cat-title">${sanitizeText(c.label)}</h3>
+            <span class="modern-cat-count mono">${count} منتج</span>
+          </div>
+        </div>`;
+    }).join('');
+  }
+  populateCategoryDropdowns();
+}
+
+function populateCategoryDropdowns() {
+  const prodCatSelect = document.getElementById('adminProdCat');
+  const quickCatSelect = document.getElementById('quickEditProdCat');
+  const optionsHtml = categories.map(c => `<option value="${sanitizeText(c.id)}">${sanitizeText(c.label)}</option>`).join('');
+
+  if (prodCatSelect) prodCatSelect.innerHTML = optionsHtml;
+  if (quickCatSelect) quickCatSelect.innerHTML = optionsHtml;
+}
+
+function renderAdminCategoriesList() {
+  const container = document.getElementById('adminCategoriesListGrid');
+  if (!container) return;
+  container.innerHTML = categories.map(c => {
+    const count = products.filter(p => p.category === c.id).length;
+    const cleanImg = sanitizeUrl(c.imageUrl);
+    return `
+      <div style="background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:42px; height:42px; border-radius:8px; background:var(--surface); display:flex; align-items:center; justify-content:center; overflow:hidden;">
+            ${cleanImg ? `<img src="${cleanImg}" style="width:100%; height:100%; object-fit:cover;">` : (catIcons[c.icon] || catIcons.jar)('var(--accent, #E85D8A)')}
+          </div>
+          <div>
+            <div style="font-weight:800; font-size:13.5px;">${sanitizeText(c.label)} (${sanitizeText(c.id)})</div>
+            <div style="font-size:11.5px; color:var(--text-soft);">${count} منتج مرتبط</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button onclick="editAdminCategory('${sanitizeText(c.id)}')" style="background:#E0E7FF; color:#3730A3; padding:5px 10px; border-radius:8px; font-weight:800; font-size:11px;">تعديل ✏️</button>
+          <button onclick="deleteAdminCategory('${sanitizeText(c.id)}', '${sanitizeText(c.label)}')" style="background:#FEE2E2; color:var(--red); padding:5px 10px; border-radius:8px; font-weight:800; font-size:11px;">حذف 🗑️</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function previewAdminCatImg(url) {
+  const box = document.getElementById('adminCatImgPreviewBox');
+  const img = document.getElementById('adminCatImgPreviewEl');
+  const cleanUrl = sanitizeUrl(url);
+  if (cleanUrl && box && img) { img.src = cleanUrl; box.style.display = 'block'; }
+  else if (box) { box.style.display = 'none'; }
+}
+
+function resetAdminCatForm() {
+  if (!document.getElementById('adminCatKeyId')) return;
+  document.getElementById('adminCatKeyId').value = '';
+  document.getElementById('adminCatLabel').value = '';
+  document.getElementById('adminCatIdInput').value = '';
+  document.getElementById('adminCatIdInput').disabled = false;
+  document.getElementById('adminCatImgUrl').value = '';
+  document.getElementById('adminCatImgPreviewBox').style.display = 'none';
+  document.getElementById('adminCatFormTitle').textContent = 'إضافة قسم رئيسي جديد';
+  document.getElementById('adminSaveCatBtn').textContent = '💾 حفظ القسم في قاعدة البيانات';
+}
+
+function editAdminCategory(catId) {
+  const c = categories.find(item => item.id === catId);
+  if (!c) return;
+  document.getElementById('adminCatKeyId').value = c.id;
+  document.getElementById('adminCatLabel').value = c.label;
+  document.getElementById('adminCatIdInput').value = c.id;
+  document.getElementById('adminCatIdInput').disabled = true;
+  document.getElementById('adminCatImgUrl').value = c.imageUrl || '';
+  document.getElementById('adminCatIconSelect').value = c.icon || 'jar';
+  if (c.imageUrl) previewAdminCatImg(c.imageUrl);
+  document.getElementById('adminCatFormTitle').textContent = 'تعديل القسم: ' + c.label;
+  document.getElementById('adminSaveCatBtn').textContent = '💾 حفظ تعديلات القسم';
+}
+
+async function handleAdminCategorySave(e) {
+  e.preventDefault();
+  if (!assertAdmin() || !lockAction('saveAdminCat', 1200)) return;
+
+  const catKey = document.getElementById('adminCatKeyId').value.trim();
+  const id = document.getElementById('adminCatIdInput').value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+  const label = document.getElementById('adminCatLabel').value.trim();
+  const imageUrl = sanitizeUrl(document.getElementById('adminCatImgUrl').value.trim());
+  const icon = document.getElementById('adminCatIconSelect').value;
+
+  if (!id || !label) {
+    showToast('يرجى كتابة اسم القسم والمعرف بشكل صحيح');
+    return;
+  }
+
+  const payload = { id: catKey || id, label: sanitizeText(label), imageUrl, icon: sanitizeText(icon) };
+
+  try {
+    await apiFetch("/api/admin/categories", { method: "POST", body: JSON.stringify(payload) });
+    if (db) await db.collection('categories').doc(payload.id).set(payload, { merge: true });
+    showToast('تم حفظ القسم بنجاح في قاعدة البيانات ✓');
+    resetAdminCatForm();
+    populateCategoryDropdowns();
+  } catch (err) {
+    console.error(err);
+    showToast('حدث خطأ أثناء حفظ القسم');
+  }
+}
+
+async function deleteAdminCategory(catId, catLabel) {
+  if (!assertAdmin()) return;
+  if (confirm(`هل أنتِ متأكدة من حذف القسم "${catLabel}"؟`)) {
+    try {
+      await apiFetch(`/api/admin/categories/${catId}`, { method: "DELETE" });
+      if (db) await db.collection('categories').doc(String(catId)).delete();
+      showToast('تم حذف القسم بنجاح ✓');
+      populateCategoryDropdowns();
+    } catch (e) { console.error(e); }
+  }
+}
+
+// ================= BRANDS MANAGEMENT =================
+function previewBrandLogoImg(url) {
+  const wrap = document.getElementById('adminBrandLogoPreviewWrap');
+  const img = document.getElementById('adminBrandLogoPreviewImg');
+  const cleanUrl = sanitizeUrl(url);
+  if (cleanUrl && wrap && img) { img.src = cleanUrl; wrap.style.display = 'block'; }
+  else if (wrap) { wrap.style.display = 'none'; }
+}
+
+function editAdminBrand(brandKey) {
+  const b = brandsData[brandKey];
+  if (!b) return;
+  document.getElementById('adminBrandOriginalKey').value = brandKey;
+  document.getElementById('adminBrandNameInput').value = b.name || brandKey;
+  document.getElementById('adminBrandColorInput').value = b.color || '#E85D8A';
+  document.getElementById('adminBrandLogoInput').value = b.logoUrl || '';
+  if (b.logoUrl) previewBrandLogoImg(b.logoUrl);
+  
+  document.getElementById('adminBrandFormTitle').textContent = '✏️ تعديل الماركة: ' + (b.name || brandKey);
+  document.getElementById('adminSaveBrandBtn').textContent = '💾 حفظ التعديلات';
+  document.getElementById('adminCancelBrandBtn').style.display = 'block';
+  window.scrollTo({ top: document.getElementById('adminSecBrands').offsetTop - 60, behavior: 'smooth' });
+}
+
+function cancelAdminBrandEdit() {
+  if (!document.getElementById('adminBrandOriginalKey')) return;
+  document.getElementById('adminBrandOriginalKey').value = '';
+  document.getElementById('adminBrandNameInput').value = '';
+  document.getElementById('adminBrandColorInput').value = '#E85D8A';
+  document.getElementById('adminBrandLogoInput').value = '';
+  document.getElementById('adminBrandLogoPreviewWrap').style.display = 'none';
+  document.getElementById('adminBrandFormTitle').textContent = '🏢 إضافة ماركة جديدة';
+  document.getElementById('adminSaveBrandBtn').textContent = '+ إضافة الماركة للشريط';
+  document.getElementById('adminCancelBrandBtn').style.display = 'none';
+}
+
+async function handleSaveBrand(e) {
+  e.preventDefault();
+  if (!assertAdmin() || !lockAction('saveBrand', 1200)) return;
+
+  const originalKey = document.getElementById('adminBrandOriginalKey').value.trim();
+  const name = document.getElementById('adminBrandNameInput').value.trim();
+  const color = document.getElementById('adminBrandColorInput').value;
+  const logoUrl = sanitizeUrl(document.getElementById('adminBrandLogoInput').value.trim());
+  if (!name) {
+    showToast('يرجى كتابة اسم الماركة');
+    return;
+  }
+
+  if (originalKey && originalKey !== name) {
+    delete brandsData[originalKey];
+  }
+
+  brandsData[name] = { name: sanitizeText(name), color: sanitizeText(color), logoUrl };
+  renderAdminBrandsList();
+  renderBrandStrip();
+
+  try {
+    await apiFetch("/api/admin/settings", { method: "POST", body: JSON.stringify({ brandsData }) });
+    if (db) await db.collection('store_settings').doc('general').set({ brandsData }, { merge: true });
+    showToast(`تم حفظ وتحديث ماركة "${name}" بنجاح ✓`);
+  } catch (err) { console.error(err); }
+  cancelAdminBrandEdit();
+}
+
+async function deleteAdminBrand(brandKey) {
+  if (!assertAdmin()) return;
+  if (confirm(`هل أنتِ متأكدة من حذف ماركة "${brandKey}" من الشريط؟`)) {
+    delete brandsData[brandKey];
+    renderAdminBrandsList();
+    renderBrandStrip();
+    try {
+      await apiFetch("/api/admin/settings", { method: "POST", body: JSON.stringify({ brandsData }) });
+      if (db) await db.collection('store_settings').doc('general').set({ brandsData }, { merge: true });
+      showToast('تم حذف الماركة بنجاح ✓');
+    } catch (err) { console.error(err); }
+  }
+}
+
+function renderAdminBrandsList() {
+  const container = document.getElementById('adminBrandsListGrid');
+  if (!container) return;
+  const keys = Object.keys(brandsData);
+  container.innerHTML = keys.map(k => {
+    const b = brandsData[k];
+    const cleanLogo = sanitizeUrl(b.logoUrl);
+    return `
+      <div style="background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:36px; height:36px; border-radius:8px; border:1px solid var(--line); background:#fff; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+            ${cleanLogo ? `<img src="${cleanLogo}" style="width:100%; height:100%; object-fit:contain;">` : `<span style="width:14px; height:14px; border-radius:50%; background:${sanitizeText(b.color)};"></span>`}
+          </div>
+          <div>
+            <div style="font-weight:800; font-size:13.5px;">${sanitizeText(b.name || k)}</div>
+            <div style="font-size:11px; color:var(--text-soft); font-family:monospace;">${sanitizeText(b.color)}</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:6px;">
+          <button onclick="editAdminBrand('${sanitizeText(k)}')" style="background:#E0E7FF; color:#3730A3; padding:5px 10px; border-radius:8px; font-weight:800; font-size:11px;">تعديل ✏️</button>
+          <button onclick="deleteAdminBrand('${sanitizeText(k)}')" style="background:#FEE2E2; color:var(--red); padding:5px 10px; border-radius:8px; font-weight:800; font-size:11px;">حذف 🗑️</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ================= THEME & STORE SETTINGS =================
+async function handleSaveCustomization(e) {
+  e.preventDefault();
+  if (!assertAdmin() || !lockAction('saveCustomization', 1200)) return;
+
+  const getVal = (id, defaultVal = '') => {
+    const el = document.getElementById(id);
+    return el ? el.value.trim() : defaultVal;
+  };
+  const getChecked = (id, defaultVal = false) => {
+    const el = document.getElementById(id);
+    return el ? el.checked : defaultVal;
+  };
+
+  const primaryColor = getVal('adminPrimaryColorPicker', storeSettings.primaryColor || '#E85D8A');
+  const deliveryStd = Number(getVal('adminDeliveryStandard', 4000));
+  const deliveryExp = Number(getVal('adminDeliveryExpress', 8000));
+
+  const newSettings = {
+    primaryColor: primaryColor,
+    deliveryFeeStandard: deliveryStd,
+    deliveryFeeExpress: deliveryExp,
+    showAnnouncement: getChecked('adminShowAnnouncement', true),
+    announcementText: sanitizeText(getVal('adminAnnouncementText', '✨ توصيل مجاني للطلبات فوق 50,000 د.ع لجميع محافظات العراق 🌸')),
+    showPharmacistBanner: getChecked('adminShowPharmacistBanner', true),
+    pharmacistCtaTitle: sanitizeText(getVal('adminPharmacistTitleInput', 'استشر الصيدلي مجاناً 🩺')),
+    pharmacistCtaDesc: sanitizeText(getVal('adminPharmacistDescInput', 'تحدثي مع الصيدلي المختص مباشرة للحصول على تشخيص دقيق لروتينك وروشتتك')),
+    socialWhatsapp: sanitizeText(getVal('adminSocialWhatsappInput', '9647813703288')),
+    socialTelegram: sanitizeText(getVal('adminSocialTelegramInput', '')),
+    socialInstagram: sanitizeText(getVal('adminSocialInstagramInput', '')),
+    socialPhone: sanitizeText(getVal('adminSocialPhoneInput', '07813703288')),
+    heroMainTitle: sanitizeText(getVal('adminHeroMainTitle', 'صيدلية القطن')),
+    heroSubTitle: sanitizeText(getVal('adminHeroSubTitle', 'نحن هنا لتحسين بشرتك')),
+    heroDescTitle: sanitizeText(getVal('adminHeroDescTitle', 'منتجات أصلية لعناية صحية وجمال طبيعي')),
+    bannerImgUrl: sanitizeUrl(getVal('adminBannerImgInput', 'https://imgdb.io/i/EQ4D9ag.png')),
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+
+  storeSettings = { ...storeSettings, ...newSettings };
+  saveLocalState();
+  applyStoreSettings();
+  showToast('تم تطبيق وحفظ اللون والتعديلات فورياً! ✨');
+
+  try {
+    await apiFetch("/api/admin/settings", { method: "POST", body: JSON.stringify(newSettings) });
+    if (db) await db.collection('store_settings').doc('general').set(newSettings, { merge: true });
+  } catch (err) { console.warn(err); }
+}
+
+function applyStoreSettings() {
+  if (storeSettings.primaryColor) {
+    applyDynamicThemeColor(storeSettings.primaryColor);
+    const colorPicker = document.getElementById('adminPrimaryColorPicker');
+    if (colorPicker) colorPicker.value = storeSettings.primaryColor;
+  }
+
+  if (storeSettings.socialWhatsapp) WHATSAPP_NUMBER = storeSettings.socialWhatsapp;
+
+  const annEl = document.getElementById('announcementBar');
+  const annTextEl = document.getElementById('announcementText');
+  const heroMainEl = document.getElementById('heroMainTitle');
+  const heroSubEl = document.getElementById('heroSubTitle');
+  const heroDescEl = document.getElementById('heroDescTitle');
+  const heroImgEl = document.getElementById('primaryHeroBannerImg');
+  const pharmWrap = document.getElementById('homePharmacistCtaWrap');
+  const drawerPharmBtn = document.getElementById('drawerConsultBtn');
+
+  if (annEl) {
+    const isVisible = (storeSettings.showAnnouncement === true || storeSettings.showAnnouncement === 'true' || storeSettings.showAnnouncement === undefined);
+    annEl.style.display = isVisible ? 'flex' : 'none';
+  }
+  if (annTextEl && storeSettings.announcementText) {
+    annTextEl.textContent = storeSettings.announcementText;
+  }
+  if (heroMainEl && storeSettings.heroMainTitle) heroMainEl.textContent = storeSettings.heroMainTitle;
+  if (heroSubEl && storeSettings.heroSubTitle) heroSubEl.textContent = storeSettings.heroSubTitle;
+  if (heroDescEl && storeSettings.heroDescTitle) heroDescEl.textContent = storeSettings.heroDescTitle;
+  if (heroImgEl && storeSettings.bannerImgUrl) heroImgEl.src = sanitizeUrl(storeSettings.bannerImgUrl);
+
+  if (pharmWrap) {
+    const isPharmVisible = (storeSettings.showPharmacistBanner === true || storeSettings.showPharmacistBanner === 'true' || storeSettings.showPharmacistBanner === undefined);
+    pharmWrap.style.display = isPharmVisible ? 'block' : 'none';
+  }
+  if (drawerPharmBtn) {
+    const isPharmVisible = (storeSettings.showPharmacistBanner === true || storeSettings.showPharmacistBanner === 'true' || storeSettings.showPharmacistBanner === undefined);
+    drawerPharmBtn.style.display = isPharmVisible ? 'flex' : 'none';
+  }
+  if (document.getElementById('pharmacistCtaTitle') && storeSettings.pharmacistCtaTitle) {
+    document.getElementById('pharmacistCtaTitle').textContent = storeSettings.pharmacistCtaTitle;
+  }
+  if (document.getElementById('pharmacistCtaDesc') && storeSettings.pharmacistCtaDesc) {
+    document.getElementById('pharmacistCtaDesc').textContent = storeSettings.pharmacistCtaDesc;
+  }
+
+  const wLink = document.getElementById('drawerSocialWhatsapp');
+  const tLink = document.getElementById('drawerSocialTelegram');
+  const iLink = document.getElementById('drawerSocialInstagram');
+  const pLink = document.getElementById('drawerSocialPhone');
+
+  if (wLink) wLink.href = `https://wa.me/${storeSettings.socialWhatsapp || WHATSAPP_NUMBER}`;
+  if (tLink) tLink.href = storeSettings.socialTelegram || '#';
+  if (iLink) iLink.href = storeSettings.socialInstagram || '#';
+  if (pLink) pLink.href = `tel:${storeSettings.socialPhone || ''}`;
+}
+
+// ================= FIRESTORE REALTIME SYNC =================
+function initFirestoreSync() {
+  if (!isFirebaseConfigured || !db) return;
+
+  db.collection('store_settings').doc('general').onSnapshot(doc => {
+    if (doc.exists) {
+      storeSettings = { ...storeSettings, ...doc.data() };
+      if (storeSettings.brandsData) brandsData = { ...brandsData, ...storeSettings.brandsData };
+      saveLocalState();
+      applyStoreSettings();
+      renderPromoBanners();
+      renderPromoCardsListAdmin();
+      renderBrandStrip();
+    }
+  }, err => console.warn(err));
+
+  db.collection('categories').onSnapshot(snap => {
+    if (!snap.empty) {
+      const loaded = [];
+      snap.forEach(d => loaded.push({ id: d.id, ...d.data() }));
+      categories = loaded;
+      renderModernCategories();
+      renderAdminCategoriesList();
+      populateCategoryDropdowns();
+      updateDiscountTargetOptions();
+    }
+  }, err => console.warn(err));
+
+  db.collection('bundles').onSnapshot(snap => {
+    if (!snap.empty) {
+      const loaded = [];
+      snap.forEach(d => loaded.push({ id: d.id, ...d.data() }));
+      bundles = loaded;
+      renderHomeBundles();
+      renderAllBundles();
+      renderAdminBundlesList();
+    }
+  }, err => console.warn(err));
+
+  db.collection('products').onSnapshot(async snap => {
+    if (snap.empty) {
+      try {
+        const batch = db.batch();
+        initialDefaultProducts.forEach(item => {
+          const docRef = db.collection('products').doc(String(item.id));
+          batch.set(docRef, item);
+        });
+        await batch.commit();
+      } catch (e) { console.warn(e); }
+      return;
+    }
+
+    const loaded = [];
+    snap.forEach(doc => loaded.push({ id: doc.id, ...doc.data() }));
+    products = loaded;
+
+    products.forEach(p => {
+      if (p.brand && !brandsData[p.brand]) {
+        brandsData[p.brand] = { name: p.brand, color: hashColor(p.brand), logoUrl: '' };
+      }
+    });
+
+    renderCurrentActiveView();
+    renderModernCategories();
+    populateBundleProductsChecklist();
+    fetchRealAnalytics();
+  }, err => console.warn(err));
+
+  listenToNotifications();
+  recordRealVisit();
+}
+
+// ================= NOTIFICATIONS & TELEGRAM =================
+function listenToNotifications() {
+  if (!isFirebaseConfigured || !db) return;
+  db.collection('notifications').orderBy('createdAt', 'desc').limit(20).onSnapshot(snap => {
+    notifications = [];
+    snap.forEach(doc => notifications.push({ id: doc.id, ...doc.data() }));
+    renderNotifications();
+  }, err => console.warn(err));
+}
+
+function renderNotifications() {
+  const unreadCount = notifications.filter(n => !readNotifs.has(n.id)).length;
+  const badge = document.getElementById('notifBadge');
+  if (badge) {
+    badge.style.display = unreadCount > 0 ? 'flex' : 'none';
+    badge.textContent = unreadCount;
+  }
+
+  const listEl = document.getElementById('notifList');
+  if (listEl) {
+    listEl.innerHTML = notifications.length === 0 ? `<div class="no-results" style="padding:30px 0;">لا توجد إشعارات جديدة حالياً 🌸</div>` :
+      notifications.map(n => {
+        const timeStr = n.createdAt && n.createdAt.toDate ? n.createdAt.toDate().toLocaleDateString('ar-IQ', {hour:'2-digit', minute:'2-digit'}) : 'الآن';
+        return `
+          <div class="notif-item">
+            <div class="notif-item-header">
+              <span class="notif-item-title">${sanitizeText(n.title)}</span>
+              <span class="notif-item-time mono">${sanitizeText(timeStr)}</span>
+            </div>
+            <p class="notif-item-desc">${sanitizeText(n.body)}</p>
+          </div>`;
+      }).join('');
+  }
+
+  const adminHistory = document.getElementById('adminNotifsHistoryList');
+  if (adminHistory) {
+    adminHistory.innerHTML = notifications.map(n => `
+      <div style="background:#fff; border:1px solid var(--line); border-radius:10px; padding:10px; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="font-weight:800; font-size:13px; color:var(--rose-deep);">${sanitizeText(n.title)}</div>
+          <div style="font-size:12px; color:var(--text-soft);">${sanitizeText(n.body)}</div>
+        </div>
+        <button onclick="deleteNotification('${sanitizeText(n.id)}')" style="color:var(--red); font-size:12px; font-weight:800;">حذف 🗑️</button>
+      </div>`).join('');
+  }
+}
+
+function openNotifModal() {
+  const modal = document.getElementById('notifModal');
+  if (modal) modal.classList.add('open');
+  notifications.forEach(n => readNotifs.add(n.id));
+  localStorage.setItem('qutn_read_notifs', JSON.stringify([...readNotifs]));
+  renderNotifications();
+}
+
+function closeNotifModal() { 
+  const modal = document.getElementById('notifModal');
+  if (modal) modal.classList.remove('open'); 
+}
+
+async function handleSendBroadcastNotification(e) {
+  e.preventDefault();
+  if (!assertAdmin() || !lockAction('sendBroadcastNotif', 2000)) return;
+
+  const title = document.getElementById('notifTitleInput').value.trim();
+  const body = document.getElementById('notifBodyInput').value.trim();
+  const type = document.getElementById('notifTypeInput').value;
+
+  if (!title || !body) {
+    showToast('يرجى تعبئة عنوان ونص الإشعار بالكامل');
+    return;
+  }
+
+  try {
+    await apiFetch("/api/admin/notifications", {
+      method: "POST",
+      body: JSON.stringify({ title, body, type })
+    });
+    if (db) {
+      await db.collection('notifications').add({
+        title: sanitizeText(title),
+        body: sanitizeText(body),
+        type: sanitizeText(type),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+    document.getElementById('notifTitleInput').value = '';
+    document.getElementById('notifBodyInput').value = '';
+    showToast('🚀 تم إرسال الإشعار لجميع المستخدمين بنجاح!');
+  } catch (err) {
+    console.error(err);
+    showToast('حدث خطأ أثناء إرسال الإشعار');
+  }
+}
+
+async function deleteNotification(id) {
+  if (!assertAdmin()) return;
+  if (confirm('حذف هذا الإشعار نهائياً؟')) {
+    await apiFetch(`/api/admin/notifications/${id}`, { method: "DELETE" });
+    if (db) await db.collection('notifications').doc(String(id)).delete();
+    showToast('تم حذف الإشعار بنجاح ✓');
+  }
+}
+
+async function handleSaveTelegramSettings(e) {
+  e.preventDefault();
+  if (!assertAdmin()) return;
+  const botToken = document.getElementById('teleBotTokenInput').value.trim();
+  const chatId = document.getElementById('teleChatIdInput').value.trim();
+
+  await apiFetch("/api/admin/settings", {
+    method: "POST",
+    body: JSON.stringify({ telegramConfig: { botToken, chatId, enabled: true } })
+  });
+  showToast('تم حفظ إعدادات التلغرام بنجاح ✓');
+}
+
+async function testTelegramBotNotification() {
+  if (!assertAdmin()) return;
+  const botToken = document.getElementById('teleBotTokenInput').value.trim();
+  const chatId = document.getElementById('teleChatIdInput').value.trim();
+
+  showToast('جاري إرسال إشعار تجريبي إلى التلغرام...');
+  const res = await apiFetch("/api/admin/telegram/test", {
+    method: "POST",
+    body: JSON.stringify({ botToken, chatId })
+  });
+
+  if (res && res.success) {
+    showToast(res.message);
+  } else {
+    showToast((res && res.message) || 'تعذر إرسال الإشعار، تحققي من صحة التوكن ورقم الشات');
+  }
+}
+
+// ================= AUDIT LOGS & SECURITY =================
+async function fetchAuditLogs() {
+  const res = await apiFetch("/api/admin/logs");
+  const tbody = document.getElementById('adminAuditLogsTbody');
+  if (!tbody) return;
+
+  if (res && res.logs && res.logs.length > 0) {
+    tbody.innerHTML = res.logs.map(log => `
+      <tr>
+        <td><span class="log-badge">${sanitizeText(log.action)}</span></td>
+        <td>${sanitizeText(log.details)}</td>
+        <td>${sanitizeText(log.adminEmail)}</td>
+        <td class="mono" style="font-size:10px;">${new Date(log.timestamp).toLocaleTimeString('ar-IQ')}</td>
+        <td class="mono" style="font-size:10px;">${sanitizeText(log.ip)}</td>
+      </tr>
+    `).join('');
+  } else {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:14px;">لا توجد سجلات بعد.</td></tr>`;
+  }
+}
+
+async function handleSaveSecuritySettings(e) {
+  e.preventDefault();
+  if (!assertAdmin()) return;
+  const maxOrdersPerHour = Number(document.getElementById('secMaxOrdersHour').value);
+  const maxRequestsPerMin = Number(document.getElementById('secMaxReqsMin').value);
+
+  await apiFetch("/api/admin/settings", {
+    method: "POST",
+    body: JSON.stringify({ rateLimits: { maxOrdersPerHour, maxRequestsPerMin } })
+  });
+  showToast('تم حفظ سياسات الحماية بنجاح ✓');
 }
 
 // ================= ACCOUNT & AUTH =================
@@ -2460,7 +2771,7 @@ function signInWithGoogle() {
     .catch(e => {
       console.error("Google Auth Error:", e);
       if (e.code === 'auth/unauthorized-domain') {
-        showToast('⚠️ يرجى إضافة دومين الموقع في قائمة Authorized Domains في Firebase');
+        showToast('⚠️ يرجى إضافة دومين الموقع في Firebase Authorized Domains');
       } else if (e.code !== 'auth/popup-closed-by-user') {
         showToast('تعذر تسجيل الدخول (' + (e.code || 'يرجى المحاولة مجدداً') + ')');
       }
@@ -2498,7 +2809,6 @@ function updateAdminInterfaceState() {
   if (bnAdmin) bnAdmin.style.display = isAdmin ? 'flex' : 'none';
   if (floatAddBtn) floatAddBtn.style.display = isAdmin ? 'flex' : 'none';
 
-  // قفل لوحة التحكم وحمايتها إذا فُتحت admin.html من مستخدم عادي
   if (adminGate) {
     if (isAdmin) {
       adminGate.classList.remove('locked');
@@ -2508,7 +2818,35 @@ function updateAdminInterfaceState() {
   }
 }
 
-// ================= CONSULTATION MODAL =================
+// ================= CONSULTATION & SHARE MODALS =================
+function shareCurrentProduct() {
+  if (!currentProductId) return;
+  const p = findProduct(currentProductId);
+  const shareUrl = `${window.location.origin}${window.location.pathname}#p=${currentProductId}`;
+  
+  if (navigator.share) {
+    navigator.share({
+      title: p ? p.name : 'صيدلية القطن',
+      text: `شاهد ${p ? p.name : 'هذا المنتج'} في صيدلية القطن:`,
+      url: shareUrl
+    }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      showToast('📋 تم نسخ رابط المنتج المباشر بنجاح!');
+    });
+  }
+}
+
+function checkUrlHashForProduct() {
+  const hash = window.location.hash;
+  if (hash && hash.startsWith('#p=')) {
+    const pId = hash.replace('#p=', '');
+    if (pId && findProduct(pId)) {
+      setTimeout(() => openProduct(pId, true), 200);
+    }
+  }
+}
+
 function openConsultModal() {
   const m = document.getElementById('consultModal');
   if (m) m.classList.add('open');
@@ -2545,6 +2883,32 @@ function handleConsultSubmit(e) {
   closeConsultModal();
 }
 
+function checkAndShowWelcomeModal() {
+  if (!localStorage.getItem('qutn_welcomed')) {
+    setTimeout(() => {
+      const m = document.getElementById('welcomeOfferModal');
+      if (m) m.classList.add('open');
+    }, 2500);
+  }
+}
+
+function closeWelcomeModal() {
+  const m = document.getElementById('welcomeOfferModal');
+  if (m) m.classList.remove('open');
+  localStorage.setItem('qutn_welcomed', '1');
+}
+
+function copyWelcomeCode() {
+  navigator.clipboard.writeText('QUTN10').then(() => {
+    showToast('تم نسخ كود الخصم (QUTN10) بنجاح!');
+  });
+}
+
+function applyWelcomeAndShop() {
+  closeWelcomeModal();
+  showToast('تسوقي الآن واستخدمي كود QUTN10 في السلة ✨');
+}
+
 function copyFullSourceCode() {
   navigator.clipboard.writeText('<!DOCTYPE html>\n' + document.documentElement.outerHTML)
     .then(() => showToast('📋 تم نسخ كود الصفحة بالكامل!'))
@@ -2566,6 +2930,7 @@ window.addEventListener('DOMContentLoaded', () => {
   renderHome();
   renderModernCategories();
   populateCategoryDropdowns();
+  populateBundleProductsChecklist();
   updateCartBadge();
   renderAccountView();
   updateUserHeaderProfile();
@@ -2581,8 +2946,10 @@ window.addEventListener('DOMContentLoaded', () => {
     fetchRealAnalytics();
     fetchAdminOrdersList();
     fetchAdminCoupons();
+    renderAdminBundlesList();
     fetchAuditLogs();
     renderAdminCategoriesList();
     renderAdminBrandsList();
+    renderPromoCardsListAdmin();
   }
 });
