@@ -5,7 +5,7 @@
 // ================= CONFIGURATION & CONSTANTS =================
 const WORKER_API_BASE = "https://cottanbackend.hussaindark6.workers.dev";
 const ADMIN_EMAIL = "hussaindark6@gmail.com";
-let WHATSAPP_NUMBER = "9647813703288";
+const WHATSAPP_NUMBER = "9647813703288"; // رقم الواتساب الرسمي المعتمد
 
 const firebaseConfig = {
   apiKey: "AIzaSyDXAp6CTcq3OlN2egGOj5Yg8jK5wUsR6Uc",
@@ -80,7 +80,7 @@ function lockAction(actionKey, cooldownMs = 1500) {
   return true;
 }
 
-// فحص متصفحات التطبيقات الداخلية (Telegram, Instagram, etc.)
+// فحص متصفحات التطبيقات الداخلية التي تحظر الجلسة مثل Telegram
 function isInAppBrowser() {
   const ua = navigator.userAgent || navigator.vendor || window.opera || '';
   const isIAB = /Telegram|Instagram|FBAN|FBAV|TikTok|Snapchat|Line|Twitter|MicroMessenger|WhatsApp|musical_ly/i.test(ua);
@@ -297,7 +297,7 @@ async function applyPromoCode(code) {
   });
 
   if (res && res.valid) {
-    appliedPromo = { code: res.code, discountAmount: res.discountAmount };
+    appliedPromo = { code: res.code, discountAmount: Number(res.discountAmount || 0) };
     showToast(res.message || 'تم تطبيق الخصم بنجاح! 🎉');
     renderCart();
     renderCheckoutSummary();
@@ -594,7 +594,7 @@ async function deleteAdminBundle(id) {
   }
 }
 
-// ================= THERMAL RECEIPT PRINTING (80mm) =================
+// ================= THERMAL RECEIPT PRINTING (80mm MATHEMATICALLY ALIGNED) =================
 function openReceiptModal(orderId) {
   const ord = myOrders.find(o => String(o.id) === String(orderId)) || (window.adminLastOrdersList && window.adminLastOrdersList.find(o => String(o.id) === String(orderId)));
   if (!ord) {
@@ -606,14 +606,14 @@ function openReceiptModal(orderId) {
   const tbody = document.getElementById('recItemsTbody');
   if (tbody) {
     tbody.innerHTML = (ord.items || []).map(it => {
-      const unitPrice = Number(it.price || 0);
+      const unitPrice = Number(it.price || it.unitPrice || 0);
       const qty = Number(it.quantity || 1);
-      const itemTotal = unitPrice * qty;
+      const itemTotal = Number(it.lineTotal) || (unitPrice * qty);
       itemsSubtotal += itemTotal;
 
       return `
         <tr>
-          <td>${sanitizeText(it.name)} ${it.isBundle ? '🎁' : ''}</td>
+          <td>${sanitizeText(it.name)} ${it.isBundle ? '🎁' : ''} (${fmtPrice(unitPrice)})</td>
           <td style="text-align:center;">${qty}</td>
           <td class="mono" style="text-align:left;">${fmtPrice(itemTotal)}</td>
         </tr>
@@ -671,8 +671,8 @@ function rateProductInstant(stars) {
   }
   localStorage.setItem(ratedKey, String(stars));
 
-  const currentTotal = (p.rating || 4.8) * (p.reviews || 80);
-  const newReviews = (p.reviews || 80) + 1;
+  const currentTotal = (Number(p.rating) || 4.8) * (Number(p.reviews) || 80);
+  const newReviews = (Number(p.reviews) || 80) + 1;
   const newRating = Number(((currentTotal + stars) / newReviews).toFixed(1));
   p.rating = newRating;
   p.reviews = newReviews;
@@ -980,7 +980,7 @@ async function fetchRealAnalytics() {
     const ordersSnap = await db.collection('orders').get();
     totalOrdersCount = Math.max(ordersSnap.size, myOrders.length);
 
-    // حساب كميات المنتجات المباعة ديناميكياً من كافة الطلبات
+    // تجميع مبيعات كل مادة لحساب أكثر 5 منتجات مبيعاً بدقة
     const productSalesMap = {};
 
     ordersSnap.forEach(doc => {
@@ -1000,7 +1000,7 @@ async function fetchRealAnalytics() {
     todayRevenue = dRev;
     monthlyRevenue = mRev;
 
-    // تحديث orderCount في الذاكرة لتطابق الطلبات الفعلية
+    // تحديث عداد orderCount في المنتجات المحلية فورياً
     products.forEach(p => {
       if (productSalesMap[p.id]) {
         p.orderCount = Math.max(Number(p.orderCount || 0), productSalesMap[p.id]);
@@ -1165,6 +1165,7 @@ function renderAdminOrdersList(orders) {
     if (statusFilter === 'delivered' && !(o.status && o.status.includes('التسليم'))) return false;
     if (statusFilter === 'shipping' && !(o.status && o.status.includes('الشحن'))) return false;
     if (statusFilter === 'processing' && !(o.status && o.status.includes('المعالجة'))) return false;
+    if (statusFilter === 'customer_cancelled' && !(o.status && o.status.includes('الزبون'))) return false;
     if (statusFilter === 'cancelled' && !(o.status && o.status.includes('ملغي'))) return false;
 
     return true;
@@ -1177,20 +1178,25 @@ function renderAdminOrdersList(orders) {
 
   container.innerHTML = displayOrders.map(ord => {
     const items = ord.items || [];
-    let itemsCalcTotal = 0;
+    let itemsCalcSubtotal = 0;
+    
     const itemsHtml = items.map(it => {
-      const price = Number(it.price || 0);
+      const unitPrice = Number(it.price || it.unitPrice || 0);
       const qty = Number(it.quantity || 1);
-      const lineTotal = price * qty;
-      itemsCalcTotal += lineTotal;
-      return `• ${it.isBundle ? '🎁 [بكج] ' : ''}${sanitizeText(it.name || 'منتج')} × ${qty} (${fmtPrice(lineTotal)})`;
+      const lineTotal = Number(it.lineTotal) || (unitPrice * qty);
+      itemsCalcSubtotal += lineTotal;
+      return `• ${it.isBundle ? '🎁 [بكج] ' : ''}${sanitizeText(it.name || 'منتج')} (${fmtPrice(unitPrice)} × ${qty} قطع) = <b>${fmtPrice(lineTotal)}</b>`;
     }).join('<br>');
 
     const delFee = (ord.deliveryFee !== undefined) 
       ? Number(ord.deliveryFee) 
       : ((ord.deliveryMethod === 'express') ? 8000 : 4000);
       
-    const grandTotal = Number(ord.total) || (itemsCalcTotal + delFee);
+    const discountVal = Number(ord.discountAmount || 0);
+    const subtotalVal = Number(ord.subtotal) || itemsCalcSubtotal;
+    const grandTotal = Number(ord.total) || Math.max(0, subtotalVal - discountVal) + delFee;
+
+    const isCancelled = ord.status && ord.status.includes('ملغي');
 
     return `
       <div class="admin-order-manage-card">
@@ -1202,6 +1208,7 @@ function renderAdminOrdersList(orders) {
               <option value="قيد المعالجة والتجهيز 🚚" ${ord.status === 'قيد المعالجة والتجهيز 🚚' ? 'selected' : ''}>قيد التجهيز 🚚</option>
               <option value="تم الشحن مع المندوب 🛵" ${ord.status === 'تم الشحن مع المندوب 🛵' ? 'selected' : ''}>تم الشحن 🛵</option>
               <option value="تم التسليم بنجاح ✅" ${ord.status === 'تم التسليم بنجاح ✅' ? 'selected' : ''}>تم التسليم ✅</option>
+              <option value="طلب ملغي من قبل الزبون ❌" ${ord.status === 'طلب ملغي من قبل الزبون ❌' ? 'selected' : ''}>ملغي من الزبون ❌</option>
               <option value="طلب ملغي ❌" ${ord.status === 'طلب ملغي ❌' ? 'selected' : ''}>طلب ملغي ❌</option>
             </select>
           </div>
@@ -1215,9 +1222,17 @@ function renderAdminOrdersList(orders) {
         <div style="font-size:12px; color:var(--ink); margin-bottom:6px; background:#F9FAFB; padding:8px 10px; border-radius:8px;">
           ${itemsHtml}
         </div>
+        
+        <!-- تفصيل الحسابات بدقة -->
+        <div class="order-pricing-box" style="margin:6px 0; background:#FFF; border:1px dashed var(--line);">
+          <div class="order-pricing-row"><span>المجموع الفرعي للمنتجات:</span><span class="mono">${fmtPrice(subtotalVal)}</span></div>
+          ${discountVal > 0 ? `<div class="order-pricing-row discount-row"><span>🎟️ خصم الكوبون (${ord.promoCode || 'كود'}):</span><span class="mono">-${fmtPrice(discountVal)}</span></div>` : ''}
+          <div class="order-pricing-row"><span>أجرة التوصيل:</span><span class="mono">+${fmtPrice(delFee)}</span></div>
+        </div>
+
         <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px dashed var(--line); padding-top:6px; margin-top:6px;">
-          <span style="font-size:11.5px; color:var(--text-soft);">أجرة التوصيل: ${fmtPrice(delFee)}</span>
-          <span style="font-weight:900; font-size:14.5px; color:var(--rose-deep);">المجموع الكلي: ${fmtPrice(grandTotal)}</span>
+          <span style="font-size:12px; font-weight:700; color:${isCancelled ? '#DC2626' : 'var(--text-soft)'};">الحالة: ${sanitizeText(ord.status || 'قيد التجهيز')}</span>
+          <span style="font-weight:900; font-size:15px; color:var(--rose-deep);">المجموع الكلي: ${fmtPrice(grandTotal)}</span>
         </div>
       </div>
     `;
@@ -1229,6 +1244,31 @@ async function updateOrderStatus(orderId, newStatus) {
   if (db) {
     await db.collection('orders').doc(String(orderId)).set({ status: newStatus }, { merge: true });
     showToast(`تم تحديث حالة الطلب #${orderId} إلى: ${newStatus}`);
+  }
+}
+
+// ================= CUSTOMER ORDER CANCELLATION =================
+async function cancelMyOrder(orderId) {
+  if (!confirm('هل أنتِ متأكدة من رغبتكِ في إلغاء هذا الطلب؟')) return;
+  
+  const ord = myOrders.find(o => String(o.id) === String(orderId));
+  if (!ord) return;
+
+  ord.status = 'طلب ملغي من قبل الزبون ❌';
+  saveLocalState();
+  renderMyOrders();
+
+  if (db) {
+    try {
+      await db.collection('orders').doc(String(orderId)).set({
+        status: 'طلب ملغي من قبل الزبون ❌',
+        cancelledAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      showToast('تم إلغاء طلبكِ بنجاح ❌');
+    } catch (err) {
+      console.warn("Cancellation sync fallback:", err);
+      showToast('تم إلغاء الطلب');
+    }
   }
 }
 
@@ -1259,6 +1299,7 @@ async function buildDetailedOrdersCSV() {
     if (statusFilter === 'delivered' && !(o.status && o.status.includes('التسليم'))) return false;
     if (statusFilter === 'shipping' && !(o.status && o.status.includes('الشحن'))) return false;
     if (statusFilter === 'processing' && !(o.status && o.status.includes('المعالجة'))) return false;
+    if (statusFilter === 'customer_cancelled' && !(o.status && o.status.includes('الزبون'))) return false;
     if (statusFilter === 'cancelled' && !(o.status && o.status.includes('ملغي'))) return false;
 
     return true;
@@ -1687,7 +1728,7 @@ function renderCheckoutSummary() {
     <div class="summary-row total"><span>المجموع الإجمالي المطلوب</span><span class="mono">${fmtPrice(finalTotal)}</span></div>`;
 }
 
-// ================= CONFIRM ORDER (WITH DETAILED WHATSAPP & TELEGRAM INVOICE) =================
+// ================= CONFIRM ORDER (WITH DETAILED WHATSAPP +9647813703288 & TELEGRAM INVOICE) =================
 async function confirmOrder() {
   if (!lockAction('confirmOrder', 2500)) return;
 
@@ -1716,20 +1757,23 @@ async function confirmOrder() {
   // 1. الحفظ الذكي لبيانات الزبون
   localStorage.setItem('qutn_customer_saved', JSON.stringify({ name, phone, address }));
 
-  // 2. إعداد مصفوفة الأصناف وحساب المجموع بدقة
+  // 2. إعداد مصفوفة الأصناف وتخزين سعر المفرد وإجمالي المادة بدقة
   let calculatedSubtotal = 0;
   const itemsPayload = ids.map(id => {
     const isBundle = id.startsWith('bundle_');
     const item = isBundle ? findBundle(id.replace('bundle_', '')) : findProduct(id);
     const unitPrice = item ? Number(item.price || 0) : 0;
     const qty = Number(cart[id] || 1);
-    calculatedSubtotal += (unitPrice * qty);
+    const lineTotal = unitPrice * qty;
+    calculatedSubtotal += lineTotal;
 
     return {
       id: id,
       name: item ? (item.name || item.title) : 'منتج',
+      unitPrice: unitPrice,
       price: unitPrice,
       quantity: qty,
+      lineTotal: lineTotal,
       isBundle: isBundle
     };
   });
@@ -1739,107 +1783,103 @@ async function confirmOrder() {
     : (Number(storeSettings.deliveryFeeStandard) || 4000);
 
   const discountAmount = appliedPromo ? Number(appliedPromo.discountAmount || 0) : 0;
-  let grandTotal = Math.max(0, calculatedSubtotal - discountAmount) + deliveryFee;
-  let orderId = "QUTN-" + Math.floor(100000 + Math.random() * 900000);
+  const grandTotal = Math.max(0, calculatedSubtotal - discountAmount) + deliveryFee;
+  const orderId = "QUTN-" + Math.floor(100000 + Math.random() * 900000);
 
-  try {
-    const response = await apiFetch("/api/orders", {
-      method: "POST",
-      body: JSON.stringify({
-        customerName: name,
-        customerPhone: phone,
-        customerAddress: address,
-        deliveryMethod,
-        items: itemsPayload,
-        promoCode: appliedPromo ? appliedPromo.code : null
-      })
-    });
+  const newOrderObj = {
+    id: orderId,
+    date: new Date().toLocaleDateString('ar-IQ', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+    name,
+    phone,
+    address,
+    deliveryMethod,
+    items: itemsPayload,
+    subtotal: calculatedSubtotal,
+    deliveryFee: deliveryFee,
+    discountAmount: discountAmount,
+    promoCode: appliedPromo ? appliedPromo.code : null,
+    total: grandTotal,
+    status: 'قيد المعالجة والتجهيز 🚚'
+  };
 
-    if (response && response.success && response.verifiedTotal) {
-      grandTotal = Number(response.verifiedTotal);
-      orderId = response.orderId;
-    }
+  myOrders.unshift(newOrderObj);
+  saveLocalState();
 
-    const newOrderObj = {
-      id: orderId,
-      date: new Date().toLocaleDateString('ar-IQ', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
-      name,
-      phone,
-      address,
-      deliveryMethod,
-      items: itemsPayload,
-      subtotal: calculatedSubtotal,
-      deliveryFee: deliveryFee,
-      discountAmount: discountAmount,
-      total: grandTotal,
-      status: 'قيد المعالجة والتجهيز 🚚'
-    };
-
-    myOrders.unshift(newOrderObj);
-
-    if (db) {
-      // 1. حفظ وثيقة الطلب في فايربيس
+  // 3. الحفظ المباشر في فايربيس وتحديث عداد المنتجات للأكثر مبيعاً
+  if (db) {
+    try {
       await db.collection('orders').doc(orderId).set({
         ...newOrderObj,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      }).catch(e => console.warn(e));
+      });
 
-      // 2. زيادة عداد المبيعات لكل منتج لتحديث إحصائية أكثر 5 منتجات مبيعاً فورياً
       itemsPayload.forEach(it => {
         if (!it.isBundle && it.id) {
           db.collection('products').doc(String(it.id)).set({
-            orderCount: firebase.firestore.FieldValue.increment(it.quantity || 1)
+            orderCount: firebase.firestore.FieldValue.increment(Number(it.quantity || 1))
           }, { merge: true }).catch(console.warn);
         }
       });
+    } catch (e) {
+      console.warn("Firestore order write error:", e);
     }
+  }
 
-    // بناء رسالة الواتساب المطابقة تماماً لرسالة التلغرام
-    const lines = itemsPayload.map(item => `• ${item.isBundle ? '🎁 [بكج توفير] ' : ''}${item.name} × ${item.quantity} (${fmtPrice(item.price * item.quantity)})`);
-    const deliveryLabel = deliveryMethod === 'express' ? `سريع (${fmtPrice(deliveryFee)})` : `عادي (${fmtPrice(deliveryFee)})`;
-    const promoInfo = appliedPromo ? `🎟️ *كود الخصم المطبق:* ${appliedPromo.code} (-${fmtPrice(discountAmount)})\n` : '';
+  // 4. إرسال الطلب لـ Cloudflare Worker لإشعار التلغرام
+  apiFetch("/api/orders", {
+    method: "POST",
+    body: JSON.stringify({
+      customerName: name,
+      customerPhone: phone,
+      customerAddress: address,
+      deliveryMethod,
+      items: itemsPayload,
+      promoCode: appliedPromo ? appliedPromo.code : null
+    })
+  }).catch(() => {});
 
-    const whatsappInvoiceMsg = 
-      `🌸 *طلب جديد - صيدلية القطن*\n` +
-      `━━━━━━━━━━━━━━━━━━━\n` +
-      `📋 *رقم الفاتورة:* #${orderId}\n` +
-      `📅 *التاريخ:* ${newOrderObj.date}\n\n` +
-      `👤 *اسم الزبون:* ${name}\n` +
-      `📞 *رقم الهاتف:* ${phone}\n` +
-      `📍 *العنوان بالتفصيل:* ${address}\n` +
-      `🚚 *نوع التوصيل:* ${deliveryLabel}\n\n` +
-      `📦 *المنتجات المطلوبة:*\n${lines.join('\n')}\n\n` +
-      `━━━━━━━━━━━━━━━━━━━\n` +
-      `💵 *المجموع الفرعي للمنتجات:* ${fmtPrice(calculatedSubtotal)}\n` +
-      `${promoInfo}` +
-      `🚚 *أجرة التوصيل:* ${fmtPrice(deliveryFee)}\n` +
-      `💰 *المجموع الإجمالي المطلوب للدفع:* *${fmtPrice(grandTotal)}*\n` +
-      `━━━━━━━━━━━━━━━━━━━\n` +
-      `✨ شكراً لتسوقكم من صيدلية القطن 🌸`;
+  // 5. بناء رسالة الواتساب الاحترافية الموجهة مباشرة لرقم الصيدلية +9647813703288
+  const lines = itemsPayload.map(item => `• ${item.isBundle ? '🎁 [بكج توفير] ' : ''}${item.name} (${fmtPrice(item.unitPrice)} × ${item.quantity} قطع) = ${fmtPrice(item.lineTotal)}`);
+  const deliveryLabel = deliveryMethod === 'express' ? `سريع (${fmtPrice(deliveryFee)})` : `عادي (${fmtPrice(deliveryFee)})`;
+  const promoInfo = appliedPromo ? `🎟️ *كود الخصم المطبق:* ${appliedPromo.code} (-${fmtPrice(discountAmount)})\n` : '';
 
-    cart = {};
-    appliedPromo = null;
-    updateCartBadge();
-    saveLocalState();
+  const whatsappInvoiceMsg = 
+    `🌸 *طلب جديد - صيدلية القطن*\n` +
+    `━━━━━━━━━━━━━━━━━━━\n` +
+    `📋 *رقم الفاتورة:* #${orderId}\n` +
+    `📅 *التاريخ:* ${newOrderObj.date}\n\n` +
+    `👤 *اسم الزبون:* ${name}\n` +
+    `📞 *رقم الهاتف:* ${phone}\n` +
+    `📍 *العنوان بالتفصيل:* ${address}\n` +
+    `🚚 *نوع التوصيل:* ${deliveryLabel}\n\n` +
+    `📦 *المنتجات المطلوبة:*\n${lines.join('\n')}\n\n` +
+    `━━━━━━━━━━━━━━━━━━━\n` +
+    `💵 *المجموع الفرعي للمنتجات:* ${fmtPrice(calculatedSubtotal)}\n` +
+    `${promoInfo}` +
+    `🚚 *أجرة التوصيل:* ${fmtPrice(deliveryFee)}\n` +
+    `💰 *المجموع الإجمالي المطلوب للدفع:* *${fmtPrice(grandTotal)}*\n` +
+    `━━━━━━━━━━━━━━━━━━━\n` +
+    `✨ يرجى تأكيد الطلب من قبل الصيدلي 🌸`;
 
-    const targetPhone = storeSettings.socialWhatsapp || WHATSAPP_NUMBER;
-    window.open(`https://wa.me/${targetPhone}?text=${encodeURIComponent(whatsappInvoiceMsg)}`, '_blank');
+  cart = {};
+  appliedPromo = null;
+  updateCartBadge();
+  saveLocalState();
 
-    const modalMsg = document.getElementById('successModalMsg');
-    if (modalMsg) {
-      modalMsg.textContent = `تم تسجيل طلبكِ رقم (#${orderId}) بنجاح بقيمة ${fmtPrice(grandTotal)}. جاري تجهيز الطلب للتوصيل إلى: ${address}.`;
-    }
-    const successModal = document.getElementById('orderSuccessModal');
-    if (successModal) successModal.classList.add('open');
+  // فتح الواتساب مباشرة مع الرقم المعتمد +9647813703288
+  const targetPhone = "9647813703288";
+  window.open(`https://wa.me/${targetPhone}?text=${encodeURIComponent(whatsappInvoiceMsg)}`, '_blank');
 
-  } catch (err) {
-    console.error(err);
-    showToast('تعذر إرسال الطلب، يرجى المحاولة لاحقاً');
-  } finally {
-    if (confirmBtn) {
-      confirmBtn.disabled = false;
-      confirmBtn.textContent = 'تأكيد الطلب';
-    }
+  const modalMsg = document.getElementById('successModalMsg');
+  if (modalMsg) {
+    modalMsg.textContent = `تم تسجيل طلبكِ رقم (#${orderId}) بنجاح بقيمة ${fmtPrice(grandTotal)}. جاري التواصل معكِ عبر الواتساب لتأكيد الشحن إلى: ${address}.`;
+  }
+  const successModal = document.getElementById('orderSuccessModal');
+  if (successModal) successModal.classList.add('open');
+
+  if (confirmBtn) {
+    confirmBtn.disabled = false;
+    confirmBtn.textContent = 'تأكيد الطلب';
   }
 }
 
@@ -2038,6 +2078,7 @@ function renderWishlist() {
   renderProductGrid('wishlistGrid', list, 'قائمتك المفضلة فارغة حالياً 🌸');
 }
 
+// ================= CUSTOMER "MY ORDERS" (WITH TRANSPARENT PRICING & CANCEL BUTTON) =================
 function renderMyOrders() {
   const container = document.getElementById('myOrdersContainer');
   const countEl = document.getElementById('myOrdersCount');
@@ -2051,16 +2092,17 @@ function renderMyOrders() {
 
   container.innerHTML = myOrders.map(ord => {
     const items = ord.items || [];
-    let calcSubtotal = 0;
+    let itemsCalcSubtotal = 0;
+    
     const itemsHtml = items.map(it => {
-      const price = Number(it.price || 0);
+      const unitPrice = Number(it.price || it.unitPrice || 0);
       const qty = Number(it.quantity || 1);
-      const lineTotal = price * qty;
-      calcSubtotal += lineTotal;
+      const lineTotal = Number(it.lineTotal) || (unitPrice * qty);
+      itemsCalcSubtotal += lineTotal;
       return `
         <div class="order-item-row">
-          <span>• ${it.isBundle ? '🎁 ' : ''}${sanitizeText(it.name)} × ${qty}</span>
-          <span class="mono">${fmtPrice(lineTotal)}</span>
+          <span>• ${it.isBundle ? '🎁 [بكج] ' : ''}${sanitizeText(it.name)} (${fmtPrice(unitPrice)} × ${qty} قطع)</span>
+          <span class="mono" style="font-weight:800;">${fmtPrice(lineTotal)}</span>
         </div>
       `;
     }).join('');
@@ -2069,13 +2111,18 @@ function renderMyOrders() {
       ? Number(ord.deliveryFee) 
       : (ord.deliveryMethod === 'express' ? 8000 : 4000);
 
-    const finalTotal = Number(ord.total) || (calcSubtotal + delFee);
+    const discountVal = Number(ord.discountAmount || 0);
+    const subtotalVal = Number(ord.subtotal) || itemsCalcSubtotal;
+    const finalTotal = Number(ord.total) || Math.max(0, subtotalVal - discountVal) + delFee;
+
+    const isProcessing = ord.status === 'قيد المعالجة والتجهيز 🚚';
+    const isCancelled = ord.status && ord.status.includes('ملغي');
 
     return `
       <div class="order-card">
         <div class="order-card-header">
           <span class="order-card-id mono">#${sanitizeText(ord.id)}</span>
-          <span class="order-card-status">${sanitizeText(ord.status || 'قيد المعالجة والتجهيز 🚚')}</span>
+          <span class="order-card-status ${isCancelled ? 'cancelled' : ''}">${sanitizeText(ord.status || 'قيد المعالجة والتجهيز 🚚')}</span>
         </div>
         
         <div class="order-tracker-timeline">
@@ -2087,16 +2134,26 @@ function renderMyOrders() {
         <div style="font-size:11.5px; color:var(--text-soft); margin-bottom:8px;">
           التاريخ: <span class="mono">${sanitizeText(ord.date)}</span> · العنوان: ${sanitizeText(ord.address)} (${ord.deliveryMethod === 'express' ? 'توصيل سريع' : 'توصيل عادي'})
         </div>
+        
         <div style="background:var(--surface); border-radius:10px; padding:10px; margin-bottom:8px;">
           ${itemsHtml}
-          <div style="border-top:1px dashed var(--line); margin-top:6px; padding-top:6px; font-size:11.5px; color:var(--text-soft); display:flex; justify-content:space-between;">
-            <span>أجرة التوصيل:</span>
-            <span class="mono">${fmtPrice(delFee)}</span>
-          </div>
         </div>
+
+        <!-- تفصيل الحسابات الواضح -->
+        <div class="order-pricing-box">
+          <div class="order-pricing-row"><span>المجموع الفرعي للمنتجات:</span><span class="mono">${fmtPrice(subtotalVal)}</span></div>
+          ${discountVal > 0 ? `<div class="order-pricing-row discount-row"><span>🎟️ خصم الكوبون (${ord.promoCode || 'كود'}):</span><span class="mono">-${fmtPrice(discountVal)}</span></div>` : ''}
+          <div class="order-pricing-row"><span>أجرة التوصيل:</span><span class="mono">+${fmtPrice(delFee)}</span></div>
+        </div>
+
         <div class="order-card-footer">
-          <span>المجموع الكلي النهائي:</span>
-          <span class="mono" style="color:var(--rose-deep); font-size:16px;">${fmtPrice(finalTotal)}</span>
+          <div>
+            ${isProcessing ? `<button type="button" class="btn-cancel-order" onclick="cancelMyOrder('${sanitizeText(ord.id)}')">❌ إلغاء الطلب</button>` : ''}
+          </div>
+          <div>
+            <span style="font-size:12px; color:var(--text-soft);">المجموع الكلي: </span>
+            <span class="mono" style="color:var(--rose-deep); font-size:16px;">${fmtPrice(finalTotal)}</span>
+          </div>
         </div>
       </div>
     `;
@@ -2250,7 +2307,6 @@ function goBackFromProduct() {
   const targetView = previousViewBeforeProduct || 'home';
   const targetScroll = previousScrollBeforeProduct || 0;
   
-  // مسح الـ Hash لتفادي الدخول المتكرر عند الرجوع
   if (window.location.hash.startsWith('#p=')) {
     history.replaceState(null, null, ' ');
   }
@@ -2597,8 +2653,6 @@ function applyStoreSettings() {
     const colorPicker = document.getElementById('adminPrimaryColorPicker');
     if (colorPicker) colorPicker.value = storeSettings.primaryColor;
   }
-
-  if (storeSettings.socialWhatsapp) WHATSAPP_NUMBER = storeSettings.socialWhatsapp;
 
   const annEl = document.getElementById('announcementBar');
   const annTextEl = document.getElementById('announcementText');
@@ -2958,7 +3012,7 @@ function signInWithGoogle() {
     return;
   }
 
-  // فحص المتصفحات الداخلية التي تحظر الجلسة مثل Telegram
+  // فحص المتصفحات الداخلية
   if (isInAppBrowser()) {
     const modal = document.getElementById('iabModal');
     if (modal) {
@@ -3107,7 +3161,7 @@ function handleConsultSubmit(e) {
     return;
   }
 
-  const targetPhone = storeSettings.socialWhatsapp || WHATSAPP_NUMBER || "9647813703288";
+  const targetPhone = "9647813703288";
   const msg = encodeURIComponent(`🩺 *استشارة صيدلانية - صيدلية القطن:*\nالاسم: ${name}\nالعمر: ${age}\nالحالة: ${cond}\nالاستفسار: ${desc}`);
   window.open(`https://wa.me/${targetPhone}?text=${msg}`, '_blank');
   closeConsultModal();
@@ -3168,7 +3222,7 @@ window.addEventListener('DOMContentLoaded', () => {
   checkAndShowWelcomeModal();
   checkUrlHashForProduct();
 
-  // تفعيل استماع تغيير الرابط المباشر
+  // استماع تغيير الرابط المباشر
   window.addEventListener('hashchange', checkUrlHashForProduct);
 
   // تهيئة لوحة التحكم وتفعيل الاستماع اللحظي للطلبات
