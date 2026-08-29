@@ -5,7 +5,7 @@
 // ================= CONFIGURATION & CONSTANTS =================
 const WORKER_API_BASE = "https://cottanbackend.hussaindark6.workers.dev";
 const ADMIN_EMAIL = "hussaindark6@gmail.com";
-const WHATSAPP_NUMBER = "9647813703288"; // رقم الواتساب الرسمي المعتمد
+const WHATSAPP_NUMBER = "9647813703288"; // الرقم المعتمد الرسمي
 
 const firebaseConfig = {
   apiKey: "AIzaSyDXAp6CTcq3OlN2egGOj5Yg8jK5wUsR6Uc",
@@ -80,7 +80,7 @@ function lockAction(actionKey, cooldownMs = 1500) {
   return true;
 }
 
-// فحص متصفحات التطبيقات الداخلية التي تحظر الجلسة مثل Telegram
+// فحص المتصفحات الداخلية
 function isInAppBrowser() {
   const ua = navigator.userAgent || navigator.vendor || window.opera || '';
   const isIAB = /Telegram|Instagram|FBAN|FBAV|TikTok|Snapchat|Line|Twitter|MicroMessenger|WhatsApp|musical_ly/i.test(ua);
@@ -594,7 +594,7 @@ async function deleteAdminBundle(id) {
   }
 }
 
-// ================= THERMAL RECEIPT PRINTING (80mm MATHEMATICALLY ALIGNED) =================
+// ================= THERMAL RECEIPT PRINTING (80mm) =================
 function openReceiptModal(orderId) {
   const ord = myOrders.find(o => String(o.id) === String(orderId)) || (window.adminLastOrdersList && window.adminLastOrdersList.find(o => String(o.id) === String(orderId)));
   if (!ord) {
@@ -1868,14 +1868,21 @@ async function confirmOrder() {
 
   // فتح الواتساب مباشرة مع الرقم المعتمد +9647813703288
   const targetPhone = "9647813703288";
-  window.open(`https://wa.me/${targetPhone}?text=${encodeURIComponent(whatsappInvoiceMsg)}`, '_blank');
+  const whatsappUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(whatsappInvoiceMsg)}`;
+
+  // ضبط رابط زر الواتساب في نافذة النجاح
+  const waBtn = document.getElementById('successModalWhatsappBtn');
+  if (waBtn) waBtn.href = whatsappUrl;
 
   const modalMsg = document.getElementById('successModalMsg');
   if (modalMsg) {
-    modalMsg.textContent = `تم تسجيل طلبكِ رقم (#${orderId}) بنجاح بقيمة ${fmtPrice(grandTotal)}. جاري التواصل معكِ عبر الواتساب لتأكيد الشحن إلى: ${address}.`;
+    modalMsg.textContent = `تم تسجيل طلبكِ رقم (#${orderId}) بنجاح بقيمة ${fmtPrice(grandTotal)}. اضغطي على الزر أدناه لإرسال الفاتورة للصيدلي وتأكيد الشحن فوراً.`;
   }
   const successModal = document.getElementById('orderSuccessModal');
   if (successModal) successModal.classList.add('open');
+
+  // تحويل مباشر للواتساب بدون حظر
+  window.location.href = whatsappUrl;
 
   if (confirmBtn) {
     confirmBtn.disabled = false;
@@ -2695,7 +2702,7 @@ function applyStoreSettings() {
   const iLink = document.getElementById('drawerSocialInstagram');
   const pLink = document.getElementById('drawerSocialPhone');
 
-  if (wLink) wLink.href = `https://wa.me/${storeSettings.socialWhatsapp || WHATSAPP_NUMBER}`;
+  if (wLink) wLink.href = `https://wa.me/9647813703288`;
   if (tLink) tLink.href = storeSettings.socialTelegram || '#';
   if (iLink) iLink.href = storeSettings.socialInstagram || '#';
   if (pLink) pLink.href = `tel:${storeSettings.socialPhone || ''}`;
