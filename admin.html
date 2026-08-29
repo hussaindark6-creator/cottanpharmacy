@@ -125,7 +125,7 @@
         <div class="admin-report-filter-row">
           <div style="flex:1; min-width:140px;">
             <label style="font-size:11.5px; font-weight:800; display:block; margin-bottom:4px;">الفترة الزمنية:</label>
-            <select id="reportTimeRange" style="padding:8px 10px; border-radius:10px; border:1px solid var(--line); font-size:12px; width:100%;">
+            <select id="reportTimeRange" onchange="fetchAdminOrdersList()" style="padding:8px 10px; border-radius:10px; border:1px solid var(--line); font-size:12px; width:100%;">
               <option value="all">كافة الطلبات المسجلة</option>
               <option value="today">اليوم فقط 📅</option>
               <option value="yesterday">أمس</option>
@@ -135,7 +135,7 @@
           </div>
           <div style="flex:1; min-width:140px;">
             <label style="font-size:11.5px; font-weight:800; display:block; margin-bottom:4px;">حالة الطلب:</label>
-            <select id="reportStatusFilter" style="padding:8px 10px; border-radius:10px; border:1px solid var(--line); font-size:12px; width:100%;">
+            <select id="reportStatusFilter" onchange="fetchAdminOrdersList()" style="padding:8px 10px; border-radius:10px; border:1px solid var(--line); font-size:12px; width:100%;">
               <option value="all">كافة الحالات</option>
               <option value="delivered">تم التسليم بنجاح ✅</option>
               <option value="shipping">تم الشحن مع المندوب 🛵</option>
@@ -214,7 +214,7 @@
       </div>
     </div>
 
-    <!-- 4. PRODUCT BUNDLES / SAVINGS PACKS MANAGEMENT (نظام حزم التوفير الجديد) -->
+    <!-- 4. PRODUCT BUNDLES / SAVINGS PACKS MANAGEMENT (حزم التوفير) -->
     <div id="adminSecBundles" style="display:none;">
       <div class="admin-fieldset">
         <legend id="adminBundleFormTitle">🎁 إضافة حزمة / بكج توفير جديد</legend>
@@ -371,7 +371,7 @@
       </div>
     </div>
 
-    <!-- 8. PRODUCT MANAGEMENT SECTION (WITH LOW STOCK FILTER) -->
+    <!-- 8. PRODUCT MANAGEMENT SECTION (مع فلتر النواقص) -->
     <div id="adminSecProducts" style="display:none;">
       <div class="admin-fieldset">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -456,7 +456,7 @@
       </div>
     </div>
 
-    <!-- 9. ADVANCED DISCOUNTS & DYNAMIC PROMO CARDS (مع إصلاح تطبيق الخصم فورياً) -->
+    <!-- 9. ADVANCED DISCOUNTS & DYNAMIC PROMO CARDS (إصلاح الخصومات المجمعة) -->
     <div id="adminSecOffers" style="display:none;">
       <div class="admin-fieldset">
         <legend>🎯 تطبيق خصم ذكي مجمع وتحديث الأسعار فورياً (Bulk Discount Engine)</legend>
