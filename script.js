@@ -80,7 +80,7 @@ function lockAction(actionKey, cooldownMs = 1500) {
   return true;
 }
 
-// فحص متصفحات التطبيقات الداخلية وحظر الجلسة
+// فحص متصفحات التطبيقات الداخلية (Telegram, Instagram, etc.)
 function isInAppBrowser() {
   const ua = navigator.userAgent || navigator.vendor || window.opera || '';
   const isIAB = /Telegram|Instagram|FBAN|FBAV|TikTok|Snapchat|Line|Twitter|MicroMessenger|WhatsApp|musical_ly/i.test(ua);
@@ -594,7 +594,7 @@ async function deleteAdminBundle(id) {
   }
 }
 
-// ================= THERMAL RECEIPT PRINTING (MATHEMATICALLY ALIGNED) =================
+// ================= THERMAL RECEIPT PRINTING (80mm) =================
 function openReceiptModal(orderId) {
   const ord = myOrders.find(o => String(o.id) === String(orderId)) || (window.adminLastOrdersList && window.adminLastOrdersList.find(o => String(o.id) === String(orderId)));
   if (!ord) {
@@ -721,7 +721,7 @@ function clearSavedCustomerData() {
   showToast('تم مسح البيانات المحفوظة');
 }
 
-// ================= BULK DISCOUNTS ENGINE (WITH DIRECT FIRESTORE PRICE SYNC) =================
+// ================= BULK DISCOUNTS ENGINE (DIRECT FIRESTORE SYNC) =================
 function updateDiscountTargetOptions() {
   const scopeEl = document.getElementById('discountScope');
   if (!scopeEl) return;
@@ -951,7 +951,7 @@ function renderPromoBanners() {
     }).join('')}`;
 }
 
-// ================= REAL ANALYTICS & LOGS =================
+// ================= REAL ANALYTICS & DYNAMIC TOP 5 SELLERS =================
 async function recordRealVisit() {
   const today = new Date().toISOString().split('T')[0];
   const visitKey = 'visited_' + today;
@@ -980,16 +980,32 @@ async function fetchRealAnalytics() {
     const ordersSnap = await db.collection('orders').get();
     totalOrdersCount = Math.max(ordersSnap.size, myOrders.length);
 
+    // حساب كميات المنتجات المباعة ديناميكياً من كافة الطلبات
+    const productSalesMap = {};
+
     ordersSnap.forEach(doc => {
       const o = doc.data();
       const oTotal = Number(o.total || o.verifiedTotal || 0);
       const oDate = o.createdAt && o.createdAt.toDate ? o.createdAt.toDate().toISOString() : (o.date || '');
       if (oDate.startsWith(todayStr)) dRev += oTotal;
       if (oDate.startsWith(currentMonthStr)) mRev += oTotal;
+
+      (o.items || []).forEach(it => {
+        if (it && it.id) {
+          productSalesMap[it.id] = (productSalesMap[it.id] || 0) + Number(it.quantity || 1);
+        }
+      });
     });
 
     todayRevenue = dRev;
     monthlyRevenue = mRev;
+
+    // تحديث orderCount في الذاكرة لتطابق الطلبات الفعلية
+    products.forEach(p => {
+      if (productSalesMap[p.id]) {
+        p.orderCount = Math.max(Number(p.orderCount || 0), productSalesMap[p.id]);
+      }
+    });
 
     const last7Days = [];
     for (let i = 6; i >= 0; i--) {
@@ -1043,17 +1059,21 @@ function renderRealAnalyticsView() {
     }).join('');
   }
 
+  // عرض أكثر 5 منتجات مبيعاً
   const topOrdersEl = document.getElementById('adminTopOrderedList');
   if (topOrdersEl) {
-    const topOrdered = [...products].filter(p => (p.orderCount || 0) > 0).sort((a,b) => (b.orderCount || 0) - (a.orderCount || 0)).slice(0, 5);
-    topOrdersEl.innerHTML = topOrdered.length === 0 ? `<div class="no-results" style="padding:20px 0;">لا توجد طلبات مسجلة حتى الآن.</div>` : 
+    const topOrdered = [...products].filter(p => (Number(p.orderCount) || 0) > 0)
+      .sort((a, b) => (Number(b.orderCount) || 0) - (Number(a.orderCount) || 0))
+      .slice(0, 5);
+
+    topOrdersEl.innerHTML = topOrdered.length === 0 ? `<div class="no-results" style="padding:20px 0;">لا توجد مبيعات مسجلة حتى الآن.</div>` : 
       topOrdered.map((p, idx) => `
         <div class="admin-rank-item">
           <div style="display:flex; align-items:center; gap:8px;">
             <span class="admin-rank-badge">${idx + 1}</span>
             <span style="font-weight:700;">${sanitizeText(p.name)} (${sanitizeText(p.brand)})</span>
           </div>
-          <span class="mono" style="font-weight:800; color:var(--accent);">${p.orderCount} طلب</span>
+          <span class="mono" style="font-weight:800; color:var(--accent);">${p.orderCount} طلب شراء</span>
         </div>`).join('');
   }
 
@@ -1168,7 +1188,7 @@ function renderAdminOrdersList(orders) {
 
     const delFee = (ord.deliveryFee !== undefined) 
       ? Number(ord.deliveryFee) 
-      : (ord.deliveryMethod === 'express' ? 8000 : 4000);
+      : ((ord.deliveryMethod === 'express') ? 8000 : 4000);
       
     const grandTotal = Number(ord.total) || (itemsCalcTotal + delFee);
 
@@ -1630,16 +1650,16 @@ function renderCart() {
   if (appliedPromo && promoBadge) {
     promoBadge.style.display = 'flex';
     promoBadge.className = 'applied-promo-tag';
-    promoBadge.innerHTML = `<span>🎟️ تم تفعيل كود الخصم: <b>${appliedPromo.code}</b> (-${fmtPrice(discount)})</span><button type="button" onclick="removePromoCode()" style="color:#DC2626; font-weight:900; background:none;">✕</button>`;
+    promoBadge.innerHTML = `<span>🎟️ تم تفعيل كود الخصم: <b>${appliedPromo.code}</b> (-${fmtPrice(discount)})</span><button type="button" onclick="removePromoCode()" style="color:#DC2626; font-weight:900; background:none; cursor:pointer;">✕</button>`;
   } else if (promoBadge) {
     promoBadge.style.display = 'none';
   }
 
   summaryEl.innerHTML = `
-    <div class="summary-row"><span>المجموع الفرعي</span><span class="mono">${fmtPrice(subtotal)}</span></div>
-    ${discount > 0 ? `<div class="summary-row" style="color:#16A34A; font-weight:800;"><span>خصم الكوبون</span><span class="mono">-${fmtPrice(discount)}</span></div>` : ''}
-    <div class="summary-row"><span>رسوم التوصيل</span><span class="mono">${fmtPrice(fee)}</span></div>
-    <div class="summary-row total"><span>الإجمالي</span><span class="mono">${fmtPrice(finalTotal)}</span></div>
+    <div class="summary-row"><span>المجموع الفرعي للمنتجات</span><span class="mono">${fmtPrice(subtotal)}</span></div>
+    ${discount > 0 ? `<div class="summary-row discount-row"><span>خصم الكوبون (${appliedPromo.code})</span><span class="mono">-${fmtPrice(discount)}</span></div>` : ''}
+    <div class="summary-row"><span>أجرة التوصيل</span><span class="mono">+${fmtPrice(fee)}</span></div>
+    <div class="summary-row total"><span>المجموع الإجمالي المطلوب</span><span class="mono">${fmtPrice(finalTotal)}</span></div>
     <button class="checkout-btn" onclick="showView('checkout')">متابعة الطلب</button>`;
 }
 
@@ -1661,13 +1681,13 @@ function renderCheckoutSummary() {
   const finalTotal = Math.max(0, subtotal - discount) + fee;
 
   summaryEl.innerHTML = `
-    <div class="summary-row"><span>المجموع الفرعي</span><span class="mono">${fmtPrice(subtotal)}</span></div>
-    ${discount > 0 ? `<div class="summary-row" style="color:#16A34A; font-weight:800;"><span>خصم الكوبون (${appliedPromo.code})</span><span class="mono">-${fmtPrice(discount)}</span></div>` : ''}
-    <div class="summary-row"><span>رسوم التوصيل</span><span class="mono">${fmtPrice(fee)}</span></div>
-    <div class="summary-row total"><span>الإجمالي</span><span class="mono">${fmtPrice(finalTotal)}</span></div>`;
+    <div class="summary-row"><span>المجموع الفرعي للمنتجات</span><span class="mono">${fmtPrice(subtotal)}</span></div>
+    ${discount > 0 ? `<div class="summary-row discount-row"><span>خصم الكوبون (${appliedPromo.code})</span><span class="mono">-${fmtPrice(discount)}</span></div>` : ''}
+    <div class="summary-row"><span>أجرة التوصيل</span><span class="mono">+${fmtPrice(fee)}</span></div>
+    <div class="summary-row total"><span>المجموع الإجمالي المطلوب</span><span class="mono">${fmtPrice(finalTotal)}</span></div>`;
 }
 
-// ================= CONFIRM ORDER (MATHEMATICALLY VERIFIED) =================
+// ================= CONFIRM ORDER (WITH DETAILED WHATSAPP & TELEGRAM INVOICE) =================
 async function confirmOrder() {
   if (!lockAction('confirmOrder', 2500)) return;
 
@@ -1758,16 +1778,44 @@ async function confirmOrder() {
     myOrders.unshift(newOrderObj);
 
     if (db) {
+      // 1. حفظ وثيقة الطلب في فايربيس
       await db.collection('orders').doc(orderId).set({
         ...newOrderObj,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       }).catch(e => console.warn(e));
+
+      // 2. زيادة عداد المبيعات لكل منتج لتحديث إحصائية أكثر 5 منتجات مبيعاً فورياً
+      itemsPayload.forEach(it => {
+        if (!it.isBundle && it.id) {
+          db.collection('products').doc(String(it.id)).set({
+            orderCount: firebase.firestore.FieldValue.increment(it.quantity || 1)
+          }, { merge: true }).catch(console.warn);
+        }
+      });
     }
 
-    const lines = itemsPayload.map(item => `${item.isBundle ? '🎁 ' : ''}${item.name} × ${item.quantity} (${fmtPrice(item.price * item.quantity)})`);
+    // بناء رسالة الواتساب المطابقة تماماً لرسالة التلغرام
+    const lines = itemsPayload.map(item => `• ${item.isBundle ? '🎁 [بكج توفير] ' : ''}${item.name} × ${item.quantity} (${fmtPrice(item.price * item.quantity)})`);
     const deliveryLabel = deliveryMethod === 'express' ? `سريع (${fmtPrice(deliveryFee)})` : `عادي (${fmtPrice(deliveryFee)})`;
-    const promoInfo = appliedPromo ? `كود الخصم: ${appliedPromo.code} (-${fmtPrice(discountAmount)})\n` : '';
-    const msg = encodeURIComponent(`*طلب جديد - صيدلية القطن* 🌸\nرقم الطلب: #${orderId}\n\nالاسم: ${name}\nالهاتف: ${phone}\nالعنوان: ${address}\nالتوصيل: ${deliveryLabel}\n${promoInfo}المجموع الفرعي: ${fmtPrice(calculatedSubtotal)}\nأجرة التوصيل: ${fmtPrice(deliveryFee)}\n\nالمنتجات المطلوبة:\n${lines.join('\n')}\n\n*المجموع الإجمالي النهائي: ${fmtPrice(grandTotal)}*`);
+    const promoInfo = appliedPromo ? `🎟️ *كود الخصم المطبق:* ${appliedPromo.code} (-${fmtPrice(discountAmount)})\n` : '';
+
+    const whatsappInvoiceMsg = 
+      `🌸 *طلب جديد - صيدلية القطن*\n` +
+      `━━━━━━━━━━━━━━━━━━━\n` +
+      `📋 *رقم الفاتورة:* #${orderId}\n` +
+      `📅 *التاريخ:* ${newOrderObj.date}\n\n` +
+      `👤 *اسم الزبون:* ${name}\n` +
+      `📞 *رقم الهاتف:* ${phone}\n` +
+      `📍 *العنوان بالتفصيل:* ${address}\n` +
+      `🚚 *نوع التوصيل:* ${deliveryLabel}\n\n` +
+      `📦 *المنتجات المطلوبة:*\n${lines.join('\n')}\n\n` +
+      `━━━━━━━━━━━━━━━━━━━\n` +
+      `💵 *المجموع الفرعي للمنتجات:* ${fmtPrice(calculatedSubtotal)}\n` +
+      `${promoInfo}` +
+      `🚚 *أجرة التوصيل:* ${fmtPrice(deliveryFee)}\n` +
+      `💰 *المجموع الإجمالي المطلوب للدفع:* *${fmtPrice(grandTotal)}*\n` +
+      `━━━━━━━━━━━━━━━━━━━\n` +
+      `✨ شكراً لتسوقكم من صيدلية القطن 🌸`;
 
     cart = {};
     appliedPromo = null;
@@ -1775,7 +1823,7 @@ async function confirmOrder() {
     saveLocalState();
 
     const targetPhone = storeSettings.socialWhatsapp || WHATSAPP_NUMBER;
-    window.open(`https://wa.me/${targetPhone}?text=${msg}`, '_blank');
+    window.open(`https://wa.me/${targetPhone}?text=${encodeURIComponent(whatsappInvoiceMsg)}`, '_blank');
 
     const modalMsg = document.getElementById('successModalMsg');
     if (modalMsg) {
@@ -1895,7 +1943,7 @@ function renderListing() {
     const t = listingValue.toLowerCase();
     list = list.filter(p => p.name.toLowerCase().includes(t) || (p.brand && p.brand.toLowerCase().includes(t)));
   } else if (listingMode === 'bestsellers') {
-    list = list.sort((a, b) => (b.orderCount || 0) - (a.orderCount || 0));
+    list = list.sort((a, b) => (Number(b.orderCount) || 0) - (Number(a.orderCount) || 0));
   }
 
   const countEl = document.getElementById('listingCount');
@@ -1934,7 +1982,7 @@ function renderHomeProductGrid() {
   let list = products.slice();
   if (homeActiveBrand === 'all') {
     title.textContent = 'الأكثر مبيعاً 🔥';
-    list = list.sort((a,b) => (b.orderCount || 0) - (a.orderCount || 0));
+    list = list.sort((a, b) => (Number(b.orderCount) || 0) - (Number(a.orderCount) || 0));
   } else {
     title.textContent = 'منتجات ' + homeActiveBrand;
     list = list.filter(p => p.brand === homeActiveBrand);
@@ -1949,24 +1997,31 @@ function selectHomeBrand(brand) {
   renderHomeProductGrid();
 }
 
+// ================= REDESIGNED BRAND STRIP (VERTICAL SQUARE CARDS) =================
 function renderBrandStrip() {
   const strip = document.getElementById('brandStrip');
   if (!strip) return;
   const brandKeys = Object.keys(brandsData);
+
   const allChip = `
-    <div class="brand-chip all-chip ${homeActiveBrand === 'all' ? 'active' : ''}" onclick="selectHomeBrand('all')">
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-      <span>الكل</span>
+    <div class="brand-chip ${homeActiveBrand === 'all' ? 'active' : ''}" onclick="selectHomeBrand('all')">
+      <div class="brand-chip-all-box">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      </div>
+      <span class="brand-chip-title">الكل</span>
     </div>`;
-    
+
   strip.innerHTML = allChip + brandKeys.map(k => {
     const b = brandsData[k];
     const isActive = homeActiveBrand === k;
     const cleanLogo = sanitizeUrl(b.logoUrl);
+
     return `
       <div class="brand-chip ${isActive ? 'active' : ''}" onclick="selectHomeBrand('${sanitizeText(k)}')">
-        ${cleanLogo ? `<img class="brand-chip-img" src="${cleanLogo}" alt="${sanitizeText(b.name || k)}">` : `<span class="brand-chip-dot" style="background:${sanitizeText(b.color)};"></span>`}
-        <span>${sanitizeText(b.name || k)}</span>
+        <div class="brand-chip-img-box">
+          ${cleanLogo ? `<img class="brand-chip-img" src="${cleanLogo}" alt="${sanitizeText(b.name || k)}">` : `<div class="brand-chip-placeholder" style="background:${sanitizeText(b.color)};">${(b.name || k).charAt(0).toUpperCase()}</div>`}
+        </div>
+        <span class="brand-chip-title">${sanitizeText(b.name || k)}</span>
       </div>`;
   }).join('');
 }
@@ -2155,6 +2210,7 @@ function renderProductDetailDOM(p) {
   };
 }
 
+// ================= OPEN PRODUCT (WITH DIRECT DEEP LINKING SUPPORT) =================
 function openProduct(id, isUserClick = false) {
   if (isUserClick) {
     previousViewBeforeProduct = (currentView !== 'product') ? currentView : 'home';
@@ -2177,25 +2233,28 @@ function openProduct(id, isUserClick = false) {
 
   renderProductDetailDOM(p);
 
-  if (isUserClick) {
-    document.documentElement.style.scrollBehavior = 'auto';
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    const pView = document.getElementById('view-product');
-    if (pView) {
-      pView.classList.add('active');
-      currentView = 'product';
-      window.scrollTo(0, 0);
-    }
-    requestAnimationFrame(() => {
-      document.documentElement.style.scrollBehavior = '';
-    });
+  document.documentElement.style.scrollBehavior = 'auto';
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const pView = document.getElementById('view-product');
+  if (pView) {
+    pView.classList.add('active');
+    currentView = 'product';
+    window.scrollTo(0, 0);
   }
+  requestAnimationFrame(() => {
+    document.documentElement.style.scrollBehavior = '';
+  });
 }
 
 function goBackFromProduct() {
   const targetView = previousViewBeforeProduct || 'home';
   const targetScroll = previousScrollBeforeProduct || 0;
   
+  // مسح الـ Hash لتفادي الدخول المتكرر عند الرجوع
+  if (window.location.hash.startsWith('#p=')) {
+    history.replaceState(null, null, ' ');
+  }
+
   document.documentElement.style.scrollBehavior = 'auto';
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   const targetEl = document.getElementById('view-' + targetView);
@@ -2829,7 +2888,7 @@ async function handleSaveSecuritySettings(e) {
   showToast('تم حفظ سياسات الحماية بنجاح ✓');
 }
 
-// ================= ACCOUNT & GOOGLE AUTH (SAFE & IN-APP PROTECTED) =================
+// ================= ACCOUNT & GOOGLE AUTH =================
 function updateUserHeaderProfile() {
   const chipAvatar = document.getElementById('userChipAvatar');
   const chipName = document.getElementById('userChipName');
@@ -2995,12 +3054,25 @@ function shareCurrentProduct() {
   }
 }
 
+// فحص ومعالجة الروابط المباشرة للمنتجات (Deep Linking)
 function checkUrlHashForProduct() {
-  const hash = window.location.hash;
-  if (hash && hash.startsWith('#p=')) {
-    const pId = hash.replace('#p=', '');
-    if (pId && findProduct(pId)) {
-      setTimeout(() => openProduct(pId, true), 200);
+  const hash = window.location.hash || '';
+  const search = window.location.search || '';
+  let pId = null;
+
+  if (hash.startsWith('#p=')) {
+    pId = hash.replace('#p=', '').trim();
+  } else if (search.includes('p=')) {
+    const params = new URLSearchParams(search);
+    pId = params.get('p');
+  }
+
+  if (pId) {
+    const p = findProduct(pId);
+    if (p) {
+      setTimeout(() => {
+        openProduct(pId, true);
+      }, 150);
     }
   }
 }
@@ -3096,6 +3168,7 @@ window.addEventListener('DOMContentLoaded', () => {
   checkAndShowWelcomeModal();
   checkUrlHashForProduct();
 
+  // تفعيل استماع تغيير الرابط المباشر
   window.addEventListener('hashchange', checkUrlHashForProduct);
 
   // تهيئة لوحة التحكم وتفعيل الاستماع اللحظي للطلبات
