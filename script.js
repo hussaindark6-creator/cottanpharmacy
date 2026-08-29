@@ -35,7 +35,7 @@ try {
   console.warn("Firebase init error:", err);
 }
 
-// ================= SECURITY & SANITIZATION =================
+// ================= SECURITY, IN-APP BROWSER & SANITIZATION =================
 function sanitizeText(str) {
   if (typeof str !== 'string') return str == null ? '' : String(str);
   return str
@@ -80,9 +80,20 @@ function lockAction(actionKey, cooldownMs = 1500) {
   return true;
 }
 
+// فحص متصفحات التطبيقات الداخلية وحظر الجلسة
 function isInAppBrowser() {
   const ua = navigator.userAgent || navigator.vendor || window.opera || '';
-  return /Instagram|FBAN|FBAV|TikTok|Snapchat|Telegram|Line|Twitter|MicroMessenger|WhatsApp|musical_ly/i.test(ua);
+  const isIAB = /Telegram|Instagram|FBAN|FBAV|TikTok|Snapchat|Line|Twitter|MicroMessenger|WhatsApp|musical_ly/i.test(ua);
+  
+  let storageBlocked = false;
+  try {
+    sessionStorage.setItem('__test_storage', '1');
+    sessionStorage.removeItem('__test_storage');
+  } catch (e) {
+    storageBlocked = true;
+  }
+
+  return isIAB || storageBlocked;
 }
 
 async function apiFetch(endpoint, options = {}) {
@@ -376,7 +387,7 @@ async function deleteAdminCoupon(id) {
   }
 }
 
-// ================= PRODUCT BUNDLES SYSTEM (نظام حزم وبكجات التوفير) =================
+// ================= PRODUCT BUNDLES SYSTEM =================
 function populateBundleProductsChecklist() {
   const container = document.getElementById('bundleProductsChecklist');
   if (!container) return;
@@ -583,13 +594,39 @@ async function deleteAdminBundle(id) {
   }
 }
 
-// ================= THERMAL RECEIPT PRINTING (80mm) =================
+// ================= THERMAL RECEIPT PRINTING (MATHEMATICALLY ALIGNED) =================
 function openReceiptModal(orderId) {
   const ord = myOrders.find(o => String(o.id) === String(orderId)) || (window.adminLastOrdersList && window.adminLastOrdersList.find(o => String(o.id) === String(orderId)));
   if (!ord) {
     showToast('تعذر العثور على بيانات الطلب');
     return;
   }
+
+  let itemsSubtotal = 0;
+  const tbody = document.getElementById('recItemsTbody');
+  if (tbody) {
+    tbody.innerHTML = (ord.items || []).map(it => {
+      const unitPrice = Number(it.price || 0);
+      const qty = Number(it.quantity || 1);
+      const itemTotal = unitPrice * qty;
+      itemsSubtotal += itemTotal;
+
+      return `
+        <tr>
+          <td>${sanitizeText(it.name)} ${it.isBundle ? '🎁' : ''}</td>
+          <td style="text-align:center;">${qty}</td>
+          <td class="mono" style="text-align:left;">${fmtPrice(itemTotal)}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  const delFee = (ord.deliveryFee !== undefined) 
+    ? Number(ord.deliveryFee) 
+    : ((ord.deliveryMethod === 'express') ? 8000 : 4000);
+
+  const discountVal = Number(ord.discountAmount || 0);
+  const exactGrandTotal = Number(ord.total) || Math.max(0, itemsSubtotal - discountVal) + delFee;
 
   document.getElementById('recOrderId').textContent = '#' + ord.id;
   document.getElementById('recOrderDate').textContent = ord.date || '';
@@ -599,23 +636,18 @@ function openReceiptModal(orderId) {
   document.getElementById('recDeliveryType').textContent = (ord.deliveryMethod === 'express') ? 'توصيل سريع 🛵' : 'توصيل عادي 🚚';
   document.getElementById('recStorePhone').textContent = storeSettings.socialPhone || '07813703288';
 
-  const tbody = document.getElementById('recItemsTbody');
-  if (tbody) {
-    tbody.innerHTML = (ord.items || []).map(it => `
-      <tr>
-        <td>${sanitizeText(it.name)} ${it.isBundle ? '🎁' : ''}</td>
-        <td style="text-align:center;">${it.quantity}</td>
-        <td class="mono" style="text-align:left;">${fmtPrice(it.price * it.quantity)}</td>
-      </tr>
-    `).join('');
-  }
-
-  const delFee = (ord.deliveryMethod === 'express') ? (storeSettings.deliveryFeeExpress || 8000) : (storeSettings.deliveryFeeStandard || 4000);
   document.getElementById('recDeliveryFee').textContent = fmtPrice(delFee);
-  document.getElementById('recGrandTotal').textContent = fmtPrice(ord.total);
+  document.getElementById('recGrandTotal').textContent = fmtPrice(exactGrandTotal);
 
   const discRow = document.getElementById('recDiscountRow');
-  if (discRow) discRow.style.display = 'none';
+  if (discRow) {
+    if (discountVal > 0) {
+      discRow.style.display = 'flex';
+      document.getElementById('recDiscountVal').textContent = '-' + fmtPrice(discountVal);
+    } else {
+      discRow.style.display = 'none';
+    }
+  }
 
   const modal = document.getElementById('thermalReceiptModal');
   if (modal) modal.classList.add('open');
@@ -1028,7 +1060,7 @@ function renderRealAnalyticsView() {
   const topViewsEl = document.getElementById('adminTopViewedList');
   if (topViewsEl) {
     const topViewed = [...products].filter(p => (p.views || 0) > 0).sort((a,b) => (b.views || 0) - (a.views || 0)).slice(0, 5);
-    topViewsEl.innerHTML = topViewed.length === 0 ? `<div class="no-results" style="padding:20px 0;">لا توجد مشاهدات مسجلة اليوم بعد.</div>` :
+    topViewsEl.innerHTML = topViewed.length === 0 ? `<div class="no-results" style="padding:20px 0;">لا توجد مشاهدات مسجلة اليوم بعد.</div>` : 
       topViewed.map((p, idx) => `
         <div class="admin-rank-item">
           <div style="display:flex; align-items:center; gap:8px;">
@@ -1040,54 +1072,136 @@ function renderRealAnalyticsView() {
   }
 }
 
-// ================= ORDERS MANAGEMENT & FILTERED EXCEL / TELEGRAM REPORT =================
+// ================= REALTIME ADMIN ORDERS LISTENER & MANAGEMENT =================
+let adminOrdersUnsubscribe = null;
+
+function listenToAdminOrdersRealtime() {
+  if (!isFirebaseConfigured || !db) return;
+
+  if (adminOrdersUnsubscribe) {
+    adminOrdersUnsubscribe();
+  }
+
+  adminOrdersUnsubscribe = db.collection('orders').onSnapshot(snap => {
+    const orders = [];
+    snap.forEach(d => {
+      orders.push({ id: d.id, ...d.data() });
+    });
+
+    orders.sort((a, b) => {
+      const timeA = (a.createdAt && a.createdAt.toMillis) ? a.createdAt.toMillis() : new Date(a.date || 0).getTime();
+      const timeB = (b.createdAt && b.createdAt.toMillis) ? b.createdAt.toMillis() : new Date(b.date || 0).getTime();
+      return timeB - timeA;
+    });
+
+    window.adminLastOrdersList = orders;
+    totalOrdersCount = orders.length;
+
+    renderAdminOrdersList(orders);
+    fetchRealAnalytics();
+  }, err => {
+    console.warn("Orders listener fallback:", err);
+    fetchAdminOrdersListFallback();
+  });
+}
+
 async function fetchAdminOrdersList() {
+  listenToAdminOrdersRealtime();
+}
+
+async function fetchAdminOrdersListFallback() {
   if (!isFirebaseConfigured || !db) return;
   try {
-    const snap = await db.collection('orders').orderBy('createdAt', 'desc').limit(100).get();
+    const snap = await db.collection('orders').get();
     const orders = [];
     snap.forEach(d => orders.push({ id: d.id, ...d.data() }));
+    orders.sort((a, b) => (new Date(b.date || 0)) - (new Date(a.date || 0)));
     window.adminLastOrdersList = orders;
     renderAdminOrdersList(orders);
-  } catch (e) { console.warn(e); }
+  } catch (e) {
+    console.error("Orders fallback error:", e);
+  }
 }
 
 function renderAdminOrdersList(orders) {
   const container = document.getElementById('adminOrdersManageContainer');
   if (!container) return;
-  if (orders.length === 0) {
-    container.innerHTML = `<div class="no-results" style="padding:20px 0;">لا توجد طلبات مسجلة حتى الآن.</div>`;
+
+  const timeFilter = document.getElementById('reportTimeRange') ? document.getElementById('reportTimeRange').value : 'all';
+  const statusFilter = document.getElementById('reportStatusFilter') ? document.getElementById('reportStatusFilter').value : 'all';
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split('T')[0];
+  const monthStr = todayStr.substring(0, 7);
+
+  let displayOrders = (orders || []).filter(o => {
+    const oDate = o.createdAt && o.createdAt.toDate ? o.createdAt.toDate().toISOString() : (o.date || '');
+    if (timeFilter === 'today' && !oDate.startsWith(todayStr)) return false;
+    if (timeFilter === 'yesterday' && !oDate.startsWith(yesterdayStr)) return false;
+    if (timeFilter === 'month' && !oDate.startsWith(monthStr)) return false;
+
+    if (statusFilter === 'delivered' && !(o.status && o.status.includes('التسليم'))) return false;
+    if (statusFilter === 'shipping' && !(o.status && o.status.includes('الشحن'))) return false;
+    if (statusFilter === 'processing' && !(o.status && o.status.includes('المعالجة'))) return false;
+    if (statusFilter === 'cancelled' && !(o.status && o.status.includes('ملغي'))) return false;
+
+    return true;
+  });
+
+  if (displayOrders.length === 0) {
+    container.innerHTML = `<div class="no-results" style="padding:24px 0;">لا توجد طلبات مطابقة حالياً.</div>`;
     return;
   }
 
-  container.innerHTML = orders.map(ord => `
-    <div class="admin-order-manage-card">
-      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed var(--line); padding-bottom:8px; margin-bottom:8px;">
-        <span class="order-card-id mono">#${sanitizeText(ord.id)}</span>
-        <div style="display:flex; gap:6px; align-items:center;">
-          <button type="button" onclick="openReceiptModal('${sanitizeText(ord.id)}')" style="background:#10B981; color:#fff; font-size:11px; font-weight:800; padding:5px 10px; border-radius:8px;">🖨️ طباعة وصل</button>
-          <select class="admin-order-status-select" onchange="updateOrderStatus('${sanitizeText(ord.id)}', this.value)">
-            <option value="قيد المعالجة والتجهيز 🚚" ${ord.status === 'قيد المعالجة والتجهيز 🚚' ? 'selected' : ''}>قيد التجهيز 🚚</option>
-            <option value="تم الشحن مع المندوب 🛵" ${ord.status === 'تم الشحن مع المندوب 🛵' ? 'selected' : ''}>تم الشحن 🛵</option>
-            <option value="تم التسليم بنجاح ✅" ${ord.status === 'تم التسليم بنجاح ✅' ? 'selected' : ''}>تم التسليم ✅</option>
-            <option value="طلب ملغي ❌" ${ord.status === 'طلب ملغي ❌' ? 'selected' : ''}>طلب ملغي ❌</option>
-          </select>
+  container.innerHTML = displayOrders.map(ord => {
+    const items = ord.items || [];
+    let itemsCalcTotal = 0;
+    const itemsHtml = items.map(it => {
+      const price = Number(it.price || 0);
+      const qty = Number(it.quantity || 1);
+      const lineTotal = price * qty;
+      itemsCalcTotal += lineTotal;
+      return `• ${it.isBundle ? '🎁 [بكج] ' : ''}${sanitizeText(it.name || 'منتج')} × ${qty} (${fmtPrice(lineTotal)})`;
+    }).join('<br>');
+
+    const delFee = (ord.deliveryFee !== undefined) 
+      ? Number(ord.deliveryFee) 
+      : (ord.deliveryMethod === 'express' ? 8000 : 4000);
+      
+    const grandTotal = Number(ord.total) || (itemsCalcTotal + delFee);
+
+    return `
+      <div class="admin-order-manage-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed var(--line); padding-bottom:8px; margin-bottom:8px;">
+          <span class="order-card-id mono">#${sanitizeText(ord.id)}</span>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <button type="button" onclick="openReceiptModal('${sanitizeText(ord.id)}')" style="background:#10B981; color:#fff; font-size:11px; font-weight:800; padding:6px 12px; border-radius:8px; cursor:pointer;">🖨️ طباعة وصل</button>
+            <select class="admin-order-status-select" onchange="updateOrderStatus('${sanitizeText(ord.id)}', this.value)">
+              <option value="قيد المعالجة والتجهيز 🚚" ${ord.status === 'قيد المعالجة والتجهيز 🚚' ? 'selected' : ''}>قيد التجهيز 🚚</option>
+              <option value="تم الشحن مع المندوب 🛵" ${ord.status === 'تم الشحن مع المندوب 🛵' ? 'selected' : ''}>تم الشحن 🛵</option>
+              <option value="تم التسليم بنجاح ✅" ${ord.status === 'تم التسليم بنجاح ✅' ? 'selected' : ''}>تم التسليم ✅</option>
+              <option value="طلب ملغي ❌" ${ord.status === 'طلب ملغي ❌' ? 'selected' : ''}>طلب ملغي ❌</option>
+            </select>
+          </div>
+        </div>
+        <div style="font-size:12px; color:var(--text-soft); margin-bottom:6px;">
+          التاريخ: <span class="mono">${sanitizeText(ord.date || '')}</span> · الزبون: <b>${sanitizeText(ord.name || '')}</b> (${sanitizeText(ord.phone || '')})
+        </div>
+        <div style="font-size:12px; color:var(--text-soft); margin-bottom:6px;">
+          العنوان: ${sanitizeText(ord.address || '')} (${ord.deliveryMethod === 'express' ? 'توصيل سريع' : 'توصيل عادي'})
+        </div>
+        <div style="font-size:12px; color:var(--ink); margin-bottom:6px; background:#F9FAFB; padding:8px 10px; border-radius:8px;">
+          ${itemsHtml}
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px dashed var(--line); padding-top:6px; margin-top:6px;">
+          <span style="font-size:11.5px; color:var(--text-soft);">أجرة التوصيل: ${fmtPrice(delFee)}</span>
+          <span style="font-weight:900; font-size:14.5px; color:var(--rose-deep);">المجموع الكلي: ${fmtPrice(grandTotal)}</span>
         </div>
       </div>
-      <div style="font-size:12px; color:var(--text-soft); margin-bottom:6px;">
-        التاريخ: <span class="mono">${sanitizeText(ord.date)}</span> · الزبون: <b>${sanitizeText(ord.name)}</b> (${sanitizeText(ord.phone)})
-      </div>
-      <div style="font-size:12px; color:var(--text-soft); margin-bottom:6px;">
-        العنوان: ${sanitizeText(ord.address)} (${ord.deliveryMethod === 'express' ? 'توصيل سريع' : 'توصيل عادي'})
-      </div>
-      <div style="font-size:12px; color:var(--ink); margin-bottom:6px;">
-        ${(ord.items || []).map(it => `• ${it.isBundle ? '🎁 [بكج] ' : ''}${sanitizeText(it.name)} × ${it.quantity} (${fmtPrice(it.price * it.quantity)})`).join('<br>')}
-      </div>
-      <div style="font-weight:900; font-size:14px; color:var(--rose-deep); text-align:left;">
-        الإجمالي: ${fmtPrice(ord.total)}
-      </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 async function updateOrderStatus(orderId, newStatus) {
@@ -1116,7 +1230,6 @@ async function buildDetailedOrdersCSV() {
   const yesterdayStr = yesterday.toISOString().split('T')[0];
   const monthStr = todayStr.substring(0, 7);
 
-  // تطبيق الفلاتر
   let filtered = orders.filter(o => {
     const oDate = o.createdAt && o.createdAt.toDate ? o.createdAt.toDate().toISOString() : (o.date || '');
     if (timeFilter === 'today' && !oDate.startsWith(todayStr)) return false;
@@ -1139,7 +1252,7 @@ async function buildDetailedOrdersCSV() {
 
   filtered.forEach(o => {
     const orderTotal = Number(o.total || 0);
-    const delFee = (o.deliveryMethod === 'express') ? (storeSettings.deliveryFeeExpress || 8000) : (storeSettings.deliveryFeeStandard || 4000);
+    const delFee = (o.deliveryFee !== undefined) ? Number(o.deliveryFee) : ((o.deliveryMethod === 'express') ? 8000 : 4000);
     const netStore = Math.max(0, orderTotal - delFee);
 
     totalCOD += orderTotal;
@@ -1394,7 +1507,7 @@ async function deleteProductConfirm(id, name) {
   }
 }
 
-// ================= ADMIN TABS CONTROLLER (13 TABS MATCHED) =================
+// ================= ADMIN TABS CONTROLLER =================
 function switchAdminSection(sec) {
   const sections = ['Stats', 'Orders', 'Coupons', 'Bundles', 'Telegram', 'Audit', 'Cats', 'Products', 'Offers', 'Brands', 'Notifs', 'Design', 'Code'];
   
@@ -1460,10 +1573,10 @@ function getCartSubtotal() {
     if (id.startsWith('bundle_')) {
       const bId = id.replace('bundle_', '');
       const b = findBundle(bId);
-      return sum + (b ? b.price * cart[id] : 0);
+      return sum + (b ? Number(b.price || 0) * cart[id] : 0);
     } else {
       const p = findProduct(id);
-      return sum + (p ? p.price * cart[id] : 0);
+      return sum + (p ? Number(p.price || 0) * cart[id] : 0);
     }
   }, 0);
 }
@@ -1510,8 +1623,8 @@ function renderCart() {
   }).join('');
 
   const subtotal = getCartSubtotal();
-  const discount = appliedPromo ? appliedPromo.discountAmount : 0;
-  const fee = (deliveryMethod === 'express') ? (storeSettings.deliveryFeeExpress || 8000) : (storeSettings.deliveryFeeStandard || 4000);
+  const discount = appliedPromo ? Number(appliedPromo.discountAmount || 0) : 0;
+  const fee = (deliveryMethod === 'express') ? (Number(storeSettings.deliveryFeeExpress) || 8000) : (Number(storeSettings.deliveryFeeStandard) || 4000);
   const finalTotal = Math.max(0, subtotal - discount) + fee;
 
   if (appliedPromo && promoBadge) {
@@ -1543,8 +1656,8 @@ function renderCheckoutSummary() {
   const summaryEl = document.getElementById('checkoutSummaryBlock');
   if (!summaryEl) return;
   const subtotal = getCartSubtotal();
-  const discount = appliedPromo ? appliedPromo.discountAmount : 0;
-  const fee = (deliveryMethod === 'express') ? (storeSettings.deliveryFeeExpress || 8000) : (storeSettings.deliveryFeeStandard || 4000);
+  const discount = appliedPromo ? Number(appliedPromo.discountAmount || 0) : 0;
+  const fee = (deliveryMethod === 'express') ? (Number(storeSettings.deliveryFeeExpress) || 8000) : (Number(storeSettings.deliveryFeeStandard) || 4000);
   const finalTotal = Math.max(0, subtotal - discount) + fee;
 
   summaryEl.innerHTML = `
@@ -1554,7 +1667,7 @@ function renderCheckoutSummary() {
     <div class="summary-row total"><span>الإجمالي</span><span class="mono">${fmtPrice(finalTotal)}</span></div>`;
 }
 
-// ================= CONFIRM ORDER (WITH SMART AUTOFILL & WHATSAPP/TELEGRAM) =================
+// ================= CONFIRM ORDER (MATHEMATICALLY VERIFIED) =================
 async function confirmOrder() {
   if (!lockAction('confirmOrder', 2500)) return;
 
@@ -1580,21 +1693,34 @@ async function confirmOrder() {
     confirmBtn.textContent = 'جاري تأكيد الطلب...';
   }
 
-  // 1. الحفظ الذكي لبيانات الزبون لتسريع الطلبات القادمة
+  // 1. الحفظ الذكي لبيانات الزبون
   localStorage.setItem('qutn_customer_saved', JSON.stringify({ name, phone, address }));
 
-  // 2. إعداد مصفوفة الأصناف كاملة مع السعر والاسم لحساب الفاتورة بدقة
+  // 2. إعداد مصفوفة الأصناف وحساب المجموع بدقة
+  let calculatedSubtotal = 0;
   const itemsPayload = ids.map(id => {
     const isBundle = id.startsWith('bundle_');
     const item = isBundle ? findBundle(id.replace('bundle_', '')) : findProduct(id);
+    const unitPrice = item ? Number(item.price || 0) : 0;
+    const qty = Number(cart[id] || 1);
+    calculatedSubtotal += (unitPrice * qty);
+
     return {
       id: id,
       name: item ? (item.name || item.title) : 'منتج',
-      price: item ? item.price : 0,
-      quantity: cart[id],
+      price: unitPrice,
+      quantity: qty,
       isBundle: isBundle
     };
   });
+
+  const deliveryFee = (deliveryMethod === 'express') 
+    ? (Number(storeSettings.deliveryFeeExpress) || 8000) 
+    : (Number(storeSettings.deliveryFeeStandard) || 4000);
+
+  const discountAmount = appliedPromo ? Number(appliedPromo.discountAmount || 0) : 0;
+  let grandTotal = Math.max(0, calculatedSubtotal - discountAmount) + deliveryFee;
+  let orderId = "QUTN-" + Math.floor(100000 + Math.random() * 900000);
 
   try {
     const response = await apiFetch("/api/orders", {
@@ -1609,11 +1735,8 @@ async function confirmOrder() {
       })
     });
 
-    let grandTotal = getCartSubtotal() - (appliedPromo ? appliedPromo.discountAmount : 0) + (deliveryMethod === 'express' ? (storeSettings.deliveryFeeExpress || 8000) : (storeSettings.deliveryFeeStandard || 4000));
-    let orderId = "QUTN-" + Math.floor(100000 + Math.random() * 900000);
-
-    if (response && response.success) {
-      grandTotal = response.verifiedTotal;
+    if (response && response.success && response.verifiedTotal) {
+      grandTotal = Number(response.verifiedTotal);
       orderId = response.orderId;
     }
 
@@ -1625,22 +1748,26 @@ async function confirmOrder() {
       address,
       deliveryMethod,
       items: itemsPayload,
+      subtotal: calculatedSubtotal,
+      deliveryFee: deliveryFee,
+      discountAmount: discountAmount,
       total: grandTotal,
       status: 'قيد المعالجة والتجهيز 🚚'
     };
+
     myOrders.unshift(newOrderObj);
 
     if (db) {
-      db.collection('orders').doc(orderId).set({
+      await db.collection('orders').doc(orderId).set({
         ...newOrderObj,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       }).catch(e => console.warn(e));
     }
 
-    const lines = itemsPayload.map(item => `${item.isBundle ? '🎁 ' : ''}${item.name} × ${item.quantity}`);
-    const deliveryLabel = deliveryMethod === 'express' ? `سريع (${fmtPrice(storeSettings.deliveryFeeExpress || 8000)})` : `عادي (${fmtPrice(storeSettings.deliveryFeeStandard || 4000)})`;
-    const promoInfo = appliedPromo ? `كود الخصم: ${appliedPromo.code} (-${fmtPrice(appliedPromo.discountAmount)})\n` : '';
-    const msg = encodeURIComponent(`*طلب جديد - صيدلية القطن* 🌸\nرقم الطلب: #${orderId}\n\nالاسم: ${name}\nالهاتف: ${phone}\nالعنوان: ${address}\nالتوصيل: ${deliveryLabel}\n${promoInfo}\nالمنتجات المطلوبة:\n${lines.join('\n')}\n\nالإجمالي النهائي: ${fmtPrice(grandTotal)}`);
+    const lines = itemsPayload.map(item => `${item.isBundle ? '🎁 ' : ''}${item.name} × ${item.quantity} (${fmtPrice(item.price * item.quantity)})`);
+    const deliveryLabel = deliveryMethod === 'express' ? `سريع (${fmtPrice(deliveryFee)})` : `عادي (${fmtPrice(deliveryFee)})`;
+    const promoInfo = appliedPromo ? `كود الخصم: ${appliedPromo.code} (-${fmtPrice(discountAmount)})\n` : '';
+    const msg = encodeURIComponent(`*طلب جديد - صيدلية القطن* 🌸\nرقم الطلب: #${orderId}\n\nالاسم: ${name}\nالهاتف: ${phone}\nالعنوان: ${address}\nالتوصيل: ${deliveryLabel}\n${promoInfo}المجموع الفرعي: ${fmtPrice(calculatedSubtotal)}\nأجرة التوصيل: ${fmtPrice(deliveryFee)}\n\nالمنتجات المطلوبة:\n${lines.join('\n')}\n\n*المجموع الإجمالي النهائي: ${fmtPrice(grandTotal)}*`);
 
     cart = {};
     appliedPromo = null;
@@ -1867,36 +1994,58 @@ function renderMyOrders() {
     return;
   }
 
-  container.innerHTML = myOrders.map(ord => `
-    <div class="order-card">
-      <div class="order-card-header">
-        <span class="order-card-id mono">#${sanitizeText(ord.id)}</span>
-        <span class="order-card-status">${sanitizeText(ord.status || 'قيد المعالجة والتجهيز 🚚')}</span>
-      </div>
-      
-      <div class="order-tracker-timeline">
-        <div class="order-step done"><div class="order-step-dot">1</div><span>تم الطلب</span></div>
-        <div class="order-step ${ord.status && (ord.status.includes('الشحن') || ord.status.includes('التسليم')) ? 'done active' : ''}"><div class="order-step-dot">2</div><span>خرج للتوصيل</span></div>
-        <div class="order-step ${ord.status && ord.status.includes('التسليم') ? 'done' : ''}"><div class="order-step-dot">3</div><span>تم التسليم</span></div>
-      </div>
+  container.innerHTML = myOrders.map(ord => {
+    const items = ord.items || [];
+    let calcSubtotal = 0;
+    const itemsHtml = items.map(it => {
+      const price = Number(it.price || 0);
+      const qty = Number(it.quantity || 1);
+      const lineTotal = price * qty;
+      calcSubtotal += lineTotal;
+      return `
+        <div class="order-item-row">
+          <span>• ${it.isBundle ? '🎁 ' : ''}${sanitizeText(it.name)} × ${qty}</span>
+          <span class="mono">${fmtPrice(lineTotal)}</span>
+        </div>
+      `;
+    }).join('');
 
-      <div style="font-size:11.5px; color:var(--text-soft); margin-bottom:8px;">
-        التاريخ: <span class="mono">${sanitizeText(ord.date)}</span> · العنوان: ${sanitizeText(ord.address)}
-      </div>
-      <div style="background:var(--surface); border-radius:10px; padding:10px; margin-bottom:8px;">
-        ${(ord.items || []).map(it => `
-          <div class="order-item-row">
-            <span>• ${it.isBundle ? '🎁 ' : ''}${sanitizeText(it.name)} × ${it.quantity}</span>
-            <span class="mono">${fmtPrice(it.price * it.quantity)}</span>
+    const delFee = (ord.deliveryFee !== undefined) 
+      ? Number(ord.deliveryFee) 
+      : (ord.deliveryMethod === 'express' ? 8000 : 4000);
+
+    const finalTotal = Number(ord.total) || (calcSubtotal + delFee);
+
+    return `
+      <div class="order-card">
+        <div class="order-card-header">
+          <span class="order-card-id mono">#${sanitizeText(ord.id)}</span>
+          <span class="order-card-status">${sanitizeText(ord.status || 'قيد المعالجة والتجهيز 🚚')}</span>
+        </div>
+        
+        <div class="order-tracker-timeline">
+          <div class="order-step done"><div class="order-step-dot">1</div><span>تم الطلب</span></div>
+          <div class="order-step ${ord.status && (ord.status.includes('الشحن') || ord.status.includes('التسليم')) ? 'done active' : ''}"><div class="order-step-dot">2</div><span>خرج للتوصيل</span></div>
+          <div class="order-step ${ord.status && ord.status.includes('التسليم') ? 'done' : ''}"><div class="order-step-dot">3</div><span>تم التسليم</span></div>
+        </div>
+
+        <div style="font-size:11.5px; color:var(--text-soft); margin-bottom:8px;">
+          التاريخ: <span class="mono">${sanitizeText(ord.date)}</span> · العنوان: ${sanitizeText(ord.address)} (${ord.deliveryMethod === 'express' ? 'توصيل سريع' : 'توصيل عادي'})
+        </div>
+        <div style="background:var(--surface); border-radius:10px; padding:10px; margin-bottom:8px;">
+          ${itemsHtml}
+          <div style="border-top:1px dashed var(--line); margin-top:6px; padding-top:6px; font-size:11.5px; color:var(--text-soft); display:flex; justify-content:space-between;">
+            <span>أجرة التوصيل:</span>
+            <span class="mono">${fmtPrice(delFee)}</span>
           </div>
-        `).join('')}
+        </div>
+        <div class="order-card-footer">
+          <span>المجموع الكلي النهائي:</span>
+          <span class="mono" style="color:var(--rose-deep); font-size:16px;">${fmtPrice(finalTotal)}</span>
+        </div>
       </div>
-      <div class="order-card-footer">
-        <span>المجموع الكلي:</span>
-        <span class="mono" style="color:var(--rose-deep); font-size:16px;">${fmtPrice(ord.total)}</span>
-      </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 function renderProductGrid(targetId, list, emptyMsg) {
@@ -2531,7 +2680,7 @@ function renderNotifications() {
 
   const listEl = document.getElementById('notifList');
   if (listEl) {
-    listEl.innerHTML = notifications.length === 0 ? `<div class="no-results" style="padding:30px 0;">لا توجد إشعارات جديدة حالياً 🌸</div>` :
+    listEl.innerHTML = notifications.length === 0 ? `<div class="no-results" style="padding:30px 0;">لا توجد إشعارات جديدة حالياً 🌸</div>` : 
       notifications.map(n => {
         const timeStr = n.createdAt && n.createdAt.toDate ? n.createdAt.toDate().toLocaleDateString('ar-IQ', {hour:'2-digit', minute:'2-digit'}) : 'الآن';
         return `
@@ -2680,7 +2829,7 @@ async function handleSaveSecuritySettings(e) {
   showToast('تم حفظ سياسات الحماية بنجاح ✓');
 }
 
-// ================= ACCOUNT & AUTH =================
+// ================= ACCOUNT & GOOGLE AUTH (SAFE & IN-APP PROTECTED) =================
 function updateUserHeaderProfile() {
   const chipAvatar = document.getElementById('userChipAvatar');
   const chipName = document.getElementById('userChipName');
@@ -2749,9 +2898,15 @@ function signInWithGoogle() {
     showToast('خدمة تسجيل الدخول غير مهيأة');
     return;
   }
+
+  // فحص المتصفحات الداخلية التي تحظر الجلسة مثل Telegram
   if (isInAppBrowser()) {
     const modal = document.getElementById('iabModal');
-    if (modal) modal.classList.add('open');
+    if (modal) {
+      modal.classList.add('open');
+    } else {
+      alert('لتسجيل الدخول بأمان عبر Google، يرجى فتح الموقع في متصفح خارجي مثل Safari أو Chrome.');
+    }
     return;
   }
 
@@ -2772,8 +2927,11 @@ function signInWithGoogle() {
       console.error("Google Auth Error:", e);
       if (e.code === 'auth/unauthorized-domain') {
         showToast('⚠️ يرجى إضافة دومين الموقع في Firebase Authorized Domains');
+      } else if (e.code === 'auth/missing-initial-state' || e.code === 'auth/web-storage-unsupported') {
+        const modal = document.getElementById('iabModal');
+        if (modal) modal.classList.add('open');
       } else if (e.code !== 'auth/popup-closed-by-user') {
-        showToast('تعذر تسجيل الدخول (' + (e.code || 'يرجى المحاولة مجدداً') + ')');
+        showToast('تعذر تسجيل الدخول (' + (e.code || 'يرجى المحاولة من متصفح Safari/Chrome') + ')');
       }
     });
 }
@@ -2938,13 +3096,12 @@ window.addEventListener('DOMContentLoaded', () => {
   checkAndShowWelcomeModal();
   checkUrlHashForProduct();
 
-  // تفعيل التتبع المباشر للروابط (Deep Linking)
   window.addEventListener('hashchange', checkUrlHashForProduct);
 
-  // تهيئة لوحة التحكم عند فتح صفحة admin.html
-  if (window.location.pathname.includes('admin.html')) {
+  // تهيئة لوحة التحكم وتفعيل الاستماع اللحظي للطلبات
+  if (window.location.pathname.includes('admin.html') || document.getElementById('adminOrdersManageContainer')) {
     fetchRealAnalytics();
-    fetchAdminOrdersList();
+    listenToAdminOrdersRealtime();
     fetchAdminCoupons();
     renderAdminBundlesList();
     fetchAuditLogs();
