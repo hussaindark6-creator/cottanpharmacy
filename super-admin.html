@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>لوحة التحكم المركزية | Super Admin SaaS</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Cairo', 'sans-serif'],
+            mono: ['IBM Plex Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Firebase SDKs (Compat v9.22.1) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    .mono { font-family: 'IBM Plex Mono', monospace; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased">
+
+  <!-- AUTH GATE (حماية المشرف العام) -->
+  <div id="superAuthGate" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-8 text-center shadow-2xl">
+      <div class="w-16 h-16 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center justify-center mx-auto mb-5 text-3xl">
+        👑
+      </div>
+      <h2 class="text-2xl font-black text-white mb-2">لوحة المشرف العام للمنصة</h2>
+      <p class="text-slate-400 text-sm mb-6 leading-relaxed">هذه اللوحة مخصصة حصراً لبريد المشرف العام (<span class="font-mono text-emerald-400 font-bold">hussaindark6@gmail.com</span>) لإدارة الصيدليات والاشتراكات.</p>
+      
+      <button onclick="handleSuperAdminSignIn()" class="w-full bg-white hover:bg-slate-100 text-slate-900 font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-3 transition duration-200 shadow-lg cursor-pointer">
+        <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+        تسجيل الدخول عبر Google
+      </button>
+      <div id="authGateError" class="hidden mt-4 text-xs font-bold text-red-400 bg-red-950/50 border border-red-800/60 p-3 rounded-lg"></div>
+    </div>
+  </div>
+
+  <!-- MAIN APP CONTAINER -->
+  <div id="superApp" class="hidden min-h-screen flex flex-col">
+    
+    <!-- Top Header -->
+    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-40">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-center text-xl">
+            ⚡
+          </div>
+          <div>
+            <h1 class="text-base font-black text-white leading-tight">Super Admin SaaS Portal</h1>
+            <p class="text-xs text-slate-400">إدارة الاشتراكات والمستأجرين المركزية</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <div class="hidden sm:flex items-center gap-2 bg-slate-800/60 border border-slate-700/60 px-3 py-1.5 rounded-full text-xs text-slate-300">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="font-mono">hussaindark6@gmail.com</span>
+          </div>
+          <button onclick="handleSuperAdminSignOut()" class="text-xs font-bold text-slate-400 hover:text-red-400 bg-slate-800 hover:bg-slate-700/80 px-3.5 py-2 rounded-lg border border-slate-700 transition">
+            تسجيل الخروج
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Body -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      
+      <!-- 1. Central Platform Analytics -->
+      <section class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between shadow-sm">
+          <div>
+            <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">إجمالي الصيدليات المسجلة</div>
+            <div class="text-3xl font-black text-white font-mono" id="statTotalPharmacies">0</div>
+          </div>
+          <div class="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center text-2xl text-emerald-400">
+            🏥
+          </div>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between shadow-sm">
+          <div>
+            <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">الصيدليات النشطة</div>
+            <div class="text-3xl font-black text-emerald-400 font-mono" id="statActivePharmacies">0</div>
+          </div>
+          <div class="w-12 h-12 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-center justify-center text-2xl text-blue-400">
+            🚀
+          </div>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between shadow-sm">
+          <div>
+            <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">إجمالي قيمة الاشتراكات</div>
+            <div class="text-2xl font-black text-amber-400 font-mono" id="statTotalRevenue">0 د.ع</div>
+          </div>
+          <div class="w-12 h-12 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-center text-2xl text-amber-400">
+            💰
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. Onboard New Pharmacy Form -->
+      <section class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-md">
+        <div class="flex items-center gap-3 pb-6 border-b border-slate-800 mb-6">
+          <div class="w-10 h-10 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-center text-xl text-emerald-400">
+            ✨
+          </div>
+          <div>
+            <h2 class="text-lg font-black text-white">إضافة صيدلية وتعيين باقة الاشتراك المخصصة</h2>
+            <p class="text-xs text-slate-400">قم بإدخال بيانات المستأجر، تاريخ انتهاء الاشتراك، وتحديد السعر المخصص يدوياً.</p>
+          </div>
+        </div>
+
+        <form id="addPharmacyForm" onsubmit="handleCreatePharmacy(event)" class="space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            
+            <!-- Slug / ID -->
+            <div>
+              <label class="block text-xs font-bold text-slate-300 mb-2">معرف الرابط (Slug / ID) *</label>
+              <input 
+                type="text" 
+                id="inpPharmacySlug" 
+                placeholder="cottanpharmacy" 
+                class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white font-mono placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition" 
+                required 
+                oninput="this.value = this.value.toLowerCase().replace(/[^a-z0-9_-]/g, '')"
+              >
+            </div>
+
+            <!-- Pharmacy Name -->
+            <div>
+              <label class="block text-xs font-bold text-slate-300 mb-2">اسم الصيدلية الرسمي *</label>
+              <input 
+                type="text" 
+                id="inpPharmacyName" 
+                placeholder="صيدلية القطن" 
+                class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition" 
+                required
+              >
+            </div>
+
+            <!-- Admin Email -->
+            <div>
+              <label class="block text-xs font-bold text-slate-300 mb-2">إيميل المشرف الرئيسي (Google) *</label>
+              <input 
+                type="email" 
+                id="inpAdminEmail" 
+                placeholder="doctor@gmail.com" 
+                class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white font-mono placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition" 
+                required
+              >
+            </div>
+
+            <!-- WhatsApp Number -->
+            <div>
+              <label class="block text-xs font-bold text-slate-300 mb-2">رقم الواتساب (مع الرمز بدون +) *</label>
+              <input 
+                type="text" 
+                id="inpWhatsapp" 
+                placeholder="9647813703288" 
+                class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white font-mono placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition" 
+                required
+              >
+            </div>
+
+            <!-- Custom Subscription Price -->
+            <div>
+              <label class="block text-xs font-bold text-slate-300 mb-2">سعر الاشتراك المخصص (د.ع) *</label>
+              <input 
+                type="number" 
+                id="inpSubscriptionPrice" 
+                placeholder="50000" 
+                min="0"
+                step="5000"
+                class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-amber-400 font-mono font-bold placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition" 
+                required
+              >
+            </div>
+
+            <!-- Subscription Expiry Date -->
+            <div>
+              <label class="block text-xs font-bold text-slate-300 mb-2">تاريخ انتهاء الاشتراك *</label>
+              <input 
+                type="date" 
+                id="inpExpiryDate" 
+                class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white font-mono focus:outline-none focus:border-emerald-500 transition" 
+                required
+              >
+            </div>
+
+            <!-- Template ID -->
+            <div>
+              <label class="block text-xs font-bold text-slate-300 mb-2">قالب الواجهة (Template ID) *</label>
+              <select 
+                id="inpTemplateId" 
+                class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white font-bold focus:outline-none focus:border-emerald-500"
+                required
+              >
+                <option value="template-one">القالب 1: الوردي العصري (Modern Soft Rose)</option>
+                <option value="template-two">القالب 2: الطبي الحديث (Clinical Blue)</option>
+                <option value="template-three">القالب 3: الزمردي الفاخر (Emerald Luxury)</option>
+              </select>
+            </div>
+
+            <!-- Primary Color -->
+            <div>
+              <label class="block text-xs font-bold text-slate-300 mb-2">اللون الأساسي للهوية</label>
+              <div class="flex items-center gap-2">
+                <input 
+                  type="color" 
+                  id="inpPrimaryColor" 
+                  value="#E85D8A" 
+                  class="w-14 h-11 bg-slate-950 border border-slate-700 rounded-xl p-1 cursor-pointer"
+                  onchange="document.getElementById('inpColorHex').value = this.value"
+                >
+                <input 
+                  type="text" 
+                  id="inpColorHex" 
+                  value="#E85D8A" 
+                  class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-xs text-white font-mono uppercase focus:outline-none focus:border-emerald-500"
+                  oninput="document.getElementById('inpPrimaryColor').value = this.value"
+                >
+              </div>
+            </div>
+
+          </div>
+
+          <div class="flex items-center justify-between pt-4 border-t border-slate-800">
+            <span class="text-xs text-slate-400">معاينة الرابط: <span class="font-mono text-emerald-400 font-bold" id="slugPreviewText">?pharmacy=...</span></span>
+            <button 
+              type="submit" 
+              id="btnCreatePharmacy"
+              class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black px-8 py-3.5 rounded-xl shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 transition duration-150 flex items-center gap-2 cursor-pointer text-sm"
+            >
+              <span>💾 إنشاء الصيدلية وتفعيل الاشتراك</span>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- 3. Registered Pharmacies & Subscriptions Directory -->
+      <section class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-md">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800 mb-6">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-500/10 border border-blue-500/30 rounded-xl flex items-center justify-center text-xl text-blue-400">
+              📂
+            </div>
+            <div>
+              <h2 class="text-lg font-black text-white">إدارة الصيدليات والاشتراكات الحالية</h2>
+              <p class="text-xs text-slate-400">التحكم في تجميد الصيدليات، تعديل أسعار الاشتراكات وتواريخ الانتهاء.</p>
+            </div>
+          </div>
+
+          <button onclick="fetchPharmaciesList()" class="self-start sm:self-auto text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-4 py-2 rounded-xl flex items-center gap-2 transition cursor-pointer">
+            <span>🔄 تحديث القائمة</span>
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-right text-sm">
+            <thead class="bg-slate-950/60 text-slate-400 font-bold border-b border-slate-800 text-xs">
+              <tr>
+                <th class="py-3 px-4">الصيدلية</th>
+                <th class="py-3 px-4">المعرف (Slug)</th>
+                <th class="py-3 px-4">المشرف الرئيسي</th>
+                <th class="py-3 px-4">سعر الاشتراك</th>
+                <th class="py-3 px-4">تاريخ الانتهاء</th>
+                <th class="py-3 px-4">الحالة</th>
+                <th class="py-3 px-4 text-center">الإجراءات السريعة</th>
+              </tr>
+            </thead>
+            <tbody id="pharmaciesTableBody" class="divide-y divide-slate-800/60">
+              <tr>
+                <td colspan="7" class="text-center py-10 text-slate-500">جاري جلب الصيدليات من Firebase...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- EDIT SUBSCRIPTION MODAL -->
+  <div id="editSubModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-800 mb-4">
+        <h3 class="font-black text-white text-base">✏️ تعديل اشتراك الصيدلية</h3>
+        <button onclick="closeEditSubModal()" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+      </div>
+      <form onsubmit="handleSaveSubEdit(event)" class="space-y-4">
+        <input type="hidden" id="editSubPharmacyId">
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">سعر الاشتراك المخصص (د.ع)</label>
+          <input type="number" id="editSubPrice" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-amber-400 font-mono font-bold" required>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">تاريخ انتهاء الاشتراك</label>
+          <input type="date" id="editSubExpiry" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white font-mono" required>
+        </div>
+        <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black py-3 rounded-xl transition">
+          💾 حفظ التعديلات سحابياً
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="superToast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-emerald-500 text-slate-950 font-black px-6 py-3 rounded-full shadow-2xl transition-all duration-300 opacity-0 pointer-events-none z-50 text-sm"></div>
+
+  <!-- Script Logic -->
+  <script>
+    const SUPER_ADMIN_EMAIL = "hussaindark6@gmail.com";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDXAp6CTcq3OlN2egGOj5Yg8jK5wUsR6Uc",
+      authDomain: "cottanpharmacy.firebaseapp.com",
+      projectId: "cottanpharmacy",
+      storageBucket: "cottanpharmacy.firebasestorage.app",
+      messagingSenderId: "163407198551",
+      appId: "1:163407198551:web:1c397d23733101456a6612",
+      measurementId: "G-QC29GK2MDW"
+    };
+
+    let auth = null, db = null, currentUser = null;
+
+    try {
+      firebase.initializeApp(firebaseConfig);
+      auth = firebase.auth();
+      db = firebase.firestore();
+      auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    } catch (e) {
+      console.error("Firebase init error:", e);
+    }
+
+    // Set default expiry date to 1 year ahead
+    window.addEventListener('DOMContentLoaded', () => {
+      const nextYear = new Date();
+      nextYear.setFullYear(nextYear.getFullYear() + 1);
+      const dateStr = nextYear.toISOString().split('T')[0];
+      const expiryInp = document.getElementById('inpExpiryDate');
+      if (expiryInp) expiryInp.value = dateStr;
+    });
+
+    let toastTimer = null;
+    function showToast(msg, isError = false) {
+      const t = document.getElementById('superToast');
+      if (!t) return;
+      t.textContent = msg;
+      t.className = `fixed bottom-6 left-1/2 -translate-x-1/2 font-black px-6 py-3 rounded-full shadow-2xl transition-all duration-300 z-50 text-sm opacity-100 ${isError ? 'bg-red-500 text-white' : 'bg-emerald-400 text-slate-950'}`;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        t.className = t.className.replace('opacity-100', 'opacity-0 pointer-events-none');
+      }, 3500);
+    }
+
+    function handleSuperAdminSignIn() {
+      if (!auth) return;
+      const provider = new firebase.auth.GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      auth.signInWithPopup(provider).then(res => checkSuperAdminAccess(res.user)).catch(err => {
+        const errBox = document.getElementById('authGateError');
+        errBox.textContent = `خطأ: ${err.message}`;
+        errBox.classList.remove('hidden');
+      });
+    }
+
+    function checkSuperAdminAccess(user) {
+      const gate = document.getElementById('superAuthGate');
+      const app = document.getElementById('superApp');
+      const errBox = document.getElementById('authGateError');
+
+      if (user && user.email && user.email.toLowerCase().trim() === SUPER_ADMIN_EMAIL.toLowerCase().trim()) {
+        currentUser = user;
+        gate.classList.add('hidden');
+        app.classList.remove('hidden');
+        fetchPharmaciesList();
+      } else {
+        if (auth) auth.signOut();
+        gate.classList.remove('hidden');
+        app.classList.add('hidden');
+        errBox.textContent = `⚠️ غير مصرح: البريد (${user ? user.email : 'المستخدم'}) ليس المشرف العام المعتمد (${SUPER_ADMIN_EMAIL}).`;
+        errBox.classList.remove('hidden');
+      }
+    }
+
+    function handleSuperAdminSignOut() {
+      if (auth) auth.signOut();
+      window.location.reload();
+    }
+
+    if (auth) {
+      auth.onAuthStateChanged(user => {
+        if (user) checkSuperAdminAccess(user);
+        else {
+          document.getElementById('superAuthGate').classList.remove('hidden');
+          document.getElementById('superApp').classList.add('hidden');
+        }
+      });
+    }
+
+    const slugInp = document.getElementById('inpPharmacySlug');
+    if (slugInp) {
+      slugInp.addEventListener('input', (e) => {
+        document.getElementById('slugPreviewText').textContent = e.target.value ? `?pharmacy=${e.target.value}` : `?pharmacy=...`;
+      });
+    }
+
+    async function fetchPharmaciesList() {
+      if (!db) return;
+      const tbody = document.getElementById('pharmaciesTableBody');
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-400">جاري تحديث البيانات...</td></tr>`;
+
+      try {
+        const snap = await db.collection('pharmacies').get();
+        let total = 0, active = 0, totalRevenue = 0;
+        const rows = [];
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        snap.forEach(doc => {
+          total++;
+          const data = doc.data();
+          const slug = doc.id;
+          const isSuspended = data.isActive === false;
+          const expiryDate = data.subscriptionExpiry || '2099-12-31';
+          const isExpired = expiryDate < todayStr;
+          const subPrice = Number(data.subscriptionPrice || 0);
+
+          totalRevenue += subPrice;
+          if (!isSuspended && !isExpired) active++;
+
+          const name = data.name || slug;
+          const adminEmail = data.adminEmail || 'غير محدد';
+          const color = data.primaryColor || '#E85D8A';
+
+          let statusBadge = `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">● نشط</span>`;
+          if (isSuspended) {
+            statusBadge = `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-500/10 text-red-400 border border-red-500/30">⛔ محظور</span>`;
+          } else if (isExpired) {
+            statusBadge = `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">⏳ منتهي</span>`;
+          }
+
+          rows.push(`
+            <tr class="hover:bg-slate-800/40 transition">
+              <td class="py-3.5 px-4">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-3.5 h-3.5 rounded-full border border-slate-700 shadow-sm shrink-0" style="background-color: ${color};"></span>
+                  <div class="font-bold text-white">${escapeHtml(name)}</div>
+                </div>
+              </td>
+              <td class="py-3.5 px-4 font-mono text-emerald-400 text-xs font-semibold">${escapeHtml(slug)}</td>
+              <td class="py-3.5 px-4 font-mono text-slate-300 text-xs">${escapeHtml(adminEmail)}</td>
+              <td class="py-3.5 px-4 font-mono text-amber-400 font-bold text-xs">${subPrice.toLocaleString()} د.ع</td>
+              <td class="py-3.5 px-4 font-mono text-xs ${isExpired ? 'text-red-400 font-bold' : 'text-slate-300'}">${escapeHtml(expiryDate)}</td>
+              <td class="py-3.5 px-4">${statusBadge}</td>
+              <td class="py-3.5 px-4 text-center">
+                <div class="flex items-center justify-center gap-1.5">
+                  <a href="index.html?pharmacy=${encodeURIComponent(slug)}" target="_blank" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-lg text-xs font-bold transition">
+                    🛍️ المتجر
+                  </a>
+                  <a href="admin.html?pharmacy=${encodeURIComponent(slug)}" target="_blank" class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2.5 py-1 rounded-lg text-xs font-bold transition">
+                    ⚙️ الإدارة
+                  </a>
+                  <button onclick="togglePharmacyStatus('${escapeHtml(slug)}', ${!isSuspended})" class="${isSuspended ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-amber-500/10 text-amber-400 border-amber-500/30'} hover:opacity-80 border px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer">
+                    ${isSuspended ? 'إلغاء الحظر' : 'حظر ⛔'}
+                  </button>
+                  <button onclick="openEditSubModal('${escapeHtml(slug)}', ${subPrice}, '${escapeHtml(expiryDate)}')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2 py-1 rounded-lg text-xs font-bold transition cursor-pointer">
+                    ✏️
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `);
+        });
+
+        document.getElementById('statTotalPharmacies').textContent = total;
+        document.getElementById('statActivePharmacies').textContent = active;
+        document.getElementById('statTotalRevenue').textContent = totalRevenue.toLocaleString() + ' د.ع';
+
+        tbody.innerHTML = rows.length ? rows.join('') : `<tr><td colspan="7" class="text-center py-10 text-slate-500">لا توجد صيدليات مضافة بعد.</td></tr>`;
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-400">خطأ: ${err.message}</td></tr>`;
+      }
+    }
+
+    async function handleCreatePharmacy(e) {
+      e.preventDefault();
+      if (!db) return;
+
+      const btn = document.getElementById('btnCreatePharmacy');
+      btn.disabled = true;
+      btn.innerHTML = `<span>جاري الحفظ والتهيئة...</span>`;
+
+      const slug = document.getElementById('inpPharmacySlug').value.trim().toLowerCase();
+      const name = document.getElementById('inpPharmacyName').value.trim();
+      const adminEmail = document.getElementById('inpAdminEmail').value.trim().toLowerCase();
+      const whatsapp = document.getElementById('inpWhatsapp').value.trim().replace(/\+/g, '');
+      const subPrice = Number(document.getElementById('inpSubscriptionPrice').value || 0);
+      const expiryDate = document.getElementById('inpExpiryDate').value;
+      const templateId = document.getElementById('inpTemplateId').value;
+      const color = document.getElementById('inpPrimaryColor').value.trim();
+
+      try {
+        const existingDoc = await db.collection('pharmacies').doc(slug).get();
+        if (existingDoc.exists) {
+          showToast('⚠️ هذا المعرف (Slug) مستخدم بالفعل لصيدلية أخرى!', true);
+          btn.disabled = false;
+          btn.innerHTML = `<span>💾 إنشاء الصيدلية وتفعيل الاشتراك</span>`;
+          return;
+        }
+
+        const pharmacyData = {
+          id: slug,
+          name: name,
+          adminEmail: adminEmail,
+          socialWhatsapp: whatsapp,
+          subscriptionPrice: subPrice,
+          subscriptionExpiry: expiryDate,
+          templateId: templateId,
+          primaryColor: color,
+          isActive: true,
+          showAnnouncement: true,
+          announcementText: `✨ أهلاً بكم في ${name} — توصيل سريع وخدمة مميزة 🌸`,
+          deliveryFeeStandard: 4000,
+          deliveryFeeExpress: 8000,
+          heroMainTitle: name,
+          heroSubTitle: "نحن هنا لتحسين صحتكم وجمالكم",
+          heroDescTitle: "منتجات أصلية ومعتمدة 100%",
+          bannerImgUrl: "https://imgdb.io/i/EQ4D9ag.png",
+          showPharmacistBanner: true,
+          pharmacistCtaTitle: "استشر الصيدلي مجاناً 🩺",
+          pharmacistCtaDesc: "تحدث مع الصيدلي المختص مباشرة للحصول على تشخيص دقيق لروتينك وروشتتك",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        await db.collection('pharmacies').doc(slug).set(pharmacyData);
+
+        // إنشاء حساب المشرف في المسار الهرمي
+        const staffDocId = adminEmail.replace(/[^a-z0-9]/g, '_');
+        await db.collection('pharmacies').doc(slug).collection('staff').doc(staffDocId).set({
+          email: adminEmail,
+          name: `مشرف ${name}`,
+          role: 'owner',
+          permissions: ['all'],
+          addedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        showToast(`🎉 تم إنشاء وتفعيل صيدلية "${name}" بنجاح!`);
+        document.getElementById('addPharmacyForm').reset();
+        fetchPharmaciesList();
+      } catch (err) {
+        showToast(`فشل إنشاء الصيدلية: ${err.message}`, true);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>💾 إنشاء الصيدلية وتفعيل الاشتراك</span>`;
+      }
+    }
+
+    async function togglePharmacyStatus(slug, suspend) {
+      if (!confirm(suspend ? `هل تريد حظر وتجميد صيدلية (${slug})؟` : `هل تريد تفعيل وإلغاء حظر صيدلية (${slug})؟`)) return;
+      try {
+        await db.collection('pharmacies').doc(slug).set({ isActive: !suspend }, { merge: true });
+        showToast(suspend ? 'تم حظر الصيدلية وتجميد الدخول' : 'تم تفعيل الصيدلية بنجاح');
+        fetchPharmaciesList();
+      } catch (e) {
+        showToast('خطأ: ' + e.message, true);
+      }
+    }
+
+    function openEditSubModal(slug, price, expiry) {
+      document.getElementById('editSubPharmacyId').value = slug;
+      document.getElementById('editSubPrice').value = price;
+      document.getElementById('editSubExpiry').value = expiry;
+      document.getElementById('editSubModal').classList.remove('hidden');
+    }
+
+    function closeEditSubModal() {
+      document.getElementById('editSubModal').classList.add('hidden');
+    }
+
+    async function handleSaveSubEdit(e) {
+      e.preventDefault();
+      const slug = document.getElementById('editSubPharmacyId').value;
+      const price = Number(document.getElementById('editSubPrice').value);
+      const expiry = document.getElementById('editSubExpiry').value;
+
+      try {
+        await db.collection('pharmacies').doc(slug).set({
+          subscriptionPrice: price,
+          subscriptionExpiry: expiry
+        }, { merge: true });
+        showToast('تم تحديث بيانات الاشتراك بنجاح ✓');
+        closeEditSubModal();
+        fetchPharmaciesList();
+      } catch (err) {
+        showToast('خطأ أثناء التحديث: ' + err.message, true);
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+  </script>
+</body>
+</html>
