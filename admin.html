@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#111827">
-  <title>لوحة تحكم المشرف | صيدلية القطن</title>
+  <title>لوحة تحكم المشرف | المنصة السحابية</title>
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,12 +27,12 @@
   <div id="adminAuthGateModal">
     <div class="admin-gate-card">
       <div style="font-size:48px; margin-bottom:12px;">🔒</div>
-      <h3 style="font-size:20px; font-weight:900; margin:0 0 8px; color:#111827;">لوحة تحكم المشرف محمية</h3>
-      <p style="font-size:13px; color:#6B7280; margin:0 0 20px; line-height:1.6;">هذا القسم مخصص فقط لمشرف المتجر المعتمد (hussaindark6@gmail.com). يرجى تسجيل الدخول بحساب المشرف للمتابعة:</p>
+      <h3 style="font-size:20px; font-weight:900; margin:0 0 8px; color:#111827;">لوحة تحكم الصيدلية محمية</h3>
+      <p style="font-size:13px; color:#6B7280; margin:0 0 20px; line-height:1.6;">هذا القسم مخصص فقط للمشرف والموظفين المصرح لهم. يرجى تسجيل الدخول بحساب معتمد للمتابعة:</p>
       <button onclick="signInWithGoogle()" style="width:100%; background:#111827; color:#fff; padding:14px; border-radius:12px; font-weight:800; font-size:14px; margin-bottom:10px; cursor:pointer;">
         تسجيل الدخول عبر Google
       </button>
-      <a href="index.html" style="display:block; font-size:13px; font-weight:700; color:#6B7280; margin-top:8px;">← العودة للمتجر</a>
+      <a href="index.html" class="admin-back-store-link" style="display:block; font-size:13px; font-weight:700; color:#6B7280; margin-top:8px;">← العودة للمتجر</a>
     </div>
   </div>
 
@@ -41,7 +41,7 @@
     <div class="wrap admin-nav-wrap">
       <div class="admin-brand-title">
         <span style="font-size:20px;">⚙️</span>
-        <span>لوحة إدارة صيدلية القطن</span>
+        <span id="adminNavTitle">لوحة تحكم وإدارة الصيدلية</span>
       </div>
       <a href="index.html" class="admin-back-btn">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/></svg>
@@ -56,15 +56,16 @@
     <div class="admin-view-header">
       <h2>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        لوحة تحكم وإدارة المتجر الشاملة
+        لوحة تحكم وإدارة المتجر السحابية
       </h2>
-      <p>مرحباً بك يا مشرف (hussaindark6@gmail.com) — إدارة حقيقية بالكامل ومربوطة بـ Cloudflare Worker و Firebase.</p>
+      <p id="adminWelcomeDesc">مرحباً بك — إدارة متكاملة ومستقلة للطلبات، الموظفين، المنتجات، وقوالب العرض.</p>
     </div>
 
-    <!-- ADMIN TABS NAVIGATION (الـ 13 قسماً المتطابقة بالكامل) -->
+    <!-- ADMIN TABS NAVIGATION (الـ 14 قسماً بما فيها إدارة الموظفين) -->
     <div class="admin-tabs-nav-view">
       <button class="admin-tab-btn-v active" id="btnTabVStats" onclick="switchAdminSection('stats')">📊 الإحصائيات والأرباح</button>
       <button class="admin-tab-btn-v" id="btnTabVOrders" onclick="switchAdminSection('orders')">📦 إدارة الطلبات والشحن</button>
+      <button class="admin-tab-btn-v" id="btnTabVStaff" onclick="switchAdminSection('staff')">👥 الموظفين والصلاحيات</button>
       <button class="admin-tab-btn-v" id="btnTabVCoupons" onclick="switchAdminSection('coupons')">🎟️ إدارة أكواد الخصم</button>
       <button class="admin-tab-btn-v" id="btnTabVBundles" onclick="switchAdminSection('bundles')">🎁 حزم وبكجات التوفير</button>
       <button class="admin-tab-btn-v" id="btnTabVTelegram" onclick="switchAdminSection('telegram')">✈️ إشعارات تلغرام</button>
@@ -74,7 +75,7 @@
       <button class="admin-tab-btn-v" id="btnTabVOffers" onclick="switchAdminSection('offers')">🏷️ الخصومات والعروض</button>
       <button class="admin-tab-btn-v" id="btnTabVBrands" onclick="switchAdminSection('brands')">🏢 الماركات والشعارات</button>
       <button class="admin-tab-btn-v" id="btnTabVNotifs" onclick="switchAdminSection('notifs')">📢 إرسال إشعار للمستخدمين</button>
-      <button class="admin-tab-btn-v" id="btnTabVDesign" onclick="switchAdminSection('design')">🎨 الواجهة وتخصيص الألوان</button>
+      <button class="admin-tab-btn-v" id="btnTabVDesign" onclick="switchAdminSection('design')">🎨 القوالب والهوية البصرية</button>
       <button class="admin-tab-btn-v" id="btnTabVCode" onclick="switchAdminSection('code')">📋 نسخ الكود</button>
     </div>
 
@@ -162,7 +163,41 @@
       </div>
     </div>
 
-    <!-- 3. PROMO CODES / COUPONS MANAGEMENT -->
+    <!-- NEW 3. STAFF & PERMISSIONS MANAGEMENT (نظام حسابات وصلاحيات الموظفين) -->
+    <div id="adminSecStaff" style="display:none;">
+      <div class="admin-fieldset">
+        <legend>👥 إضافة موظف جديد للصيدلية ومنح الصلاحيات</legend>
+        <form onsubmit="handleAddStaffMember(event)">
+          <div style="display:flex; gap:10px;">
+            <div class="form-field" style="flex:1.5;">
+              <label>الاسم الكامل للموظف *</label>
+              <input type="text" id="staffNameInput" placeholder="مثال: د. أحمد خالد" required>
+            </div>
+            <div class="form-field" style="flex:2;">
+              <label>البريد الإلكتروني المسجل في Google *</label>
+              <input type="email" id="staffEmailInput" placeholder="ahmed@gmail.com" required>
+            </div>
+          </div>
+          <div class="form-field">
+            <label>الدور الوظيفي والصلاحيات *</label>
+            <select id="staffRoleSelect" required>
+              <option value="pharmacist">صيدلي (استقبال الطلبات، تغيير الأسعار والمخزون، الاستشارات)</option>
+              <option value="manager">مدير فرع (إدارة شاملة للمنتجات والطلبات والكوبونات)</option>
+              <option value="staff">موظف تجهيز وشحن (معاينة وتجهيز الطلبات فقط)</option>
+              <option value="owner">مشرف / مالك مشارك (صلاحيات كاملة للمتجر)</option>
+            </select>
+          </div>
+          <button type="submit" class="admin-btn-save" style="background:#111827;">+ إضافة الموظف واعتماد الصلاحيات سحابياً</button>
+        </form>
+      </div>
+
+      <div class="admin-fieldset">
+        <legend>قائمة الموظفين المصرح لهم بإدارة هذه الصيدلية</legend>
+        <div id="adminStaffListGrid" style="display:flex; flex-direction:column; gap:8px;"></div>
+      </div>
+    </div>
+
+    <!-- 4. PROMO CODES / COUPONS MANAGEMENT -->
     <div id="adminSecCoupons" style="display:none;">
       <div class="admin-fieldset">
         <legend id="adminCouponFormTitle">🎟️ إضافة كود خصم جديد (Server & Firestore Promo Code)</legend>
@@ -171,7 +206,7 @@
           <div style="display:flex; gap:10px;">
             <div class="form-field" style="flex:1.5;">
               <label>كود الخصم (Promo Code) *</label>
-              <input type="text" id="couponCodeInput" placeholder="مثال: QUTN20" style="text-transform:uppercase; font-family:monospace;" required>
+              <input type="text" id="couponCodeInput" placeholder="مثال: SAVE20" style="text-transform:uppercase; font-family:monospace;" required>
             </div>
             <div class="form-field" style="flex:1;">
               <label>نوع الخصم</label>
@@ -215,7 +250,7 @@
       </div>
     </div>
 
-    <!-- 4. PRODUCT BUNDLES / SAVINGS PACKS MANAGEMENT (حزم التوفير) -->
+    <!-- 5. PRODUCT BUNDLES / SAVINGS PACKS MANAGEMENT (حزم التوفير) -->
     <div id="adminSecBundles" style="display:none;">
       <div class="admin-fieldset">
         <legend id="adminBundleFormTitle">🎁 إضافة حزمة / بكج توفير جديد</legend>
@@ -227,7 +262,7 @@
           </div>
           <div class="form-field">
             <label>الوصف القصير ومميزات البكج *</label>
-            <textarea id="bundleDescInput" rows="2" placeholder="غسول سيرافي + مرطب سيرافي + واقي شمس بحماية كاملة وتوفير فوري" required></textarea>
+            <textarea id="bundleDescInput" rows="2" placeholder="غسول + مرطب + واقي شمس بحماية كاملة وتوفير فوري" required></textarea>
           </div>
           <div style="display:flex; gap:10px;">
             <div class="form-field" style="flex:1;">
@@ -264,11 +299,11 @@
       </div>
     </div>
 
-    <!-- 5. TELEGRAM BOT NOTIFICATIONS SETTINGS -->
+    <!-- 6. TELEGRAM BOT NOTIFICATIONS SETTINGS -->
     <div id="adminSecTelegram" style="display:none;">
       <div class="admin-fieldset">
         <legend>✈️ إعدادات ربط التلغرام (Telegram Bot Instant Webhook)</legend>
-        <p style="font-size:12.5px; color:var(--text-soft); margin-top:-4px;">عند تأكيد أي طلب أو طلب تقرير إكسل، سيقوم الخادم بالإرسال تلقائياً:</p>
+        <p style="font-size:12.5px; color:var(--text-soft); margin-top:-4px;">عند تأكيد أي طلب أو طلب تقرير إكسل، سيقوم الخادم بالإرسال تلقائياً لمجموعة الصيدلية:</p>
         <form onsubmit="handleSaveTelegramSettings(event)">
           <div class="form-field">
             <label>توكن البوت (Telegram Bot Token) *</label>
@@ -286,7 +321,7 @@
       </div>
     </div>
 
-    <!-- 6. AUDIT LOGS & RATE LIMITING SECTION -->
+    <!-- 7. AUDIT LOGS & RATE LIMITING SECTION -->
     <div id="adminSecAudit" style="display:none;">
       <div class="admin-fieldset">
         <legend>🛡️ إعدادات الحماية ومعدل الطلبات (Rate Limiting)</legend>
@@ -307,7 +342,7 @@
 
       <div class="admin-fieldset">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <legend style="margin-bottom:0;">📜 سجل تدقيق عمليات المشرف (Audit Logs)</legend>
+          <legend style="margin-bottom:0;">📜 سجل تدقيق عمليات المشرف والموظفين (Audit Logs)</legend>
           <button type="button" onclick="fetchAuditLogs()" style="color:var(--accent); font-size:12px; font-weight:800;">🔄 تحديث السجل</button>
         </div>
         <div style="overflow-x:auto;">
@@ -316,7 +351,7 @@
               <tr>
                 <th>الحدث</th>
                 <th>التفاصيل</th>
-                <th>المشرف</th>
+                <th>المشرف / الموظف</th>
                 <th>الوقت</th>
                 <th>IP</th>
               </tr>
@@ -327,7 +362,7 @@
       </div>
     </div>
 
-    <!-- 7. CATEGORY MANAGEMENT SECTION -->
+    <!-- 8. CATEGORY MANAGEMENT SECTION -->
     <div id="adminSecCats" style="display:none;">
       <div class="admin-fieldset">
         <legend id="adminCatFormTitle">إضافة قسم رئيسي جديد</legend>
@@ -372,7 +407,7 @@
       </div>
     </div>
 
-    <!-- 8. PRODUCT MANAGEMENT SECTION (مع فلتر النواقص) -->
+    <!-- 9. PRODUCT MANAGEMENT SECTION (مع فلتر النواقص) -->
     <div id="adminSecProducts" style="display:none;">
       <div class="admin-fieldset">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -457,7 +492,7 @@
       </div>
     </div>
 
-    <!-- 9. ADVANCED DISCOUNTS & DYNAMIC PROMO CARDS (إصلاح الخصومات المجمعة) -->
+    <!-- 10. ADVANCED DISCOUNTS & DYNAMIC PROMO CARDS -->
     <div id="adminSecOffers" style="display:none;">
       <div class="admin-fieldset">
         <legend>🎯 تطبيق خصم ذكي مجمع وتحديث الأسعار فورياً (Bulk Discount Engine)</legend>
@@ -526,7 +561,7 @@
       </div>
     </div>
 
-    <!-- 10. BRAND MANAGEMENT SECTION -->
+    <!-- 11. BRAND MANAGEMENT SECTION -->
     <div id="adminSecBrands" style="display:none;">
       <div class="admin-fieldset">
         <legend id="adminBrandFormTitle">🏢 إضافة ماركة جديدة</legend>
@@ -560,7 +595,7 @@
       </div>
     </div>
 
-    <!-- 11. NOTIFICATIONS BROADCAST SECTION -->
+    <!-- 12. NOTIFICATIONS BROADCAST SECTION -->
     <div id="adminSecNotifs" style="display:none;">
       <div class="admin-fieldset">
         <legend>📢 إرسال إشعار وتنبيه عام لجميع مستخدمي الموقع</legend>
@@ -571,7 +606,7 @@
           </div>
           <div class="form-field">
             <label>تفاصيل الإشعار أو التنبيه *</label>
-            <textarea id="notifBodyInput" rows="3" placeholder="اكتبي تفاصيل العرض أو الرسالة التي ستظهر في صندوق إشعارات المستخدمين..." required></textarea>
+            <textarea id="notifBodyInput" rows="3" placeholder="اكتبي تفاصيل العرض أو الرسالة التي ستظهر للمستخدمين..." required></textarea>
           </div>
           <div class="form-field">
             <label>نوع التنبيه</label>
@@ -591,15 +626,34 @@
       </div>
     </div>
 
-    <!-- 12. THEME CUSTOMIZATION, SOCIAL & DELIVERY SECTION -->
+    <!-- 13. THEME & MULTI-TEMPLATE ENGINE, BRANDING, SOCIAL & DELIVERY SECTION -->
     <div id="adminSecDesign" style="display:none;">
       <form onsubmit="handleSaveCustomization(event)">
+        
+        <!-- Multi-Template Selector -->
         <fieldset class="admin-fieldset">
-          <legend>🎨 تخصيص لون وثيم الموقع بالكامل (Theme Customizer)</legend>
-          <div style="display:flex; align-items:center; justify-content:space-between; gap:14px; background:#F9FAFB; padding:12px 14px; border-radius:12px;">
+          <legend>🎭 قالب وتصميم المتجر (SaaS Multi-Template Engine)</legend>
+          <div class="form-field">
+            <label>اختيار القالب النشط للصيدلية (مجاناً لكل صيدلية) *</label>
+            <select id="adminTemplateSelector" style="font-weight:800; color:var(--rose-deep); background:#F9FAFB;">
+              <option value="template-one">القالب 1: العصري الناعم (Soft Rose / Modern)</option>
+              <option value="template-two">القالب 2: الطبي الحديث (Clinical Blue / Modern Medical)</option>
+              <option value="template-three">القالب 3: الزمردي الفاخر (Emerald Luxury & Organic)</option>
+            </select>
+            <p style="font-size:11.5px; color:var(--text-soft); margin-top:4px;">تغيير القالب يعيد ترتيب وتصميم المتجر فورياً دون المساس بالبيانات أو طلبات الزبائن.</p>
+          </div>
+        </fieldset>
+
+        <fieldset class="admin-fieldset">
+          <legend>🎨 اسم الصيدلية واللون الرئيسي (Brand Identity)</legend>
+          <div class="form-field">
+            <label>اسم الصيدلية الرسمي *</label>
+            <input type="text" id="adminPharmacyNameInput" placeholder="مثال: صيدلية القطن" required>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:14px; background:#F9FAFB; padding:12px 14px; border-radius:12px; margin-top:8px;">
             <div>
-              <div style="font-weight:800; font-size:13.5px; color:var(--ink);">اللون الرئيسي للموقع</div>
-              <div style="font-size:11.5px; color:var(--text-soft);">سيتم تطبيق هذا اللون فورياً وسحابياً على كافة الأزرار، الأيقونات، والهوية</div>
+              <div style="font-weight:800; font-size:13.5px; color:var(--ink);">اللون الرئيسي للموقع (Theme Color)</div>
+              <div style="font-size:11.5px; color:var(--text-soft);">سيتم تطبيق هذا اللون فورياً وسحابياً على كافة الأزرار والأيقونات</div>
             </div>
             <input type="color" id="adminPrimaryColorPicker" value="#E85D8A" style="width:54px; height:42px; padding:2px; cursor:pointer; border-radius:8px; border:1px solid #D1D5DB;">
           </div>
@@ -692,11 +746,11 @@
       </form>
     </div>
 
-    <!-- 13. COPY CODE TOOL -->
+    <!-- 14. COPY CODE TOOL -->
     <div id="adminSecCode" style="display:none;">
       <div class="admin-copy-code-box">
         <h3>📋 أداة نسخ كود الموقع المحدث بالكامل</h3>
-        <p>اضغطي على الزر أدناه لنسخ كود الصفحة بالكامل إلى الحافظة لوضعه مباشرة في GitHub بكل سهولة:</p>
+        <p>اضغط على الزر أدناه لنسخ كود الصفحة بالكامل إلى الحافظة:</p>
         <button class="btn-copy-full-code" onclick="copyFullSourceCode()">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
           نسخ الكود الكامل للموقع
@@ -714,16 +768,15 @@
         <button onclick="closeReceiptModal()" style="font-weight:900; font-size:16px;">✕</button>
       </div>
       
-      <!-- Print Area Styled for 80mm Thermal Paper -->
       <div class="receipt-print-area" id="receiptPrintArea">
         <div class="receipt-header">
-          <h3>صيدلية القطن 🌸</h3>
+          <h3>الصيدلية 🌸</h3>
           <p style="margin:2px 0; font-size:11px;">منتجات عناية وتجميل أصلية 100%</p>
           <p style="margin:2px 0; font-size:10px;">هاتف: <span id="recStorePhone">07813703288</span></p>
         </div>
         <div class="receipt-divider"></div>
         <div style="font-size:11px; margin-bottom:6px;">
-          <div><b>رقم الوصل:</b> <span class="mono" id="recOrderId">#QUTN-123456</span></div>
+          <div><b>رقم الوصل:</b> <span class="mono" id="recOrderId">#ORD-123456</span></div>
           <div><b>التاريخ:</b> <span id="recOrderDate"></span></div>
           <div><b>العميل:</b> <span id="recCustName"></span></div>
           <div><b>الهاتف:</b> <span id="recCustPhone" class="mono"></span></div>
@@ -748,7 +801,7 @@
           <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:900; margin-top:4px;"><span>المجموع الكلي:</span><span id="recGrandTotal" class="mono">0 د.ع</span></div>
         </div>
         <div class="receipt-footer">
-          <p style="margin:4px 0;">شكراً لتسوقكم من صيدلية القطن 🌸</p>
+          <p style="margin:4px 0;">شكراً لتسوقكم معنا 🌸</p>
           <p style="margin:0; font-size:9px;">يرجى فحص الطلب عند الاستلام من المندوب</p>
         </div>
       </div>
