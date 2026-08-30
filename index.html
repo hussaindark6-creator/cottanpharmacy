@@ -1,18 +1,18 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" id="htmlRoot" data-theme="light">
+<html lang="ar" dir="rtl" id="htmlRoot" data-theme="light" data-template="template-one">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#ffffff">
-  <title>صيدلية القطن | متجر العناية بالبشرة والتجميل</title>
+  <title>متجر الصيدلية | منصة العناية والصحة</title>
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Embedded Critical Styles (حماية من الوميض وإخفاء تام للنوافذ غير النشطة) -->
+  <!-- Embedded Critical Styles (حماية من الوميض FOUC وتنسيقات الحماية للمودال) -->
   <style>
     :root {
       --ink: #1F2937; --text-soft: #6B7280; --paper: #FFFFFF; --surface: #FFF0F3;
@@ -35,7 +35,7 @@
     .view.active { display: block !important; }
 
     /* إخفاء تام للنوافذ المنبثقة لمنع تسريب النصوص في أسفل الصفحة */
-    .notif-modal-overlay, .success-modal-overlay, .iab-modal, .consult-modal-overlay, .welcome-modal-overlay, .admin-quick-modal-overlay {
+    .notif-modal-overlay, .success-modal-overlay, .iab-modal, .consult-modal-overlay, .welcome-modal-overlay, .admin-quick-modal-overlay, .receipt-modal-overlay {
       display: none !important;
       position: fixed;
       inset: 0;
@@ -46,7 +46,7 @@
       justify-content: center;
       padding: 20px;
     }
-    .notif-modal-overlay.open, .success-modal-overlay.open, .iab-modal.open, .consult-modal-overlay.open, .welcome-modal-overlay.open, .admin-quick-modal-overlay.open {
+    .notif-modal-overlay.open, .success-modal-overlay.open, .iab-modal.open, .consult-modal-overlay.open, .welcome-modal-overlay.open, .admin-quick-modal-overlay.open, .receipt-modal-overlay.open {
       display: flex !important;
     }
 
@@ -58,8 +58,11 @@
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
   </style>
 
-  <!-- Complete External Stylesheet -->
+  <!-- Complete External Stylesheet (Base Styles) -->
   <link rel="stylesheet" href="style.css">
+
+  <!-- Dynamic Theme / Template Link Tag (يتم تحديثه تلقائياً حسب قيمة templateId للصيدلية) -->
+  <link id="dynamicTemplateStylesheet" rel="stylesheet" href="">
 
   <!-- Firebase SDKs (Compat v9.22.1) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -79,17 +82,17 @@
 </head>
 <body>
 
-  <!-- STICKY ADMIN BAR (يظهر للمشرف فقط بعد تسجيل الدخول) -->
+  <!-- STICKY ADMIN BAR (يظهر للمشرفين والموظفين المصرح لهم فقط) -->
   <div id="adminTopBar" class="admin-sticky-bar" style="display:none;">
     <div style="display:flex; align-items:center; gap:8px;">
-      <span>👑 لوحة تحكم المشرف (hussaindark6@gmail.com)</span>
+      <span>⚙️ لوحة الإدارة والصلاحيات</span>
     </div>
-    <a href="admin.html" class="admin-bar-btn">⚙️ فتح لوحة الإدارة</a>
+    <a href="admin.html" class="admin-bar-btn">لوحة التحكم ⚙️</a>
   </div>
 
   <!-- ANNOUNCEMENT BAR -->
   <div id="announcementBar" class="announcement-bar">
-    <span id="announcementText">✨ توصيل مجاني للطلبات فوق 50,000 د.ع لجميع محافظات العراق 🌸</span>
+    <span id="announcementText">✨ جاري تحميل العروض الحصرية... 🌸</span>
   </div>
 
   <!-- SIDE MENU DRAWER OVERLAY -->
@@ -98,7 +101,7 @@
   <!-- SIDE MENU DRAWER -->
   <aside class="menu-drawer" id="menuDrawer">
     <div class="drawer-header">
-      <h3 id="drawerLogoTitle">صيدلية القطن</h3>
+      <h3 id="drawerLogoTitle">الصيدلية</h3>
       <button onclick="closeMenu()" class="icon-btn" aria-label="إغلاق">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
@@ -142,7 +145,7 @@
       </button>
     </div>
 
-    <!-- Social Channels -->
+    <!-- Social Channels (تتحدث ديناميكياً) -->
     <div class="drawer-social-section">
       <div class="drawer-social-title">تواصل معنا مباشرة 🌸</div>
       <div class="drawer-social-grid">
@@ -159,7 +162,7 @@
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
         </a>
       </div>
-      <div class="drawer-footer">صيدلية القطن © 2026 — منتجات أصلية 100%</div>
+      <div class="drawer-footer">جميع الحقوق محفوظة © 2026 — منتجات أصلية 100%</div>
     </div>
   </aside>
 
@@ -171,7 +174,7 @@
       </button>
       
       <div class="logo-block" onclick="showView('home')">
-        <span class="logo-text" id="headerLogoText">صيدلية القطن</span>
+        <span class="logo-text" id="headerLogoText">الصيدلية</span>
         <span class="logo-mark">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent, #E85D8A)" stroke-width="2"><circle cx="12" cy="8" r="3"/><circle cx="8" cy="10" r="3"/><circle cx="16" cy="10" r="3"/><path d="M12 13v7"/></svg>
         </span>
@@ -215,12 +218,12 @@
     <div class="wrap hero-wrap">
       <div class="qutn-hybrid-banner" onclick="showView('categories')">
         <div class="banner-text-col">
-          <h1 class="main-title" id="heroMainTitle">صيدلية القطن</h1>
-          <p class="sub-title" id="heroSubTitle">نحن هنا لتحسين بشرتك</p>
+          <h1 class="main-title" id="heroMainTitle">متجر الصيدلية</h1>
+          <p class="sub-title" id="heroSubTitle">نحن هنا لتحسين صحتك وبشرتك</p>
           <p class="desc-title"><span id="heroDescTitle">منتجات أصلية لعناية صحية وجمال طبيعي</span> <span>🌸</span></p>
         </div>
         <div class="banner-model-col">
-          <img id="primaryHeroBannerImg" src="https://imgdb.io/i/EQ4D9ag.png" alt="العناية بالبشرة والجمال">
+          <img id="primaryHeroBannerImg" src="https://imgdb.io/i/EQ4D9ag.png" alt="الصحة والجمال">
         </div>
       </div>
     </div>
@@ -239,7 +242,7 @@
       </div>
     </div>
 
-    <!-- Product Bundles Section (حزم وبكجات التوفير في الرئيسية) -->
+    <!-- Product Bundles Section -->
     <section class="wrap section" id="homeBundlesSection" style="display:none;">
       <div class="section-head">
         <span class="see-all" onclick="showView('bundles')">عرض كل البكجات</span>
@@ -248,7 +251,7 @@
       <div class="bundle-grid" id="homeBundlesGrid"></div>
     </section>
 
-    <!-- Shop by Brand Section (شريط الماركات المحدث) -->
+    <!-- Shop by Brand Section -->
     <section class="wrap section">
       <div class="section-head">
         <span class="see-all" onclick="openBestSellers()">عرض الكل</span>
@@ -266,7 +269,7 @@
       <div class="product-grid" id="bestSellersGrid"></div>
     </section>
 
-    <!-- Promo Banners Section (Dynamic Promo Cards) -->
+    <!-- Promo Banners Section -->
     <section class="wrap section" id="promoBannersSection">
       <div id="promoBanners"></div>
     </section>
@@ -300,7 +303,7 @@
     </div>
   </div>
 
-  <!-- ============ 4. BUNDLES VIEW (واجهة حزم وبكجات التوفير) ============ -->
+  <!-- ============ 4. BUNDLES VIEW ============ -->
   <div class="view" id="view-bundles">
     <div class="wrap">
       <div class="pd-back" onclick="showView('home')">
@@ -316,7 +319,7 @@
     </div>
   </div>
 
-  <!-- ============ 5. MY ORDERS VIEW ("طلباتي") ============ -->
+  <!-- ============ 5. MY ORDERS VIEW ============ -->
   <div class="view" id="view-orders">
     <div class="wrap">
       <div class="section-head" style="margin-top:16px;">
@@ -349,7 +352,7 @@
     </div>
   </div>
 
-  <!-- ============ 8. PRODUCT DETAIL VIEW (DIRECT DEEP LINKING & STAR RATING) ============ -->
+  <!-- ============ 8. PRODUCT DETAIL VIEW ============ -->
   <div class="view" id="view-product">
     <div class="wrap">
       <div style="display:flex; align-items:center; justify-content:space-between; padding-top:6px;">
@@ -431,7 +434,7 @@
       <div id="cartItemsList"></div>
 
       <div class="promo-input-group" id="cartPromoGroup">
-        <input type="text" id="cartPromoCodeInput" placeholder="أدخلي كود الخصم (مثال: QUTN10)">
+        <input type="text" id="cartPromoCodeInput" placeholder="أدخلي كود الخصم (مثال: PROMO10)">
         <button type="button" onclick="applyPromoCode(document.getElementById('cartPromoCodeInput').value)">تطبيق الكود</button>
       </div>
       <div id="appliedPromoBadge" style="display:none;"></div>
@@ -440,7 +443,7 @@
     </div>
   </div>
 
-  <!-- ============ 10. CHECKOUT VIEW (WITH SMART AUTOFILL) ============ -->
+  <!-- ============ 10. CHECKOUT VIEW ============ -->
   <div class="view" id="view-checkout">
     <div class="wrap">
       <div class="pd-back" onclick="showView('cart')">
@@ -452,7 +455,6 @@
         <h2>إتمام الطلب</h2>
       </div>
 
-      <!-- Smart Customer Autofill Notification -->
       <div id="autofillNoticeBox" style="display:none;" class="autofill-indicator">
         <span>✨ تم ملء بياناتكِ المحفوظة تلقائياً</span>
         <button type="button" onclick="clearSavedCustomerData()" style="color:#DC2626; font-size:11.5px; font-weight:800; text-decoration:underline;">مسح/تعديل</button>
@@ -501,8 +503,8 @@
     <div class="welcome-card">
       <button class="welcome-close-btn" onclick="closeWelcomeModal()">✕</button>
       <div style="font-size:44px; margin-bottom:6px;">🌸</div>
-      <h3>أهلاً بكِ في صيدلية القطن!</h3>
-      <p>يسعدنا انضمامكِ إلينا. احصلي على خصم فوري 10% على طلبكِ الأول باستخدام الكود أدناه:</p>
+      <h3>أهلاً بكِ معنا!</h3>
+      <p>يسعدنا انضمامكِ إلينا. احصلي على خصم فوري على طلبكِ الأول باستخدام الكود أدناه:</p>
       <div class="welcome-code-box">
         <span class="mono" id="welcomeCodeText">QUTN10</span>
         <button type="button" onclick="copyWelcomeCode()">نسخ الكود 📋</button>
@@ -515,7 +517,7 @@
   <div class="admin-quick-modal-overlay" id="adminQuickEditModal">
     <div class="admin-quick-card">
       <div class="consult-header">
-        <h3 style="color:#111827;">✏️ تعديل سريع للمنتج (المشرف)</h3>
+        <h3 style="color:#111827;">✏️ تعديل سريع للمنتج</h3>
         <button class="icon-btn" onclick="closeAdminQuickEditModal()">✕</button>
       </div>
       <div style="padding:16px; text-align:right;">
@@ -579,7 +581,7 @@
     <div class="success-card">
       <div class="success-icon-badge">🌸</div>
       <h3>تم إتمام الطلب بنجاح!</h3>
-      <p id="successModalMsg">شكراً لثقتكِ بصيدلية القطن. تم توثيق طلبكِ بنجاح، ويمكنكِ متابعته دائماً من قسم "طلباتي".</p>
+      <p id="successModalMsg">شكراً لثقتكِ بنا. تم توثيق طلبكِ بنجاح، ويمكنكِ متابعته دائماً من قسم "طلباتي".</p>
       <div class="success-actions">
         <button type="button" class="pd-add-btn" onclick="closeSuccessModalAndGoOrders()">📦 متابعة طلباتي</button>
         <button type="button" style="padding:10px; font-weight:800; color:var(--text-soft);" onclick="closeSuccessModal()">العودة للرئيسية</button>
