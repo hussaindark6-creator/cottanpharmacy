@@ -73,10 +73,10 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         لوحة تحكم وإدارة المتجر الشاملة
       </h2>
-      <p id="adminWelcomeDesc">مرحباً بك — إدارة متكاملة ومستقلة للطلبات، الموظفين، والمنتجات.</p>
+      <p id="adminWelcomeDesc">مرحباً بك — إدارة متكاملة للطلبات، الموظفين، المنتجات، والهوية البصرية.</p>
     </div>
 
-    <!-- ADMIN TABS NAVIGATION (مع نظام الصلاحيات) -->
+    <!-- ADMIN TABS NAVIGATION (تم حذف التيليجرام ونسخ الكود) -->
     <div class="admin-tabs-nav-view">
       <button class="admin-tab-btn-v active" id="btnTabVStats" onclick="switchAdminSection('stats')">📊 الإحصائيات والأرباح</button>
       <button class="admin-tab-btn-v" id="btnTabVOrders" onclick="switchAdminSection('orders')">📦 إدارة الطلبات والشحن</button>
@@ -87,10 +87,9 @@
       <button class="admin-tab-btn-v" id="btnTabVCoupons" onclick="switchAdminSection('coupons')">🎟️ إدارة أكواد الخصم</button>
       <button class="admin-tab-btn-v" id="btnTabVBrands" onclick="switchAdminSection('brands')">🏢 الماركات والشعارات</button>
       <button class="admin-tab-btn-v" id="btnTabVNotifs" onclick="switchAdminSection('notifs')">📢 إرسال إشعار للمستخدمين</button>
-      <button class="admin-tab-btn-v" id="btnTabVTelegram" onclick="switchAdminSection('telegram')">✈️ إشعارات تلغرام</button>
       <button class="admin-tab-btn-v" id="btnTabVAudit" onclick="switchAdminSection('audit')">🛡️ سجل العمليات والحماية</button>
       <button class="admin-tab-btn-v" id="btnTabVStaff" onclick="switchAdminSection('staff')">👥 الموظفين والصلاحيات</button>
-      <button class="admin-tab-btn-v" id="btnTabVDesign" onclick="switchAdminSection('design')">🎨 القوالب والهوية البصرية</button>
+      <button class="admin-tab-btn-v" id="btnTabVDesign" onclick="switchAdminSection('design')">🎨 الهوية البصرية والتصميم</button>
     </div>
 
     <!-- 1. REAL ANALYTICS & REVENUE SECTION -->
@@ -133,7 +132,7 @@
       </div>
     </div>
 
-    <!-- 2. ORDERS MANAGEMENT, THERMAL PRINT & ADVANCED EXCEL / TELEGRAM REPORT SECTION -->
+    <!-- 2. ORDERS MANAGEMENT, THERMAL PRINT & EXCEL EXPORT -->
     <div id="adminSecOrders" style="display:none;">
       <div class="admin-fieldset">
         <legend style="margin-bottom:8px;">📊 فلاتر تقارير المبيعات والتصدير الذكي</legend>
@@ -160,9 +159,6 @@
             </select>
           </div>
           <div style="display:flex; gap:8px; align-items:flex-end; margin-top:4px;">
-            <button type="button" onclick="sendOrdersReportToTelegram()" style="background:#0284C7; color:#fff; font-weight:800; font-size:12px; padding:9px 14px; border-radius:10px; display:inline-flex; align-items:center; gap:6px;">
-              🚀 إرسال التقرير لـ Telegram
-            </button>
             <button type="button" onclick="exportOrdersToCSV()" style="background:#16A34A; color:#fff; font-weight:800; font-size:12px; padding:9px 14px; border-radius:10px; display:inline-flex; align-items:center; gap:6px;">
               📊 تنزيل Excel / CSV
             </button>
@@ -542,29 +538,7 @@
       </div>
     </div>
 
-    <!-- 10. TELEGRAM SETTINGS -->
-    <div id="adminSecTelegram" style="display:none;">
-      <div class="admin-fieldset">
-        <legend>✈️ إعدادات ربط التلغرام (Telegram Bot Instant Webhook)</legend>
-        <p style="font-size:12.5px; color:var(--text-soft); margin-top:-4px;">عند تأكيد أي طلب أو طلب تقرير إكسل، سيقوم الخادم بالإرسال تلقائياً لمجموعة الصيدلية:</p>
-        <form onsubmit="handleSaveTelegramSettings(event)">
-          <div class="form-field">
-            <label>توكن البوت (Telegram Bot Token) *</label>
-            <input type="text" id="teleBotTokenInput" placeholder="مثال: 8714017218:AAEOyJK9u1nMcGSBnm...">
-          </div>
-          <div class="form-field">
-            <label>معرف المحادثة أو المجموعة (Chat ID) *</label>
-            <input type="text" id="teleChatIdInput" placeholder="مثال: -5458203370">
-          </div>
-          <div style="display:flex; gap:10px; margin-top:10px;">
-            <button type="button" onclick="testTelegramBotNotification()" style="flex:1; background:#0284C7; color:#fff; font-weight:800; padding:12px; border-radius:12px;">🚀 إرسال إشعار تجريبي</button>
-            <button type="submit" class="admin-btn-save" style="flex:1; margin-top:0;">💾 حفظ إعدادات التلغرام</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- 11. AUDIT LOGS -->
+    <!-- 10. AUDIT LOGS -->
     <div id="adminSecAudit" style="display:none;">
       <div class="admin-fieldset">
         <legend>🛡️ إعدادات الحماية ومعدل الطلبات (Rate Limiting)</legend>
@@ -605,7 +579,7 @@
       </div>
     </div>
 
-    <!-- 12. STAFF & PERMISSIONS (RBAC) -->
+    <!-- 11. STAFF & PERMISSIONS (RBAC) -->
     <div id="adminSecStaff" style="display:none;">
       <div class="admin-fieldset">
         <legend>👥 إضافة موظف جديد للصيدلية ومنح الصلاحيات</legend>
@@ -639,21 +613,9 @@
       </div>
     </div>
 
-    <!-- 13. THEME & BRANDING -->
+    <!-- 12. THEME & BRANDING CUSTOMIZATION (تم إبقاء الهوية وحذف اختيار القالب) -->
     <div id="adminSecDesign" style="display:none;">
       <form onsubmit="handleSaveCustomization(event)">
-        <fieldset class="admin-fieldset">
-          <legend>🎭 قالب وتصميم المتجر (SaaS Multi-Template Engine)</legend>
-          <div class="form-field">
-            <label>اختيار القالب النشط للصيدلية *</label>
-            <select id="adminTemplateSelector" style="font-weight:800; color:var(--rose-deep); background:#F9FAFB;">
-              <option value="template-one">القالب 1: العصري الناعم (Soft Rose / Modern)</option>
-              <option value="template-two">القالب 2: الطبي الحديث (Clinical Blue / Modern Medical)</option>
-              <option value="template-three">القالب 3: الزمردي الفاخر (Emerald Luxury & Organic)</option>
-            </select>
-          </div>
-        </fieldset>
-
         <fieldset class="admin-fieldset">
           <legend>🎨 اسم الصيدلية واللون الرئيسي (Brand Identity)</legend>
           <div class="form-field">
@@ -663,7 +625,7 @@
           <div style="display:flex; align-items:center; justify-content:space-between; gap:14px; background:#F9FAFB; padding:12px 14px; border-radius:12px; margin-top:8px;">
             <div>
               <div style="font-weight:800; font-size:13.5px; color:var(--ink);">اللون الرئيسي للموقع (Theme Color)</div>
-              <div style="font-size:11.5px; color:var(--text-soft);">سيتم تطبيق هذا اللون فورياً وسحابياً على كافة الأزرار والأيقونات</div>
+              <div style="font-size:11.5px; color:var(--text-soft);">سيتم تطبيق هذا اللون فورياً وسحابياً على كافة الأزرار والأيقونات والهوية</div>
             </div>
             <input type="color" id="adminPrimaryColorPicker" value="#E85D8A" style="width:54px; height:42px; padding:2px; cursor:pointer; border-radius:8px; border:1px solid #D1D5DB;">
           </div>
@@ -825,7 +787,7 @@
       const user = auth ? auth.currentUser : currentUser;
       const isSuper = user && user.email && user.email.toLowerCase().trim() === 'hussaindark6@gmail.com';
 
-      // 1. التحقق من حالة الاشتراك والصيدلية
+      // 1. التحقق من حالة الاشتراك وتجميد الصيدلية
       try {
         const snap = await dbPaths.pharmacyDoc().get();
         if (snap.exists) {
@@ -859,23 +821,17 @@
       // 2. تطبيق نظام الصلاحيات المقيد للموظفين
       if (!isSuper && currentStaffData) {
         const role = currentStaffData.role;
-        const perms = currentStaffData.permissions || [];
-
         if (role === 'staff' || role === 'pharmacist') {
-          // إخفاء التبويبات الحساسة (الماليات، التصميم، الموظفين، الحماية، التلغرام)
-          const sensitiveTabs = ['btnTabVDesign', 'btnTabVStaff', 'btnTabVAudit', 'btnTabVTelegram', 'btnTabVStats'];
+          const sensitiveTabs = ['btnTabVDesign', 'btnTabVStaff', 'btnTabVAudit', 'btnTabVStats'];
           sensitiveTabs.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.style.display = 'none';
           });
-
-          // توجيه الموظف افتراضياً لقسم المنتجات أو الطلبات
           switchAdminSection('products');
         }
       }
     }
 
-    // تشغيل الفحص عند اكتمال تحميل الصفحة وتغير حالة المستخدم
     window.addEventListener('DOMContentLoaded', () => {
       setTimeout(enforceSubscriptionAndRoleGates, 1000);
     });
