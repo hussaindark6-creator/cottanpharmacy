@@ -1,11 +1,47 @@
 /* ==========================================================
-   صيدلية القطن | Cottanpharmacy — Master Script Engine
+   SaaS Multi-Tenant Pharmacy Engine — script.js
    ========================================================== */
 
-// ================= CONFIGURATION & CONSTANTS =================
+// ================= 1. MULTI-TENANT RESOLVER & ROUTING =================
+const DEFAULT_PHARMACY_ID = "cottanpharmacy";
+
+function getActivePharmacyId() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const paramId = urlParams.get('pharmacy') || urlParams.get('p_id') || urlParams.get('id');
+  if (paramId && paramId.trim()) {
+    const cleanId = paramId.trim().toLowerCase();
+    sessionStorage.setItem('saas_active_pharmacy_id', cleanId);
+    return cleanId;
+  }
+  const cachedId = sessionStorage.getItem('saas_active_pharmacy_id');
+  if (cachedId && cachedId.trim()) {
+    return cachedId.trim().toLowerCase();
+  }
+  return DEFAULT_PHARMACY_ID;
+}
+
+const currentPharmacyId = getActivePharmacyId();
+
+// دالة لإنشاء روابط داخلية مع الحفاظ على معرف الصيدلية
+function getTenantUrl(pagePath) {
+  const cleanPath = pagePath.split('?')[0];
+  return `${cleanPath}?pharmacy=${encodeURIComponent(currentPharmacyId)}`;
+}
+
+// دالة لتحديث روابط التنقل داخل الصفحة لتمرير معرف الصيدلية
+function patchTenantLinks() {
+  document.querySelectorAll('a[href]').forEach(a => {
+    const href = a.getAttribute('href');
+    if (href && (href.startsWith('index.html') || href.startsWith('admin.html') || href === './' || href === '/')) {
+      const page = href.split('?')[0];
+      a.setAttribute('href', getTenantUrl(page));
+    }
+  });
+}
+
+// ================= 2. CONFIGURATION & FIREBASE =================
 const WORKER_API_BASE = "https://cottanbackend.hussaindark6.workers.dev";
-const ADMIN_EMAIL = "hussaindark6@gmail.com";
-const WHATSAPP_NUMBER = "9647813703288"; // الرقم المعتمد الرسمي
+const SUPER_ADMIN_EMAIL = "hussaindark6@gmail.com";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDXAp6CTcq3OlN2egGOj5Yg8jK5wUsR6Uc",
@@ -18,6 +54,7 @@ const firebaseConfig = {
 };
 
 let auth = null, db = null, currentUser = null, isFirebaseConfigured = false;
+let currentStaffData = null; // بيانات الموظف والصلاحيات للصيدلية الحالية
 
 try {
   if (firebaseConfig.apiKey) {
@@ -26,7 +63,6 @@ try {
     db = firebase.firestore();
     isFirebaseConfigured = true;
 
-    // تفعيل التخزين المحلي للجلسة لضمان بقاء تسجيل الدخول نشطاً
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(err => {
       console.warn("Persistence fallback:", err);
     });
@@ -35,7 +71,20 @@ try {
   console.warn("Firebase init error:", err);
 }
 
-// ================= SECURITY, IN-APP BROWSER & SANITIZATION =================
+// ================= 3. HIERARCHICAL DB PATH BUILDERS =================
+const dbPaths = {
+  pharmacyDoc: (pId = currentPharmacyId) => db.collection('pharmacies').doc(pId),
+  productsCol: (pId = currentPharmacyId) => db.collection('pharmacies').doc(pId).collection('products'),
+  ordersCol: (pId = currentPharmacyId) => db.collection('pharmacies').doc(pId).collection('orders'),
+  staffCol: (pId = currentPharmacyId) => db.collection('pharmacies').doc(pId).collection('staff'),
+  categoriesCol: (pId = currentPharmacyId) => db.collection('pharmacies').doc(pId).collection('categories'),
+  bundlesCol: (pId = currentPharmacyId) => db.collection('pharmacies').doc(pId).collection('bundles'),
+  couponsCol: (pId = currentPharmacyId) => db.collection('pharmacies').doc(pId).collection('coupons'),
+  notificationsCol: (pId = currentPharmacyId) => db.collection('pharmacies').doc(pId).collection('notifications'),
+  analyticsDailyCol: (pId = currentPharmacyId) => db.collection('pharmacies').doc(pId).collection('analytics_daily')
+};
+
+// ================= 4. SECURITY & PERMISSIONS (RBAC) =================
 function sanitizeText(str) {
   if (typeof str !== 'string') return str == null ? '' : String(str);
   return str
@@ -55,14 +104,30 @@ function sanitizeUrl(url) {
   return '';
 }
 
-function isCurrentUserAdmin() {
+function isSuperAdmin() {
   const user = auth ? auth.currentUser : currentUser;
-  return !!(user && user.email && user.email.toLowerCase().trim() === ADMIN_EMAIL.toLowerCase());
+  return !!(user && user.email && user.email.toLowerCase().trim() === SUPER_ADMIN_EMAIL.toLowerCase());
+}
+
+function isCurrentUserAdmin() {
+  if (isSuperAdmin()) return true;
+  if (!currentUser || !currentStaffData) return false;
+  return currentStaffData.role === 'owner' || currentStaffData.role === 'manager' || currentStaffData.role === 'admin';
+}
+
+function hasPermission(permissionName) {
+  if (isSuperAdmin()) return true;
+  if (!currentStaffData) return false;
+  if (currentStaffData.role === 'owner') return true;
+  if (currentStaffData.permissions && currentStaffData.permissions.includes(permissionName)) {
+    return true;
+  }
+  return false;
 }
 
 function assertAdmin() {
   if (!isCurrentUserAdmin()) {
-    showToast('⚠️ غير مصرح: هذه العملية مخصصة للمشرف فقط.');
+    showToast('⚠️ غير مصرح: هذه العملية مخصصة لمشرف الصيدلية فقط.');
     return false;
   }
   return true;
@@ -80,11 +145,9 @@ function lockAction(actionKey, cooldownMs = 1500) {
   return true;
 }
 
-// فحص المتصفحات الداخلية
 function isInAppBrowser() {
   const ua = navigator.userAgent || navigator.vendor || window.opera || '';
   const isIAB = /Telegram|Instagram|FBAN|FBAV|TikTok|Snapchat|Line|Twitter|MicroMessenger|WhatsApp|musical_ly/i.test(ua);
-  
   let storageBlocked = false;
   try {
     sessionStorage.setItem('__test_storage', '1');
@@ -92,13 +155,13 @@ function isInAppBrowser() {
   } catch (e) {
     storageBlocked = true;
   }
-
   return isIAB || storageBlocked;
 }
 
 async function apiFetch(endpoint, options = {}) {
   const headers = {
     "Content-Type": "application/json",
+    "X-Pharmacy-Id": currentPharmacyId,
     ...(options.headers || {})
   };
 
@@ -121,7 +184,7 @@ async function apiFetch(endpoint, options = {}) {
   }
 }
 
-// ================= ICONS & GRAPHICS =================
+// ================= 5. ICONS & GRAPHICS =================
 const icons = {
   bottle: c => `<svg viewBox="0 0 24 24" width="48" height="48" style="width:48px;height:48px;max-width:100%;max-height:100%;" fill="none"><path d="M10 2h4v3.2l1.4 1.6c.4.45.6 1 .6 1.6V20a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V8.4c0-.6.2-1.15.6-1.6L9 5.2V2Z" fill="${c}" fill-opacity=".14" stroke="${c}" stroke-width="1.5"/><rect x="9" y="11" width="6" height="8.4" rx="0.8" fill="${c}" fill-opacity=".26"/></svg>`,
   jar: c => `<svg viewBox="0 0 24 24" width="48" height="48" style="width:48px;height:48px;max-width:100%;max-height:100%;" fill="none"><rect x="5" y="9" width="14" height="12" rx="2.6" fill="${c}" fill-opacity=".14" stroke="${c}" stroke-width="1.5"/><rect x="6.4" y="11" width="11.2" height="8.4" rx="1.4" fill="${c}" fill-opacity=".26"/><rect x="4.4" y="6" width="15.2" height="3.4" rx="1.4" fill="${c}" fill-opacity=".3" stroke="${c}" stroke-width="1.3"/></svg>`,
@@ -146,68 +209,39 @@ function hashColor(name) {
   return `hsl(${Math.abs(hash) % 360}, 50%, 62%)`;
 }
 
-// ================= STORE STATE & DEFAULT DATA =================
+// ================= 6. TENANT STATE & ISOLATED STORAGE =================
+const getStorageKey = (key) => `saas_${currentPharmacyId}_${key}`;
+
 let brandsData = {
   'Cerave': { name: 'Cerave', color: '#5FAE6E', logoUrl: '' },
   'Simple': { name: 'Simple', color: '#C97F79', logoUrl: '' },
   'REVUELE': { name: 'REVUELE', color: '#D9A441', logoUrl: '' },
-  'COSMO': { name: 'COSMO', color: '#B7A233', logoUrl: '' },
-  'Skin1004': { name: 'Skin1004', color: '#8FAE4A', logoUrl: '' },
-  'The Ordinary': { name: 'The Ordinary', color: '#4CAE93', logoUrl: '' },
-  'DIADERM': { name: 'DIADERM', color: '#b01e4a', logoUrl: '' },
-  'Photoblock': { name: 'Photoblock', color: '#4C8CAE', logoUrl: '' },
-  'ISIS Pharma': { name: 'ISIS Pharma', color: '#4C6FAE', logoUrl: '' },
-  'Uriage': { name: 'Uriage', color: '#5C5CAE', logoUrl: '' },
-  'Dove': { name: 'Dove', color: '#7A4A6B', logoUrl: '' },
-  'dr.Clinic': { name: 'dr.Clinic', color: '#C9463D', logoUrl: '' },
-  'LACALUT': { name: 'LACALUT', color: '#C33A2E', logoUrl: '' },
-  'ACM': { name: 'ACM', color: '#6B7078', logoUrl: '' }
+  'COSMO': { name: 'COSMO', color: '#B7A233', logoUrl: '' }
 };
 
 let categories = [
   { id: 'face', label: 'العناية بالوجه', icon: 'face', imageUrl: '' },
   { id: 'moisturizer', label: 'مرطبات', icon: 'jar', imageUrl: '' },
   { id: 'serum', label: 'سيرومات', icon: 'bottle', imageUrl: '' },
-  { id: 'sunscreen', label: 'واقي شمس', icon: 'sunscreen', imageUrl: '' },
-  { id: 'baby', label: 'العناية بالأطفال', icon: 'baby', imageUrl: '' },
-  { id: 'intimate', label: 'العناية بالمناطق الحساسة', icon: 'intimate', imageUrl: '' },
-  { id: 'body', label: 'العناية بالجسم', icon: 'body', imageUrl: '' },
-  { id: 'hair', label: 'العناية بالشعر', icon: 'hair', imageUrl: '' }
+  { id: 'sunscreen', label: 'واقي شمس', icon: 'sunscreen', imageUrl: '' }
 ];
 
-const initialDefaultProducts = [
-  { id: '1', name: 'كريم سيرافي مرطب للبشرة الجافة', brand: 'Cerave', category: 'moisturizer', size: '236 مل', price: 25000, rating: 4.8, reviews: 126, type: 'jar', inStock: true, isSpecialOffer: false, views: 1, orderCount: 0, description: 'كريم مرطب غني بالسيراميدات وحمض الهيالورونيك، يرمم حاجز البشرة ويمنحها ترطيباً يدوم 24 ساعة.', ingredients: 'Ceramides, Hyaluronic Acid, Glycerin', usage: 'يوضع على الوجه والجسم صباحاً ومساءً.' },
-  { id: '2', name: 'رفيول حل نياسيناميد 10% + زنك', brand: 'REVUELE', category: 'serum', size: '30 مل', price: 18000, rating: 4.7, reviews: 98, type: 'bottle', inStock: true, isSpecialOffer: false, views: 1, orderCount: 0, description: 'سيروم مركّز يقلل من ظهور المسام الواسعة ويوازن إفراز الدهون.', ingredients: 'Niacinamide 10%, Zinc PCA', usage: 'تُوضع نقاط على بشرة نظيفة مساءً.' },
-  { id: '3', name: 'غسول سيمبل للبشرة الحساسة', brand: 'Simple', category: 'face', size: '150 مل', price: 12000, rating: 4.6, reviews: 82, type: 'tube', inStock: true, isSpecialOffer: false, views: 1, orderCount: 0, description: 'غسول لطيف خالٍ من الصابون والعطور، ينظف البشرة بعمق دون تجفيفها.', ingredients: 'Glycerin, Panthenol, Vitamin B5', usage: 'يُدلّك على بشرة مبللة ثم يُشطف.' },
-  { id: '4', name: 'كوزمو واقي شمس SPF50 PA+++', brand: 'COSMO', category: 'sunscreen', size: '50 مل', price: 19000, rating: 4.8, reviews: 90, type: 'tube', inStock: true, isSpecialOffer: false, views: 1, orderCount: 0, description: 'واقي شمس خفيف غير دهني بحماية عريضة، يمتص بسرعة.', ingredients: 'Zinc Oxide, Titanium Dioxide, Vitamin E', usage: 'يوضع صباحاً ويجدد كل ساعتين إلى 3 ساعات.' }
-];
-
-let products = [...initialDefaultProducts];
-let bundles = [
-  {
-    id: 'b1',
-    title: 'بكج النضارة والترطيب العميق',
-    description: 'كريم سيرافي المرطب + سيروم رفيول نياسيناميد 10% لبشرة مشرقة وصحية',
-    oldPrice: 43000,
-    price: 35000,
-    savingsBadge: 'وفر 8,000 د.ع 💸',
-    productIds: ['1', '2'],
-    imageUrl: ''
-  }
-];
-
+let products = [];
+let bundles = [];
 let notifications = [];
-let cart = JSON.parse(localStorage.getItem('qutn_cart') || '{}');
-let wishlist = new Set(JSON.parse(localStorage.getItem('qutn_wishlist') || '[]'));
-let readNotifs = new Set(JSON.parse(localStorage.getItem('qutn_read_notifs') || '[]'));
-let myOrders = JSON.parse(localStorage.getItem('qutn_my_orders') || '[]');
+let staffMembers = [];
+
+let cart = JSON.parse(localStorage.getItem(getStorageKey('cart')) || '{}');
+let wishlist = new Set(JSON.parse(localStorage.getItem(getStorageKey('wishlist')) || '[]'));
+let readNotifs = new Set(JSON.parse(localStorage.getItem(getStorageKey('read_notifs')) || '[]'));
+let myOrders = JSON.parse(localStorage.getItem(getStorageKey('my_orders')) || '[]');
+
 let currentView = 'home';
 let listingMode = null, listingValue = null, listingCatActive = 'all';
 let currentProductId = null, pdQty = 1, pdActiveTab = 'desc', deliveryMethod = 'standard';
 let appliedPromo = null;
 let isLowStockFilterActive = false;
 
-// نظام حفظ موضع الشاشة
 let previousViewBeforeProduct = 'home';
 let previousScrollBeforeProduct = 0;
 
@@ -217,31 +251,32 @@ let todayRevenue = 0;
 let monthlyRevenue = 0;
 let weeklyVisitsData = [];
 
-let storeSettings = JSON.parse(localStorage.getItem('qutn_store_settings') || '{}');
-if (!storeSettings.primaryColor) {
-  storeSettings = {
-    primaryColor: '#E85D8A',
-    bannerImgUrl: 'https://imgdb.io/i/EQ4D9ag.png',
-    announcementText: '✨ توصيل مجاني للطلبات فوق 50,000 د.ع لجميع محافظات العراق 🌸',
-    showAnnouncement: true,
-    showPharmacistBanner: true,
-    pharmacistCtaTitle: 'استشر الصيدلي مجاناً 🩺',
-    pharmacistCtaDesc: 'تحدثي مع الصيدلي المختص مباشرة للحصول على تشخيص دقيق لروتينك وروشتتك',
-    socialWhatsapp: '9647813703288',
-    socialTelegram: 'https://t.me/cottanpharmacy',
-    socialInstagram: 'https://instagram.com/cottanpharmacy',
-    socialPhone: '07813703288',
-    deliveryFeeStandard: 4000,
-    deliveryFeeExpress: 8000,
-    heroMainTitle: 'صيدلية القطن',
-    heroSubTitle: 'نحن هنا لتحسين بشرتك',
-    heroDescTitle: 'منتجات أصلية لعناية صحية وجمال طبيعي',
-    promoCards: [
-      { id: 'pc_1', title: 'عرض خاص من دوف', desc: 'عناية ناعمة وترطيب عميق لبشرتك', discount: 'خصم حتى 25%', img: '' },
-      { id: 'pc_2', title: 'عروض السيرومات العلاجية', desc: 'تغذية وإشراقة طبيعية لمظهر صحي', discount: 'خصم حتى 30%', img: '' }
-    ]
-  };
-}
+// بيانات الصيدلية الافتراضية
+let pharmacyProfile = {
+  id: currentPharmacyId,
+  name: 'صيدلية القطن',
+  templateId: 'template-one', // 'template-one', 'template-two', 'template-three'
+  primaryColor: '#E85D8A',
+  logoUrl: '',
+  bannerImgUrl: 'https://imgdb.io/i/EQ4D9ag.png',
+  announcementText: '✨ توصيل مجاني للطلبات فوق 50,000 د.ع لجميع المحافظات 🌸',
+  showAnnouncement: true,
+  showPharmacistBanner: true,
+  pharmacistCtaTitle: 'استشر الصيدلي مجاناً 🩺',
+  pharmacistCtaDesc: 'تحدثي مع الصيدلي المختص مباشرة للحصول على تشخيص دقيق لروتينك وروشتتك',
+  socialWhatsapp: '9647813703288',
+  socialTelegram: 'https://t.me/cottanpharmacy',
+  socialInstagram: 'https://instagram.com/cottanpharmacy',
+  socialPhone: '07813703288',
+  deliveryFeeStandard: 4000,
+  deliveryFeeExpress: 8000,
+  heroMainTitle: 'صيدلية القطن',
+  heroSubTitle: 'نحن هنا لتحسين بشرتك',
+  heroDescTitle: 'منتجات أصلية لعناية صحية وجمال طبيعي',
+  promoCards: [
+    { id: 'pc_1', title: 'عروض مميزة', desc: 'عناية وترطيب فائق لبشرتك', discount: 'خصم حتى 25%', img: '' }
+  ]
+};
 
 function fmtPrice(n) { return (Number(n) || 0).toLocaleString('en-US') + ' د.ع'; }
 function findProduct(id) { return products.find(p => String(p.id) === String(id)); }
@@ -249,18 +284,18 @@ function findBundle(id) { return bundles.find(b => String(b.id) === String(id));
 function starIcon() { return `<svg viewBox="0 0 24 24" width="12" height="12" style="width:12px;height:12px;" fill="currentColor"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1z"/></svg>`; }
 
 function saveLocalState() {
-  localStorage.setItem('qutn_cart', JSON.stringify(cart));
-  localStorage.setItem('qutn_wishlist', JSON.stringify([...wishlist]));
-  localStorage.setItem('qutn_my_orders', JSON.stringify(myOrders));
-  localStorage.setItem('qutn_store_settings', JSON.stringify(storeSettings));
+  localStorage.setItem(getStorageKey('cart'), JSON.stringify(cart));
+  localStorage.setItem(getStorageKey('wishlist'), JSON.stringify([...wishlist]));
+  localStorage.setItem(getStorageKey('my_orders'), JSON.stringify(myOrders));
+  localStorage.setItem(getStorageKey('store_settings'), JSON.stringify(pharmacyProfile));
 }
 
 function getBrandColor(brandName) {
   if (brandsData[brandName] && brandsData[brandName].color) return sanitizeText(brandsData[brandName].color);
-  return hashColor(brandName || 'Qutn');
+  return hashColor(brandName || 'Pharmacy');
 }
 
-// ================= DYNAMIC THEME ENGINE =================
+// ================= 7. DYNAMIC THEME & TEMPLATE ENGINE =================
 function applyDynamicThemeColor(hexColor) {
   if (!hexColor || !/^#[0-9A-F]{6}$/i.test(hexColor)) return;
   const root = document.documentElement;
@@ -278,7 +313,27 @@ function applyDynamicThemeColor(hexColor) {
   root.style.setProperty('--accent-dark', `rgb(${Math.max(0, r-30)}, ${Math.max(0, g-30)}, ${Math.max(0, b-30)})`);
 }
 
-// ================= PROMO CODES / COUPONS =================
+function applyPharmacyTemplate(templateId = 'template-one') {
+  const htmlRoot = document.getElementById('htmlRoot') || document.documentElement;
+  htmlRoot.setAttribute('data-template', templateId);
+
+  let linkTag = document.getElementById('dynamicTemplateStylesheet');
+  if (!linkTag) {
+    linkTag = document.createElement('link');
+    linkTag.id = 'dynamicTemplateStylesheet';
+    linkTag.rel = 'stylesheet';
+    document.head.appendChild(linkTag);
+  }
+
+  // تحميل ملف الـ CSS للقالب في حال الرغبة بملفات منفصلة أو الاعتماد على الأنماط المدمجة
+  if (templateId && templateId !== 'template-one') {
+    linkTag.href = `template-${templateId.replace('template-', '')}.css`;
+  } else {
+    linkTag.removeAttribute('href');
+  }
+}
+
+// ================= 8. MULTI-TENANT PROMO CODES =================
 async function applyPromoCode(code) {
   if (!code || !code.trim()) {
     showToast('يرجى كتابة كود الخصم أولاً');
@@ -290,23 +345,57 @@ async function applyPromoCode(code) {
     return;
   }
 
-  showToast('جاري التحقق من كود الخصم سحابياً...');
+  showToast('جاري التحقق من كود الخصم...');
+  
+  // التحقق المباشر من وثائق الصيدلية الحالية في Firestore
+  try {
+    const cleanCode = code.trim().toUpperCase();
+    const snap = await dbPaths.couponsCol().doc(cleanCode).get();
+
+    if (snap.exists) {
+      const c = snap.data();
+      if (!c.active) {
+        showToast('كود الخصم غير مفعل حالياً ❌');
+        return;
+      }
+      if (c.expiry && new Date(c.expiry) < new Date()) {
+        showToast('كود الخصم منتهي الصلاحية ❌');
+        return;
+      }
+      if (c.minSpend && subtotal < Number(c.minSpend)) {
+        showToast(`الحد الأدنى لتفعيل الكود هو ${fmtPrice(c.minSpend)}`);
+        return;
+      }
+
+      let discountAmount = (c.type === 'percentage') 
+        ? Math.round(subtotal * (Number(c.value) / 100))
+        : Number(c.value);
+
+      appliedPromo = { code: cleanCode, discountAmount };
+      showToast('تم تطبيق الخصم بنجاح! 🎉');
+      renderCart();
+      renderCheckoutSummary();
+      return;
+    }
+  } catch (err) {
+    console.warn("Local coupon check error:", err);
+  }
+
+  // في حال فشل الفحص المحلي يتم الاستدعاء عبر الـ API
   const res = await apiFetch("/api/coupons/validate", {
     method: "POST",
-    body: JSON.stringify({ code: code.trim(), subtotal })
+    body: JSON.stringify({ code: code.trim(), subtotal, pharmacyId: currentPharmacyId })
   });
 
   if (res && res.valid) {
     appliedPromo = { code: res.code, discountAmount: Number(res.discountAmount || 0) };
     showToast(res.message || 'تم تطبيق الخصم بنجاح! 🎉');
-    renderCart();
-    renderCheckoutSummary();
   } else {
     appliedPromo = null;
     showToast((res && res.message) || 'كود الخصم غير صالح أو منتهي الصلاحية ❌');
-    renderCart();
-    renderCheckoutSummary();
   }
+  renderCart();
+  renderCheckoutSummary();
 }
 
 function removePromoCode() {
@@ -317,9 +406,14 @@ function removePromoCode() {
 }
 
 async function fetchAdminCoupons() {
-  const res = await apiFetch("/api/admin/coupons");
-  if (res && res.coupons) {
-    renderAdminCouponsList(res.coupons);
+  if (!isFirebaseConfigured || !db) return;
+  try {
+    const snap = await dbPaths.couponsCol().get();
+    const coupons = [];
+    snap.forEach(d => coupons.push({ id: d.id, ...d.data() }));
+    renderAdminCouponsList(coupons);
+  } catch (e) {
+    console.warn(e);
   }
 }
 
@@ -327,14 +421,14 @@ function renderAdminCouponsList(coupons) {
   const container = document.getElementById('adminCouponsListGrid');
   if (!container) return;
   if (coupons.length === 0) {
-    container.innerHTML = `<div class="no-results" style="padding:16px 0;">لا توجد أكواد خصم مسجلة حالياً.</div>`;
+    container.innerHTML = `<div class="no-results" style="padding:16px 0;">لا توجد أكواد خصم مسجلة لهذه الصيدلية.</div>`;
     return;
   }
   container.innerHTML = coupons.map(c => `
     <div style="background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
       <div>
         <div style="font-weight:900; font-size:14px; color:var(--rose-deep); font-family:monospace;">
-          ${sanitizeText(c.code)} 
+          ${sanitizeText(c.code || c.id)} 
           <span class="log-badge">${c.type === 'percentage' ? c.value + '%' : fmtPrice(c.value)}</span>
           ${c.active ? '<span style="color:#16A34A; font-size:11px; font-weight:800; margin-inline-start:6px;">● نشط</span>' : '<span style="color:#DC2626; font-size:11px; font-weight:800; margin-inline-start:6px;">● متوقف</span>'}
         </div>
@@ -360,34 +454,29 @@ async function handleAdminCouponSave(e) {
     minSpend: Number(document.getElementById('couponMinSpendInput').value || 0),
     maxUses: Number(document.getElementById('couponMaxUsesInput').value || 100),
     expiry: document.getElementById('couponExpiryInput').value,
-    active: document.getElementById('couponActiveCheck').checked
+    active: document.getElementById('couponActiveCheck').checked,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
 
-  const res = await apiFetch("/api/admin/coupons", { method: "POST", body: JSON.stringify(payload) });
-  if (res && res.success) {
-    if (db) {
-      await db.collection('coupons').doc(res.coupon ? res.coupon.id : payload.code).set(payload, { merge: true });
-    }
+  if (db) {
+    await dbPaths.couponsCol().doc(payload.code).set(payload, { merge: true });
     showToast('تم حفظ كود الخصم وتفعيله سحابياً بنجاح! 🎉');
     document.getElementById('couponCodeInput').value = '';
     document.getElementById('couponValueInput').value = '';
     fetchAdminCoupons();
-  } else {
-    showToast((res && res.message) || 'حدث خطأ أثناء حفظ الكوبون');
   }
 }
 
 async function deleteAdminCoupon(id) {
   if (!assertAdmin()) return;
   if (confirm('هل أنتِ متأكدة من حذف هذا الكوبون نهائياً؟')) {
-    await apiFetch(`/api/admin/coupons/${id}`, { method: "DELETE" });
-    if (db) await db.collection('coupons').doc(String(id)).delete();
+    if (db) await dbPaths.couponsCol().doc(String(id)).delete();
     fetchAdminCoupons();
     showToast('تم حذف الكوبون بنجاح ✓');
   }
 }
 
-// ================= PRODUCT BUNDLES SYSTEM =================
+// ================= 9. MULTI-TENANT PRODUCT BUNDLES =================
 function populateBundleProductsChecklist() {
   const container = document.getElementById('bundleProductsChecklist');
   if (!container) return;
@@ -434,7 +523,6 @@ function renderBundleCardHTML(b) {
   return `
     <div class="bundle-card">
       <span class="bundle-savings-badge">${sanitizeText(b.savingsBadge || 'توفير فوري 💸')}</span>
-      
       <div class="bundle-thumb-row">
         ${cleanImg ? `<img src="${cleanImg}" style="max-height:100px; object-fit:contain;">` : 
           includedProds.map((p, idx) => `
@@ -445,22 +533,18 @@ function renderBundleCardHTML(b) {
           `).join('')
         }
       </div>
-
       <h3 class="bundle-title">${sanitizeText(b.title)}</h3>
       <p class="bundle-desc">${sanitizeText(b.description)}</p>
-
       <div class="bundle-items-list">
         <b>مكونات البكج:</b>
         ${includedProds.map(p => `<span>• ${sanitizeText(p.name)} (${sanitizeText(p.brand)})</span>`).join('')}
       </div>
-
       <div class="bundle-price-box">
         <div>
           <span class="p-price mono" style="font-size:17px; color:var(--rose-deep);">${fmtPrice(b.price)}</span>
           ${b.oldPrice ? `<span class="p-oldprice mono" style="margin-inline-start:6px;">${fmtPrice(b.oldPrice)}</span>` : ''}
         </div>
       </div>
-
       <button class="add-cart-btn" onclick="addBundleToCart('${sanitizeText(b.id)}')">
         🎁 أضف البكج كاملاً للسلة
       </button>
@@ -564,37 +648,26 @@ async function handleAdminBundleSave(e) {
     price: price,
     savingsBadge: sanitizeText(savings),
     imageUrl: img,
-    productIds: selectedProdIds
+    productIds: selectedProdIds,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
 
-  const idx = bundles.findIndex(b => b.id === payload.id);
-  if (idx > -1) bundles[idx] = payload;
-  else bundles.unshift(payload);
-
   if (db) {
-    await db.collection('bundles').doc(payload.id).set(payload, { merge: true });
+    await dbPaths.bundlesCol().doc(payload.id).set(payload, { merge: true });
+    showToast('تم حفظ بكج التوفير بنجاح! 🎁');
+    resetAdminBundleForm();
   }
-
-  renderAdminBundlesList();
-  renderHomeBundles();
-  renderAllBundles();
-  resetAdminBundleForm();
-  showToast('تم حفظ بكج التوفير بنجاح! 🎁');
 }
 
 async function deleteAdminBundle(id) {
   if (!assertAdmin()) return;
   if (confirm('هل أنتِ متأكدة من حذف هذا البكج؟')) {
-    bundles = bundles.filter(b => b.id !== id);
-    if (db) await db.collection('bundles').doc(String(id)).delete();
-    renderAdminBundlesList();
-    renderHomeBundles();
-    renderAllBundles();
+    if (db) await dbPaths.bundlesCol().doc(String(id)).delete();
     showToast('تم حذف البكج بنجاح ✓');
   }
 }
 
-// ================= THERMAL RECEIPT PRINTING (80mm) =================
+// ================= 10. THERMAL RECEIPT PRINTING (80mm) =================
 function openReceiptModal(orderId) {
   const ord = myOrders.find(o => String(o.id) === String(orderId)) || (window.adminLastOrdersList && window.adminLastOrdersList.find(o => String(o.id) === String(orderId)));
   if (!ord) {
@@ -623,7 +696,7 @@ function openReceiptModal(orderId) {
 
   const delFee = (ord.deliveryFee !== undefined) 
     ? Number(ord.deliveryFee) 
-    : ((ord.deliveryMethod === 'express') ? 8000 : 4000);
+    : ((ord.deliveryMethod === 'express') ? (pharmacyProfile.deliveryFeeExpress || 8000) : (pharmacyProfile.deliveryFeeStandard || 4000));
 
   const discountVal = Number(ord.discountAmount || 0);
   const exactGrandTotal = Number(ord.total) || Math.max(0, itemsSubtotal - discountVal) + delFee;
@@ -634,7 +707,11 @@ function openReceiptModal(orderId) {
   document.getElementById('recCustPhone').textContent = ord.phone || '';
   document.getElementById('recCustAddress').textContent = ord.address || '';
   document.getElementById('recDeliveryType').textContent = (ord.deliveryMethod === 'express') ? 'توصيل سريع 🛵' : 'توصيل عادي 🚚';
-  document.getElementById('recStorePhone').textContent = storeSettings.socialPhone || '07813703288';
+  document.getElementById('recStorePhone').textContent = pharmacyProfile.socialPhone || '07813703288';
+
+  // تحديث عنوان الصيدلية في رأس الوصل
+  const recStoreTitle = document.querySelector('.receipt-header h3');
+  if (recStoreTitle) recStoreTitle.textContent = `${pharmacyProfile.name || 'الصيدلية'} 🌸`;
 
   document.getElementById('recDeliveryFee').textContent = fmtPrice(delFee);
   document.getElementById('recGrandTotal').textContent = fmtPrice(exactGrandTotal);
@@ -658,13 +735,13 @@ function closeReceiptModal() {
   if (modal) modal.classList.remove('open');
 }
 
-// ================= SMART STAR-ONLY RATING =================
+// ================= 11. RATINGS & AUTOFILL =================
 function rateProductInstant(stars) {
   if (!currentProductId) return;
   const p = findProduct(currentProductId);
   if (!p) return;
 
-  const ratedKey = 'rated_' + currentProductId;
+  const ratedKey = getStorageKey('rated_' + currentProductId);
   if (localStorage.getItem(ratedKey)) {
     showToast('لقد قمتِ بتقييم هذا المنتج مسبقاً ⭐');
     return;
@@ -678,7 +755,7 @@ function rateProductInstant(stars) {
   p.reviews = newReviews;
 
   if (db) {
-    db.collection('products').doc(String(currentProductId)).set({ rating: newRating, reviews: newReviews }, { merge: true }).catch(console.warn);
+    dbPaths.productsCol().doc(String(currentProductId)).set({ rating: newRating, reviews: newReviews }, { merge: true }).catch(console.warn);
   }
 
   document.querySelectorAll('.star-btn').forEach((btn, idx) => {
@@ -691,9 +768,8 @@ function rateProductInstant(stars) {
   renderProductDetailDOM(p);
 }
 
-// ================= SMART AUTOFILL =================
 function checkAndAutofillCustomer() {
-  const saved = JSON.parse(localStorage.getItem('qutn_customer_saved') || 'null');
+  const saved = JSON.parse(localStorage.getItem('saas_customer_saved_profile') || 'null');
   const noticeBox = document.getElementById('autofillNoticeBox');
   if (saved) {
     const nameEl = document.getElementById('custName');
@@ -709,7 +785,7 @@ function checkAndAutofillCustomer() {
 }
 
 function clearSavedCustomerData() {
-  localStorage.removeItem('qutn_customer_saved');
+  localStorage.removeItem('saas_customer_saved_profile');
   const nameEl = document.getElementById('custName');
   const phoneEl = document.getElementById('custPhone');
   const addrEl = document.getElementById('custAddress');
@@ -721,7 +797,7 @@ function clearSavedCustomerData() {
   showToast('تم مسح البيانات المحفوظة');
 }
 
-// ================= BULK DISCOUNTS ENGINE (DIRECT FIRESTORE SYNC) =================
+// ================= 12. BULK DISCOUNTS ENGINE =================
 function updateDiscountTargetOptions() {
   const scopeEl = document.getElementById('discountScope');
   if (!scopeEl) return;
@@ -795,7 +871,7 @@ async function handleApplyBulkDiscount(e) {
       }
     }
     if (batch && p.id) {
-      const docRef = db.collection('products').doc(String(p.id));
+      const docRef = dbPaths.productsCol().doc(String(p.id));
       batch.set(docRef, { price: p.price, oldPrice: p.oldPrice || null, isSpecialOffer: !!p.isSpecialOffer }, { merge: true });
     }
   });
@@ -806,20 +882,14 @@ async function handleApplyBulkDiscount(e) {
 
   saveLocalState();
   renderCurrentActiveView();
-
-  await apiFetch("/api/admin/discounts/bulk", {
-    method: "POST",
-    body: JSON.stringify({ scope, target, percentage: pct, action })
-  });
-
   showToast(action === 'apply' ? `تم تطبيق خصم ${pct}% على ${targetProducts.length} منتج فورياً! ✓` : `تم استرجاع الأسعار الأصلية بنجاح ✓`);
 }
 
-// ================= DYNAMIC PROMO CARDS (CRUD) =================
+// ================= 13. PROMO CARDS (DYNAMIC THEME CARDS) =================
 function renderPromoCardsListAdmin() {
   const container = document.getElementById('adminPromoCardsListGrid');
   if (!container) return;
-  const cards = storeSettings.promoCards || [];
+  const cards = pharmacyProfile.promoCards || [];
 
   if (cards.length === 0) {
     container.innerHTML = `<div class="no-results" style="padding:14px 0;">لا توجد بطاقات عروض نشطة.</div>`;
@@ -846,7 +916,7 @@ function renderPromoCardsListAdmin() {
 }
 
 function editPromoCard(cardId) {
-  const card = (storeSettings.promoCards || []).find(c => c.id === cardId);
+  const card = (pharmacyProfile.promoCards || []).find(c => c.id === cardId);
   if (!card) return;
   document.getElementById('promoCardDocId').value = card.id;
   document.getElementById('promoCardTitle').value = card.title || '';
@@ -884,7 +954,7 @@ async function handleSavePromoCard(e) {
     return;
   }
 
-  if (!storeSettings.promoCards) storeSettings.promoCards = [];
+  if (!pharmacyProfile.promoCards) pharmacyProfile.promoCards = [];
 
   const cardObj = {
     id: docId || ('pc_' + Date.now()),
@@ -894,17 +964,16 @@ async function handleSavePromoCard(e) {
     img: img
   };
 
-  const idx = storeSettings.promoCards.findIndex(c => c.id === cardObj.id);
-  if (idx > -1) storeSettings.promoCards[idx] = cardObj;
-  else storeSettings.promoCards.unshift(cardObj);
+  const idx = pharmacyProfile.promoCards.findIndex(c => c.id === cardObj.id);
+  if (idx > -1) pharmacyProfile.promoCards[idx] = cardObj;
+  else pharmacyProfile.promoCards.unshift(cardObj);
 
   saveLocalState();
   renderPromoCardsListAdmin();
   renderPromoBanners();
 
   try {
-    await apiFetch("/api/admin/settings", { method: "POST", body: JSON.stringify({ promoCards: storeSettings.promoCards }) });
-    if (db) await db.collection('store_settings').doc('general').set({ promoCards: storeSettings.promoCards }, { merge: true });
+    if (db) await dbPaths.pharmacyDoc().set({ promoCards: pharmacyProfile.promoCards }, { merge: true });
     showToast('تم حفظ بطاقة العرض بنجاح ✓');
     resetPromoCardForm();
   } catch (err) {
@@ -915,11 +984,11 @@ async function handleSavePromoCard(e) {
 async function deletePromoCard(cardId) {
   if (!assertAdmin()) return;
   if (confirm('هل أنتِ متأكدة من حذف هذه البطاقة؟')) {
-    storeSettings.promoCards = (storeSettings.promoCards || []).filter(c => c.id !== cardId);
+    pharmacyProfile.promoCards = (pharmacyProfile.promoCards || []).filter(c => c.id !== cardId);
     saveLocalState();
     renderPromoCardsListAdmin();
     renderPromoBanners();
-    if (db) await db.collection('store_settings').doc('general').set({ promoCards: storeSettings.promoCards }, { merge: true });
+    if (db) await dbPaths.pharmacyDoc().set({ promoCards: pharmacyProfile.promoCards }, { merge: true });
     showToast('تم حذف بطاقة العرض بنجاح ✓');
   }
 }
@@ -927,7 +996,7 @@ async function deletePromoCard(cardId) {
 function renderPromoBanners() {
   const el = document.getElementById('promoBanners');
   if (!el) return;
-  const cards = storeSettings.promoCards || [];
+  const cards = pharmacyProfile.promoCards || [];
 
   if (cards.length === 0) {
     el.innerHTML = '';
@@ -951,16 +1020,15 @@ function renderPromoBanners() {
     }).join('')}`;
 }
 
-// ================= REAL ANALYTICS & DYNAMIC TOP 5 SELLERS =================
+// ================= 14. REAL ANALYTICS (TENANT SCOPED) =================
 async function recordRealVisit() {
   const today = new Date().toISOString().split('T')[0];
-  const visitKey = 'visited_' + today;
+  const visitKey = getStorageKey('visited_' + today);
   try {
     if (!sessionStorage.getItem(visitKey)) {
       sessionStorage.setItem(visitKey, '1');
-      await apiFetch("/api/analytics/visit", { method: "POST" });
       if (db) {
-        await db.collection('analytics_daily').doc(today).set({
+        await dbPaths.analyticsDailyCol().doc(today).set({
           visits: firebase.firestore.FieldValue.increment(1),
           date: today
         }, { merge: true });
@@ -977,10 +1045,9 @@ async function fetchRealAnalytics() {
     const currentMonthStr = todayStr.substring(0, 7);
 
     let dRev = 0, mRev = 0;
-    const ordersSnap = await db.collection('orders').get();
+    const ordersSnap = await dbPaths.ordersCol().get();
     totalOrdersCount = Math.max(ordersSnap.size, myOrders.length);
 
-    // تجميع مبيعات كل مادة لحساب أكثر 5 منتجات مبيعاً بدقة
     const productSalesMap = {};
 
     ordersSnap.forEach(doc => {
@@ -1000,7 +1067,6 @@ async function fetchRealAnalytics() {
     todayRevenue = dRev;
     monthlyRevenue = mRev;
 
-    // تحديث عداد orderCount في المنتجات المحلية فورياً
     products.forEach(p => {
       if (productSalesMap[p.id]) {
         p.orderCount = Math.max(Number(p.orderCount || 0), productSalesMap[p.id]);
@@ -1014,7 +1080,7 @@ async function fetchRealAnalytics() {
       last7Days.push(d.toISOString().split('T')[0]);
     }
     
-    const visitsSnap = await db.collection('analytics_daily').get();
+    const visitsSnap = await dbPaths.analyticsDailyCol().get();
     const visitsMap = {};
     visitsSnap.forEach(doc => { visitsMap[doc.id] = (doc.data().visits || 0); });
 
@@ -1059,7 +1125,6 @@ function renderRealAnalyticsView() {
     }).join('');
   }
 
-  // عرض أكثر 5 منتجات مبيعاً
   const topOrdersEl = document.getElementById('adminTopOrderedList');
   if (topOrdersEl) {
     const topOrdered = [...products].filter(p => (Number(p.orderCount) || 0) > 0)
@@ -1092,7 +1157,7 @@ function renderRealAnalyticsView() {
   }
 }
 
-// ================= REALTIME ADMIN ORDERS LISTENER & MANAGEMENT =================
+// ================= 15. REALTIME ORDERS LISTENER (TENANT ISOLATED) =================
 let adminOrdersUnsubscribe = null;
 
 function listenToAdminOrdersRealtime() {
@@ -1102,7 +1167,7 @@ function listenToAdminOrdersRealtime() {
     adminOrdersUnsubscribe();
   }
 
-  adminOrdersUnsubscribe = db.collection('orders').onSnapshot(snap => {
+  adminOrdersUnsubscribe = dbPaths.ordersCol().onSnapshot(snap => {
     const orders = [];
     snap.forEach(d => {
       orders.push({ id: d.id, ...d.data() });
@@ -1121,26 +1186,11 @@ function listenToAdminOrdersRealtime() {
     fetchRealAnalytics();
   }, err => {
     console.warn("Orders listener fallback:", err);
-    fetchAdminOrdersListFallback();
   });
 }
 
 async function fetchAdminOrdersList() {
   listenToAdminOrdersRealtime();
-}
-
-async function fetchAdminOrdersListFallback() {
-  if (!isFirebaseConfigured || !db) return;
-  try {
-    const snap = await db.collection('orders').get();
-    const orders = [];
-    snap.forEach(d => orders.push({ id: d.id, ...d.data() }));
-    orders.sort((a, b) => (new Date(b.date || 0)) - (new Date(a.date || 0)));
-    window.adminLastOrdersList = orders;
-    renderAdminOrdersList(orders);
-  } catch (e) {
-    console.error("Orders fallback error:", e);
-  }
 }
 
 function renderAdminOrdersList(orders) {
@@ -1190,7 +1240,7 @@ function renderAdminOrdersList(orders) {
 
     const delFee = (ord.deliveryFee !== undefined) 
       ? Number(ord.deliveryFee) 
-      : ((ord.deliveryMethod === 'express') ? 8000 : 4000);
+      : ((ord.deliveryMethod === 'express') ? (pharmacyProfile.deliveryFeeExpress || 8000) : (pharmacyProfile.deliveryFeeStandard || 4000));
       
     const discountVal = Number(ord.discountAmount || 0);
     const subtotalVal = Number(ord.subtotal) || itemsCalcSubtotal;
@@ -1222,14 +1272,11 @@ function renderAdminOrdersList(orders) {
         <div style="font-size:12px; color:var(--ink); margin-bottom:6px; background:#F9FAFB; padding:8px 10px; border-radius:8px;">
           ${itemsHtml}
         </div>
-        
-        <!-- تفصيل الحسابات بدقة -->
         <div class="order-pricing-box" style="margin:6px 0; background:#FFF; border:1px dashed var(--line);">
           <div class="order-pricing-row"><span>المجموع الفرعي للمنتجات:</span><span class="mono">${fmtPrice(subtotalVal)}</span></div>
           ${discountVal > 0 ? `<div class="order-pricing-row discount-row"><span>🎟️ خصم الكوبون (${ord.promoCode || 'كود'}):</span><span class="mono">-${fmtPrice(discountVal)}</span></div>` : ''}
           <div class="order-pricing-row"><span>أجرة التوصيل:</span><span class="mono">+${fmtPrice(delFee)}</span></div>
         </div>
-
         <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px dashed var(--line); padding-top:6px; margin-top:6px;">
           <span style="font-size:12px; font-weight:700; color:${isCancelled ? '#DC2626' : 'var(--text-soft)'};">الحالة: ${sanitizeText(ord.status || 'قيد التجهيز')}</span>
           <span style="font-weight:900; font-size:15px; color:var(--rose-deep);">المجموع الكلي: ${fmtPrice(grandTotal)}</span>
@@ -1242,41 +1289,16 @@ function renderAdminOrdersList(orders) {
 async function updateOrderStatus(orderId, newStatus) {
   if (!assertAdmin()) return;
   if (db) {
-    await db.collection('orders').doc(String(orderId)).set({ status: newStatus }, { merge: true });
+    await dbPaths.ordersCol().doc(String(orderId)).set({ status: newStatus }, { merge: true });
     showToast(`تم تحديث حالة الطلب #${orderId} إلى: ${newStatus}`);
   }
 }
 
-// ================= CUSTOMER ORDER CANCELLATION =================
-async function cancelMyOrder(orderId) {
-  if (!confirm('هل أنتِ متأكدة من رغبتكِ في إلغاء هذا الطلب؟')) return;
-  
-  const ord = myOrders.find(o => String(o.id) === String(orderId));
-  if (!ord) return;
-
-  ord.status = 'طلب ملغي من قبل الزبون ❌';
-  saveLocalState();
-  renderMyOrders();
-
-  if (db) {
-    try {
-      await db.collection('orders').doc(String(orderId)).set({
-        status: 'طلب ملغي من قبل الزبون ❌',
-        cancelledAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
-      showToast('تم إلغاء طلبكِ بنجاح ❌');
-    } catch (err) {
-      console.warn("Cancellation sync fallback:", err);
-      showToast('تم إلغاء الطلب');
-    }
-  }
-}
-
-// دالة تصفية وبناء تقرير المبيعات المفصل مع حسابات التوصيل
+// ================= 16. CSV & TELEGRAM EXPORT =================
 async function buildDetailedOrdersCSV() {
   let orders = window.adminLastOrdersList || [];
   if (orders.length === 0 && db) {
-    const snap = await db.collection('orders').orderBy('createdAt', 'desc').get();
+    const snap = await dbPaths.ordersCol().orderBy('createdAt', 'desc').get();
     snap.forEach(d => orders.push(d.data()));
   }
   if (orders.length === 0) orders = myOrders;
@@ -1307,13 +1329,11 @@ async function buildDetailedOrdersCSV() {
 
   let csv = "رقم الطلب,التاريخ والوقت,اسم العميل,رقم الهاتف,العنوان الكامل,نوع التوصيل,حالة الطلب,المنتجات المطلوبة,مبلغ التحصيل من الزبون (COD),أجرة التوصيل المستقطعة,صافي المستحق للصيدلية\n";
   
-  let totalCOD = 0;
-  let totalDelivery = 0;
-  let totalNetStore = 0;
+  let totalCOD = 0, totalDelivery = 0, totalNetStore = 0;
 
   filtered.forEach(o => {
     const orderTotal = Number(o.total || 0);
-    const delFee = (o.deliveryFee !== undefined) ? Number(o.deliveryFee) : ((o.deliveryMethod === 'express') ? 8000 : 4000);
+    const delFee = (o.deliveryFee !== undefined) ? Number(o.deliveryFee) : ((o.deliveryMethod === 'express') ? (pharmacyProfile.deliveryFeeExpress || 8000) : (pharmacyProfile.deliveryFeeStandard || 4000));
     const netStore = Math.max(0, orderTotal - delFee);
 
     totalCOD += orderTotal;
@@ -1326,25 +1346,20 @@ async function buildDetailedOrdersCSV() {
 
   csv += `\n"المجاميع النهائية","إجمالي الطلبات: ${filtered.length}","","","","","","","المجموع: ${totalCOD} د.ع","أجور الشحن: ${totalDelivery} د.ع","صافي الصيدلية: ${totalNetStore} د.ع"\n`;
 
-  return {
-    csv,
-    totalOrders: filtered.length,
-    totalRevenue: totalCOD,
-    totalDelivery,
-    totalNetStore
-  };
+  return { csv, totalOrders: filtered.length, totalRevenue: totalCOD, totalDelivery, totalNetStore };
 }
 
 async function sendOrdersReportToTelegram() {
   if (!assertAdmin() || !lockAction('sendTeleReport', 3000)) return;
 
-  showToast('جاري إنشاء التقرير المفصل وإرساله إلى التلغرام...');
+  showToast('جاري إنشاء التقرير وإرساله إلى التلغرام...');
   try {
     const report = await buildDetailedOrdersCSV();
     const dateStr = new Date().toLocaleDateString('ar-IQ').replace(/\//g, '-');
-    const filename = `تقرير_مبيعات_صيدلية_القطن_${dateStr}.csv`;
+    const filename = `تقرير_مبيعات_${pharmacyProfile.name || 'الصيدلية'}_${dateStr}.csv`;
 
-    const caption = `📊 *كشف مبيعات صيدلية القطن الشامل*\n` +
+    const caption = `📊 *كشف مبيعات ${pharmacyProfile.name || 'الصيدلية'} الشامل*\n` +
+                    `🏢 *معرف الصيدلية:* \`${currentPharmacyId}\`\n` +
                     `📅 *التاريخ:* ${dateStr}\n` +
                     `━━━━━━━━━━━━━━━━━━━\n` +
                     `📦 *إجمالي الطلبات:* ${report.totalOrders} طلب\n` +
@@ -1356,7 +1371,7 @@ async function sendOrdersReportToTelegram() {
 
     const res = await apiFetch("/api/admin/telegram/send-report", {
       method: "POST",
-      body: JSON.stringify({ csvData: report.csv, filename, caption })
+      body: JSON.stringify({ csvData: report.csv, filename, caption, pharmacyId: currentPharmacyId })
     });
 
     if (res && res.success) {
@@ -1380,7 +1395,7 @@ async function exportOrdersToCSV() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `تقرير_مبيعات_صيدلية_القطن_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `تقرير_مبيعات_${pharmacyProfile.name || 'الصيدلية'}_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -1390,7 +1405,7 @@ async function exportOrdersToCSV() {
   }
 }
 
-// ================= PRODUCT MANAGEMENT & ON-CARD ACTIONS =================
+// ================= 17. PRODUCTS CRUD (TENANT ISOLATED) =================
 function toggleLowStockFilter() {
   isLowStockFilterActive = !isLowStockFilterActive;
   const btn = document.getElementById('btnFilterLowStock');
@@ -1411,8 +1426,7 @@ async function quickEditPrice(id, currentPrice) {
     showToast('يرجى إدخال سعر صحيح أكبر من صفر');
     return;
   }
-  await apiFetch("/api/admin/products", { method: "POST", body: JSON.stringify({ id, price: newPrice }) });
-  if (db) await db.collection('products').doc(String(id)).set({ price: newPrice }, { merge: true });
+  if (db) await dbPaths.productsCol().doc(String(id)).set({ price: newPrice }, { merge: true });
   showToast('تم تحديث السعر فورياً ✓');
 }
 
@@ -1421,8 +1435,7 @@ async function quickToggleStock(id) {
   const p = findProduct(id);
   if (!p) return;
   const newStock = (p.inStock === false) ? true : false;
-  await apiFetch("/api/admin/products", { method: "POST", body: JSON.stringify({ id, inStock: newStock }) });
-  if (db) await db.collection('products').doc(String(id)).set({ inStock: newStock }, { merge: true });
+  if (db) await dbPaths.productsCol().doc(String(id)).set({ inStock: newStock }, { merge: true });
   showToast(newStock ? 'تم التعيين: متوفر 🟢' : 'تم التعيين: نفذت الكمية 🔴');
 }
 
@@ -1462,8 +1475,7 @@ async function saveAdminQuickEdit() {
   }
 
   const updates = { name: sanitizeText(name), brand: sanitizeText(brand), price, category, type, imageUrl };
-  await apiFetch("/api/admin/products", { method: "POST", body: JSON.stringify({ id, ...updates }) });
-  if (db) await db.collection('products').doc(String(id)).set(updates, { merge: true });
+  if (db) await dbPaths.productsCol().doc(String(id)).set(updates, { merge: true });
   closeAdminQuickEditModal();
   showToast('تم تحديث المنتج وحفظه سحابياً ✓');
 }
@@ -1473,7 +1485,7 @@ function openAdminQuickAddModal() {
   if (window.location.pathname.includes('admin.html')) {
     switchAdminSection('products');
   } else {
-    window.location.href = 'admin.html';
+    window.location.href = getTenantUrl('admin.html');
   }
 }
 
@@ -1542,14 +1554,12 @@ async function handleAdminProductSave(e) {
   try {
     if (docId) {
       payload.id = docId;
-      await apiFetch("/api/admin/products", { method: "POST", body: JSON.stringify(payload) });
-      if (db) await db.collection('products').doc(docId).set(payload, { merge: true });
+      if (db) await dbPaths.productsCol().doc(docId).set(payload, { merge: true });
       showToast('تم حفظ تعديلات المنتج بنجاح ✓');
     } else {
       payload.views = 0;
       payload.orderCount = 0;
-      await apiFetch("/api/admin/products", { method: "POST", body: JSON.stringify(payload) });
-      if (db) await db.collection('products').add(payload);
+      if (db) await dbPaths.productsCol().add(payload);
       showToast('تمت إضافة المنتج الجديد بنجاح ✓');
     }
     resetAdminProductForm();
@@ -1562,15 +1572,14 @@ async function handleAdminProductSave(e) {
 async function deleteProductConfirm(id, name) {
   if (!assertAdmin()) return;
   if (confirm(`هل أنتِ متأكدة من حذف المنتج "${name}" نهائياً؟`)) {
-    await apiFetch(`/api/admin/products/${id}`, { method: "DELETE" });
-    if (db) await db.collection('products').doc(String(id)).delete();
+    if (db) await dbPaths.productsCol().doc(String(id)).delete();
     showToast('تم حذف المنتج بنجاح ✓');
   }
 }
 
-// ================= ADMIN TABS CONTROLLER =================
+// ================= 18. ADMIN SECTIONS CONTROLLER =================
 function switchAdminSection(sec) {
-  const sections = ['Stats', 'Orders', 'Coupons', 'Bundles', 'Telegram', 'Audit', 'Cats', 'Products', 'Offers', 'Brands', 'Notifs', 'Design', 'Code'];
+  const sections = ['Stats', 'Orders', 'Coupons', 'Bundles', 'Telegram', 'Audit', 'Cats', 'Products', 'Offers', 'Brands', 'Notifs', 'Design', 'Code', 'Staff'];
   
   sections.forEach(k => {
     const btn = document.getElementById('btnTabV' + k);
@@ -1595,9 +1604,10 @@ function switchAdminSection(sec) {
   }
   if (sec === 'cats') renderAdminCategoriesList();
   if (sec === 'brands') renderAdminBrandsList();
+  if (sec === 'staff') fetchStaffList();
 }
 
-// ================= CART & CHECKOUT =================
+// ================= 19. CART & ORDER CONFIRMATION =================
 function addToCart(id, silent = false, quantity = 1) {
   cart[id] = (cart[id] || 0) + quantity;
   updateCartBadge();
@@ -1685,7 +1695,7 @@ function renderCart() {
 
   const subtotal = getCartSubtotal();
   const discount = appliedPromo ? Number(appliedPromo.discountAmount || 0) : 0;
-  const fee = (deliveryMethod === 'express') ? (Number(storeSettings.deliveryFeeExpress) || 8000) : (Number(storeSettings.deliveryFeeStandard) || 4000);
+  const fee = (deliveryMethod === 'express') ? (Number(pharmacyProfile.deliveryFeeExpress) || 8000) : (Number(pharmacyProfile.deliveryFeeStandard) || 4000);
   const finalTotal = Math.max(0, subtotal - discount) + fee;
 
   if (appliedPromo && promoBadge) {
@@ -1718,7 +1728,7 @@ function renderCheckoutSummary() {
   if (!summaryEl) return;
   const subtotal = getCartSubtotal();
   const discount = appliedPromo ? Number(appliedPromo.discountAmount || 0) : 0;
-  const fee = (deliveryMethod === 'express') ? (Number(storeSettings.deliveryFeeExpress) || 8000) : (Number(storeSettings.deliveryFeeStandard) || 4000);
+  const fee = (deliveryMethod === 'express') ? (Number(pharmacyProfile.deliveryFeeExpress) || 8000) : (Number(pharmacyProfile.deliveryFeeStandard) || 4000);
   const finalTotal = Math.max(0, subtotal - discount) + fee;
 
   summaryEl.innerHTML = `
@@ -1728,7 +1738,6 @@ function renderCheckoutSummary() {
     <div class="summary-row total"><span>المجموع الإجمالي المطلوب</span><span class="mono">${fmtPrice(finalTotal)}</span></div>`;
 }
 
-// ================= CONFIRM ORDER (WITH DETAILED WHATSAPP +9647813703288 & TELEGRAM INVOICE) =================
 async function confirmOrder() {
   if (!lockAction('confirmOrder', 2500)) return;
 
@@ -1754,10 +1763,8 @@ async function confirmOrder() {
     confirmBtn.textContent = 'جاري تأكيد الطلب...';
   }
 
-  // 1. الحفظ الذكي لبيانات الزبون
-  localStorage.setItem('qutn_customer_saved', JSON.stringify({ name, phone, address }));
+  localStorage.setItem('saas_customer_saved_profile', JSON.stringify({ name, phone, address }));
 
-  // 2. إعداد مصفوفة الأصناف وتخزين سعر المفرد وإجمالي المادة بدقة
   let calculatedSubtotal = 0;
   const itemsPayload = ids.map(id => {
     const isBundle = id.startsWith('bundle_');
@@ -1779,15 +1786,17 @@ async function confirmOrder() {
   });
 
   const deliveryFee = (deliveryMethod === 'express') 
-    ? (Number(storeSettings.deliveryFeeExpress) || 8000) 
-    : (Number(storeSettings.deliveryFeeStandard) || 4000);
+    ? (Number(pharmacyProfile.deliveryFeeExpress) || 8000) 
+    : (Number(pharmacyProfile.deliveryFeeStandard) || 4000);
 
   const discountAmount = appliedPromo ? Number(appliedPromo.discountAmount || 0) : 0;
   const grandTotal = Math.max(0, calculatedSubtotal - discountAmount) + deliveryFee;
-  const orderId = "QUTN-" + Math.floor(100000 + Math.random() * 900000);
+  const orderPrefix = (pharmacyProfile.name || 'ORD').substring(0, 4).toUpperCase();
+  const orderId = `${orderPrefix}-${Math.floor(100000 + Math.random() * 900000)}`;
 
   const newOrderObj = {
     id: orderId,
+    pharmacyId: currentPharmacyId,
     date: new Date().toLocaleDateString('ar-IQ', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
     name,
     phone,
@@ -1805,17 +1814,17 @@ async function confirmOrder() {
   myOrders.unshift(newOrderObj);
   saveLocalState();
 
-  // 3. الحفظ المباشر في فايربيس وتحديث عداد المنتجات للأكثر مبيعاً
+  // الحفظ في المسار الهرمي الخاص بالصيدلية الحالية
   if (db) {
     try {
-      await db.collection('orders').doc(orderId).set({
+      await dbPaths.ordersCol().doc(orderId).set({
         ...newOrderObj,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
 
       itemsPayload.forEach(it => {
         if (!it.isBundle && it.id) {
-          db.collection('products').doc(String(it.id)).set({
+          dbPaths.productsCol().doc(String(it.id)).set({
             orderCount: firebase.firestore.FieldValue.increment(Number(it.quantity || 1))
           }, { merge: true }).catch(console.warn);
         }
@@ -1825,26 +1834,13 @@ async function confirmOrder() {
     }
   }
 
-  // 4. إرسال الطلب لـ Cloudflare Worker لإشعار التلغرام
-  apiFetch("/api/orders", {
-    method: "POST",
-    body: JSON.stringify({
-      customerName: name,
-      customerPhone: phone,
-      customerAddress: address,
-      deliveryMethod,
-      items: itemsPayload,
-      promoCode: appliedPromo ? appliedPromo.code : null
-    })
-  }).catch(() => {});
-
-  // 5. بناء رسالة الواتساب الاحترافية الموجهة مباشرة لرقم الصيدلية +9647813703288
+  // بناء رسالة الواتساب المخصصة للصيدلية الحالية
   const lines = itemsPayload.map(item => `• ${item.isBundle ? '🎁 [بكج توفير] ' : ''}${item.name} (${fmtPrice(item.unitPrice)} × ${item.quantity} قطع) = ${fmtPrice(item.lineTotal)}`);
   const deliveryLabel = deliveryMethod === 'express' ? `سريع (${fmtPrice(deliveryFee)})` : `عادي (${fmtPrice(deliveryFee)})`;
   const promoInfo = appliedPromo ? `🎟️ *كود الخصم المطبق:* ${appliedPromo.code} (-${fmtPrice(discountAmount)})\n` : '';
 
   const whatsappInvoiceMsg = 
-    `🌸 *طلب جديد - صيدلية القطن*\n` +
+    `🌸 *طلب جديد - ${pharmacyProfile.name || 'الصيدلية'}*\n` +
     `━━━━━━━━━━━━━━━━━━━\n` +
     `📋 *رقم الفاتورة:* #${orderId}\n` +
     `📅 *التاريخ:* ${newOrderObj.date}\n\n` +
@@ -1866,22 +1862,16 @@ async function confirmOrder() {
   updateCartBadge();
   saveLocalState();
 
-  // فتح الواتساب مباشرة مع الرقم المعتمد +9647813703288
-  const targetPhone = "9647813703288";
+  const targetPhone = (pharmacyProfile.socialWhatsapp || "9647813703288").replace(/\+/g, '').trim();
   const whatsappUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(whatsappInvoiceMsg)}`;
-
-  // ضبط رابط زر الواتساب في نافذة النجاح
-  const waBtn = document.getElementById('successModalWhatsappBtn');
-  if (waBtn) waBtn.href = whatsappUrl;
 
   const modalMsg = document.getElementById('successModalMsg');
   if (modalMsg) {
-    modalMsg.textContent = `تم تسجيل طلبكِ رقم (#${orderId}) بنجاح بقيمة ${fmtPrice(grandTotal)}. اضغطي على الزر أدناه لإرسال الفاتورة للصيدلي وتأكيد الشحن فوراً.`;
+    modalMsg.textContent = `تم تسجيل طلبكِ رقم (#${orderId}) بنجاح بقيمة ${fmtPrice(grandTotal)}. يتم الآن التوجيه لتأكيد الطلب مع الصيدلي عبر واتساب.`;
   }
   const successModal = document.getElementById('orderSuccessModal');
   if (successModal) successModal.classList.add('open');
 
-  // تحويل مباشر للواتساب بدون حظر
   window.location.href = whatsappUrl;
 
   if (confirmBtn) {
@@ -1902,7 +1892,7 @@ function closeSuccessModalAndGoOrders() {
   showView('orders');
 }
 
-// ================= NAVIGATION & VIEW RENDERING =================
+// ================= 20. VIEWS & NAVIGATION =================
 function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   const target = document.getElementById('view-' + name);
@@ -1935,7 +1925,7 @@ function closeMenu() {
 }
 
 function openWhatsapp() {
-  const targetNumber = storeSettings.socialWhatsapp || WHATSAPP_NUMBER || "9647813703288";
+  const targetNumber = (pharmacyProfile.socialWhatsapp || "9647813703288").replace(/\+/g, '').trim();
   window.open(`https://wa.me/${targetNumber}`, '_blank');
 }
 
@@ -2044,7 +2034,6 @@ function selectHomeBrand(brand) {
   renderHomeProductGrid();
 }
 
-// ================= REDESIGNED BRAND STRIP (VERTICAL SQUARE CARDS) =================
 function renderBrandStrip() {
   const strip = document.getElementById('brandStrip');
   if (!strip) return;
@@ -2085,7 +2074,7 @@ function renderWishlist() {
   renderProductGrid('wishlistGrid', list, 'قائمتك المفضلة فارغة حالياً 🌸');
 }
 
-// ================= CUSTOMER "MY ORDERS" (WITH TRANSPARENT PRICING & CANCEL BUTTON) =================
+// ================= 21. ORDERS VIEW & CANCELLATION =================
 function renderMyOrders() {
   const container = document.getElementById('myOrdersContainer');
   const countEl = document.getElementById('myOrdersCount');
@@ -2131,28 +2120,22 @@ function renderMyOrders() {
           <span class="order-card-id mono">#${sanitizeText(ord.id)}</span>
           <span class="order-card-status ${isCancelled ? 'cancelled' : ''}">${sanitizeText(ord.status || 'قيد المعالجة والتجهيز 🚚')}</span>
         </div>
-        
         <div class="order-tracker-timeline">
           <div class="order-step done"><div class="order-step-dot">1</div><span>تم الطلب</span></div>
           <div class="order-step ${ord.status && (ord.status.includes('الشحن') || ord.status.includes('التسليم')) ? 'done active' : ''}"><div class="order-step-dot">2</div><span>خرج للتوصيل</span></div>
           <div class="order-step ${ord.status && ord.status.includes('التسليم') ? 'done' : ''}"><div class="order-step-dot">3</div><span>تم التسليم</span></div>
         </div>
-
         <div style="font-size:11.5px; color:var(--text-soft); margin-bottom:8px;">
           التاريخ: <span class="mono">${sanitizeText(ord.date)}</span> · العنوان: ${sanitizeText(ord.address)} (${ord.deliveryMethod === 'express' ? 'توصيل سريع' : 'توصيل عادي'})
         </div>
-        
         <div style="background:var(--surface); border-radius:10px; padding:10px; margin-bottom:8px;">
           ${itemsHtml}
         </div>
-
-        <!-- تفصيل الحسابات الواضح -->
         <div class="order-pricing-box">
           <div class="order-pricing-row"><span>المجموع الفرعي للمنتجات:</span><span class="mono">${fmtPrice(subtotalVal)}</span></div>
           ${discountVal > 0 ? `<div class="order-pricing-row discount-row"><span>🎟️ خصم الكوبون (${ord.promoCode || 'كود'}):</span><span class="mono">-${fmtPrice(discountVal)}</span></div>` : ''}
           <div class="order-pricing-row"><span>أجرة التوصيل:</span><span class="mono">+${fmtPrice(delFee)}</span></div>
         </div>
-
         <div class="order-card-footer">
           <div>
             ${isProcessing ? `<button type="button" class="btn-cancel-order" onclick="cancelMyOrder('${sanitizeText(ord.id)}')">❌ إلغاء الطلب</button>` : ''}
@@ -2167,6 +2150,29 @@ function renderMyOrders() {
   }).join('');
 }
 
+async function cancelMyOrder(orderId) {
+  if (!confirm('هل أنتِ متأكدة من رغبتكِ في إلغاء هذا الطلب؟')) return;
+  const ord = myOrders.find(o => String(o.id) === String(orderId));
+  if (!ord) return;
+
+  ord.status = 'طلب ملغي من قبل الزبون ❌';
+  saveLocalState();
+  renderMyOrders();
+
+  if (db) {
+    try {
+      await dbPaths.ordersCol().doc(String(orderId)).set({
+        status: 'طلب ملغي من قبل الزبون ❌',
+        cancelledAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      showToast('تم إلغاء طلبكِ بنجاح ❌');
+    } catch (err) {
+      console.warn("Cancellation sync fallback:", err);
+    }
+  }
+}
+
+// ================= 22. PRODUCT GRID & DETAIL RENDERING =================
 function renderProductGrid(targetId, list, emptyMsg) {
   const el = document.getElementById(targetId);
   if (!el) return;
@@ -2252,12 +2258,11 @@ function renderProductDetailDOM(p) {
   stockEl.className = inStock ? 'pd-stock' : 'pd-stock out';
   stockEl.innerHTML = inStock ? `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" style="width:18px;height:18px;"><path d="M5 13l4 4L19 7"/></svg><span>متوفر بالمخزون</span>` : `<span>نفذت الكمية حالياً</span>`;
 
-  document.getElementById('pdTabDesc').textContent = p.description || 'منتج أصلي معتمد من صيدلية القطن.';
+  document.getElementById('pdTabDesc').textContent = p.description || 'منتج أصلي معتمد.';
   document.getElementById('pdTabIng').textContent = p.ingredients || 'تركيبة غنية ومفحوصة جلدياً.';
   document.getElementById('pdTabUse').textContent = p.usage || 'يُوضع على بشرة نظيفة وفق الإرشادات.';
   
-  // شريط النجوم السريع
-  const rated = localStorage.getItem('rated_' + p.id);
+  const rated = localStorage.getItem(getStorageKey('rated_' + p.id));
   document.querySelectorAll('.star-btn').forEach((btn, idx) => {
     btn.classList.toggle('active', rated && idx < Number(rated));
   });
@@ -2274,7 +2279,6 @@ function renderProductDetailDOM(p) {
   };
 }
 
-// ================= OPEN PRODUCT (WITH DIRECT DEEP LINKING SUPPORT) =================
 function openProduct(id, isUserClick = false) {
   if (isUserClick) {
     previousViewBeforeProduct = (currentView !== 'product') ? currentView : 'home';
@@ -2286,13 +2290,10 @@ function openProduct(id, isUserClick = false) {
   const p = findProduct(id);
   if (!p) return;
 
-  if (isUserClick) {
-    apiFetch(`/api/products/${id}/view`, { method: "POST" }).catch(() => {});
-    if (db) {
-      db.collection('products').doc(String(id)).set({
-        views: firebase.firestore.FieldValue.increment(1)
-      }, { merge: true }).catch(e => console.warn(e));
-    }
+  if (isUserClick && db) {
+    dbPaths.productsCol().doc(String(id)).set({
+      views: firebase.firestore.FieldValue.increment(1)
+    }, { merge: true }).catch(e => console.warn(e));
   }
 
   renderProductDetailDOM(p);
@@ -2366,7 +2367,7 @@ function renderCrossSelling(currentP) {
   renderProductGrid('pdSuggestedGrid', suggestions);
 }
 
-// ================= MODERN CATEGORIES =================
+// ================= 23. CATEGORIES & BRANDS =================
 function renderModernCategories() {
   const container = document.getElementById('catRowFull');
   const totalCountEl = document.getElementById('categoriesTotalCount');
@@ -2477,8 +2478,7 @@ async function handleAdminCategorySave(e) {
   const payload = { id: catKey || id, label: sanitizeText(label), imageUrl, icon: sanitizeText(icon) };
 
   try {
-    await apiFetch("/api/admin/categories", { method: "POST", body: JSON.stringify(payload) });
-    if (db) await db.collection('categories').doc(payload.id).set(payload, { merge: true });
+    if (db) await dbPaths.categoriesCol().doc(payload.id).set(payload, { merge: true });
     showToast('تم حفظ القسم بنجاح في قاعدة البيانات ✓');
     resetAdminCatForm();
     populateCategoryDropdowns();
@@ -2492,15 +2492,13 @@ async function deleteAdminCategory(catId, catLabel) {
   if (!assertAdmin()) return;
   if (confirm(`هل أنتِ متأكدة من حذف القسم "${catLabel}"؟`)) {
     try {
-      await apiFetch(`/api/admin/categories/${catId}`, { method: "DELETE" });
-      if (db) await db.collection('categories').doc(String(catId)).delete();
+      if (db) await dbPaths.categoriesCol().doc(String(catId)).delete();
       showToast('تم حذف القسم بنجاح ✓');
       populateCategoryDropdowns();
     } catch (e) { console.error(e); }
   }
 }
 
-// ================= BRANDS MANAGEMENT =================
 function previewBrandLogoImg(url) {
   const wrap = document.getElementById('adminBrandLogoPreviewWrap');
   const img = document.getElementById('adminBrandLogoPreviewImg');
@@ -2558,8 +2556,7 @@ async function handleSaveBrand(e) {
   renderBrandStrip();
 
   try {
-    await apiFetch("/api/admin/settings", { method: "POST", body: JSON.stringify({ brandsData }) });
-    if (db) await db.collection('store_settings').doc('general').set({ brandsData }, { merge: true });
+    if (db) await dbPaths.pharmacyDoc().set({ brandsData }, { merge: true });
     showToast(`تم حفظ وتحديث ماركة "${name}" بنجاح ✓`);
   } catch (err) { console.error(err); }
   cancelAdminBrandEdit();
@@ -2572,8 +2569,7 @@ async function deleteAdminBrand(brandKey) {
     renderAdminBrandsList();
     renderBrandStrip();
     try {
-      await apiFetch("/api/admin/settings", { method: "POST", body: JSON.stringify({ brandsData }) });
-      if (db) await db.collection('store_settings').doc('general').set({ brandsData }, { merge: true });
+      if (db) await dbPaths.pharmacyDoc().set({ brandsData }, { merge: true });
       showToast('تم حذف الماركة بنجاح ✓');
     } catch (err) { console.error(err); }
   }
@@ -2605,7 +2601,87 @@ function renderAdminBrandsList() {
   }).join('');
 }
 
-// ================= THEME & STORE SETTINGS =================
+// ================= 24. ADVANCED STAFF MANAGEMENT (MULTI-TENANT RBAC) =================
+async function fetchStaffList() {
+  if (!isFirebaseConfigured || !db) return;
+  try {
+    const snap = await dbPaths.staffCol().get();
+    staffMembers = [];
+    snap.forEach(d => staffMembers.push({ id: d.id, ...d.data() }));
+    renderStaffList();
+  } catch (err) {
+    console.warn("Staff fetch error:", err);
+  }
+}
+
+function renderStaffList() {
+  const container = document.getElementById('adminStaffListGrid');
+  if (!container) return;
+
+  if (staffMembers.length === 0) {
+    container.innerHTML = `<div class="no-results" style="padding:14px 0;">لا يوجد موظفون مضافون لهذه الصيدلية حالياً.</div>`;
+    return;
+  }
+
+  container.innerHTML = staffMembers.map(st => `
+    <div style="background:#fff; border:1px solid var(--line); border-radius:12px; padding:12px; display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <div style="font-weight:800; font-size:13.5px; color:var(--ink);">
+          👤 ${sanitizeText(st.name || 'موظف')} (${sanitizeText(st.email)})
+          <span class="log-badge" style="background:#E0E7FF; color:#3730A3;">${sanitizeText(st.role || 'staff')}</span>
+        </div>
+        <div style="font-size:11.5px; color:var(--text-soft); margin-top:2px;">
+          الصلاحيات: ${(st.permissions || ['all']).join(', ')}
+        </div>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button onclick="deleteStaffMember('${sanitizeText(st.id)}')" style="background:#FEE2E2; color:var(--red); padding:5px 10px; border-radius:8px; font-weight:800; font-size:11px;">حذف 🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function handleAddStaffMember(e) {
+  e.preventDefault();
+  if (!assertAdmin()) return;
+
+  const email = document.getElementById('staffEmailInput').value.trim().toLowerCase();
+  const name = document.getElementById('staffNameInput').value.trim();
+  const role = document.getElementById('staffRoleSelect').value;
+
+  if (!email || !name) {
+    showToast('يرجى كتابة اسم وبريد الموظف');
+    return;
+  }
+
+  const staffDocId = email.replace(/[^a-z0-9]/g, '_');
+  const payload = {
+    email,
+    name: sanitizeText(name),
+    role,
+    permissions: role === 'owner' ? ['all'] : ['orders', 'products', 'analytics'],
+    addedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+
+  if (db) {
+    await dbPaths.staffCol().doc(staffDocId).set(payload, { merge: true });
+    showToast(`تم إضافة الموظف "${name}" بنجاح ✓`);
+    document.getElementById('staffEmailInput').value = '';
+    document.getElementById('staffNameInput').value = '';
+    fetchStaffList();
+  }
+}
+
+async function deleteStaffMember(staffId) {
+  if (!assertAdmin()) return;
+  if (confirm('هل أنتِ متأكدة من حذف هذا الموظف؟')) {
+    if (db) await dbPaths.staffCol().doc(staffId).delete();
+    showToast('تم حذف الموظف بنجاح');
+    fetchStaffList();
+  }
+}
+
+// ================= 25. THEME & BRANDING CUSTOMIZATION =================
 async function handleSaveCustomization(e) {
   e.preventDefault();
   if (!assertAdmin() || !lockAction('saveCustomization', 1200)) return;
@@ -2619,16 +2695,19 @@ async function handleSaveCustomization(e) {
     return el ? el.checked : defaultVal;
   };
 
-  const primaryColor = getVal('adminPrimaryColorPicker', storeSettings.primaryColor || '#E85D8A');
+  const primaryColor = getVal('adminPrimaryColorPicker', pharmacyProfile.primaryColor || '#E85D8A');
+  const templateId = getVal('adminTemplateSelector', pharmacyProfile.templateId || 'template-one');
   const deliveryStd = Number(getVal('adminDeliveryStandard', 4000));
   const deliveryExp = Number(getVal('adminDeliveryExpress', 8000));
 
   const newSettings = {
+    name: sanitizeText(getVal('adminPharmacyNameInput', pharmacyProfile.name || 'صيدلية القطن')),
+    templateId: templateId,
     primaryColor: primaryColor,
     deliveryFeeStandard: deliveryStd,
     deliveryFeeExpress: deliveryExp,
     showAnnouncement: getChecked('adminShowAnnouncement', true),
-    announcementText: sanitizeText(getVal('adminAnnouncementText', '✨ توصيل مجاني للطلبات فوق 50,000 د.ع لجميع محافظات العراق 🌸')),
+    announcementText: sanitizeText(getVal('adminAnnouncementText', '✨ توصيل مجاني للطلبات فوق 50,000 د.ع لجميع المحافظات 🌸')),
     showPharmacistBanner: getChecked('adminShowPharmacistBanner', true),
     pharmacistCtaTitle: sanitizeText(getVal('adminPharmacistTitleInput', 'استشر الصيدلي مجاناً 🩺')),
     pharmacistCtaDesc: sanitizeText(getVal('adminPharmacistDescInput', 'تحدثي مع الصيدلي المختص مباشرة للحصول على تشخيص دقيق لروتينك وروشتتك')),
@@ -2643,23 +2722,35 @@ async function handleSaveCustomization(e) {
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
 
-  storeSettings = { ...storeSettings, ...newSettings };
+  pharmacyProfile = { ...pharmacyProfile, ...newSettings };
   saveLocalState();
   applyStoreSettings();
-  showToast('تم تطبيق وحفظ اللون والتعديلات فورياً! ✨');
+  showToast('تم تطبيق وحفظ القالب والهوية سحابياً! ✨');
 
   try {
-    await apiFetch("/api/admin/settings", { method: "POST", body: JSON.stringify(newSettings) });
-    if (db) await db.collection('store_settings').doc('general').set(newSettings, { merge: true });
+    if (db) await dbPaths.pharmacyDoc().set(newSettings, { merge: true });
   } catch (err) { console.warn(err); }
 }
 
 function applyStoreSettings() {
-  if (storeSettings.primaryColor) {
-    applyDynamicThemeColor(storeSettings.primaryColor);
+  if (pharmacyProfile.primaryColor) {
+    applyDynamicThemeColor(pharmacyProfile.primaryColor);
     const colorPicker = document.getElementById('adminPrimaryColorPicker');
-    if (colorPicker) colorPicker.value = storeSettings.primaryColor;
+    if (colorPicker) colorPicker.value = pharmacyProfile.primaryColor;
   }
+
+  // تطبيق القالب
+  applyPharmacyTemplate(pharmacyProfile.templateId || 'template-one');
+  const tmplSelector = document.getElementById('adminTemplateSelector');
+  if (tmplSelector) tmplSelector.value = pharmacyProfile.templateId || 'template-one';
+
+  // تحديث نصوص وهوية الصيدلية
+  document.title = `${pharmacyProfile.name || 'الصيدلية'} | المتجر الإلكتروني`;
+
+  const headerLogoText = document.getElementById('headerLogoText');
+  const drawerLogoTitle = document.getElementById('drawerLogoTitle');
+  if (headerLogoText) headerLogoText.textContent = pharmacyProfile.name || 'الصيدلية';
+  if (drawerLogoTitle) drawerLogoTitle.textContent = pharmacyProfile.name || 'الصيدلية';
 
   const annEl = document.getElementById('announcementBar');
   const annTextEl = document.getElementById('announcementText');
@@ -2671,30 +2762,30 @@ function applyStoreSettings() {
   const drawerPharmBtn = document.getElementById('drawerConsultBtn');
 
   if (annEl) {
-    const isVisible = (storeSettings.showAnnouncement === true || storeSettings.showAnnouncement === 'true' || storeSettings.showAnnouncement === undefined);
+    const isVisible = (pharmacyProfile.showAnnouncement === true || pharmacyProfile.showAnnouncement === 'true' || pharmacyProfile.showAnnouncement === undefined);
     annEl.style.display = isVisible ? 'flex' : 'none';
   }
-  if (annTextEl && storeSettings.announcementText) {
-    annTextEl.textContent = storeSettings.announcementText;
+  if (annTextEl && pharmacyProfile.announcementText) {
+    annTextEl.textContent = pharmacyProfile.announcementText;
   }
-  if (heroMainEl && storeSettings.heroMainTitle) heroMainEl.textContent = storeSettings.heroMainTitle;
-  if (heroSubEl && storeSettings.heroSubTitle) heroSubEl.textContent = storeSettings.heroSubTitle;
-  if (heroDescEl && storeSettings.heroDescTitle) heroDescEl.textContent = storeSettings.heroDescTitle;
-  if (heroImgEl && storeSettings.bannerImgUrl) heroImgEl.src = sanitizeUrl(storeSettings.bannerImgUrl);
+  if (heroMainEl) heroMainEl.textContent = pharmacyProfile.heroMainTitle || pharmacyProfile.name;
+  if (heroSubEl) heroSubEl.textContent = pharmacyProfile.heroSubTitle || '';
+  if (heroDescEl) heroDescEl.textContent = pharmacyProfile.heroDescTitle || '';
+  if (heroImgEl && pharmacyProfile.bannerImgUrl) heroImgEl.src = sanitizeUrl(pharmacyProfile.bannerImgUrl);
 
   if (pharmWrap) {
-    const isPharmVisible = (storeSettings.showPharmacistBanner === true || storeSettings.showPharmacistBanner === 'true' || storeSettings.showPharmacistBanner === undefined);
+    const isPharmVisible = (pharmacyProfile.showPharmacistBanner === true || pharmacyProfile.showPharmacistBanner === 'true' || pharmacyProfile.showPharmacistBanner === undefined);
     pharmWrap.style.display = isPharmVisible ? 'block' : 'none';
   }
   if (drawerPharmBtn) {
-    const isPharmVisible = (storeSettings.showPharmacistBanner === true || storeSettings.showPharmacistBanner === 'true' || storeSettings.showPharmacistBanner === undefined);
+    const isPharmVisible = (pharmacyProfile.showPharmacistBanner === true || pharmacyProfile.showPharmacistBanner === 'true' || pharmacyProfile.showPharmacistBanner === undefined);
     drawerPharmBtn.style.display = isPharmVisible ? 'flex' : 'none';
   }
-  if (document.getElementById('pharmacistCtaTitle') && storeSettings.pharmacistCtaTitle) {
-    document.getElementById('pharmacistCtaTitle').textContent = storeSettings.pharmacistCtaTitle;
+  if (document.getElementById('pharmacistCtaTitle') && pharmacyProfile.pharmacistCtaTitle) {
+    document.getElementById('pharmacistCtaTitle').textContent = pharmacyProfile.pharmacistCtaTitle;
   }
-  if (document.getElementById('pharmacistCtaDesc') && storeSettings.pharmacistCtaDesc) {
-    document.getElementById('pharmacistCtaDesc').textContent = storeSettings.pharmacistCtaDesc;
+  if (document.getElementById('pharmacistCtaDesc') && pharmacyProfile.pharmacistCtaDesc) {
+    document.getElementById('pharmacistCtaDesc').textContent = pharmacyProfile.pharmacistCtaDesc;
   }
 
   const wLink = document.getElementById('drawerSocialWhatsapp');
@@ -2702,29 +2793,35 @@ function applyStoreSettings() {
   const iLink = document.getElementById('drawerSocialInstagram');
   const pLink = document.getElementById('drawerSocialPhone');
 
-  if (wLink) wLink.href = `https://wa.me/9647813703288`;
-  if (tLink) tLink.href = storeSettings.socialTelegram || '#';
-  if (iLink) iLink.href = storeSettings.socialInstagram || '#';
-  if (pLink) pLink.href = `tel:${storeSettings.socialPhone || ''}`;
+  const cleanWa = (pharmacyProfile.socialWhatsapp || "9647813703288").replace(/\+/g, '').trim();
+  if (wLink) wLink.href = `https://wa.me/${cleanWa}`;
+  if (tLink) tLink.href = pharmacyProfile.socialTelegram || '#';
+  if (iLink) iLink.href = pharmacyProfile.socialInstagram || '#';
+  if (pLink) pLink.href = `tel:${pharmacyProfile.socialPhone || ''}`;
 }
 
-// ================= FIRESTORE REALTIME SYNC =================
+// ================= 26. FIRESTORE REALTIME SYNC (MULTI-TENANT) =================
 function initFirestoreSync() {
   if (!isFirebaseConfigured || !db) return;
 
-  db.collection('store_settings').doc('general').onSnapshot(doc => {
+  // 1. مزامنة وثيقة الصيدلية الحالية
+  dbPaths.pharmacyDoc().onSnapshot(doc => {
     if (doc.exists) {
-      storeSettings = { ...storeSettings, ...doc.data() };
-      if (storeSettings.brandsData) brandsData = { ...brandsData, ...storeSettings.brandsData };
+      pharmacyProfile = { ...pharmacyProfile, ...doc.data() };
+      if (pharmacyProfile.brandsData) brandsData = { ...brandsData, ...pharmacyProfile.brandsData };
       saveLocalState();
       applyStoreSettings();
       renderPromoBanners();
       renderPromoCardsListAdmin();
       renderBrandStrip();
+    } else {
+      // إنشاء الوثيقة الافتراضية إذا كانت صيدلية جديدة
+      dbPaths.pharmacyDoc().set(pharmacyProfile, { merge: true });
     }
-  }, err => console.warn(err));
+  }, err => console.warn("Pharmacy sync warning:", err));
 
-  db.collection('categories').onSnapshot(snap => {
+  // 2. مزامنة الأقسام
+  dbPaths.categoriesCol().onSnapshot(snap => {
     if (!snap.empty) {
       const loaded = [];
       snap.forEach(d => loaded.push({ id: d.id, ...d.data() }));
@@ -2736,7 +2833,8 @@ function initFirestoreSync() {
     }
   }, err => console.warn(err));
 
-  db.collection('bundles').onSnapshot(snap => {
+  // 3. مزامنة البكجات
+  dbPaths.bundlesCol().onSnapshot(snap => {
     if (!snap.empty) {
       const loaded = [];
       snap.forEach(d => loaded.push({ id: d.id, ...d.data() }));
@@ -2747,43 +2845,34 @@ function initFirestoreSync() {
     }
   }, err => console.warn(err));
 
-  db.collection('products').onSnapshot(async snap => {
-    if (snap.empty) {
-      try {
-        const batch = db.batch();
-        initialDefaultProducts.forEach(item => {
-          const docRef = db.collection('products').doc(String(item.id));
-          batch.set(docRef, item);
-        });
-        await batch.commit();
-      } catch (e) { console.warn(e); }
-      return;
+  // 4. مزامنة المنتجات
+  dbPaths.productsCol().onSnapshot(snap => {
+    if (!snap.empty) {
+      const loaded = [];
+      snap.forEach(doc => loaded.push({ id: doc.id, ...doc.data() }));
+      products = loaded;
+
+      products.forEach(p => {
+        if (p.brand && !brandsData[p.brand]) {
+          brandsData[p.brand] = { name: p.brand, color: hashColor(p.brand), logoUrl: '' };
+        }
+      });
+
+      renderCurrentActiveView();
+      renderModernCategories();
+      populateBundleProductsChecklist();
+      fetchRealAnalytics();
     }
-
-    const loaded = [];
-    snap.forEach(doc => loaded.push({ id: doc.id, ...doc.data() }));
-    products = loaded;
-
-    products.forEach(p => {
-      if (p.brand && !brandsData[p.brand]) {
-        brandsData[p.brand] = { name: p.brand, color: hashColor(p.brand), logoUrl: '' };
-      }
-    });
-
-    renderCurrentActiveView();
-    renderModernCategories();
-    populateBundleProductsChecklist();
-    fetchRealAnalytics();
   }, err => console.warn(err));
 
   listenToNotifications();
   recordRealVisit();
 }
 
-// ================= NOTIFICATIONS & TELEGRAM =================
+// ================= 27. NOTIFICATIONS & TELEGRAM =================
 function listenToNotifications() {
   if (!isFirebaseConfigured || !db) return;
-  db.collection('notifications').orderBy('createdAt', 'desc').limit(20).onSnapshot(snap => {
+  dbPaths.notificationsCol().orderBy('createdAt', 'desc').limit(20).onSnapshot(snap => {
     notifications = [];
     snap.forEach(doc => notifications.push({ id: doc.id, ...doc.data() }));
     renderNotifications();
@@ -2831,7 +2920,7 @@ function openNotifModal() {
   const modal = document.getElementById('notifModal');
   if (modal) modal.classList.add('open');
   notifications.forEach(n => readNotifs.add(n.id));
-  localStorage.setItem('qutn_read_notifs', JSON.stringify([...readNotifs]));
+  localStorage.setItem(getStorageKey('read_notifs'), JSON.stringify([...readNotifs]));
   renderNotifications();
 }
 
@@ -2854,12 +2943,8 @@ async function handleSendBroadcastNotification(e) {
   }
 
   try {
-    await apiFetch("/api/admin/notifications", {
-      method: "POST",
-      body: JSON.stringify({ title, body, type })
-    });
     if (db) {
-      await db.collection('notifications').add({
+      await dbPaths.notificationsCol().add({
         title: sanitizeText(title),
         body: sanitizeText(body),
         type: sanitizeText(type),
@@ -2878,8 +2963,7 @@ async function handleSendBroadcastNotification(e) {
 async function deleteNotification(id) {
   if (!assertAdmin()) return;
   if (confirm('حذف هذا الإشعار نهائياً؟')) {
-    await apiFetch(`/api/admin/notifications/${id}`, { method: "DELETE" });
-    if (db) await db.collection('notifications').doc(String(id)).delete();
+    if (db) await dbPaths.notificationsCol().doc(String(id)).delete();
     showToast('تم حذف الإشعار بنجاح ✓');
   }
 }
@@ -2890,11 +2974,12 @@ async function handleSaveTelegramSettings(e) {
   const botToken = document.getElementById('teleBotTokenInput').value.trim();
   const chatId = document.getElementById('teleChatIdInput').value.trim();
 
-  await apiFetch("/api/admin/settings", {
-    method: "POST",
-    body: JSON.stringify({ telegramConfig: { botToken, chatId, enabled: true } })
-  });
-  showToast('تم حفظ إعدادات التلغرام بنجاح ✓');
+  if (db) {
+    await dbPaths.pharmacyDoc().set({
+      telegramConfig: { botToken, chatId, enabled: true }
+    }, { merge: true });
+    showToast('تم حفظ إعدادات التلغرام للصيدلية بنجاح ✓');
+  }
 }
 
 async function testTelegramBotNotification() {
@@ -2905,7 +2990,7 @@ async function testTelegramBotNotification() {
   showToast('جاري إرسال إشعار تجريبي إلى التلغرام...');
   const res = await apiFetch("/api/admin/telegram/test", {
     method: "POST",
-    body: JSON.stringify({ botToken, chatId })
+    body: JSON.stringify({ botToken, chatId, pharmacyId: currentPharmacyId })
   });
 
   if (res && res.success) {
@@ -2915,7 +3000,6 @@ async function testTelegramBotNotification() {
   }
 }
 
-// ================= AUDIT LOGS & SECURITY =================
 async function fetchAuditLogs() {
   const res = await apiFetch("/api/admin/logs");
   const tbody = document.getElementById('adminAuditLogsTbody');
@@ -2942,14 +3026,15 @@ async function handleSaveSecuritySettings(e) {
   const maxOrdersPerHour = Number(document.getElementById('secMaxOrdersHour').value);
   const maxRequestsPerMin = Number(document.getElementById('secMaxReqsMin').value);
 
-  await apiFetch("/api/admin/settings", {
-    method: "POST",
-    body: JSON.stringify({ rateLimits: { maxOrdersPerHour, maxRequestsPerMin } })
-  });
-  showToast('تم حفظ سياسات الحماية بنجاح ✓');
+  if (db) {
+    await dbPaths.pharmacyDoc().set({
+      rateLimits: { maxOrdersPerHour, maxRequestsPerMin }
+    }, { merge: true });
+    showToast('تم حفظ سياسات الحماية بنجاح ✓');
+  }
 }
 
-// ================= ACCOUNT & GOOGLE AUTH =================
+// ================= 28. AUTH & STAFF PERMISSION SYNC =================
 function updateUserHeaderProfile() {
   const chipAvatar = document.getElementById('userChipAvatar');
   const chipName = document.getElementById('userChipName');
@@ -2978,6 +3063,29 @@ function updateUserHeaderProfile() {
   }
 }
 
+async function verifyStaffPermissions(user) {
+  if (!user || !user.email) {
+    currentStaffData = null;
+    return;
+  }
+  if (user.email.toLowerCase().trim() === SUPER_ADMIN_EMAIL.toLowerCase()) {
+    currentStaffData = { role: 'owner', permissions: ['all'] };
+    return;
+  }
+  try {
+    const staffDocId = user.email.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const doc = await dbPaths.staffCol().doc(staffDocId).get();
+    if (doc.exists) {
+      currentStaffData = doc.data();
+    } else {
+      currentStaffData = null;
+    }
+  } catch (e) {
+    console.warn("Staff verification err:", e);
+    currentStaffData = null;
+  }
+}
+
 function renderAccountView() {
   const container = document.getElementById('accountAuthContainer');
   if (!container) return;
@@ -2990,12 +3098,12 @@ function renderAccountView() {
         <div class="user-profile-header">
           <div class="user-avatar"><img src="${cleanPhoto || 'https://imgdb.io/i/EQ4D9ag.png'}"></div>
           <div class="user-info">
-            <h3>${sanitizeText(currentUser.displayName || currentUser.email)} ${isAdmin ? '⭐ (مشرف المتجر)' : ''}</h3>
+            <h3>${sanitizeText(currentUser.displayName || currentUser.email)} ${isAdmin ? '⭐ (مشرف الصيدلية)' : ''}</h3>
             <p>${sanitizeText(currentUser.email || '')}</p>
-            <div class="sync-indicator"><span class="sync-dot"></span><span>البيانات متزامنة سحابياً</span></div>
+            <div class="sync-indicator"><span class="sync-dot"></span><span>البيانات متزامنة مع ${sanitizeText(pharmacyProfile.name || 'الصيدلية')}</span></div>
           </div>
         </div>
-        ${isAdmin ? `<a class="auth-btn-google" style="margin-bottom:10px; background:#FEF3C7; color:#92400E; font-weight:800; display:flex;" href="admin.html">⚙️ لوحة تحكم وإدارة المتجر</a>` : ''}
+        ${isAdmin ? `<a class="auth-btn-google" style="margin-bottom:10px; background:#FEF3C7; color:#92400E; font-weight:800; display:flex;" href="${getTenantUrl('admin.html')}">⚙️ لوحة تحكم وإدارة الصيدلية</a>` : ''}
         <button class="auth-btn-google" style="margin-bottom:10px;" onclick="showView('orders')">📦 عرض طلباتي وتتبع الشحن</button>
         <button class="auth-btn-logout" onclick="handleSignOut()">تسجيل الخروج</button>
       </div>`;
@@ -3003,7 +3111,7 @@ function renderAccountView() {
     container.innerHTML = `
       <div class="account-card">
         <div style="font-size:38px; margin-bottom:8px;">🌸</div>
-        <h3 style="font-size:17px; font-weight:900; margin:0 0 6px;">مرحباً بك في صيدلية القطن</h3>
+        <h3 style="font-size:17px; font-weight:900; margin:0 0 6px;">مرحباً بك في ${sanitizeText(pharmacyProfile.name || 'الصيدلية')}</h3>
         <p style="font-size:12.5px; color:var(--text-soft); margin:0 0 20px;">سجلي الدخول بنقرة واحدة لحفظ منتجاتك المفضلة ومتابعة طلباتكِ:</p>
         <button class="auth-btn-google" onclick="signInWithGoogle()">
           <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
@@ -3019,14 +3127,10 @@ function signInWithGoogle() {
     return;
   }
 
-  // فحص المتصفحات الداخلية
   if (isInAppBrowser()) {
     const modal = document.getElementById('iabModal');
-    if (modal) {
-      modal.classList.add('open');
-    } else {
-      alert('لتسجيل الدخول بأمان عبر Google، يرجى فتح الموقع في متصفح خارجي مثل Safari أو Chrome.');
-    }
+    if (modal) modal.classList.add('open');
+    else alert('لتسجيل الدخول بأمان عبر Google، يرجى فتح الموقع في متصفح خارجي.');
     return;
   }
 
@@ -3034,9 +3138,10 @@ function signInWithGoogle() {
   provider.setCustomParameters({ prompt: 'select_account' });
 
   auth.signInWithPopup(provider)
-    .then(res => {
+    .then(async res => {
       if (res && res.user) {
         currentUser = res.user;
+        await verifyStaffPermissions(currentUser);
         showToast(`أهلاً بكِ ${sanitizeText(currentUser.displayName || '')} 🌸`);
         updateUserHeaderProfile();
         renderAccountView();
@@ -3047,11 +3152,8 @@ function signInWithGoogle() {
       console.error("Google Auth Error:", e);
       if (e.code === 'auth/unauthorized-domain') {
         showToast('⚠️ يرجى إضافة دومين الموقع في Firebase Authorized Domains');
-      } else if (e.code === 'auth/missing-initial-state' || e.code === 'auth/web-storage-unsupported') {
-        const modal = document.getElementById('iabModal');
-        if (modal) modal.classList.add('open');
       } else if (e.code !== 'auth/popup-closed-by-user') {
-        showToast('تعذر تسجيل الدخول (' + (e.code || 'يرجى المحاولة من متصفح Safari/Chrome') + ')');
+        showToast('تعذر تسجيل الدخول (' + (e.code || 'حاول مجدداً') + ')');
       }
     });
 }
@@ -3059,6 +3161,7 @@ function signInWithGoogle() {
 async function handleSignOut() {
   if (auth) await auth.signOut();
   currentUser = null;
+  currentStaffData = null;
   updateUserHeaderProfile();
   renderAccountView();
   updateAdminInterfaceState();
@@ -3066,8 +3169,9 @@ async function handleSignOut() {
 }
 
 if (isFirebaseConfigured && auth) {
-  auth.onAuthStateChanged(user => {
+  auth.onAuthStateChanged(async user => {
     currentUser = user;
+    await verifyStaffPermissions(user);
     updateAdminInterfaceState();
     updateUserHeaderProfile();
     renderAccountView();
@@ -3088,24 +3192,21 @@ function updateAdminInterfaceState() {
   if (floatAddBtn) floatAddBtn.style.display = isAdmin ? 'flex' : 'none';
 
   if (adminGate) {
-    if (isAdmin) {
-      adminGate.classList.remove('locked');
-    } else {
-      adminGate.classList.add('locked');
-    }
+    if (isAdmin) adminGate.classList.remove('locked');
+    else adminGate.classList.add('locked');
   }
 }
 
-// ================= CONSULTATION & SHARE MODALS =================
+// ================= 29. SHARE & CONSULTATION =================
 function shareCurrentProduct() {
   if (!currentProductId) return;
   const p = findProduct(currentProductId);
-  const shareUrl = `${window.location.origin}${window.location.pathname}#p=${currentProductId}`;
+  const shareUrl = `${window.location.origin}${window.location.pathname}?pharmacy=${encodeURIComponent(currentPharmacyId)}#p=${currentProductId}`;
   
   if (navigator.share) {
     navigator.share({
-      title: p ? p.name : 'صيدلية القطن',
-      text: `شاهد ${p ? p.name : 'هذا المنتج'} في صيدلية القطن:`,
+      title: p ? p.name : pharmacyProfile.name,
+      text: `شاهد ${p ? p.name : 'هذا المنتج'} في ${pharmacyProfile.name}:`,
       url: shareUrl
     }).catch(() => {});
   } else {
@@ -3115,7 +3216,6 @@ function shareCurrentProduct() {
   }
 }
 
-// فحص ومعالجة الروابط المباشرة للمنتجات (Deep Linking)
 function checkUrlHashForProduct() {
   const hash = window.location.hash || '';
   const search = window.location.search || '';
@@ -3131,9 +3231,7 @@ function checkUrlHashForProduct() {
   if (pId) {
     const p = findProduct(pId);
     if (p) {
-      setTimeout(() => {
-        openProduct(pId, true);
-      }, 150);
+      setTimeout(() => openProduct(pId, true), 150);
     }
   }
 }
@@ -3168,14 +3266,14 @@ function handleConsultSubmit(e) {
     return;
   }
 
-  const targetPhone = "9647813703288";
-  const msg = encodeURIComponent(`🩺 *استشارة صيدلانية - صيدلية القطن:*\nالاسم: ${name}\nالعمر: ${age}\nالحالة: ${cond}\nالاستفسار: ${desc}`);
+  const targetPhone = (pharmacyProfile.socialWhatsapp || "9647813703288").replace(/\+/g, '').trim();
+  const msg = encodeURIComponent(`🩺 *استشارة صيدلانية - ${pharmacyProfile.name || 'الصيدلية'}:*\nالاسم: ${name}\nالعمر: ${age}\nالحالة: ${cond}\nالاستفسار: ${desc}`);
   window.open(`https://wa.me/${targetPhone}?text=${msg}`, '_blank');
   closeConsultModal();
 }
 
 function checkAndShowWelcomeModal() {
-  if (!localStorage.getItem('qutn_welcomed')) {
+  if (!localStorage.getItem(getStorageKey('welcomed'))) {
     setTimeout(() => {
       const m = document.getElementById('welcomeOfferModal');
       if (m) m.classList.add('open');
@@ -3186,7 +3284,7 @@ function checkAndShowWelcomeModal() {
 function closeWelcomeModal() {
   const m = document.getElementById('welcomeOfferModal');
   if (m) m.classList.remove('open');
-  localStorage.setItem('qutn_welcomed', '1');
+  localStorage.setItem(getStorageKey('welcomed'), '1');
 }
 
 function copyWelcomeCode() {
@@ -3197,7 +3295,7 @@ function copyWelcomeCode() {
 
 function applyWelcomeAndShop() {
   closeWelcomeModal();
-  showToast('تسوقي الآن واستخدمي كود QUTN10 في السلة ✨');
+  showToast('تسوقي الآن واستخدمي كود الخصم في السلة ✨');
 }
 
 function copyFullSourceCode() {
@@ -3216,8 +3314,10 @@ function showToast(msg) {
   toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
 }
 
-// ================= INITIALIZATION & BOOTSTRAP =================
+// ================= 30. INITIALIZATION & BOOTSTRAP =================
 window.addEventListener('DOMContentLoaded', () => {
+  patchTenantLinks();
+  applyStoreSettings();
   renderHome();
   renderModernCategories();
   populateCategoryDropdowns();
@@ -3229,10 +3329,8 @@ window.addEventListener('DOMContentLoaded', () => {
   checkAndShowWelcomeModal();
   checkUrlHashForProduct();
 
-  // استماع تغيير الرابط المباشر
   window.addEventListener('hashchange', checkUrlHashForProduct);
 
-  // تهيئة لوحة التحكم وتفعيل الاستماع اللحظي للطلبات
   if (window.location.pathname.includes('admin.html') || document.getElementById('adminOrdersManageContainer')) {
     fetchRealAnalytics();
     listenToAdminOrdersRealtime();
@@ -3242,5 +3340,6 @@ window.addEventListener('DOMContentLoaded', () => {
     renderAdminCategoriesList();
     renderAdminBrandsList();
     renderPromoCardsListAdmin();
+    fetchStaffList();
   }
 });
