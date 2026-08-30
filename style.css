@@ -1,6 +1,7 @@
 /* ==========================================================
-   صيدلية القطن | Cottanpharmacy — COMPLETE GLOBAL STYLES
+   SaaS Multi-Tenant Pharmacy — COMPLETE MASTER STYLESHEET
    ========================================================== */
+
 :root, html[data-theme="light"] {
   color-scheme: light;
   --ink: #1F2937;
@@ -26,6 +27,61 @@
   --radius-sm: 12px;
 }
 
+/* ==========================================================
+   MULTI-TEMPLATE SYSTEM OVERRIDES (القوالب المتعددة المدمجة)
+   ========================================================== */
+
+/* Template 2: Clinical Blue & Medical Pro (القالب الطبي الحديث) */
+html[data-template="template-two"] {
+  --surface: #F0F9FF;
+  --surface-hover: #E0F2FE;
+  --line: #BAE6FD;
+  --rose: #7DD3FC;
+  --rose-deep: #0284C7;
+  --accent: #0284C7;
+  --accent-dark: #0369A1;
+  --radius-lg: 12px;
+  --radius-md: 8px;
+  --radius-sm: 6px;
+  --shadow-soft: 0 2px 10px rgba(2, 132, 199, 0.08);
+}
+html[data-template="template-two"] .product-card,
+html[data-template="template-two"] .bundle-card,
+html[data-template="template-two"] .modern-cat-card {
+  border-width: 1px;
+  border-color: #E0F2FE;
+  border-radius: var(--radius-md);
+}
+html[data-template="template-two"] .add-cart-btn,
+html[data-template="template-two"] .checkout-btn {
+  border-radius: 8px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+/* Template 3: Emerald Luxury & Organic (القالب الزمردي الفاخر) */
+html[data-template="template-three"] {
+  --surface: #F2FBF7;
+  --surface-hover: #E1F7EC;
+  --line: #D1FAE5;
+  --rose: #6EE7B7;
+  --rose-deep: #059669;
+  --accent: #059669;
+  --accent-dark: #047857;
+  --radius-lg: 24px;
+  --radius-md: 18px;
+  --radius-sm: 14px;
+  --shadow-soft: 0 6px 24px rgba(5, 150, 105, 0.08);
+}
+html[data-template="template-three"] .product-card:hover,
+html[data-template="template-three"] .bundle-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 12px 30px rgba(5, 150, 105, 0.15);
+}
+
+/* ==========================================================
+   BASE & TYPOGRAPHY
+   ========================================================== */
 * { 
   box-sizing: border-box; 
   -webkit-tap-highlight-color: transparent; 
@@ -92,7 +148,7 @@ svg {
 }
 
 /* ==========================================================
-   STICKY ADMIN BAR
+   STICKY ADMIN BAR & GATES
    ========================================================== */
 .admin-sticky-bar {
   background: #111827;
@@ -125,8 +181,34 @@ svg {
   transform: scale(1.04); 
 }
 
+#adminAuthGateModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.95);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+#adminAuthGateModal.locked {
+  display: flex !important;
+}
+
+.admin-gate-card {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: 32px 24px;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+}
+
 /* ==========================================================
-   ANNOUNCEMENT BAR
+   ANNOUNCEMENT BAR & HEADER
    ========================================================== */
 .announcement-bar {
   background: var(--surface);
@@ -142,9 +224,6 @@ svg {
   transition: all .2s;
 }
 
-/* ==========================================================
-   HEADER & SEARCH BAR
-   ========================================================== */
 header { 
   position: sticky; 
   top: 0; 
@@ -271,8 +350,6 @@ header {
 .user-chip-avatar svg { 
   width: 16px !important; 
   height: 16px !important; 
-  max-width: 16px;
-  max-height: 16px;
   color: var(--accent); 
 }
 
@@ -471,7 +548,7 @@ header {
 }
 
 /* ==========================================================
-   HERO BANNER & MOBILE SPACING FIX
+   HERO BANNER
    ========================================================== */
 .hero-wrap { 
   padding: 10px 0 14px; 
@@ -564,7 +641,7 @@ header {
 }
 
 /* ==========================================================
-   PHARMACIST CONSULTATION CTA BANNER
+   PHARMACIST CTA BANNER
    ========================================================== */
 .consult-cta-banner {
   background: linear-gradient(135deg, var(--surface) 0%, var(--surface-hover) 100%);
@@ -630,7 +707,7 @@ header {
 }
 
 /* ==========================================================
-   BRAND STRIP REDESIGNED (VERTICAL SQUARE CARDS)
+   BRAND STRIP
    ========================================================== */
 .section { 
   padding: 10px 0; 
@@ -673,7 +750,6 @@ header {
   display: none; 
 }
 
-/* Brand Card Container (Vertical Layout) */
 .brand-chip {
   flex: 0 0 auto;
   width: 76px;
@@ -693,7 +769,6 @@ header {
   transform: translateY(-3px); 
 }
 
-/* Logo Box Container */
 .brand-chip-img-box {
   width: 68px;
   height: 68px;
@@ -774,8 +849,8 @@ header {
 }
 
 /* ==========================================================
-   PRODUCT BUNDLES (حزم التوفير)
-   ========================================================= */
+   PRODUCT BUNDLES (حزم وبكجات التوفير)
+   ========================================================== */
 .bundle-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -908,7 +983,7 @@ header {
 .product-card { 
   background: #fff; 
   border: 1px solid var(--line); 
-  border-radius: 18px; 
+  border-radius: var(--radius-lg); 
   padding: 12px; 
   position: relative; 
   cursor: pointer; 
@@ -1072,7 +1147,7 @@ header {
 }
 
 /* ==========================================================
-   DIRECT ON-CARD ADMIN ACTIONS & FLOATING BUTTON
+   ADMIN ACTIONS ON CARDS & FLOATING BUTTON
    ========================================================== */
 .admin-card-actions { 
   display: grid; 
@@ -1128,7 +1203,7 @@ header {
 }
 
 /* ==========================================================
-   MODERN CATEGORIES GRID VIEW
+   MODERN FULL-COVER CATEGORIES GRID
    ========================================================== */
 .cat-grid-modern { 
   display: grid; 
@@ -1344,7 +1419,7 @@ header {
 }
 
 /* ==========================================================
-   MY ORDERS VIEW & ORDER PRICING BREAKDOWN
+   MY ORDERS VIEW & TIMELINE
    ========================================================== */
 .order-card { 
   background: #fff; 
@@ -1479,7 +1554,7 @@ header {
 }
 
 /* ==========================================================
-   PRODUCT DETAIL & QUICK STAR-ONLY RATING
+   PRODUCT DETAIL VIEW & STAR RATINGS
    ========================================================== */
 .share-btn {
   display: inline-flex;
@@ -1632,7 +1707,6 @@ header {
   display: block; 
 }
 
-/* Quick Star-Only Rating Box */
 .star-rating-box {
   background: var(--surface);
   border: 1.5px solid var(--line);
@@ -1717,7 +1791,7 @@ header {
 }
 
 /* ==========================================================
-   CART & CHECKOUT (CLEAR BREAKDOWN WITH PROMO CODES)
+   CART & CHECKOUT
    ========================================================== */
 .cart-item { 
   display: flex; 
