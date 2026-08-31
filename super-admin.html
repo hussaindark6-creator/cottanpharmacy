@@ -66,7 +66,7 @@
           </div>
           <div>
             <h1 class="text-base font-black text-white leading-tight">Super Admin SaaS Portal</h1>
-            <p class="text-xs text-slate-400">إدارة الاشتراكات، التيليجرام، والتقارير المركزية</p>
+            <p class="text-xs text-slate-400">إدارة الاشتراكات، القوالب المعزولة، والتقارير المركزية</p>
           </div>
         </div>
 
@@ -128,7 +128,7 @@
             ✨
           </div>
           <div>
-            <h2 class="text-lg font-black text-white">إضافة صيدلية وتعيين باقة الاشتراك والقالب وبوت التيليجرام</h2>
+            <h2 class="text-lg font-black text-white">إضافة صيدلية وتعيين القالب والاشتراك وبوت التليجرام</h2>
             <p class="text-xs text-slate-400">التحكم الكامل ببيانات المستأجر والربط الفوري في قاعدة البيانات.</p>
           </div>
         </div>
@@ -210,7 +210,7 @@
               >
             </div>
 
-            <!-- Template ID -->
+            <!-- Template ID (محدث بنظام القوالب المعزولة) -->
             <div>
               <label class="block text-xs font-bold text-slate-300 mb-2">قالب وتصميم الواجهة (Template ID) *</label>
               <select 
@@ -218,9 +218,9 @@
                 class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white font-bold focus:outline-none focus:border-emerald-500"
                 required
               >
-                <option value="template-one">القالب 1: الوردي العصري (Modern Soft Rose)</option>
-                <option value="template-two">القالب 2: الطبي الحديث (Clinical Blue Pro)</option>
-                <option value="template-three">القالب 3: الزمردي الفاخر (Emerald Luxury Organic)</option>
+                <option value="template_a">القالب 1: العصري الناعم (template_a.js - Modern Soft)</option>
+                <option value="template_b">القالب 2: الطبي الحديث (template_b.js - Clinical Blue Pro)</option>
+                <option value="template_default">القالب 3: الافتراضي المرجعي (template_default.js - Classic)</option>
               </select>
             </div>
 
@@ -282,7 +282,7 @@
         </form>
       </section>
 
-      <!-- 3. Registered Pharmacies Table & Management (مع تحسين العرض على الموبايل) -->
+      <!-- 3. Registered Pharmacies Table & Management -->
       <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-8 shadow-md">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800 mb-6">
           <div class="flex items-center gap-3">
@@ -300,7 +300,6 @@
           </button>
         </div>
 
-        <!-- جدول بتمرير أفقي سلس على الموبايل لمنع ضغط الأزرار -->
         <div class="overflow-x-auto -mx-4 sm:mx-0">
           <table class="w-full text-right text-sm min-w-[700px]">
             <thead class="bg-slate-950/60 text-slate-400 font-bold border-b border-slate-800 text-xs">
@@ -404,7 +403,7 @@
     </div>
   </div>
 
-  <!-- 5. FULL EDIT MODAL (مع إمكانية تعديل الـ Slug / ID) -->
+  <!-- 5. FULL EDIT MODAL (مع اختيار القالب المعزول وتعديل الـ Slug) -->
   <div id="fullEditModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between pb-4 border-b border-slate-800 mb-6">
@@ -417,7 +416,6 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           
-          <!-- Slug Editing -->
           <div>
             <label class="block text-xs font-bold text-emerald-400 mb-1">معرف الرابط (Slug / ID) *</label>
             <input 
@@ -449,9 +447,9 @@
           <div>
             <label class="block text-xs font-bold text-slate-300 mb-1">قالب الواجهة (Template ID) *</label>
             <select id="editTemplateId" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white font-bold" required>
-              <option value="template-one">القالب 1: الوردي العصري (Modern Soft Rose)</option>
-              <option value="template-two">القالب 2: الطبي الحديث (Clinical Blue Pro)</option>
-              <option value="template-three">القالب 3: الزمردي الفاخر (Emerald Luxury Organic)</option>
+              <option value="template_a">القالب 1: العصري الناعم (template_a.js)</option>
+              <option value="template_b">القالب 2: الطبي الحديث (template_b.js)</option>
+              <option value="template_default">القالب 3: الافتراضي المرجعي (template_default.js)</option>
             </select>
           </div>
           <div class="sm:col-span-2">
@@ -636,7 +634,7 @@
           const name = data.name || slug;
           const adminEmail = data.adminEmail || 'غير محدد';
           const color = data.primaryColor || '#E85D8A';
-          const template = data.templateId || 'template-one';
+          const template = data.templateId || 'template_default';
           const hasTelegram = !!(data.telegramConfig && data.telegramConfig.botToken);
 
           let statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">● نشط</span>`;
@@ -953,7 +951,7 @@
       }
     }
 
-    // ================= FULL EDIT MODAL (مع دعم تعديل الـ SLUG وتحديث المعرف) =================
+    // ================= FULL EDIT MODAL (مع دعم تعديل الـ SLUG واختيار القالب المعزول) =================
     function openFullEditModal(slug) {
       const data = window.cachedPharmaciesMap[slug] || {};
       document.getElementById('editOldSlugId').value = slug;
@@ -962,7 +960,7 @@
       document.getElementById('editAdminEmail').value = data.adminEmail || '';
       document.getElementById('editSubPrice').value = data.subscriptionPrice || 0;
       document.getElementById('editSubExpiry').value = data.subscriptionExpiry || '';
-      document.getElementById('editTemplateId').value = data.templateId || 'template-one';
+      document.getElementById('editTemplateId').value = data.templateId || 'template_default';
       document.getElementById('editWhatsapp').value = data.socialWhatsapp || '';
       document.getElementById('editTeleBotToken').value = (data.telegramConfig && data.telegramConfig.botToken) || '';
       document.getElementById('editTeleChatId').value = (data.telegramConfig && data.telegramConfig.chatId) || '';
@@ -1008,7 +1006,6 @@
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
-        // إذا قام المشرف بتغيير الـ Slug، نقوم بإنشاء المستند الجديد وحذف القديم
         if (newSlug !== oldSlug) {
           const checkNew = await db.collection('pharmacies').doc(newSlug).get();
           if (checkNew.exists) {
@@ -1016,20 +1013,17 @@
             return;
           }
 
-          // حفظ الوثيقة الجديدة
           const oldData = window.cachedPharmaciesMap[oldSlug] || {};
           await db.collection('pharmacies').doc(newSlug).set({
             ...oldData,
             ...payload
           });
 
-          // حذف الوثيقة القديمة
           await db.collection('pharmacies').doc(oldSlug).delete();
           showToast(`تم تغيير معرف الصيدلية من (${oldSlug}) إلى (${newSlug}) بنجاح! 🚀`);
         } else {
-          // تحديث عادي على نفس المستند
           await db.collection('pharmacies').doc(oldSlug).set(payload, { merge: true });
-          showToast('تم تحديث إعدادات الصيدلية بنجاح ✓');
+          showToast('تم تحديث إعدادات وقالب الصيدلية بنجاح ✓');
         }
 
         closeFullEditModal();
