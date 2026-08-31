@@ -3137,7 +3137,7 @@ function signInWithGoogle() {
   const provider = new firebase.auth.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
 
-  auth.signInWithPopup(provider)
+  auth.signInWithRedirect(provider)
     .then(async res => {
       if (res && res.user) {
         currentUser = res.user;
