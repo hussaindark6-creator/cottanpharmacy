@@ -142,7 +142,7 @@
               <input 
                 type="text" 
                 id="inpPharmacySlug" 
-                placeholder="cottan أو alhayat" 
+                placeholder="مثال: cottan أو alhayat" 
                 class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white font-mono placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition" 
                 required 
                 oninput="this.value = this.value.toLowerCase().replace(/[^a-z0-9_-]/g, '')"
@@ -210,7 +210,7 @@
               >
             </div>
 
-            <!-- Template ID (حصري للسوبر أدمن) -->
+            <!-- Template ID -->
             <div>
               <label class="block text-xs font-bold text-slate-300 mb-2">قالب وتصميم الواجهة (Template ID) *</label>
               <select 
@@ -245,7 +245,7 @@
               </div>
             </div>
 
-            <!-- Telegram Bot Token (مخصص للصيدلية) -->
+            <!-- Telegram Bot Token -->
             <div>
               <label class="block text-xs font-bold text-slate-300 mb-2">توكن بوت تلغرام الصيدلية (Bot Token)</label>
               <input 
@@ -282,8 +282,8 @@
         </form>
       </section>
 
-      <!-- 3. Registered Pharmacies Table & Management -->
-      <section class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-md">
+      <!-- 3. Registered Pharmacies Table & Management (مع تحسين العرض على الموبايل) -->
+      <section class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-8 shadow-md">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800 mb-6">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 bg-blue-500/10 border border-blue-500/30 rounded-xl flex items-center justify-center text-xl text-blue-400">
@@ -300,8 +300,9 @@
           </button>
         </div>
 
-        <div class="overflow-x-auto">
-          <table class="w-full text-right text-sm">
+        <!-- جدول بتمرير أفقي سلس على الموبايل لمنع ضغط الأزرار -->
+        <div class="overflow-x-auto -mx-4 sm:mx-0">
+          <table class="w-full text-right text-sm min-w-[700px]">
             <thead class="bg-slate-950/60 text-slate-400 font-bold border-b border-slate-800 text-xs">
               <tr>
                 <th class="py-3 px-4">الصيدلية</th>
@@ -341,7 +342,6 @@
       </div>
 
       <div class="overflow-y-auto py-6 space-y-6 flex-1 pr-1">
-        <!-- Quick Financial Stats -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 text-center">
             <div class="text-xs text-slate-400 mb-1">مبيعات اليوم</div>
@@ -361,7 +361,6 @@
           </div>
         </div>
 
-        <!-- Export Buttons Row -->
         <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl flex items-center justify-between gap-3 flex-wrap">
           <div>
             <div class="font-bold text-white text-xs">تصدير تقرير مبيعات هذه الصيدلية:</div>
@@ -377,11 +376,10 @@
           </div>
         </div>
 
-        <!-- Live Orders List -->
         <div>
           <h4 class="font-bold text-white text-sm mb-3 flex items-center gap-2">📦 أحدث طلبات الزبائن المسجلة في هذه الصيدلية:</h4>
           <div class="bg-slate-950 border border-slate-800 rounded-xl overflow-x-auto max-h-56">
-            <table class="w-full text-right text-xs">
+            <table class="w-full text-right text-xs min-w-[500px]">
               <thead class="bg-slate-900 text-slate-400 font-bold border-b border-slate-800">
                 <tr>
                   <th class="py-2.5 px-3">رقم الطلب</th>
@@ -398,7 +396,6 @@
           </div>
         </div>
 
-        <!-- Notifications Log -->
         <div>
           <h4 class="font-bold text-white text-sm mb-3 flex items-center gap-2">📢 سجل إشعارات الصيدلية:</h4>
           <div id="inspNotifsList" class="space-y-2 max-h-40 overflow-y-auto"></div>
@@ -407,7 +404,7 @@
     </div>
   </div>
 
-  <!-- 5. FULL EDIT MODAL -->
+  <!-- 5. FULL EDIT MODAL (مع إمكانية تعديل الـ Slug / ID) -->
   <div id="fullEditModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between pb-4 border-b border-slate-800 mb-6">
@@ -416,9 +413,23 @@
       </div>
 
       <form onsubmit="handleSaveFullEdit(event)" class="space-y-4">
-        <input type="hidden" id="editSlugId">
+        <input type="hidden" id="editOldSlugId">
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          
+          <!-- Slug Editing -->
+          <div>
+            <label class="block text-xs font-bold text-emerald-400 mb-1">معرف الرابط (Slug / ID) *</label>
+            <input 
+              type="text" 
+              id="editSlugInp" 
+              class="w-full bg-slate-950 border border-emerald-500/50 rounded-xl px-4 py-2.5 text-sm text-emerald-400 font-mono focus:border-emerald-400" 
+              required
+              oninput="this.value = this.value.toLowerCase().replace(/[^a-z0-9_-]/g, '')"
+            >
+            <p class="text-[10px] text-slate-500 mt-1">تعديل هذا الحقل يغير رابط المتجر مباشرة</p>
+          </div>
+
           <div>
             <label class="block text-xs font-bold text-slate-300 mb-1">اسم الصيدلية</label>
             <input type="text" id="editName" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white" required>
@@ -443,7 +454,7 @@
               <option value="template-three">القالب 3: الزمردي الفاخر (Emerald Luxury Organic)</option>
             </select>
           </div>
-          <div>
+          <div class="sm:col-span-2">
             <label class="block text-xs font-bold text-slate-300 mb-1">رقم الواتساب</label>
             <input type="text" id="editWhatsapp" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white font-mono" required>
           </div>
@@ -466,7 +477,7 @@
     </div>
   </div>
 
-  <!-- 6. SUPER ADMIN PERSONAL TELEGRAM SETTINGS MODAL -->
+  <!-- 6. SUPER ADMIN PERSONAL TELEGRAM MODAL -->
   <div id="superTeleModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl">
       <div class="flex items-center justify-between pb-4 border-b border-slate-800 mb-4">
@@ -524,7 +535,6 @@
       const expiryInp = document.getElementById('inpExpiryDate');
       if (expiryInp) expiryInp.value = nextYear.toISOString().split('T')[0];
 
-      // تحميل إعدادات بوت السوبر أدمن المحفوظة
       const savedSuperBot = localStorage.getItem('saas_super_bot_token') || '';
       const savedSuperChat = localStorage.getItem('saas_super_chat_id') || '';
       if (document.getElementById('superBotTokenInp')) document.getElementById('superBotTokenInp').value = savedSuperBot;
@@ -655,7 +665,7 @@
               </td>
               <td class="py-3.5 px-4">${statusBadge}</td>
               <td class="py-3.5 px-4 text-center">
-                <div class="flex items-center justify-center gap-1.5 flex-wrap">
+                <div class="flex items-center justify-center gap-1.5 flex-nowrap">
                   <a href="index.html?pharmacy=${encodeURIComponent(slug)}" target="_blank" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-lg text-xs font-bold transition">
                     🛍️ المتجر
                   </a>
@@ -665,8 +675,8 @@
                   <button onclick="openInspectorModal('${escapeHtml(slug)}')" class="bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer" title="فحص المبيعات والتقارير">
                     📊 التقارير
                   </button>
-                  <button onclick="openFullEditModal('${escapeHtml(slug)}')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2 py-1 rounded-lg text-xs font-bold transition cursor-pointer" title="تعديل">
-                    ✏️
+                  <button onclick="openFullEditModal('${escapeHtml(slug)}')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer" title="تعديل">
+                    ✏️ تعديل
                   </button>
                   <button onclick="togglePharmacyStatus('${escapeHtml(slug)}', ${!isSuspended})" class="${isSuspended ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-amber-500/10 text-amber-400 border-amber-500/30'} hover:opacity-80 border px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer">
                     ${isSuspended ? 'تفعيل' : 'حظر ⛔'}
@@ -751,7 +761,6 @@
 
         await db.collection('pharmacies').doc(slug).set(pharmacyData);
 
-        // إنشاء حساب المشرف في جدول الموظفين
         const staffDocId = adminEmail.replace(/[^a-z0-9]/g, '_');
         await db.collection('pharmacies').doc(slug).collection('staff').doc(staffDocId).set({
           email: adminEmail,
@@ -772,7 +781,7 @@
       }
     }
 
-    // ================= CENTRAL PHARMACY REPORTS & EXCEL EXPORT =================
+    // ================= CENTRAL REPORTS INSPECTOR =================
     let currentInspSlug = null;
     let currentInspOrders = [];
 
@@ -826,11 +835,9 @@
 
         ordersTbody.innerHTML = ordersRows.length ? ordersRows.join('') : `<tr><td colspan="5" class="text-center py-4 text-slate-500">لا توجد طلبات مسجلة بعد.</td></tr>`;
 
-        // جلب الزيارات
         const visitsDoc = await db.collection('pharmacies').doc(slug).collection('analytics_daily').doc(todayStr).get();
         document.getElementById('inspTodayVisits').textContent = visitsDoc.exists ? (visitsDoc.data().visits || 0) : 0;
 
-        // جلب الإشعارات
         const notifsSnap = await db.collection('pharmacies').doc(slug).collection('notifications').orderBy('createdAt', 'desc').limit(5).get();
         const notifsList = document.getElementById('inspNotifsList');
         if (notifsSnap.empty) {
@@ -946,10 +953,11 @@
       }
     }
 
-    // ================= FULL EDIT MODAL =================
+    // ================= FULL EDIT MODAL (مع دعم تعديل الـ SLUG وتحديث المعرف) =================
     function openFullEditModal(slug) {
       const data = window.cachedPharmaciesMap[slug] || {};
-      document.getElementById('editSlugId').value = slug;
+      document.getElementById('editOldSlugId').value = slug;
+      document.getElementById('editSlugInp').value = slug;
       document.getElementById('editName').value = data.name || '';
       document.getElementById('editAdminEmail').value = data.adminEmail || '';
       document.getElementById('editSubPrice').value = data.subscriptionPrice || 0;
@@ -967,7 +975,8 @@
 
     async function handleSaveFullEdit(e) {
       e.preventDefault();
-      const slug = document.getElementById('editSlugId').value;
+      const oldSlug = document.getElementById('editOldSlugId').value.trim().toLowerCase();
+      const newSlug = document.getElementById('editSlugInp').value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
       const name = document.getElementById('editName').value.trim();
       const adminEmail = document.getElementById('editAdminEmail').value.trim().toLowerCase();
       const price = Number(document.getElementById('editSubPrice').value);
@@ -977,8 +986,14 @@
       const botToken = document.getElementById('editTeleBotToken').value.trim();
       const chatId = document.getElementById('editTeleChatId').value.trim();
 
+      if (!newSlug) {
+        showToast('يرجى كتابة معرّف صحيح للصيدلية', true);
+        return;
+      }
+
       try {
-        await db.collection('pharmacies').doc(slug).set({
+        const payload = {
+          id: newSlug,
           name: name,
           adminEmail: adminEmail,
           subscriptionPrice: price,
@@ -991,9 +1006,32 @@
             enabled: !!(botToken && chatId)
           },
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
+        };
 
-        showToast('تم تحديث إعدادات وقالب وتيليجرام الصيدلية بنجاح ✓');
+        // إذا قام المشرف بتغيير الـ Slug، نقوم بإنشاء المستند الجديد وحذف القديم
+        if (newSlug !== oldSlug) {
+          const checkNew = await db.collection('pharmacies').doc(newSlug).get();
+          if (checkNew.exists) {
+            showToast(`⚠️ المعرف الجديد (${newSlug}) مستخدم لصيدلية أخرى بالفعل!`, true);
+            return;
+          }
+
+          // حفظ الوثيقة الجديدة
+          const oldData = window.cachedPharmaciesMap[oldSlug] || {};
+          await db.collection('pharmacies').doc(newSlug).set({
+            ...oldData,
+            ...payload
+          });
+
+          // حذف الوثيقة القديمة
+          await db.collection('pharmacies').doc(oldSlug).delete();
+          showToast(`تم تغيير معرف الصيدلية من (${oldSlug}) إلى (${newSlug}) بنجاح! 🚀`);
+        } else {
+          // تحديث عادي على نفس المستند
+          await db.collection('pharmacies').doc(oldSlug).set(payload, { merge: true });
+          showToast('تم تحديث إعدادات الصيدلية بنجاح ✓');
+        }
+
         closeFullEditModal();
         fetchPharmaciesList();
       } catch (err) {
@@ -1023,7 +1061,6 @@
       }
     }
 
-    // ================= SUPER ADMIN PERSONAL TELEGRAM MODAL =================
     function openSuperTeleSettingsModal() {
       document.getElementById('superTeleModal').classList.remove('hidden');
     }
