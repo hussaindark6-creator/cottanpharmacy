@@ -1,6 +1,6 @@
 /* ==========================================================
    SaaS Multi-Tenant Pharmacy Engine — script.js
-   With Dynamic Modular Theme Loader & Fail-Safe Fallback
+   Full Enterprise Edition with Live Sync & Clinical Editing
    ========================================================== */
 
 // ================= 1. SUBDOMAIN & SLUG RESOLVER =================
@@ -249,7 +249,7 @@ let weeklyVisitsData = [];
 let pharmacyProfile = {
   id: currentPharmacyId,
   name: 'الصيدلية',
-  templateId: 'template-one',
+  templateId: 'template_default',
   primaryColor: '#E85D8A',
   logoUrl: '',
   bannerImgUrl: 'https://imgdb.io/i/EQ4D9ag.png',
@@ -324,14 +324,12 @@ async function loadDynamicTheme(templateId) {
   const targetFile = TEMPLATE_MODULE_MAP[targetKey] || 'templates/template_default.js';
 
   try {
-    // 1. محاولة استيراد القالب ديناميكياً
     const module = await import(`./${targetFile}?t=${Date.now()}`);
     activeThemeModule = module.default || module.TemplateA || module.TemplateB || module.TemplateDefault || window.TemplateDefault;
-    if (!activeThemeModule) throw new Error("Template module is empty");
+    if (!activeThemeModule) throw new Error("Template module export is empty");
   } catch (err) {
-    console.warn(`[Theme Engine] فشل تحميل القالب (${targetKey})، جاري تشغيل خطة الطوارئ للقالب الافتراضي:`, err);
+    console.warn(`[Theme Engine] فشل استدعاء القالب (${targetKey})، جاري تشغيل خطة الطوارئ للقالب الافتراضي:`, err);
     try {
-      // 2. خطة الطوارئ: التحميل التلقائي للقالب الافتراضي
       const fallbackModule = await import(`./templates/template_default.js?t=${Date.now()}`);
       activeThemeModule = fallbackModule.default || fallbackModule.TemplateDefault || window.TemplateDefault;
     } catch (fallbackErr) {
@@ -340,12 +338,11 @@ async function loadDynamicTheme(templateId) {
     }
   }
 
-  // تطبيق الأنماط البصرية للقالب
   if (activeThemeModule && typeof activeThemeModule.applyStyles === 'function') {
     try {
       activeThemeModule.applyStyles(pharmacyProfile);
     } catch (e) {
-      console.warn("[Theme Engine] خطأ أثناء تطبيق أنماط القالب:", e);
+      console.warn("[Theme Engine] خطأ في تطبيق أنماط القالب:", e);
     }
   } else {
     applyPharmacyTemplate(targetKey);
@@ -387,7 +384,7 @@ function checkStorefrontSubscriptionLock() {
       const freezeDesc = document.getElementById('storefrontFreezeDesc');
       if (freezeDesc) {
         freezeDesc.textContent = isSuspended 
-          ? 'عذراً، هذا المتجر متوقف مؤقتاً لأعمال الصيانة. يرجى مراجعة إدارة الصيدلية.' 
+          ? 'عذراً، هذا المتجر متوقف مؤقتاً لأعمال الصيانة والتجديد. يرجى مراجعة إدارة الصيدلية.' 
           : 'عذراً، انتهت صلاحية اشتراك هذا المتجر مؤقتاً. يرجى مراجعة الإدارة.';
       }
     } else {
@@ -435,7 +432,7 @@ async function sendOrderToPharmacyTelegram(orderObj) {
       `📞 *رقم الهاتف:* \`${orderObj.phone}\`\n` +
       `📍 *العنوان:* ${orderObj.address}\n` +
       `🛵 *نوع التوصيل:* ${orderObj.deliveryMethod === 'express' ? 'سريع' : 'عادي'}\n\n` +
-      `📦 *المنتجات:*\n${itemsLines}\n\n` +
+      `📦 *المنتجات المطلوبة:*\n${itemsLines}\n\n` +
       `━━━━━━━━━━━━━━━━━━━\n` +
       `💵 *المجموع الفرعي:* \`${fmtPrice(orderObj.subtotal)}\`\n` +
       `${promoInfo}` +
@@ -772,7 +769,6 @@ function renderAllBundles() {
 }
 
 function renderBundleCardHTML(b) {
-  // تفويض العرض للقالب النشط
   if (activeThemeModule && typeof activeThemeModule.renderBundleCard === 'function') {
     try {
       return activeThemeModule.renderBundleCard(b, getTemplateHelpers());
@@ -931,7 +927,7 @@ async function deleteAdminBundle(id) {
   }
 }
 
-// ================= 14. 80mm THERMAL RECEIPTS =================
+// ================= 14. 80mm THERMAL RECEIPT PRINTING =================
 function openReceiptModal(orderId) {
   const ord = myOrders.find(o => String(o.id) === String(orderId)) || (window.adminLastOrdersList && window.adminLastOrdersList.find(o => String(o.id) === String(orderId)));
   if (!ord) {
@@ -1418,7 +1414,7 @@ function renderRealAnalyticsView() {
   }
 }
 
-// ================= 19. REALTIME ORDERS LISTENER =================
+// ================= 19. REALTIME ORDERS SNAPSHOT (0-SECOND SYNC) =================
 let adminOrdersUnsubscribe = null;
 
 function listenToAdminOrdersRealtime() {
@@ -1428,6 +1424,7 @@ function listenToAdminOrdersRealtime() {
     adminOrdersUnsubscribe();
   }
 
+  // الاستماع اللحظي الفوري لأي طلب جديد يضاف لمجموعة الصيدلية
   adminOrdersUnsubscribe = dbPaths.ordersCol().onSnapshot(snap => {
     const orders = [];
     snap.forEach(d => orders.push({ id: d.id, ...d.data() }));
@@ -1443,7 +1440,7 @@ function listenToAdminOrdersRealtime() {
 
     renderAdminOrdersList(orders);
     fetchRealAnalytics();
-  }, err => console.warn(err));
+  }, err => console.warn("Orders Snapshot Warning:", err));
 }
 
 async function fetchAdminOrdersList() {
@@ -1479,7 +1476,7 @@ function renderAdminOrdersList(orders) {
   });
 
   if (displayOrders.length === 0) {
-    container.innerHTML = `<div class="no-results" style="padding:24px 0;">لا توجد طلبات مطابقة حالياً.</div>`;
+    container.innerHTML = `<div class="no-results" style="padding:24px 0;">لا توجد طلبات مسجلة حالياً.</div>`;
     return;
   }
 
@@ -1559,7 +1556,7 @@ async function buildDetailedOrdersCSV() {
   }
   if (orders.length === 0) orders = myOrders;
 
-  let csv = "رقم الطلب,التاريخ والوقت,اسم العميل,رقم الهاتف,العنوان الكامل,نوع التوصيل,حالة الطلب,المنتجات المطلوبة,مبلغ التحصيل من الزبون (COD),أجرة التوصيل المستقطعة,صافي المستحق للصيدلية\n";
+  let csv = "Order ID,Date & Time,Customer Name,Phone Number,Full Address,Delivery Method,Order Status,Items Ordered,Total Amount (IQD),Delivery Fee (IQD),Net Store (IQD)\n";
   
   let totalCOD = 0, totalDelivery = 0, totalNetStore = 0;
 
@@ -1572,11 +1569,11 @@ async function buildDetailedOrdersCSV() {
     totalDelivery += delFee;
     totalNetStore += netStore;
 
-    const itemsFormatted = (o.items || []).map(it => `${it.name} (×${it.quantity})`).join(" + ");
-    csv += `"${o.id}","${o.date || ''}","${o.name || ''}","${o.phone || ''}","${(o.address || '').replace(/"/g, '""')}","${o.deliveryMethod === 'express' ? 'توصيل سريع' : 'توصيل عادي'}","${o.status || ''}","${itemsFormatted.replace(/"/g, '""')}","${orderTotal} د.ع","${delFee} د.ع","${netStore} د.ع"\n`;
+    const itemsFormatted = (o.items || []).map(it => `${it.name} (x${it.quantity})`).join(" + ");
+    csv += `"${o.id}","${o.date || ''}","${o.name || ''}","${o.phone || ''}","${(o.address || '').replace(/"/g, '""')}","${o.deliveryMethod === 'express' ? 'Express' : 'Standard'}","${o.status || ''}","${itemsFormatted.replace(/"/g, '""')}","${orderTotal}","${delFee}","${netStore}"\n`;
   });
 
-  csv += `\n"المجاميع النهائية","إجمالي الطلبات: ${orders.length}","","","","","","","المجموع: ${totalCOD} د.ع","أجور الشحن: ${totalDelivery} د.ع","صافي الصيدلية: ${totalNetStore} د.ع"\n`;
+  csv += `\n"TOTALS","${orders.length} Orders","","","","","","","${totalCOD} IQD","${totalDelivery} IQD","${totalNetStore} IQD"\n`;
 
   return { csv, totalOrders: orders.length, totalRevenue: totalCOD, totalDelivery, totalNetStore };
 }
@@ -1586,19 +1583,22 @@ async function exportOrdersToCSV() {
   showToast('جاري تصدير وتحميل ملف المبيعات...');
   try {
     const report = await buildDetailedOrdersCSV();
+    const dateStr = new Date().toISOString().split('T')[0];
+    const fileName = `Sales_Report_${currentPharmacyId}_${dateStr}.csv`;
+
     const blob = new Blob(["\uFEFF" + report.csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `تقرير_مبيعات_${pharmacyProfile.name || 'الصيدلية'}_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", fileName);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showToast('تم تنزيل ملف Excel بنجاح! 📊');
+    showToast(`تم تنزيل ${fileName} بنجاح! 📊`);
   } catch (e) { console.error(e); }
 }
 
-// ================= 21. PRODUCTS MANAGEMENT =================
+// ================= 21. PRODUCTS FULL CLINICAL CRUD =================
 function toggleLowStockFilter() {
   isLowStockFilterActive = !isLowStockFilterActive;
   const btn = document.getElementById('btnFilterLowStock');
@@ -1632,18 +1632,29 @@ async function quickToggleStock(id) {
   showToast(newStock ? 'تم التعيين: متوفر 🟢' : 'تم التعيين: نفذت الكمية 🔴');
 }
 
+// فتح نافذة التعديل السريع مع تعبئة كامل الحقول الطبية والسريرية
 function openAdminQuickEditModal(id) {
   if (!assertAdmin()) return;
   const p = findProduct(id);
   if (!p) return;
+
   populateCategoryDropdowns();
+
   document.getElementById('quickEditProdId').value = p.id;
   document.getElementById('quickEditProdName').value = p.name || '';
   document.getElementById('quickEditProdBrand').value = p.brand || '';
   document.getElementById('quickEditProdPrice').value = p.price || '';
+  if (document.getElementById('quickEditProdOldPrice')) document.getElementById('quickEditProdOldPrice').value = p.oldPrice || '';
+  if (document.getElementById('quickEditProdSize')) document.getElementById('quickEditProdSize').value = p.size || '';
   document.getElementById('quickEditProdCat').value = p.category || (categories[0] ? categories[0].id : 'face');
   document.getElementById('quickEditProdType').value = p.type || 'bottle';
   document.getElementById('quickEditProdImg').value = p.imageUrl || '';
+  if (document.getElementById('quickEditProdDesc')) document.getElementById('quickEditProdDesc').value = p.description || '';
+  if (document.getElementById('quickEditProdIng')) document.getElementById('quickEditProdIng').value = p.ingredients || '';
+  if (document.getElementById('quickEditProdUsage')) document.getElementById('quickEditProdUsage').value = p.usage || '';
+  if (document.getElementById('quickEditProdInStock')) document.getElementById('quickEditProdInStock').checked = (p.inStock !== false);
+  if (document.getElementById('quickEditProdIsOffer')) document.getElementById('quickEditProdIsOffer').checked = !!p.isSpecialOffer;
+
   document.getElementById('adminQuickEditModal').classList.add('open');
 }
 
@@ -1652,25 +1663,51 @@ function closeAdminQuickEditModal() {
   if (m) m.classList.remove('open');
 }
 
+// حفظ كامل التعديلات الطبية للمنتج سحابياً
 async function saveAdminQuickEdit() {
   if (!assertAdmin()) return;
+
   const id = document.getElementById('quickEditProdId').value;
   const name = document.getElementById('quickEditProdName').value.trim();
   const brand = document.getElementById('quickEditProdBrand').value.trim();
   const price = Number(document.getElementById('quickEditProdPrice').value);
+  const oldPriceVal = document.getElementById('quickEditProdOldPrice') ? document.getElementById('quickEditProdOldPrice').value.trim() : '';
+  const oldPrice = oldPriceVal ? Number(oldPriceVal) : null;
+  const size = document.getElementById('quickEditProdSize') ? document.getElementById('quickEditProdSize').value.trim() : 'عبوة قياسية';
   const category = document.getElementById('quickEditProdCat').value;
   const type = document.getElementById('quickEditProdType').value;
   const imageUrl = sanitizeUrl(document.getElementById('quickEditProdImg').value.trim());
+  const description = document.getElementById('quickEditProdDesc') ? sanitizeText(document.getElementById('quickEditProdDesc').value.trim()) : '';
+  const ingredients = document.getElementById('quickEditProdIng') ? sanitizeText(document.getElementById('quickEditProdIng').value.trim()) : '';
+  const usage = document.getElementById('quickEditProdUsage') ? sanitizeText(document.getElementById('quickEditProdUsage').value.trim()) : '';
+  const inStock = document.getElementById('quickEditProdInStock') ? document.getElementById('quickEditProdInStock').checked : true;
+  const isSpecialOffer = document.getElementById('quickEditProdIsOffer') ? document.getElementById('quickEditProdIsOffer').checked : false;
 
   if (!name || !brand || isNaN(price) || price <= 0) {
     showToast('يرجى التأكد من كتابة الاسم والماركة والسعر');
     return;
   }
 
-  const updates = { name: sanitizeText(name), brand: sanitizeText(brand), price, category, type, imageUrl };
+  const updates = {
+    name: sanitizeText(name),
+    brand: sanitizeText(brand),
+    price,
+    oldPrice,
+    size,
+    category,
+    type,
+    imageUrl,
+    description,
+    ingredients,
+    usage,
+    inStock,
+    isSpecialOffer,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+
   if (db) await dbPaths.productsCol().doc(String(id)).set(updates, { merge: true });
   closeAdminQuickEditModal();
-  showToast('تم تحديث المنتج وحفظه سحابياً ✓');
+  showToast('تم تحديث تفاصيل الدواء والمنتج سحابياً ✓');
 }
 
 function openAdminQuickAddModal() {
@@ -1705,7 +1742,7 @@ function resetAdminProductForm() {
   document.getElementById('adminProdInStock').checked = true;
   document.getElementById('adminProdIsOffer').checked = false;
   document.getElementById('adminProdImgPreviewBox').style.display = 'none';
-  document.getElementById('adminFormModeTitleV').textContent = 'إضافة منتج جديد';
+  document.getElementById('adminFormModeTitleV').textContent = 'إضافة منتج أو دواء جديد';
   document.getElementById('adminSaveProdBtn').textContent = '💾 حفظ المنتج في قاعدة البيانات';
 }
 
@@ -2240,7 +2277,6 @@ function renderProductGrid(targetId, list, emptyMsg) {
   const isAdmin = isCurrentUserAdmin();
 
   el.innerHTML = displayList.map(p => {
-    // تفويض عرض بطاقة المنتج للقالب النشط
     if (activeThemeModule && typeof activeThemeModule.renderProductCard === 'function') {
       try {
         return activeThemeModule.renderProductCard(p, getTemplateHelpers());
@@ -2436,7 +2472,6 @@ function renderModernCategories() {
     container.innerHTML = categories.map(c => {
       const count = products.filter(p => p.category === c.id).length;
       
-      // تفويض عرض بطاقة القسم للقالب النشط
       if (activeThemeModule && typeof activeThemeModule.renderCategoryCard === 'function') {
         try {
           return activeThemeModule.renderCategoryCard(c, count, getTemplateHelpers());
@@ -2803,7 +2838,6 @@ function applyStoreSettings() {
     if (colorPicker) colorPicker.value = pharmacyProfile.primaryColor;
   }
 
-  // تحميل القالب المعزول ديناميكياً
   loadDynamicTheme(pharmacyProfile.templateId);
 
   document.title = `${pharmacyProfile.name || 'الصيدلية'} | المتجر الإلكتروني`;
@@ -2859,7 +2893,7 @@ function applyStoreSettings() {
 function initFirestoreSync() {
   if (!isFirebaseConfigured || !db) return;
 
-  // 1. مزامنة وثيقة الصيدلية الحالية والقالب وفحص الصلاحية
+  // 1. مزامنة وثيقة الصيدلية الحالية وفحص صلاحية الاشتراك (Kill Switch)
   dbPaths.pharmacyDoc().onSnapshot(doc => {
     if (doc.exists) {
       pharmacyProfile = { ...pharmacyProfile, ...doc.data() };
@@ -3355,7 +3389,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   checkAndShowWelcomeModal();
   checkUrlHashForProduct();
 
-  // تحميل القالب المناسب عند بدء التشغيل
   await loadDynamicTheme(pharmacyProfile.templateId);
   renderCurrentActiveView();
 
