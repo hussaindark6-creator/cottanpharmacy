@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" id="htmlRoot" data-theme="light" data-template="template-one">
+<html lang="ar" dir="rtl" id="htmlRoot" data-theme="light" data-template="template_default">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Embedded Critical Styles (حماية من الوميض FOUC وتنسيقات الحماية للنوافذ) -->
+  <!-- Embedded Critical Styles (حماية من الوميض FOUC وعزل تام للنوافذ المنبثقة) -->
   <style>
     :root {
       --ink: #1F2937; --text-soft: #6B7280; --paper: #FFFFFF; --surface: #FFF0F3;
@@ -34,8 +34,8 @@
     .view { display: none !important; }
     .view.active { display: block !important; }
 
-    /* إخفاء تام للنوافذ المنبثقة لمنع تسريب النصوص في أسفل الصفحة */
-    .notif-modal-overlay, .success-modal-overlay, .iab-modal, .consult-modal-overlay, .welcome-modal-overlay, .admin-quick-modal-overlay, .receipt-modal-overlay, .storefront-freeze-overlay {
+    /* إخفاء تام للنوافذ المنبثقة وشاشة القفل لمنع تسريب النصوص في أسفل الصفحة */
+    .notif-modal-overlay, .success-modal-overlay, .iab-modal, .consult-modal-overlay, .welcome-modal-overlay, .receipt-modal-overlay, .storefront-freeze-overlay {
       display: none !important;
       position: fixed;
       inset: 0;
@@ -46,7 +46,7 @@
       justify-content: center;
       padding: 20px;
     }
-    .notif-modal-overlay.open, .success-modal-overlay.open, .iab-modal.open, .consult-modal-overlay.open, .welcome-modal-overlay.open, .admin-quick-modal-overlay.open, .receipt-modal-overlay.open, .storefront-freeze-overlay.open {
+    .notif-modal-overlay.open, .success-modal-overlay.open, .iab-modal.open, .consult-modal-overlay.open, .welcome-modal-overlay.open, .receipt-modal-overlay.open, .storefront-freeze-overlay.open {
       display: flex !important;
     }
 
@@ -64,7 +64,7 @@
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
   </style>
 
-  <!-- Complete External Stylesheet (Base & Multi-Template Styles) -->
+  <!-- Complete External Stylesheet -->
   <link rel="stylesheet" href="style.css">
 
   <!-- Firebase SDKs (Compat v9.22.1) -->
@@ -85,9 +85,9 @@
 </head>
 <body>
 
-  <!-- STOREFRONT FREEZE OVERLAY (شاشة القفل في حال تجميد أو انتهاء اشتراك الصيدلية) -->
+  <!-- STOREFRONT FREEZE OVERLAY (شاشة القفل التلقائي في حال تجميد أو انتهاء اشتراك الصيدلية) -->
   <div class="storefront-freeze-overlay" id="storefrontFreezeModal">
-    <div class="welcome-card" style="border: 1.5px solid #EF4444; max-width: 420px; background: #fff;">
+    <div class="welcome-card" style="border: 1.5px solid #EF4444; max-width: 420px; background: #fff; text-align: center;">
       <div style="font-size: 52px; margin-bottom: 12px;">🔒</div>
       <h3 style="color: #DC2626; font-size: 20px; font-weight: 900; margin: 0 0 8px;">المتجر متوقف مؤقتاً</h3>
       <p id="storefrontFreezeDesc" style="font-size: 13px; color: #4B5563; line-height: 1.7; margin: 0 0 20px;">
@@ -528,54 +528,7 @@
     </div>
   </div>
 
-  <!-- 2. Admin Quick Editor Modal -->
-  <div class="admin-quick-modal-overlay" id="adminQuickEditModal">
-    <div class="admin-quick-card">
-      <div class="consult-header">
-        <h3 style="color:#111827;">✏️ تعديل سريع للمنتج</h3>
-        <button class="icon-btn" onclick="closeAdminQuickEditModal()">✕</button>
-      </div>
-      <div style="padding:16px; text-align:right;">
-        <input type="hidden" id="quickEditProdId">
-        <div class="form-field">
-          <label>اسم المنتج *</label>
-          <input type="text" id="quickEditProdName" required>
-        </div>
-        <div style="display:flex; gap:10px;">
-          <div class="form-field" style="flex:1;">
-            <label>الماركة *</label>
-            <input type="text" id="quickEditProdBrand" required>
-          </div>
-          <div class="form-field" style="flex:1;">
-            <label>السعر (د.ع) *</label>
-            <input type="number" id="quickEditProdPrice" required>
-          </div>
-        </div>
-        <div style="display:flex; gap:10px;">
-          <div class="form-field" style="flex:1;">
-            <label>القسم / التصنيف *</label>
-            <select id="quickEditProdCat" required></select>
-          </div>
-          <div class="form-field" style="flex:1;">
-            <label>نوع العبوة (الأيقونة)</label>
-            <select id="quickEditProdType">
-              <option value="bottle">زجاجة (Bottle)</option>
-              <option value="jar">مرطبان (Jar)</option>
-              <option value="tube">أنبوب (Tube)</option>
-              <option value="spray">بخاخ (Spray)</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-field">
-          <label>رابط الصورة المباشر</label>
-          <input type="url" id="quickEditProdImg">
-        </div>
-        <button class="admin-btn-save" onclick="saveAdminQuickEdit()">💾 حفظ التعديلات فورياً</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 3. Notifications Modal -->
+  <!-- 2. Notifications Modal -->
   <div class="notif-modal-overlay" id="notifModal">
     <div class="notif-modal-card">
       <div class="consult-header">
@@ -591,7 +544,7 @@
     </div>
   </div>
 
-  <!-- 4. Order Success Modal -->
+  <!-- 3. Order Success Modal -->
   <div class="success-modal-overlay" id="orderSuccessModal">
     <div class="success-card">
       <div class="success-icon-badge">🌸</div>
@@ -604,7 +557,7 @@
     </div>
   </div>
 
-  <!-- 5. In-App Browser Guidance Modal -->
+  <!-- 4. In-App Browser Guidance Modal -->
   <div class="iab-modal" id="iabModal">
     <div class="iab-content">
       <div class="iab-icon">
@@ -628,7 +581,7 @@
     </div>
   </div>
 
-  <!-- 6. Pharmacist Direct Consultation Modal -->
+  <!-- 5. Pharmacist Direct Consultation Modal -->
   <div class="consult-modal-overlay" id="consultModal">
     <div class="consult-modal-card">
       <div class="consult-header">
