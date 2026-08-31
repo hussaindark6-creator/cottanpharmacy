@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Embedded Critical Styles (حماية من الوميض FOUC وتنسيقات الحماية للمودال) -->
+  <!-- Embedded Critical Styles (حماية من الوميض FOUC وتنسيقات الحماية للنوافذ) -->
   <style>
     :root {
       --ink: #1F2937; --text-soft: #6B7280; --paper: #FFFFFF; --surface: #FFF0F3;
@@ -35,7 +35,7 @@
     .view.active { display: block !important; }
 
     /* إخفاء تام للنوافذ المنبثقة لمنع تسريب النصوص في أسفل الصفحة */
-    .notif-modal-overlay, .success-modal-overlay, .iab-modal, .consult-modal-overlay, .welcome-modal-overlay, .admin-quick-modal-overlay, .receipt-modal-overlay {
+    .notif-modal-overlay, .success-modal-overlay, .iab-modal, .consult-modal-overlay, .welcome-modal-overlay, .admin-quick-modal-overlay, .receipt-modal-overlay, .storefront-freeze-overlay {
       display: none !important;
       position: fixed;
       inset: 0;
@@ -46,8 +46,14 @@
       justify-content: center;
       padding: 20px;
     }
-    .notif-modal-overlay.open, .success-modal-overlay.open, .iab-modal.open, .consult-modal-overlay.open, .welcome-modal-overlay.open, .admin-quick-modal-overlay.open, .receipt-modal-overlay.open {
+    .notif-modal-overlay.open, .success-modal-overlay.open, .iab-modal.open, .consult-modal-overlay.open, .welcome-modal-overlay.open, .admin-quick-modal-overlay.open, .receipt-modal-overlay.open, .storefront-freeze-overlay.open {
       display: flex !important;
+    }
+
+    .storefront-freeze-overlay {
+      z-index: 999999 !important;
+      background: rgba(17, 24, 39, 0.96) !important;
+      backdrop-filter: blur(10px) !important;
     }
 
     .menu-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 70; opacity: 0; pointer-events: none; transition: opacity .25s; }
@@ -58,11 +64,8 @@
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
   </style>
 
-  <!-- Complete External Stylesheet (Base Styles) -->
+  <!-- Complete External Stylesheet (Base & Multi-Template Styles) -->
   <link rel="stylesheet" href="style.css">
-
-  <!-- Dynamic Theme / Template Link Tag (يتم تحديثه تلقائياً حسب قيمة templateId للصيدلية) -->
-  <link id="dynamicTemplateStylesheet" rel="stylesheet" href="">
 
   <!-- Firebase SDKs (Compat v9.22.1) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -81,6 +84,18 @@
   </script>
 </head>
 <body>
+
+  <!-- STOREFRONT FREEZE OVERLAY (شاشة القفل في حال تجميد أو انتهاء اشتراك الصيدلية) -->
+  <div class="storefront-freeze-overlay" id="storefrontFreezeModal">
+    <div class="welcome-card" style="border: 1.5px solid #EF4444; max-width: 420px; background: #fff;">
+      <div style="font-size: 52px; margin-bottom: 12px;">🔒</div>
+      <h3 style="color: #DC2626; font-size: 20px; font-weight: 900; margin: 0 0 8px;">المتجر متوقف مؤقتاً</h3>
+      <p id="storefrontFreezeDesc" style="font-size: 13px; color: #4B5563; line-height: 1.7; margin: 0 0 20px;">
+        عذراً، هذا المتجر متوقف مؤقتاً لأعمال الصيانة والتجديد. يرجى مراجعة إدارة الصيدلية.
+      </p>
+      <div style="font-size: 11.5px; color: #9CA3AF;">منصة المتاجر الإلكترونية السحابية © 2026</div>
+    </div>
+  </div>
 
   <!-- STICKY ADMIN BAR (يظهر للمشرفين والموظفين المصرح لهم فقط) -->
   <div id="adminTopBar" class="admin-sticky-bar" style="display:none;">
@@ -219,8 +234,8 @@
       <div class="qutn-hybrid-banner" onclick="showView('categories')">
         <div class="banner-text-col">
           <h1 class="main-title" id="heroMainTitle">متجر الصيدلية</h1>
-          <p class="sub-title" id="heroSubTitle">نحن هنا لتحسين صحتك وبشرتك</p>
-          <p class="desc-title"><span id="heroDescTitle">منتجات أصلية لعناية صحية وجمال طبيعي</span> <span>🌸</span></p>
+          <p class="sub-title" id="heroSubTitle">نحن هنا لتحسين صحتكم وجمالكم</p>
+          <p class="desc-title"><span id="heroDescTitle">منتجات أصلية ومعتمدة 100%</span> <span>🌸</span></p>
         </div>
         <div class="banner-model-col">
           <img id="primaryHeroBannerImg" src="https://imgdb.io/i/EQ4D9ag.png" alt="الصحة والجمال">
@@ -236,7 +251,7 @@
         </div>
         <div class="consult-cta-text">
           <h4 id="pharmacistCtaTitle">استشر الصيدلي مجاناً 🩺</h4>
-          <p id="pharmacistCtaDesc">تحدثي مع الصيدلي المختص مباشرة للحصول على تشخيص دقيق لروتينك وروشتتك</p>
+          <p id="pharmacistCtaDesc">تحدث مع الصيدلي المختص مباشرة للحصول على تشخيص دقيق لروتينك وروشتتك</p>
         </div>
         <button class="consult-cta-btn" type="button">استشر الآن</button>
       </div>
