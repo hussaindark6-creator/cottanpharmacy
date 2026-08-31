@@ -1,12 +1,12 @@
 /* ==========================================================
    SaaS Multi-Tenant Pharmacy Engine — script.js
+   With Dynamic Modular Theme Loader & Fail-Safe Fallback
    ========================================================== */
 
 // ================= 1. SUBDOMAIN & SLUG RESOLVER =================
 const DEFAULT_PHARMACY_ID = "cottanpharmacy";
 
 function getActivePharmacyId() {
-  // 1. فحص الرابط المباشر من الدومين الفرعي (Subdomain)
   const hostname = window.location.hostname;
   const parts = hostname.split('.');
   if (parts.length >= 3 && parts[0] !== 'www' && parts[0] !== 'localhost') {
@@ -15,7 +15,6 @@ function getActivePharmacyId() {
     return sub;
   }
 
-  // 2. فحص متغيرات الرابط (Query Parameters)
   const urlParams = new URLSearchParams(window.location.search);
   const paramId = urlParams.get('pharmacy') || urlParams.get('p_id') || urlParams.get('p') || urlParams.get('id');
   if (paramId && paramId.trim()) {
@@ -24,7 +23,6 @@ function getActivePharmacyId() {
     return cleanId;
   }
 
-  // 3. فحص الجلسة المحفوظة
   const cachedId = sessionStorage.getItem('saas_active_pharmacy_id');
   if (cachedId && cachedId.trim()) {
     return cachedId.trim().toLowerCase();
@@ -50,7 +48,7 @@ function patchTenantLinks() {
   });
 }
 
-// ================= 2. FIREBASE & CONFIGURATION =================
+// ================= 2. FIREBASE CONFIGURATION =================
 const WORKER_API_BASE = "https://cottanbackend.hussaindark6.workers.dev";
 const SUPER_ADMIN_EMAIL = "hussaindark6@gmail.com";
 
@@ -95,7 +93,7 @@ const dbPaths = {
   analyticsDailyCol: (pId = currentPharmacyId) => db.collection('pharmacies').doc(pId).collection('analytics_daily')
 };
 
-// ================= 4. SECURITY & SANITIZATION =================
+// ================= 4. SANITIZATION & SECURITY =================
 function sanitizeText(str) {
   if (typeof str !== 'string') return str == null ? '' : String(str);
   return str
@@ -187,7 +185,7 @@ async function apiFetch(endpoint, options = {}) {
   }
 }
 
-// ================= 5. ICONS & VISUALS =================
+// ================= 5. ICONS & GRAPHICS =================
 const icons = {
   bottle: c => `<svg viewBox="0 0 24 24" width="48" height="48" style="width:48px;height:48px;max-width:100%;max-height:100%;" fill="none"><path d="M10 2h4v3.2l1.4 1.6c.4.45.6 1 .6 1.6V20a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V8.4c0-.6.2-1.15.6-1.6L9 5.2V2Z" fill="${c}" fill-opacity=".14" stroke="${c}" stroke-width="1.5"/><rect x="9" y="11" width="6" height="8.4" rx="0.8" fill="${c}" fill-opacity=".26"/></svg>`,
   jar: c => `<svg viewBox="0 0 24 24" width="48" height="48" style="width:48px;height:48px;max-width:100%;max-height:100%;" fill="none"><rect x="5" y="9" width="14" height="12" rx="2.6" fill="${c}" fill-opacity=".14" stroke="${c}" stroke-width="1.5"/><rect x="6.4" y="11" width="11.2" height="8.4" rx="1.4" fill="${c}" fill-opacity=".26"/><rect x="4.4" y="6" width="15.2" height="3.4" rx="1.4" fill="${c}" fill-opacity=".3" stroke="${c}" stroke-width="1.3"/></svg>`,
@@ -212,7 +210,7 @@ function hashColor(name) {
   return `hsl(${Math.abs(hash) % 360}, 50%, 62%)`;
 }
 
-// ================= 6. ISOLATED TENANT STATE =================
+// ================= 6. ISOLATED STATE & PROFILE =================
 const getStorageKey = (key) => `saas_${currentPharmacyId}_${key}`;
 
 let brandsData = {
@@ -248,7 +246,6 @@ let todayRevenue = 0;
 let monthlyRevenue = 0;
 let weeklyVisitsData = [];
 
-// Profile & Subscription Defaults
 let pharmacyProfile = {
   id: currentPharmacyId,
   name: 'الصيدلية',
@@ -273,11 +270,7 @@ let pharmacyProfile = {
   isActive: true,
   subscriptionExpiry: '2099-12-31',
   subscriptionPrice: 50000,
-  telegramConfig: {
-    botToken: '',
-    chatId: '',
-    enabled: false
-  },
+  telegramConfig: { botToken: '', chatId: '', enabled: false },
   promoCards: []
 };
 
@@ -298,7 +291,67 @@ function getBrandColor(brandName) {
   return hashColor(brandName || 'Pharmacy');
 }
 
-// ================= 7. DYNAMIC THEME & TEMPLATES =================
+// ================= 7. DYNAMIC THEME LOADER & FAIL-SAFE ENGINE =================
+const TEMPLATE_MODULE_MAP = {
+  'template-one': 'templates/template_a.js',
+  'template_a': 'templates/template_a.js',
+  'template-two': 'templates/template_b.js',
+  'template_b': 'templates/template_b.js',
+  'default': 'templates/template_default.js',
+  'template_default': 'templates/template_default.js'
+};
+
+let activeThemeModule = null;
+
+function getTemplateHelpers() {
+  return {
+    sanitizeText,
+    sanitizeUrl,
+    fmtPrice,
+    getBrandColor,
+    starIcon,
+    icons,
+    catIcons,
+    wishlist,
+    findProduct,
+    findBundle,
+    isCurrentUserAdmin
+  };
+}
+
+async function loadDynamicTheme(templateId) {
+  const targetKey = templateId || pharmacyProfile.templateId || 'template_default';
+  const targetFile = TEMPLATE_MODULE_MAP[targetKey] || 'templates/template_default.js';
+
+  try {
+    // 1. محاولة استيراد القالب ديناميكياً
+    const module = await import(`./${targetFile}?t=${Date.now()}`);
+    activeThemeModule = module.default || module.TemplateA || module.TemplateB || module.TemplateDefault || window.TemplateDefault;
+    if (!activeThemeModule) throw new Error("Template module is empty");
+  } catch (err) {
+    console.warn(`[Theme Engine] فشل تحميل القالب (${targetKey})، جاري تشغيل خطة الطوارئ للقالب الافتراضي:`, err);
+    try {
+      // 2. خطة الطوارئ: التحميل التلقائي للقالب الافتراضي
+      const fallbackModule = await import(`./templates/template_default.js?t=${Date.now()}`);
+      activeThemeModule = fallbackModule.default || fallbackModule.TemplateDefault || window.TemplateDefault;
+    } catch (fallbackErr) {
+      console.error("[Theme Engine] تعذر تحميل القالب الافتراضي:", fallbackErr);
+      activeThemeModule = null;
+    }
+  }
+
+  // تطبيق الأنماط البصرية للقالب
+  if (activeThemeModule && typeof activeThemeModule.applyStyles === 'function') {
+    try {
+      activeThemeModule.applyStyles(pharmacyProfile);
+    } catch (e) {
+      console.warn("[Theme Engine] خطأ أثناء تطبيق أنماط القالب:", e);
+    }
+  } else {
+    applyPharmacyTemplate(targetKey);
+  }
+}
+
 function applyDynamicThemeColor(hexColor) {
   if (!hexColor || !/^#[0-9A-F]{6}$/i.test(hexColor)) return;
   const root = document.documentElement;
@@ -343,7 +396,7 @@ function checkStorefrontSubscriptionLock() {
   }
 }
 
-// ================= 9. SMART INVENTORY & LOW STOCK DETECTOR =================
+// ================= 9. SMART LOW-STOCK DETECTOR =================
 function checkLowStockAlerts() {
   const outOfStock = products.filter(p => p.inStock === false);
   const alertBanner = document.getElementById('adminLowStockAlertBanner');
@@ -359,7 +412,7 @@ function checkLowStockAlerts() {
   }
 }
 
-// ================= 10. TENANT-SPECIFIC TELEGRAM DISPATCHER =================
+// ================= 10. TENANT TELEGRAM DISPATCHER =================
 async function sendOrderToPharmacyTelegram(orderObj) {
   const teleConfig = pharmacyProfile.telegramConfig;
   if (!teleConfig || !teleConfig.botToken || !teleConfig.chatId || teleConfig.enabled === false) {
@@ -484,7 +537,6 @@ async function confirmOrder() {
   myOrders.unshift(newOrderObj);
   saveLocalState();
 
-  // 1. حفظ الطلب في Firestore
   if (db) {
     try {
       await dbPaths.ordersCol().doc(orderId).set({
@@ -504,10 +556,8 @@ async function confirmOrder() {
     }
   }
 
-  // 2. إرسال لبوت تليجرام الصيدلية
   sendOrderToPharmacyTelegram(newOrderObj);
 
-  // 3. بناء وتجهيز رابط الواتساب
   const lines = itemsPayload.map(item => `• ${item.isBundle ? '🎁 [بكج توفير] ' : ''}${item.name} (${fmtPrice(item.unitPrice)} × ${item.quantity} قطع) = ${fmtPrice(item.lineTotal)}`);
   const deliveryLabel = deliveryMethod === 'express' ? `سريع (${fmtPrice(deliveryFee)})` : `عادي (${fmtPrice(deliveryFee)})`;
   const promoInfo = appliedPromo ? `🎟️ *كود الخصم المطبق:* ${appliedPromo.code} (-${fmtPrice(discountAmount)})\n` : '';
@@ -722,6 +772,15 @@ function renderAllBundles() {
 }
 
 function renderBundleCardHTML(b) {
+  // تفويض العرض للقالب النشط
+  if (activeThemeModule && typeof activeThemeModule.renderBundleCard === 'function') {
+    try {
+      return activeThemeModule.renderBundleCard(b, getTemplateHelpers());
+    } catch (e) {
+      console.warn("[Theme Engine] خطأ في عرض بطاقة البكج، جاري استخدام العرض الافتراضي:", e);
+    }
+  }
+
   const includedProds = (b.productIds || []).map(pid => findProduct(pid)).filter(Boolean);
   const cleanImg = sanitizeUrl(b.imageUrl);
 
@@ -732,7 +791,7 @@ function renderBundleCardHTML(b) {
         ${cleanImg ? `<img src="${cleanImg}" style="max-height:100px; object-fit:contain;">` : 
           includedProds.map((p, idx) => `
             <div class="bundle-thumb-item">
-              ${p.imageUrl ? `<img src="${sanitizeUrl(p.imageUrl)}">` : icons[p.type || 'bottle'](getBrandColor(p.brand))}
+              ${p.imageUrl ? `<img src="${sanitizeUrl(p.imageUrl)}">` : (icons[p.type || 'bottle'] || icons.bottle)(getBrandColor(p.brand))}
             </div>
             ${idx < includedProds.length - 1 ? '<span class="bundle-plus-icon">+</span>' : ''}
           `).join('')
@@ -872,7 +931,7 @@ async function deleteAdminBundle(id) {
   }
 }
 
-// ================= 14. 80mm THERMAL RECEIPT PRINTING =================
+// ================= 14. 80mm THERMAL RECEIPTS =================
 function openReceiptModal(orderId) {
   const ord = myOrders.find(o => String(o.id) === String(orderId)) || (window.adminLastOrdersList && window.adminLastOrdersList.find(o => String(o.id) === String(orderId)));
   if (!ord) {
@@ -2181,6 +2240,15 @@ function renderProductGrid(targetId, list, emptyMsg) {
   const isAdmin = isCurrentUserAdmin();
 
   el.innerHTML = displayList.map(p => {
+    // تفويض عرض بطاقة المنتج للقالب النشط
+    if (activeThemeModule && typeof activeThemeModule.renderProductCard === 'function') {
+      try {
+        return activeThemeModule.renderProductCard(p, getTemplateHelpers());
+      } catch (e) {
+        console.warn("[Theme Engine] خطأ في عرض بطاقة المنتج، استخدام العرض الافتراضي:", e);
+      }
+    }
+
     const color = getBrandColor(p.brand);
     const discountPct = p.oldPrice ? Math.round((1 - p.price/p.oldPrice) * 100) : null;
     const isWished = wishlist.has(p.id);
@@ -2242,7 +2310,7 @@ function renderProductDetailDOM(p) {
   const discountPct = p.oldPrice ? Math.round((1 - p.price/p.oldPrice) * 100) : null;
   document.getElementById('pdPriceRow').innerHTML = `
     <span class="pd-price mono">${fmtPrice(p.price)}</span>
-    ${p.oldPrice ? `<span class="pd-oldprice mono">${fmtPrice(p.oldPrice)}</span><span class="pd-discount">خصم ${discountPct}%</span>` : ''}`;
+    ${p.oldPrice ? `<span class="pd-oldprice mono">${fmtPrice(p.oldPrice)}</span>` : ''}`;
 
   const stockEl = document.getElementById('pdStock');
   const inStock = (p.inStock !== false);
@@ -2367,6 +2435,16 @@ function renderModernCategories() {
   if (container) {
     container.innerHTML = categories.map(c => {
       const count = products.filter(p => p.category === c.id).length;
+      
+      // تفويض عرض بطاقة القسم للقالب النشط
+      if (activeThemeModule && typeof activeThemeModule.renderCategoryCard === 'function') {
+        try {
+          return activeThemeModule.renderCategoryCard(c, count, getTemplateHelpers());
+        } catch (e) {
+          console.warn("[Theme Engine] خطأ في عرض بطاقة القسم:", e);
+        }
+      }
+
       const cleanImg = sanitizeUrl(c.imageUrl);
       return `
         <div class="modern-cat-card" onclick="openCategory('${sanitizeText(c.id)}')">
@@ -2725,7 +2803,8 @@ function applyStoreSettings() {
     if (colorPicker) colorPicker.value = pharmacyProfile.primaryColor;
   }
 
-  applyPharmacyTemplate(pharmacyProfile.templateId || 'template-one');
+  // تحميل القالب المعزول ديناميكياً
+  loadDynamicTheme(pharmacyProfile.templateId);
 
   document.title = `${pharmacyProfile.name || 'الصيدلية'} | المتجر الإلكتروني`;
 
@@ -2736,9 +2815,6 @@ function applyStoreSettings() {
 
   const annEl = document.getElementById('announcementBar');
   const annTextEl = document.getElementById('announcementText');
-  const heroMainEl = document.getElementById('heroMainTitle');
-  const heroSubEl = document.getElementById('heroSubTitle');
-  const heroDescEl = document.getElementById('heroDescTitle');
   const heroImgEl = document.getElementById('primaryHeroBannerImg');
   const pharmWrap = document.getElementById('homePharmacistCtaWrap');
   const drawerPharmBtn = document.getElementById('drawerConsultBtn');
@@ -2750,9 +2826,6 @@ function applyStoreSettings() {
   if (annTextEl && pharmacyProfile.announcementText) {
     annTextEl.textContent = pharmacyProfile.announcementText;
   }
-  if (heroMainEl) heroMainEl.textContent = pharmacyProfile.heroMainTitle || pharmacyProfile.name;
-  if (heroSubEl) heroSubEl.textContent = pharmacyProfile.heroSubTitle || '';
-  if (heroDescEl) heroDescEl.textContent = pharmacyProfile.heroDescTitle || '';
   if (heroImgEl && pharmacyProfile.bannerImgUrl) heroImgEl.src = sanitizeUrl(pharmacyProfile.bannerImgUrl);
 
   if (pharmWrap) {
@@ -2786,7 +2859,7 @@ function applyStoreSettings() {
 function initFirestoreSync() {
   if (!isFirebaseConfigured || !db) return;
 
-  // 1. مزامنة وثيقة الصيدلية الحالية وفحص صلاحية الاشتراك (Kill Switch)
+  // 1. مزامنة وثيقة الصيدلية الحالية والقالب وفحص الصلاحية
   dbPaths.pharmacyDoc().onSnapshot(doc => {
     if (doc.exists) {
       pharmacyProfile = { ...pharmacyProfile, ...doc.data() };
@@ -3069,7 +3142,6 @@ function renderAccountView() {
   }
 }
 
-// 1. حدث الضغط مع try/catch ورسالة توجيه واضحة
 async function signInWithGoogle() {
   if (!auth) {
     showToast('خدمة تسجيل الدخول غير مهيأة');
@@ -3094,7 +3166,6 @@ async function signInWithGoogle() {
   }
 }
 
-// 2. استقبال النتيجة وفحص الصلاحيات في النطاق العام (Global Scope)
 if (isFirebaseConfigured && auth) {
   auth.getRedirectResult()
     .then(async (result) => {
@@ -3270,7 +3341,7 @@ function showToast(msg) {
 }
 
 // ================= 34. INITIALIZATION & BOOTSTRAP =================
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
   patchTenantLinks();
   applyStoreSettings();
   renderHome();
@@ -3283,6 +3354,10 @@ window.addEventListener('DOMContentLoaded', () => {
   initFirestoreSync();
   checkAndShowWelcomeModal();
   checkUrlHashForProduct();
+
+  // تحميل القالب المناسب عند بدء التشغيل
+  await loadDynamicTheme(pharmacyProfile.templateId);
+  renderCurrentActiveView();
 
   window.addEventListener('hashchange', checkUrlHashForProduct);
 
