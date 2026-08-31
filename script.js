@@ -3069,8 +3069,8 @@ function renderAccountView() {
   }
 }
 
-// 1. حدث الضغط النظيف (فقط بدء إعادة التوجيه)
-function signInWithGoogle() {
+// 1. حدث الضغط مع try/catch ورسالة توجيه واضحة
+async function signInWithGoogle() {
   if (!auth) {
     showToast('خدمة تسجيل الدخول غير مهيأة');
     return;
@@ -3083,9 +3083,15 @@ function signInWithGoogle() {
     return;
   }
 
-  const provider = new firebase.auth.GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: 'select_account' });
-  auth.signInWithRedirect(provider);
+  try {
+    showToast('جاري التحويل إلى Google...');
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    await auth.signInWithRedirect(provider);
+  } catch (error) {
+    console.error("Sign-in Trigger Error:", error);
+    showToast(`⚠️ تعذر بدء الدخول: ${error.message}`);
+  }
 }
 
 // 2. استقبال النتيجة وفحص الصلاحيات في النطاق العام (Global Scope)
