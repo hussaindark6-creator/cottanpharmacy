@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" id="htmlRoot" data-theme="light">
+<html lang="ar" dir="rtlvalue = b.logoUrl || '';
+  if (b.logoUrl) previewBrandLogoImg(b.logoUrl);" id="htmlRoot" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -12,7 +13,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Complete External Stylesheet -->
+  <!-- Complete External Stylesheet
+  
+  document.getElementById('adminBrandFormTitle').textContent = '✏️ تعديل الماركة: ' + (b.name || brand -->
   <link rel="stylesheet" href="style.css">
 
   <!-- Firebase SDKs (Compat v9.22.1) -->
@@ -25,25 +28,34 @@
 
   <!-- ADMIN AUTHENTICATION GATE (حماية صفحة الأدمن) -->
   <div id="adminAuthGateModal">
-    <div class="admin-gate-card">
+    <div class="admin-gateKey);
+  document.getElementById('adminSaveBrandBtn').textContent = '💾 حفظ التعديلات';
+  document.getElementById('admin-card">
       <div style="font-size:48px; margin-bottom:12px;">🔒</div>
       <h3 style="font-size:20px; font-weight:900; margin:0 0 8px; color:#111827;">لوحة تحكم الصيدلية محمية</h3>
       <p style="font-size:13px; color:#6B7280; margin:0 0 20px; line-height:1.6;">هذا القسم مخصص فقط لمشرف الصيدلية المعتمد أو المشرف العام للمنصة. يرجى تسجيل الدخول للمتابعة:</p>
       <button onclick="signInWithGoogle()" style="width:100%; background:#111827; color:#fff; padding:14px; border-radius:12px; font-weight:800; font-size:14px; margin-bottom:10px; cursor:pointer;">
         تسجيل الدخول عبر Google
       </button>
-      <a href="index.html" class="admin-back-store-link" style="display:block; font-size:13px; font-weight:700; color:#6B7280; margin-top:8px;">← العودة للمتجر</a>
+      <a href="index.html" class="admin-back-store-link" style="display:block;CancelBrandBtn').style.display = 'block';
+  window.scrollTo({ top: document.getElementById('adminSecBrands').offsetTop - 60 font-size:13px; font-weight:700; color:#6B7280; margin-top:8px;">← العودة للمتجر</a>
     </div>
   </div>
 
   <!-- SUBSCRIPTION / SUSPENDED BLOCK GATE (شاشة حظر انتهاء الاشتراك) -->
   <div id="subscriptionLockGate" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(17, 24, 39, 0.96); backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:20px;">
     <div class="admin-gate-card" style="border:1.5px solid #EF4444; max-width:440px;">
-      <div style="font-size:48px; margin-bottom:12px;">⚠️</div>
+      <div style="font-size:48px; margin-bottom:12px;">, behavior: 'smooth' });
+}
+
+function cancelAdminBrandEdit() {
+  if (!document.getElementById('adminBrandOriginalKey'))⚠️</div>
       <h3 id="lockGateTitle" style="font-size:20px; font-weight:900; margin:0 0 8px; color:#DC2626;">الاشتراك منتهي أو المتجر موقوف</h3>
       <p id="lockGateDesc" style="font-size:13px; color:#6B7280; margin:0 0 20px; line-height:1.7;">
         عذراً، انتهت فترة صلاحية اشتراك هذه الصيدلية أو تم تجميد المتجر مؤقتاً من قبل إدارة المنصة.<br>
-        يرجى التواصل مع المشرف العام (<b class="mono" style="color:#111827;">hussaindark6@gmail.com</b>) لتجديد الاشتراك وإعادة تفعيل لوحة التحكم.
+        يرجى التواصل مع المشرف return;
+  document.getElementById('adminBrandOriginalKey').value = '';
+  document.getElementById('adminBrandName العام (<b class="mono" style="color:#111827;">hussaindark6@gmail.com</b>) لتجديد الاشتراك وإعادة تفعيل لوحة التحكم.
       </p>
       <a href="index.html" class="admin-back-btn" style="display:inline-flex; justify-content:center; width:100%; padding:12px; background:#111827;">
         ← العودة لمتجر الصيدلية
@@ -52,14 +64,17 @@
   </div>
 
   <!-- ADMIN NAVIGATION TOP BAR -->
-  <header class="admin-nav-header no-print">
+  <header class="admin-nav-header noInput').value = '';
+  document.getElementById('adminBrandColorInput').value = '#E85D8-print">
     <div class="wrap admin-nav-wrap">
       <div class="admin-brand-title">
         <span style="font-size:20px;">⚙️</span>
         <span id="adminNavTitle">لوحة تحكم وإدارة الصيدلية</span>
       </div>
       <a href="index.html" class="admin-back-btn">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/></svg>
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4A';
+  document.getElementById('adminBrandLogoInput').value = '';
+  document.getElementById('adminBrandLogoPreviewa1 1 0 0 1-1-1Z"/></svg>
         العودة للمتجر
       </a>
     </div>
@@ -70,31 +85,81 @@
     <!-- ADMIN HEADER GREETING -->
     <div class="admin-view-header">
       <h2>
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        لوحة تحكم وإدارة المتجر الشاملة
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4Wrap').style.display = 'none';
+  document.getElementById('adminBrandFormTitle').textContent = '🏢 إضافة ماركة جديدة';
+  document 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0.getElementById('adminSaveBrandBtn').textContent = '+ إضافة الماركة للشريط';
+  document.getElementById('adminCancelBrandBtn').style.display 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1 = 'none';
+}
+
+async function handleSaveBrand(e) {
+  e.preventDefault();
+  if (!assertAdmin() || !lock.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 Action('saveBrand', 1200)) return;
+
+  const originalKey = document.getElementById('adminBrandOriginalKey').1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.value.trim();
+  const name = document.getElementById('adminBrandNameInput').value.trim();
+  const color = document.getElementById('admin06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        لوBrandColorInput').value;
+  const logoUrl = sanitizeUrl(document.getElementById('adminBrandLogoInput').value.trim());حة تحكم وإدارة المتجر الشاملة
       </h2>
       <p id="adminWelcomeDesc">مرحباً بك — إدارة متكاملة للطلبات، الموظفين، المنتجات، والهوية البصرية.</p>
     </div>
 
-    <!-- ADMIN TABS NAVIGATION (تم حذف التيليجرام ونسخ الكود) -->
+    <!-- LOW STOCK ALERT BANNER (تنبيه المخزون الذكي) -->
+    <div id="adminLowStockAlertBanner" style="display:none; background:#FEF3C7; border:1.5px solid #FDE68A; border-radius:14px; padding:12px 16px; margin-bottom:16px; align-items:center; justify-content:space-between;">
+  if (!name) {
+    showToast('يرجى كتابة اسم الماركة');
+    return;
+  }
+
+  if
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:22px;">⚠️</span>
+        <div>
+          <div style="font-weight:900; font-size:13.5px; color:#92400E;">تنبيه مخزون: هناك منتجات نفدت كميتها من المتجر!</div>
+          <div style="font-size:11.5px; color:#B45309;">لديك (<b id="adminLowStockCount">0</b>) منتج غير متوفر حالياً بالمخزون.</div>
+        </div>
+      </div>
+       (originalKey && originalKey !== name) {
+    delete brandsData[originalKey];
+  }
+
+  brandsData[name] = { name: sanitizeText<button type="button" onclick="switchAdminSection('products'); toggleLowStockFilter();" style="background:#B45309; color:#fff; font-weight:800; font-size:11.5px; padding:6px 14px; border-radius:999px;">
+        معاينة النواقص 🔍
+      </button>
+    </div>
+
+    <!-- ADMIN TABS NAVIGATION (تم حذف التيليجرام ونسخ الكود بال(name), color: sanitizeText(color), logoUrl };
+  renderAdminBrandsList();
+  renderBrandStripكامل) -->
     <div class="admin-tabs-nav-view">
       <button class="admin-tab-btn-v active" id="btnTabVStats" onclick="switchAdminSection('stats')">📊 الإحصائيات والأرباح</button>
       <button class="admin-tab-btn-v" id="btnTabVOrders" onclick="switchAdminSection('orders')">📦 إدارة الطلبات والشحن</button>
-      <button class="admin-tab-btn-v" id="btnTabVProducts" onclick="switchAdminSection('products')">💊 إدارة المنتجات والأدوية</button>
+      <button class="admin-tab-btn-v" id="btnTabVProducts" onclick="();
+
+  try {
+    if (db) await dbPaths.pharmacyDoc().set({ brandsData },switchAdminSection('products')">💊 إدارة المنتجات والأدوية</button>
       <button class="admin-tab-btn-v" id="btnTabVCats" onclick="switchAdminSection('cats')">🗂️ إدارة الأقسام</button>
       <button class="admin-tab-btn-v" id="btnTabVOffers" onclick="switchAdminSection('offers')">🏷️ الخصومات والعروض</button>
       <button class="admin-tab-btn-v" id="btnTabVBundles" onclick="switchAdminSection('bundles')">🎁 حزم وبكجات التوفير</button>
-      <button class="admin-tab-btn-v" id="btnTabVCoupons" onclick="switchAdminSection('coupons')">🎟️ إدارة أكواد الخصم</button>
+      <button class="admin-tab-btn-v" id="btnTabVC { merge: true });
+    showToast(`تم حفظ وتحديث ماركة "${name}" بنجاح ✓`);
+  } catch (err)oupons" onclick="switchAdminSection('coupons')">🎟️ إدارة أكواد الخصم</button>
       <button class="admin-tab-btn-v" id="btnTabVBrands" onclick="switchAdminSection('brands')">🏢 الماركات والشعارات</button>
       <button class="admin-tab-btn-v" id="btnTabVNotifs" onclick="switchAdminSection('notifs')">📢 إرسال إشعار للمستخدمين</button>
-      <button class="admin-tab-btn-v" id="btnTabVAudit" onclick="switchAdminSection('audit')">🛡️ سجل العمليات والحماية</button>
+      <button class="admin-tab-btn-v" id="btnTabVAudit" onclick="switchAdminSection('audit')"> { console.error(err); }
+  cancelAdminBrandEdit();
+}
+
+async function deleteAdminBrand(brandKey)🛡️ سجل العمليات والحماية</button>
       <button class="admin-tab-btn-v" id="btnTabVStaff" onclick="switchAdminSection('staff')">👥 الموظفين والصلاحيات</button>
       <button class="admin-tab-btn-v" id="btnTabVDesign" onclick="switchAdminSection('design')">🎨 الهوية البصرية والتصميم</button>
     </div>
 
     <!-- 1. REAL ANALYTICS & REVENUE SECTION -->
     <div id="adminSecStats">
-      <div class="admin-stat-grid-v">
+      <div class {
+  if (!assertAdmin()) return;
+  if (confirm(`هل أنتِ متأكدة من حذف ماركة "${="admin-stat-grid-v">
         <div class="admin-stat-card-v">
           <div class="num mono" id="statDailyRevenue">0 د.ع</div>
           <div class="lbl">💰 مبيعات اليوم الفعلية</div>
@@ -105,7 +170,10 @@
         </div>
         <div class="admin-stat-card-v">
           <div class="num mono" id="statDailyVisits">0</div>
-          <div class="lbl">👁️ زيارات اليوم الحقيقية</div>
+          <div class="lblbrandKey}" من الشريط؟`)) {
+    delete brandsData[brandKey];
+    renderAdminBrandsList();
+    renderBrand">👁️ زيارات اليوم الحقيقية</div>
         </div>
         <div class="admin-stat-card-v">
           <div class="num mono" id="statTotalOrdersV">0</div>
@@ -116,7 +184,9 @@
       <div class="admin-chart-wrap">
         <div class="admin-chart-title">
           <span>📈 الزيارات اليومية الحقيقية (آخر 7 أيام)</span>
-          <span style="font-size:11px; font-weight:700; color:var(--accent);">محدث تلقائياً من السيرفر</span>
+          <span style="font-size:11px; font-Strip();
+    try {
+      if (db) await dbPaths.pharmacyDoc().set({ brandsData },weight:700; color:var(--accent);">محدث تلقائياً من السيرفر</span>
         </div>
         <div class="chart-bars-row" id="adminRealChartBars"></div>
       </div>
@@ -132,37 +202,53 @@
       </div>
     </div>
 
-    <!-- 2. ORDERS MANAGEMENT, THERMAL PRINT & EXCEL EXPORT -->
+     { merge: true });
+      showToast('تم حذف الماركة بنجاح ✓');
+    } catch (err) { console.error(<!-- 2. ORDERS MANAGEMENT, THERMAL PRINT & EXCEL EXPORT -->
     <div id="adminSecOrders" style="display:none;">
       <div class="admin-fieldset">
         <legend style="margin-bottom:8px;">📊 فلاتر تقارير المبيعات والتصدير الذكي</legend>
         <div class="admin-report-filter-row">
           <div style="flex:1; min-width:140px;">
-            <label style="font-size:11.5px; font-weight:800; display:block; margin-bottom:4px;">الفترة الزمنية:</label>
+            <label style="font-size:11err); }
+  }
+}
+
+function renderAdminBrandsList() {
+  const container = document.getElementById('adminBrandsListGrid');
+.5px; font-weight:800; display:block; margin-bottom:4px;">الفترة الزمنية:</label>
             <select id="reportTimeRange" onchange="fetchAdminOrdersList()" style="padding:8px 10px; border-radius:10px; border:1px solid var(--line); font-size:12px; width:100%;">
               <option value="all">كافة الطلبات المسجلة</option>
               <option value="today">اليوم فقط 📅</option>
               <option value="yesterday">أمس</option>
               <option value="week">آخر 7 أيام</option>
-              <option value="month">هذا الشهر 🗓️</option>
+              <option  if (!container) return;
+  const keys = Object.keys(brandsData);
+  container.innerHTML = keys.map(k => {
+    const value="month">هذا الشهر 🗓️</option>
             </select>
           </div>
           <div style="flex:1; min-width:140px;">
             <label style="font-size:11.5px; font-weight:800; display:block; margin-bottom:4px;">حالة الطلب:</label>
             <select id="reportStatusFilter" onchange="fetchAdminOrdersList()" style="padding:8px 10px; border-radius:10px; border:1px solid var(--line); font-size:12px; width:100%;">
-              <option value="all">كافة الحالات</option>
+              <option value="all">ك b = brandsData[k];
+    const cleanLogo = sanitizeUrl(b.logoUrl);
+    return `
+      <div style="background:#fff; border:افة الحالات</option>
               <option value="delivered">تم التسليم بنجاح ✅</option>
               <option value="shipping">تم الشحن مع المندوب 🛵</option>
               <option value="processing">قيد المعالجة والتجهيز 🚚</option>
-              <option value="customer_cancelled">ملغي من قبل الزبون ❌</option>
+              <option value="customer_cancelled">ملغي من قبل1px solid var(--line); border-radius:12px; padding:10px 14px; display:flex; align-items الزبون ❌</option>
               <option value="cancelled">طلب ملغي من الإدارة ❌</option>
             </select>
           </div>
           <div style="display:flex; gap:8px; align-items:flex-end; margin-top:4px;">
-            <button type="button" onclick="exportOrdersToCSV()" style="background:#16A34A; color:#fff; font-weight:800; font-size:12px; padding:9px 14px; border-radius:10px; display:inline-flex; align-items:center; gap:6px;">
+            <button type="button" onclick="exportOrdersToCSV()" style="background:#16A34A; color:#fff; font-weight:800; font-size:12px; padding:9px 14px;:center; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:10px;"> border-radius:10px; display:inline-flex; align-items:center; gap:6px;">
               📊 تنزيل Excel / CSV
             </button>
-            <button type="button" onclick="fetchAdminOrdersList()" style="background:#2563EB; color:#fff; font-weight:800; font-size:12px; padding:9px 12px; border-radius:10px;">
+            <button type="button" onclick="fetchAdminOrdersList()" style="background:#2563EB; color:#fff; font-weight:800; font-size
+          <div style="width:36px; height:36px; border-radius:8px; border:1px solid var(--:12px; padding:9px 12px; border-radius:10px;">
               🔄 تحديث
             </button>
           </div>
@@ -171,14 +257,15 @@
         <p style="font-size:12.5px; color:var(--text-soft); margin-top:8px;">قائمة الطلبات المباشرة وتحديث حالات الشحن الفورية وطباعة البوليصة الحرارية:</p>
         <div id="adminOrdersManageContainer" style="margin-top:14px;"></div>
       </div>
-    </div>
+    line); background:#fff; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+            ${cleanLogo ? `<img src="${cleanLogo</div>
 
     <!-- 3. PRODUCT MANAGEMENT SECTION -->
     <div id="adminSecProducts" style="display:none;">
       <div class="admin-fieldset">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
           <legend id="adminFormModeTitleV" style="margin:0;">إضافة منتج أو دواء جديد</legend>
-          <button type="button" onclick="toggleLowStockFilter()" id="btnFilterLowStock" style="background:#FEF3C7; color:#B45309; font-weight:800; font-size:11.5px; padding:6px 12px; border-radius:999px; border:1px solid #FDE68A;">
+          <button type="button" onclick="toggleLowStockFilter()" id="btnFilterLowStock" style="background:#FEF3C7; color:#B45309; font-weight:800; font-size}" style="width:100%; height:100%; object-fit:contain;">` : `<span style="width:14px:11.5px; padding:6px 12px; border-radius:999px; border:1px solid #FDE68A;">
             ⚠️ عرض المنتجات النافذة فقط
           </button>
         </div>
@@ -188,7 +275,7 @@
             <label>اسم المنتج الكامل *</label>
             <input type="text" id="adminProdName" placeholder="مثال: كريم سيرافي المرطب" required>
           </div>
-          <div style="display:flex; gap:10px;">
+          <div style; height:14px; border-radius:50%; background:${sanitizeText(b.color)};">="display:flex; gap:10px;">
             <div class="form-field" style="flex:1;">
               <label>الماركة / الشركة *</label>
               <input type="text" id="adminProdBrand" placeholder="Cerave" required>
@@ -198,7 +285,10 @@
               <select id="adminProdCat" required></select>
             </div>
           </div>
-          <div style="display:flex; gap:10px;">
+          <div style="display:flex;</span>`}
+          </div>
+          <div>
+            <div style="font-weight:800; font-size gap:10px;">
             <div class="form-field" style="flex:1;">
               <label>الحجم / العبوة</label>
               <input type="text" id="adminProdSize" placeholder="236 مل">
@@ -207,7 +297,8 @@
               <label>نوع وشكل العبوة (الأيقونة) *</label>
               <select id="adminProdType">
                 <option value="bottle">زجاجة 🧴 (Bottle)</option>
-                <option value="jar">مرطبان 🍯 (Jar)</option>
+                <option value="jar:13.5px;">${sanitizeText(b.name || k)}</div>
+            <div style="font-size:11px;">مرطبان 🍯 (Jar)</option>
                 <option value="tube">أنبوب 🧪 (Tube)</option>
                 <option value="spray">بخاخ 💨 (Spray)</option>
               </select>
@@ -216,7 +307,10 @@
           <div style="display:flex; gap:10px;">
             <div class="form-field" style="flex:1;">
               <label>السعر الحالي (د.ع) *</label>
-              <input type="number" id="adminProdPrice" placeholder="25000" required min="500">
+              <input type="number" id="adminProdPrice" placeholder="25000" required color:var(--text-soft); font-family:monospace;">${sanitizeText(b.color)}</div>
+          </div>
+        </div>
+ min="500">
             </div>
             <div class="form-field" style="flex:1;">
               <label>السعر قبل الخصم (اختياري)</label>
@@ -225,13 +319,14 @@
           </div>
           <div class="form-field">
             <label>رابط الصورة المباشر (اختياري)</label>
-            <input type="url" id="adminProdImgUrl" placeholder="https://..." oninput="previewAdminProdImg(this.value)">
+            <input type="url" id="adminProdImgUrl" placeholder="https://..." oninput="previewAdminProdImg(this.        <div style="display:flex; gap:6px;">
+          <button onclick="editAdminBrand('${sanitizeText(k)}value)">
             <div id="adminProdImgPreviewBox" style="margin-top:6px; display:none;">
               <img id="adminProdImgPreviewEl" src="" style="height:70px; border-radius:8px; border:1px solid var(--line);" alt="Preview">
             </div>
           </div>
           <div class="form-field">
-            <label>الوصف المفصل والفوائد</label>
+            <label>الوصف المفصل والفوائد')" style="background:#E0E7FF; color:#3730A3; padding:5px 10px;</label>
             <textarea id="adminProdDesc" rows="2" placeholder="فوائد المنتج ومميزاته..."></textarea>
           </div>
           <div style="display:flex; gap:10px;">
@@ -239,7 +334,8 @@
               <label>المكونات الفعالة</label>
               <input type="text" id="adminProdIng" placeholder="Hyaluronic Acid, Ceramides...">
             </div>
-            <div class="form-field" style="flex:1;">
+            <div class="form-field" style="flex border-radius:8px; font-weight:800; font-size:11px;">تعديل ✏️</button>
+:1;">
               <label>طريقة الاستخدام</label>
               <input type="text" id="adminProdUsage" placeholder="يوضع صباحاً ومساءً...">
             </div>
@@ -248,12 +344,12 @@
             <span>متوفر في المخزون (In Stock)</span>
             <input type="checkbox" id="adminProdInStock" checked style="width:20px; height:20px; cursor:pointer;">
           </div>
-          <div class="admin-toggle-switch">
+          <div class="admin-toggle-          <button onclick="deleteAdminBrand('${sanitizeText(k)}')" style="background:#FEE2E2; color:var(--red); paddingswitch">
             <span>تفعيل كعرض خاص (Special Offer)</span>
             <input type="checkbox" id="adminProdIsOffer" style="width:20px; height:20px; cursor:pointer;">
           </div>
           <button type="submit" class="admin-btn-save" id="adminSaveProdBtn">💾 حفظ المنتج في قاعدة البيانات</button>
-          <button type="button" onclick="resetAdminProductForm()" style="width:100%; margin-top:8px; font-size:13px; font-weight:700; color:var(--text-soft); padding:8px;">إلغاء ومسح الحقول</button>
+          <button type="button:5px 10px; border-radius:8px; font-weight:800; font-size" onclick="resetAdminProductForm()" style="width:100%; margin-top:8px; font-size:13px; font-weight:700; color:var(--text-soft); padding:8px;">إلغاء ومسح الحقول</button>
         </form>
       </div>
     </div>
@@ -261,7 +357,13 @@
     <!-- 4. CATEGORY MANAGEMENT SECTION -->
     <div id="adminSecCats" style="display:none;">
       <div class="admin-fieldset">
-        <legend id="adminCatFormTitle">إضافة قسم رئيسي جديد</legend>
+        :11px;">حذف 🗑️</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ================= <legend id="adminCatFormTitle">إضافة قسم رئيسي جديد</legend>
         <form id="adminCatForm" onsubmit="handleAdminCategorySave(event)">
           <input type="hidden" id="adminCatKeyId" value="">
           <div class="form-field">
@@ -269,50 +371,71 @@
             <input type="text" id="adminCatLabel" placeholder="مثال: العناية بالعيون" required>
           </div>
           <div class="form-field">
-            <label>المعرف الإنجليزي (Category ID / Slug) *</label>
+            <label26. STAFF MANAGEMENT =================
+async function fetchStaffList() {
+  if (!isFirebaseConfigured ||>المعرف الإنجليزي (Category ID / Slug) *</label>
             <input type="text" id="adminCatIdInput" placeholder="مثال: eye-care" required>
           </div>
           <div class="form-field">
             <label>رابط صورة القسم المباشر (اختياري)</label>
-            <input type="url" id="adminCatImgUrl" placeholder="https://..." oninput="previewAdminCatImg(this.value)">
+            <input type="url" id="adminCatImgUrl" placeholder=" !db) return;
+  try {
+    const snap = await dbPaths.staffCol().get();
+    staffMembers = [];
+    snaphttps://..." oninput="previewAdminCatImg(this.value)">
             <div id="adminCatImgPreviewBox" style="margin-top:6px; display:none;">
               <img id="adminCatImgPreviewEl" src="" style="height:70px; border-radius:8px; border:1px solid var(--line); object-fit:cover;" alt="Category Preview">
             </div>
           </div>
           <div class="form-field">
             <label>أو اختيار أيقونة افتراضية</label>
-            <select id="adminCatIconSelect">
+            <.forEach(d => staffMembers.push({ id: d.id, ...d.data() }));
+    renderStaffList();
+  select id="adminCatIconSelect">
               <option value="jar">مرطبان (Jar)</option>
               <option value="bottle">زجاجة (Bottle)</option>
               <option value="face">وجه (Face)</option>
               <option value="sunscreen">واقي شمس (Sunscreen)</option>
-              <option value="body">جسم (Body)</option>
+              <option value="body">جسم (Body)</} catch (err) { console.warn(err); }
+}
+
+function renderStaffList() {
+  const container = document.getElementById('adminStaffListGrid');option>
               <option value="hair">شعر (Hair)</option>
               <option value="baby">أطفال (Baby)</option>
               <option value="intimate">مناطق حساسة (Intimate)</option>
             </select>
           </div>
           <button type="submit" class="admin-btn-save" id="adminSaveCatBtn">💾 حفظ القسم في قاعدة البيانات</button>
-          <button type="button" onclick="resetAdminCatForm()" style="width:100%; margin-top:8px; font-size:13px; font-weight:700; color:var(--text-soft); padding:8px;">إلغاء ومسح الحقول</button>
+
+  if (!container) return;
+
+  if (staffMembers.length === 0) {
+    container          <button type="button" onclick="resetAdminCatForm()" style="width:100%; margin-top:8px; font-size:13px; font-weight:700; color:var(--text-soft); padding:8px;">إلغاء ومسح الحقول</button>
         </form>
       </div>
 
       <div class="admin-fieldset">
         <legend>قائمة الأقسام الحالية المعتمدة في المتجر</legend>
-        <div id="adminCategoriesListGrid" style="display:flex; flex-direction:column; gap:8px;"></div>
+        <div id="adminCategoriesListGrid".innerHTML = `<div class="no-results" style="padding:14px 0;">لا يوجد موظفون style="display:flex; flex-direction:column; gap:8px;"></div>
       </div>
     </div>
 
     <!-- 5. ADVANCED DISCOUNTS & PROMO CARDS -->
     <div id="adminSecOffers" style="display:none;">
       <div class="admin-fieldset">
-        <legend>🎯 تطبيق خصم ذكي مجمع وتحديث الأسعار فورياً (Bulk Discount Engine)</legend>
+        <legend>🎯 تطبيق خصم ذكي مجمع وتحديث الأسعار فورياً مضافون لهذه الصيدلية حالياً.</div>`;
+    return;
+  }
+
+  container.innerHTML = staffMembers.map (Bulk Discount Engine)</legend>
         <form onsubmit="handleApplyBulkDiscount(event)">
           <div class="form-field">
             <label>نطاق تطبيق الخصم *</label>
             <select id="discountScope" onchange="updateDiscountTargetOptions()">
               <option value="brand">على ماركة / شركة معينة</option>
-              <option value="category">على قسم كامل</option>
+              <option value="category(st => `
+    <div style="background:#fff; border:1px solid var(--line); border-radius:12px; padding">على قسم كامل</option>
               <option value="product">على منتج واحد محدد</option>
               <option value="all">على جميع منتجات المتجر</option>
             </select>
@@ -322,33 +445,40 @@
             <select id="discountTargetSelect" required></select>
           </div>
           <div style="display:flex; gap:10px;">
-            <div class="form-field" style="flex:1;">
+            :12px; display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <div style="font<div class="form-field" style="flex:1;">
               <label>نسبة الخصم (%) *</label>
               <input type="number" id="discountPercentage" placeholder="مثال: 20" min="1" max="90" required>
             </div>
             <div class="form-field" style="flex:1;">
               <label>الإجراء *</label>
               <select id="discountActionType">
-                <option value="apply">تطبيق الخصم وتخفيض السعر فورياً</option>
+                <option-weight:800; font-size:13.5px; color:var(--ink);">
+          👤 ${sanitizeText(st.name || 'موظف value="apply">تطبيق الخصم وتخفيض السعر فورياً</option>
                 <option value="reset">إلغاء الخصم واسترجاع السعر الأصلي</option>
               </select>
             </div>
           </div>
-          <button type="submit" class="admin-btn-save" id="adminApplyDiscountBtn" style="background:#b01e4a;">⚡ تطبيق الخصم فورياً وتحديث أسعار المنتجات</button>
+          <button type="submit" class="admin-btn-save" id="adminApplyDiscountBtn" style="background:#b01e4a;">⚡ تطبيق الخصم')} (${sanitizeText(st.email)})
+          <span class="log-badge" style="background:#E0E7FF; color:#3730A3;"> فورياً وتحديث أسعار المنتجات</button>
         </form>
       </div>
 
       <div class="admin-fieldset">
         <legend id="adminPromoCardFormTitle">🎁 إدارة بطاقات "عروض مميزة" في الصفحة الرئيسية</legend>
         <form id="adminPromoCardForm" onsubmit="handleSavePromoCard(event)">
-          <input type="hidden" id="promoCardDocId" value="">
+          <input type="${sanitizeText(st.role || 'staff')}</span>
+        </div>
+        <div style="font-size:11hidden" id="promoCardDocId" value="">
           <div class="form-field">
             <label>عنوان العرض الرئيسي *</label>
             <input type="text" id="promoCardTitle" placeholder="مثال: عروض السيرومات العلاجية" required>
           </div>
           <div class="form-field">
             <label>الوصف القصير *</label>
-            <input type="text" id="promoCardDesc" placeholder="مثال: تغذية وإشراقة طبيعية لمظهر صحي" required>
+            <input type="text" id="promoCardDesc" placeholder="مثال: تغذية وإشراقة طبيعية لمظهر صح.5px; color:var(--text-soft); margin-top:2px;">
+          الصلاحيات: ${(st.permissions ||ي" required>
           </div>
           <div style="display:flex; gap:10px;">
             <div class="form-field" style="flex:1;">
@@ -357,11 +487,15 @@
             </div>
             <div class="form-field" style="flex:1;">
               <label>رابط صورة العرض (اختياري)</label>
-              <input type="url" id="promoCardImgUrl" placeholder="https://...">
+              <input type="url" id ['all']).join(', ')}
+        </div>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button onclick="="promoCardImgUrl" placeholder="https://...">
             </div>
           </div>
           <button type="submit" class="admin-btn-save" id="adminSavePromoCardBtn">💾 حفظ بطاقة العرض سحابياً</button>
-          <button type="button" onclick="resetPromoCardForm()" style="width:100%; margin-top:8px; font-size:13px; font-weight:700; color:var(--text-soft); padding:8px;">إلغاء ومسح الحقول</button>
+          <button type="button" onclick="resetPromoCardForm()" style="width:100%; margin-top:8px; font-size:13px; font-weight:700; color:var(--text-soft); padding:8px;">إلغاء ومسح الحdeleteStaffMember('${sanitizeText(st.id)}')" style="background:#FEE2E2; color:var(--red); paddingقول</button>
         </form>
       </div>
 
@@ -371,26 +505,41 @@
       </div>
     </div>
 
-    <!-- 6. PRODUCT BUNDLES / SAVINGS PACKS -->
+    <!-- 6. PRODUCT BUNDLES /:5px 10px; border-radius:8px; font-weight:800; font-size SAVINGS PACKS -->
     <div id="adminSecBundles" style="display:none;">
       <div class="admin-fieldset">
         <legend id="adminBundleFormTitle">🎁 إضافة حزمة / بكج توفير جديد</legend>
         <form id="adminBundleForm" onsubmit="handleAdminBundleSave(event)">
           <input type="hidden" id="bundleDocId" value="">
-          <div class="form-field">
+          <div:11px;">حذف 🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function handleAddStaff class="form-field">
             <label>اسم البكج أو الحزمة *</label>
             <input type="text" id="bundleTitleInput" placeholder="مثال: بكج العناية الكاملة بالبشرة الجافة" required>
           </div>
           <div class="form-field">
             <label>الوصف القصير ومميزات البكج *</label>
-            <textarea id="bundleDescInput" rows="2" placeholder="غسول + مرطب + واقي شمس بحماية كاملة وتوفير فوري" required></textarea>
+            <textarea id="bundleDescInput" rows="2Member(e) {
+  e.preventDefault();
+  if (!assertAdmin()) return;
+
+  const email = document.getElementById('staff" placeholder="غسول + مرطب + واقي شمس بحماية كاملة وتوفير فوري" required></textarea>
           </div>
           <div style="display:flex; gap:10px;">
             <div class="form-field" style="flex:1;">
-              <label>السعر الأصلي قبل التوفير (د.ع) *</label>
+              <label>السعر الأصلي قبل التوفير (د.ع) *EmailInput').value.trim().toLowerCase();
+  const name = document.getElementById('staffNameInput').value.trim();
+  const role = document</label>
               <input type="number" id="bundleOldPriceInput" placeholder="65000" required min="1000">
             </div>
-            <div class="form-field" style="flex:1;">
+            <div class="form-field" style="flex.getElementById('staffRoleSelect').value;
+
+  if (!email || !name) {
+    showToast('يرج:1;">
               <label>سعر البكج بعد الخصم (د.ع) *</label>
               <input type="number" id="bundlePriceInput" placeholder="49000" required min="1000">
             </div>
@@ -398,20 +547,34 @@
           <div style="display:flex; gap:10px;">
             <div class="form-field" style="flex:1;">
               <label>شارة التوفير (Badge)</label>
-              <input type="text" id="bundleSavingsInput" placeholder="وفر 16,000 د.ع 💸" value="وفر 15,000 د.ع 💸">
+              <input type="text" id="bundleSavingsInput" placeholder="وفر 16,000 دى كتابة اسم وبريد الموظف');
+    return;
+  }
+
+  const staffDocId = email.replace(/.ع 💸" value="وفر 15,000 د.ع 💸">
             </div>
             <div class="form-field" style="flex:1;">
               <label>رابط صورة البكج (اختياري)</label>
-              <input type="url" id="bundleImgInput" placeholder="https://...">
+              <input type="url" id="bundleImg[^a-z0-9]/g, '_');
+  const payload = {
+    email,
+    name: sanitizeText(name),Input" placeholder="https://...">
             </div>
           </div>
           <div class="form-field">
             <label>اختيار المنتجات المكونة للبكج (تحديد متعدد)</label>
             <div id="bundleProductsChecklist" style="max-height:160px; overflow-y:auto; border:1.5px solid var(--line); border-radius:12px; padding:10px; background:#fff;"></div>
           </div>
-          <button type="submit" class="admin-btn-save" id="btnSaveBundle">💾 حفظ وتفعيل البكج في المتجر</button>
+          <button type="submit" class="admin-btn-save" id="
+    role,
+    permissions: role === 'owner' ? ['all'] :btnSaveBundle">💾 حفظ وتفعيل البكج في المتجر</button>
           <button type="button" onclick="resetAdminBundleForm()" style="width:100%; margin-top:8px; font-size:13px; font-weight:700; color:var(--text-soft); padding:8px;">إلغاء ومسح الحقول</button>
-        </form>
+        </ ['orders', 'products', 'analytics'],
+    addedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+
+  if (db) {
+    awaitform>
       </div>
 
       <div class="admin-fieldset">
@@ -423,18 +586,27 @@
     <!-- 7. PROMO CODES / COUPONS MANAGEMENT -->
     <div id="adminSecCoupons" style="display:none;">
       <div class="admin-fieldset">
-        <legend id="adminCouponFormTitle">🎟️ إضافة كود خصم جديد (Server & Firestore Promo Code)</legend>
+        <legend id="adminCouponFormTitle">🎟️ إضافة ك dbPaths.staffCol().doc(staffDocId).set(payload, { merge: true });
+    showToast(`تم إضافة الموظف "${ود خصم جديد (Server & Firestore Promo Code)</legend>
         <form id="adminCouponForm" onsubmit="handleAdminCouponSave(event)">
           <input type="hidden" id="couponDocId" value="">
           <div style="display:flex; gap:10px;">
             <div class="form-field" style="flex:1.5;">
-              <label>كود الخصم (Promo Code) *</label>
+              <label>كود الخname}" بنجاح ✓`);
+    document.getElementById('staffEmailInput').value = '';
+    document.getElementById('staffNameصم (Promo Code) *</label>
               <input type="text" id="couponCodeInput" placeholder="مثال: SAVE20" style="text-transform:uppercase; font-family:monospace;" required>
             </div>
             <div class="form-field" style="flex:1;">
               <label>نوع الخصم</label>
               <select id="couponTypeSelect">
-                <option value="percentage">نسبة مئوية (%)</option>
+                <optionInput').value = '';
+    fetchStaffList();
+  }
+}
+
+async function deleteStaffMember(staffId) {
+   value="percentage">نسبة مئوية (%)</option>
                 <option value="fixed">مبلغ ثابت (د.ع)</option>
               </select>
             </div>
@@ -442,7 +614,8 @@
           <div style="display:flex; gap:10px;">
             <div class="form-field" style="flex:1;">
               <label>قيمة الخصم *</label>
-              <input type="number" id="couponValueInput" placeholder="مثال: 20 أو 5000" min="1" required>
+              <input type="number" id="couponValueInput" placeholder="مثال: 20 أو 5000" min="if (!assertAdmin()) return;
+  if (confirm('هل أنتِ متأكدة من حذف هذا الموظف؟1" required>
             </div>
             <div class="form-field" style="flex:1;">
               <label>الحد الأدنى للطلب (د.ع)</label>
@@ -451,7 +624,9 @@
           </div>
           <div style="display:flex; gap:10px;">
             <div class="form-field" style="flex:1;">
-              <label>الحد الأقصى للاستخدامات</label>
+              <label>الحد الأقصى للاستخدامات')) {
+    if (db) await dbPaths.staffCol().doc(staffId).delete();
+    showToast('تم حذف الموظف بنج</label>
               <input type="number" id="couponMaxUsesInput" value="100" min="1">
             </div>
             <div class="form-field" style="flex:1;">
@@ -461,7 +636,12 @@
           </div>
           <div class="admin-toggle-switch">
             <span>تفعيل الكود فورياً للعملاء</span>
-            <input type="checkbox" id="couponActiveCheck" checked style="width:20px; height:20px; cursor:pointer;">
+            <اح');
+    fetchStaffList();
+  }
+}
+
+// ================= 27. THEME & BRANDINGinput type="checkbox" id="couponActiveCheck" checked style="width:20px; height:20px; cursor:pointer;">
           </div>
           <button type="submit" class="admin-btn-save" id="btnSaveCoupon">💾 حفظ وتفعيل كود الخصم سحابياً</button>
         </form>
@@ -469,7 +649,10 @@
 
       <div class="admin-fieldset">
         <legend>قائمة أكواد الخصم النشطة في النظام</legend>
-        <div id="adminCouponsListGrid" style="display:flex; flex-direction:column; gap:8px;"></div>
+        <div id="adminCouponsListGrid" style="display:flex SAVER =================
+async function handleSaveCustomization(e) {
+  e.preventDefault();
+  if; flex-direction:column; gap:8px;"></div>
       </div>
     </div>
 
@@ -477,12 +660,17 @@
     <div id="adminSecBrands" style="display:none;">
       <div class="admin-fieldset">
         <legend id="adminBrandFormTitle">🏢 إضافة ماركة جديدة</legend>
-        <form id="adminBrandForm" onsubmit="handleSaveBrand(event)">
+        <form id="admin (!assertAdmin() || !lockAction('saveCustomization', 1200)) return;
+
+  const getVal = (id, defaultValBrandForm" onsubmit="handleSaveBrand(event)">
           <input type="hidden" id="adminBrandOriginalKey" value="">
           <div style="display:flex; gap:10px;">
             <div class="form-field" style="flex:2;">
               <label>اسم الشركة أو الماركة *</label>
-              <input type="text" id="adminBrandNameInput" placeholder="مثال: La Roche Posay" required>
+              <input type="text" id="adminBrandName = '') => {
+    const el = document.getElementById(id);
+    return el ? el.value.trim() : defaultVal;
+Input" placeholder="مثال: La Roche Posay" required>
             </div>
             <div class="form-field" style="flex:1;">
               <label>اللون التمييزي</label>
@@ -491,15 +679,23 @@
           </div>
           <div class="form-field">
             <label>رابط شعار الماركة (اختياري)</label>
-            <input type="url" id="adminBrandLogoInput" placeholder="https://..." oninput="previewBrandLogoImg(this.value)">
+            <input type="url" id="admin  };
+  const getChecked = (id, defaultVal = false) => {
+    const el = document.getElementById(id);BrandLogoInput" placeholder="https://..." oninput="previewBrandLogoImg(this.value)">
             <div id="adminBrandLogoPreviewWrap" style="margin-top:8px; display:none;">
-              <img id="adminBrandLogoPreviewImg" src="" style="height:48px; border-radius:8px; border:1px solid var(--line); background:#fff; padding:3px;" alt="Logo Preview">
+              <img id="adminBrandLogoPreviewImg" src="" style="height
+    return el ? el.checked : defaultVal;
+  };
+
+  const primaryColor = getVal(':48px; border-radius:8px; border:1px solid var(--line); background:#fff; padding:3px;" alt="Logo Preview">
             </div>
           </div>
-          <button type="submit" class="admin-btn-save" id="adminSaveBrandBtn" style="background:#111827;">+ إضافة الماركة للشريط</button>
+          <button type="submit" class="admin-btn-save" id="adminSaveBrandBtn" style="background:#111827;">+ إضافة الماركة للشريط</adminPrimaryColorPicker', pharmacyProfile.primaryColor || '#E85D8A');
+  const deliveryStd = Number(getVal('adminDeliveryStandard', button>
           <button type="button" id="adminCancelBrandBtn" onclick="cancelAdminBrandEdit()" style="display:none; width:100%; margin-top:8px; font-size:13px; font-weight:700; color:var(--text-soft); padding:8px;">إلغاء التعديل</button>
         </form>
-      </div>
+      4000));
+  const deliveryExp = Number(getVal('adminDeliveryExpress', 8000));</div>
 
       <div class="admin-fieldset">
         <legend>قائمة الشركات والماركات الحالية المعتمدة</legend>
@@ -508,19 +704,27 @@
     </div>
 
     <!-- 9. NOTIFICATIONS BROADCAST -->
-    <div id="adminSecNotifs" style="display:none;">
+    <div id="adminSecNotifs
+
+  const newSettings = {
+    name: sanitizeText(getVal('adminPharmacyNameInput', pharmacyProfile.name || '" style="display:none;">
       <div class="admin-fieldset">
         <legend>📢 إرسال إشعار وتنبيه عام لجميع مستخدمي الموقع</legend>
         <form onsubmit="handleSendBroadcastNotification(event)">
           <div class="form-field">
             <label>عنوان الإشعار *</label>
-            <input type="text" id="notifTitleInput" placeholder="مثال: خصم 20% على جميع واقيات الشمس! ☀️" required>
+            <input type="text" id="notifTitleInput" placeholder="مثالصيدلية')),
+    primaryColor: primaryColor,
+    deliveryFeeStandard: deliveryStd,
+    deliveryFeeExpressال: خصم 20% على جميع واقيات الشمس! ☀️" required>
           </div>
           <div class="form-field">
             <label>تفاصيل الإشعار أو التنبيه *</label>
             <textarea id="notifBodyInput" rows="3" placeholder="اكتبي تفاصيل العرض أو الرسالة التي ستظهر للمستخدمين..." required></textarea>
           </div>
-          <div class="form-field">
+          <div: deliveryExp,
+    showAnnouncement: getChecked('adminShowAnnouncement', true),
+    announcementText: class="form-field">
             <label>نوع التنبيه</label>
             <select id="notifTypeInput">
               <option value="offer">عرض وتخفيض 🎁</option>
@@ -528,41 +732,49 @@
               <option value="urgent">تحديث هام ⚡</option>
             </select>
           </div>
-          <button type="submit" class="admin-btn-save" id="adminSendNotifBtn" style="background:#2563EB;">🚀 إرسال الإشعار فوراً</button>
+          < sanitizeText(getVal('adminAnnouncementText', '✨ أهلاً بكم في متجرنا الإلكتروني 🌸')),
+    showPharmacistBanner:button type="submit" class="admin-btn-save" id="adminSendNotifBtn" style="background:#2563EB;">🚀 إرسال الإشعار فوراً</button>
         </form>
       </div>
 
       <div class="admin-fieldset">
         <legend>سجل الإشعارات المرسلة مؤخراً</legend>
-        <div id="adminNotifsHistoryList" style="display:flex; flex-direction:column; gap:8px;"></div>
+        <div id="adminNotifsHistoryList getChecked('adminShowPharmacistBanner', true),
+    pharmacistCtaTitle: sanitizeText(getVal('admin" style="display:flex; flex-direction:column; gap:8px;"></div>
       </div>
     </div>
 
     <!-- 10. AUDIT LOGS -->
     <div id="adminSecAudit" style="display:none;">
       <div class="admin-fieldset">
-        <legend>🛡️ إعدادات الحماية ومعدل الطلبات (Rate Limiting)</legend>
+PharmacistTitleInput', 'استشر الصيدلي مجاناً 🩺')),
+    pharmacistCtaDesc:        <legend>🛡️ إعدادات الحماية ومعدل الطلبات (Rate Limiting)</legend>
         <form onsubmit="handleSaveSecuritySettings(event)">
           <div style="display:flex; gap:10px;">
             <div class="form-field" style="flex:1;">
               <label>الحد الأقصى للطلبات لكل IP / ساعة</label>
-              <input type="number" id="secMaxOrdersHour" value="15" min="1" max="50">
+              <input type=" sanitizeText(getVal('adminPharmacistDescInput', 'تحدث مع الصيدلي المختص مباشرة للحصول على تشخيص دقيق لروتينnumber" id="secMaxOrdersHour" value="15" min="1" max="50">
             </div>
             <div class="form-field" style="flex:1;">
-              <label>الحد الأقصى للطلبات العامة / دقيقة</label>
+              <label>الحد الأقصى للطلبات العامةك وروشتتك')),
+    socialWhatsapp: sanitizeText(getVal('adminSocialWhatsappInput', '96478137 / دقيقة</label>
               <input type="number" id="secMaxReqsMin" value="80" min="10" max="200">
             </div>
           </div>
-          <button type="submit" class="admin-btn-save" style="background:#111827;">🛡️ حفظ سياسات الأمان</button>
+          <button type="submit" class="admin-btn-save" style03288')),
+    socialTelegram: sanitizeText(getVal('adminSocialTelegramInput', '')),
+    socialInstagram: sanitizeText(="background:#111827;">🛡️ حفظ سياسات الأمان</button>
         </form>
       </div>
 
       <div class="admin-fieldset">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <legend style="margin-bottom:0;">📜 سجل تدقيق عمليات المشرف والموظفين (Audit Logs)</legend>
+          <legend style="margin-bottom:0;">📜 سجل تدقيق عمليات المشرف والموظفين (getVal('adminSocialInstagramInput', '')),
+    socialPhone: sanitizeText(getVal('adminSocialPhoneInput', '0781Audit Logs)</legend>
           <button type="button" onclick="fetchAuditLogs()" style="color:var(--accent); font-size:12px; font-weight:800;">🔄 تحديث السجل</button>
         </div>
-        <div style="overflow-x:auto;">
+        <div style="overflow-x:3703288')),
+    heroMainTitle: sanitizeText(getVal('adminHeroMainTitle', 'auto;">
           <table class="log-table">
             <thead>
               <tr>
@@ -577,57 +789,87 @@
           </table>
         </div>
       </div>
-    </div>
+    متجر الصيدلية')),
+    heroSubTitle: sanitizeText(getVal('adminHeroSubTitle', 'نحن هنا لتحسين</div>
 
     <!-- 11. STAFF & PERMISSIONS (RBAC) -->
     <div id="adminSecStaff" style="display:none;">
       <div class="admin-fieldset">
-        <legend>👥 إضافة موظف جديد للصيدلية ومنح الصلاحيات</legend>
+        <legend>👥 إضافة موظف جديد للصيدلية ومنح الصلاح صحتكم وجمالكم')),
+    heroDescTitle: sanitizeText(getVal('adminHeroDescTitle', 'منتجات أصليةيات</legend>
         <form onsubmit="handleAddStaffMember(event)">
           <div style="display:flex; gap:10px;">
             <div class="form-field" style="flex:1.5;">
               <label>الاسم الكامل للموظف *</label>
               <input type="text" id="staffNameInput" placeholder="مثال: د. أحمد خالد" required>
-            </div>
+            </div> ومعتمدة 100%')),
+    bannerImgUrl: sanitizeUrl(getVal('adminBannerImgInput
             <div class="form-field" style="flex:2;">
               <label>البريد الإلكتروني المسجل في Google *</label>
-              <input type="email" id="staffEmailInput" placeholder="ahmed@gmail.com" required>
+              <input type="email" id="staffEmailInput" placeholder="ahmed@gmail.com" required', 'https://imgdb.io/i/EQ4D9ag.png')),
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp>
             </div>
           </div>
           <div class="form-field">
             <label>الدور الوظيفي والصلاحيات *</label>
             <select id="staffRoleSelect" required>
               <option value="pharmacist">صيدلي (استقبال الطلبات، تغيير الأسعار والمخزون، الاستشارات)</option>
-              <option value="manager">مدير فرع (إدارة شاملة للمنتجات والطلبات والكوبونات)</option>
+              <option value="manager">مدير فرع()
+  };
+
+  pharmacyProfile = { ...pharmacyProfile, ...newSettings };
+  saveLocalState();
+  apply (إدارة شاملة للمنتجات والطلبات والكوبونات)</option>
               <option value="staff">موظف تجهيز وشحن (معاينة وتجهيز الطلبات فقط)</option>
               <option value="owner">مشرف / مالك مشارك (صلاحيات كاملة للمتجر)</option>
             </select>
           </div>
-          <button type="submit" class="admin-btn-save" style="background:#111827;">+ إضافة الموظف واعتماد الصلاحيات سحابياً</button>
+          <button type="StoreSettings();
+  showToast('تم تطبيق وحفظ الهوية سحابياً! ✨');
+
+  try {
+    ifsubmit" class="admin-btn-save" style="background:#111827;">+ إضافة الموظف واعتماد الصلاحيات سحابياً</button>
         </form>
       </div>
 
       <div class="admin-fieldset">
-        <legend>قائمة الموظفين المصرح لهم بإدارة هذه الصيدلية</legend>
+         (db) await dbPaths.pharmacyDoc().set(newSettings, { merge: true });
+  } catch (err) { console.warn<legend>قائمة الموظفين المصرح لهم بإدارة هذه الصيدلية</legend>
         <div id="adminStaffListGrid" style="display:flex; flex-direction:column; gap:8px;"></div>
       </div>
     </div>
 
-    <!-- 12. THEME & BRANDING CUSTOMIZATION (تم إبقاء الهوية وحذف اختيار القالب) -->
+    <!-- 12. THE(err); }
+}
+
+function applyStoreSettings() {
+  if (pharmacyProfile.primaryColor) {
+    ME & BRANDING (الهوية البصرية) -->
     <div id="adminSecDesign" style="display:none;">
       <form onsubmit="handleSaveCustomization(event)">
         <fieldset class="admin-fieldset">
           <legend>🎨 اسم الصيدلية واللون الرئيسي (Brand Identity)</legend>
           <div class="form-field">
-            <label>اسم الصيدلية الرسمي *</label>
+            <label>اسم الصيدلية الرسميapplyDynamicThemeColor(pharmacyProfile.primaryColor);
+    const colorPicker = document.getElementById('adminPrimaryColorPicker');
+ *</label>
             <input type="text" id="adminPharmacyNameInput" placeholder="مثال: صيدلية القطن" required>
           </div>
-          <div style="display:flex; align-items:center; justify-content:space-between; gap:14px; background:#F9FAFB; padding:12px 14px; border-radius:12px; margin-top:8px;">
+          <div style="display:flex; align-items:center; justify-content:space    if (colorPicker) colorPicker.value = pharmacyProfile.primaryColor;
+  }
+
+  applyPharmacyTemplate(pharmacyProfile.templateId ||-between; gap:14px; background:#F9FAFB; padding:12px 14px; border-radius:12px; margin-top:8px;">
             <div>
               <div style="font-weight:800; font-size:13.5px; color:var(--ink);">اللون الرئيسي للموقع (Theme Color)</div>
-              <div style="font-size:11.5px; color:var(--text-soft);">سيتم تطبيق هذا اللون فورياً وسحابياً على كافة الأزرار والأيقونات والهوية</div>
+              <div style="font-size 'template-one');
+
+  document.title = `${pharmacyProfile.name || 'الصيدلية'} | المتجر الإلكتروني`;
+
+  const headerLogoText = document.getElementById:11.5px; color:var(--text-soft);">سيتم تطبيق هذا اللون فورياً وسحابياً على كافة الأزرار والأيقونات والهوية</div>
             </div>
-            <input type="color" id="adminPrimaryColorPicker" value="#E85D8A" style="width:54px; height:42px; padding:2px; cursor:pointer; border-radius:8px; border:1px solid #D1D5DB;">
+            <input type="color" id="adminPrimaryColorPicker" value="#E85D8A" style="width:54px; height:42px; padding:2px; cursor:pointer; border-radius:8px; border:('headerLogoText');
+  const drawerLogoTitle = document.getElementById('drawerLogoTitle');
+  if (headerLogoText)1px solid #D1D5DB;">
           </div>
         </fieldset>
 
@@ -635,31 +877,44 @@
           <legend>🩺 إعدادات شريط "استشر الصيدلي مجاناً"</legend>
           <div class="admin-toggle-switch" style="background:#fff;">
             <span>إظهار شريط الاستشارة في الصفحة الرئيسية</span>
-            <input type="checkbox" id="adminShowPharmacistBanner" checked style="width:20px; height:20px; cursor:pointer;">
+            <input type="checkbox" id=" headerLogoText.textContent = pharmacyProfile.name || 'الصيدلية';
+  if (drawerLogoTitle)adminShowPharmacistBanner" checked style="width:20px; height:20px; cursor:pointer;">
           </div>
           <div class="form-field">
             <label>العنوان الرئيسي في الشريط</label>
-            <input type="text" id="adminPharmacistTitleInput" placeholder="استشر الصيدلي مجاناً 🩺">
+            <input drawerLogoTitle.textContent = pharmacyProfile.name || 'الصيدلية';
+
+  const annEl = document.getElementById('ann type="text" id="adminPharmacistTitleInput" placeholder="استشر الصيدلي مجاناً 🩺">
           </div>
           <div class="form-field">
             <label>الوصف القصير</label>
-            <input type="text" id="adminPharmacistDescInput" placeholder="تحدثي مع الصيدلي المختص مباشرة للحصول على تشخيص دقيق لروتينك وروشتتك">
+            <input type="text" id="adminPharmacistDescInput" placeholder="تحدثouncementBar');
+  const annTextEl = document.getElementById('announcementText');
+  const heroMainEl = document.getElementById('heroي مع الصيدلي المختص مباشرة للحصول على تشخيص دقيق لروتينك وروشتتك">
           </div>
         </fieldset>
 
         <fieldset class="admin-fieldset">
           <legend>📱 إدارة وسائل التواصل وروابط الصيدلية</legend>
           <div class="form-field">
-            <label>رقم الواتساب الرسمي لاستقبال الطلبات (مع الرمز الدولي بدون +) *</label>
+            <label>رقم الواتساب الرسمي لاستقبال الطلبات (مع الرمز الدوليMainTitle');
+  const heroSubEl = document.getElementById('heroSubTitle');
+  const heroDescEl = document.getElementById('heroDesc بدون +) *</label>
             <input type="text" id="adminSocialWhatsappInput" placeholder="مثال: 9647813703288" required>
           </div>
           <div style="display:flex; gap:10px;">
-            <div class="form-field" style="flex:1;">
+Title');
+  const heroImgEl = document.getElementById('primaryHeroBannerImg');
+  const pharmWrap = document.getElementById('homePharmacistCtaWrap');            <div class="form-field" style="flex:1;">
               <label>رابط أو يوزر التلغرام</label>
               <input type="text" id="adminSocialTelegramInput" placeholder="https://t.me/cottanpharmacy">
             </div>
             <div class="form-field" style="flex:1;">
-              <label>رابط الإنستغرام</label>
+              <label>رابط الإنستغرام</
+  const drawerPharmBtn = document.getElementById('drawerConsultBtn');
+
+  if (annEl) {
+    constlabel>
               <input type="text" id="adminSocialInstagramInput" placeholder="https://instagram.com/cottanpharmacy">
             </div>
           </div>
@@ -667,31 +922,39 @@
             <label>رقم هاتف الاتصال المباشر</label>
             <input type="text" id="adminSocialPhoneInput" placeholder="07813703288">
           </div>
-        </fieldset>
+ isVisible = (pharmacyProfile.showAnnouncement === true || pharmacyProfile.showAnnouncement === 'true' || pharmacyProfile.showAnnouncement === undefined        </fieldset>
 
         <fieldset class="admin-fieldset">
           <legend>🚚 إعدادات وتكلفة التوصيل لجميع المحافظات</legend>
           <div style="display:flex; gap:10px;">
             <div class="form-field" style="flex:1;">
-              <label>سعر التوصيل العادي (د.ع) *</label>
+              <label>سعر التوصيل العادي (د);
+    annEl.style.display = isVisible ? 'flex' : 'none';
+  }
+  if.ع) *</label>
               <input type="number" id="adminDeliveryStandard" value="4000" min="0" required>
             </div>
             <div class="form-field" style="flex:1;">
               <label>سعر التوصيل السريع (د.ع) *</label>
-              <input type="number" id="adminDeliveryExpress" value="8000" min="0" required>
+              <input type="number" id="adminDeliveryExpress" value="8000 (annTextEl && pharmacyProfile.announcementText) {
+    annTextEl.textContent = pharmacyProfile.announcementText;
+  }
+  if (heroMain" min="0" required>
             </div>
           </div>
         </fieldset>
 
         <fieldset class="admin-fieldset">
           <legend>📢 شريط التنبيهات العلوي</legend>
-          <div class="admin-toggle-switch" style="background:#fff;">
+          <div class="admin-toggle-switch" style="backgroundEl) heroMainEl.textContent = pharmacyProfile.heroMainTitle || pharmacyProfile.name;
+  if (heroSubEl):#fff;">
             <span>إظهار شريط التنبيهات العلوي</span>
             <input type="checkbox" id="adminShowAnnouncement" checked style="width:20px; height:20px; cursor:pointer;">
           </div>
           <div class="form-field">
             <label>نص الإعلان أو التنبيه</label>
-            <input type="text" id="adminAnnouncementText" placeholder="مثال: توصيل مجاني للطلبات فوق 50,000 د.ع 🌸">
+            <input type="text" id="adminAnnouncementText" placeholder=" heroSubEl.textContent = pharmacyProfile.heroSubTitle || '';
+  if (heroDescEl) heroDescمثال: توصيل مجاني للطلبات فوق 50,000 د.ع 🌸">
           </div>
         </fieldset>
 
@@ -699,7 +962,8 @@
           <legend>🌸 البانر الرئيسي (Hero Banner)</legend>
           <div class="form-field">
             <label>العنوان الرئيسي في البانر</label>
-            <input type="text" id="adminHeroMainTitle" placeholder="صيدلية القطن">
+            <input type="text" id="adminHeroMainTitleEl.textContent = pharmacyProfile.heroDescTitle || '';
+  if (heroImgEl && pharmacyProfile.banner" placeholder="صيدلية القطن">
           </div>
           <div class="form-field">
             <label>العنوان الفرعي</label>
@@ -707,14 +971,17 @@
           </div>
           <div class="form-field">
             <label>الوصف الترويجي</label>
-            <input type="text" id="adminHeroDescTitle" placeholder="منتجات أصلية لعناية صحية وجمال طبيعي">
+            <input type="text" id="adminImgUrl) heroImgEl.src = sanitizeUrl(pharmacyProfile.bannerImgUrl);
+
+  if (pharmWrap) {
+    constHeroDescTitle" placeholder="منتجات أصلية لعناية صحية وجمال طبيعي">
           </div>
           <div class="form-field">
             <label>رابط صورة العارضة (Direct Image URL)</label>
             <input type="url" id="adminBannerImgInput" placeholder="https://...">
           </div>
         </fieldset>
-        <button type="submit" class="admin-btn-save" id="adminSaveDesignBtn">✨ حفظ وتطبيق جميع التعديلات سحابياً</button>
+        <button type="submit" class="admin-btn isPharmVisible = (pharmacyProfile.showPharmacistBanner === true || pharmacyProfile.showPharmacistBanner === '-save" id="adminSaveDesignBtn">✨ حفظ وتطبيق جميع التعديلات سحابياً</button>
       </form>
     </div>
 
@@ -723,25 +990,35 @@
   <!-- 80mm THERMAL RECEIPT PRINT MODAL -->
   <div class="receipt-modal-overlay" id="thermalReceiptModal">
     <div class="receipt-modal-card">
-      <div class="no-print" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <h4 style="margin:0; font-weight:900;">🖨️ معاينة بوليصة الشحن (80mm)</h4>
+      <div class="no-print" style="display:true' || pharmacyProfile.showPharmacistBanner === undefined);
+    pharmWrap.style.display = isPharmVisible ?flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h4 style="margin:0; font-weight:900;">🖨️ معاينة بوليصة الشحن (80mm)</h4> 'block' : 'none';
+  }
+  if (drawerPharmBtn) {
+    const isPharmVisible =
         <button onclick="closeReceiptModal()" style="font-weight:900; font-size:16px;">✕</button>
       </div>
       
       <div class="receipt-print-area" id="receiptPrintArea">
         <div class="receipt-header">
           <h3>الصيدلية 🌸</h3>
-          <p style="margin:2px 0; font-size:11px;">منتجات عناية وتجميل أصلية 100%</p>
+          <p style="margin:2px 0; font-size:1 (pharmacyProfile.showPharmacistBanner === true || pharmacyProfile.showPharmacistBanner === 'true' || pharmacyProfile.showPharmacistBanner === undefined);
+    drawer1px;">منتجات عناية وتجميل أصلية 100%</p>
           <p style="margin:2px 0; font-size:10px;">هاتف: <span id="recStorePhone">07813703288</span></p>
         </div>
         <div class="receipt-divider"></div>
-        <div style="font-size:11px; margin-bottom:6px;">
+        <div style="font-size:11px; margin-bottom:6PharmBtn.style.display = isPharmVisible ? 'flex' : 'none';
+  }
+  if (document.getElementByIdpx;">
           <div><b>رقم الوصل:</b> <span class="mono" id="recOrderId">#ORD-123456</span></div>
           <div><b>التاريخ:</b> <span id="recOrderDate"></span></div>
-          <div><b>العميل:</b> <span id="recCustName"></span></div>
+          <div><b>العميل:</b>('pharmacistCtaTitle') && pharmacyProfile.pharmacistCtaTitle) {
+    document.getElementById('pharmacistCtaTitle'). <span id="recCustName"></span></div>
           <div><b>الهاتف:</b> <span id="recCustPhone" class="mono"></span></div>
           <div><b>العنوان:</b> <span id="recCustAddress"></span></div>
-          <div><b>نوع التوصيل:</b> <span id="recDeliveryType"></span></div>
+          <div><b>نوع التوصيل:</b> <textContent = pharmacyProfile.pharmacistCtaTitle;
+  }
+  if (document.getElementById('pharmacistCtaDescspan id="recDeliveryType"></span></div>
         </div>
         <div class="receipt-divider"></div>
         <table class="receipt-table">
@@ -752,36 +1029,52 @@
               <th>السعر</th>
             </tr>
           </thead>
-          <tbody id="recItemsTbody"></tbody>
+          <tbody id="recItems') && pharmacyProfile.pharmacistCtaDesc) {
+    document.getElementById('pharmacistCtaDesc').Tbody"></tbody>
         </table>
         <div class="receipt-divider"></div>
         <div style="font-size:12px; font-weight:800;">
           <div style="display:flex; justify-content:space-between;"><span>أجرة التوصيل:</span><span id="recDeliveryFee" class="mono">0 د.ع</span></div>
-          <div style="display:flex; justify-content:space-between;" id="recDiscountRow"><span>الخصم:</span><span id="recDiscountVal" class="mono">0 د.ع</span></div>
-          <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:900; margin-top:4px;"><span>المجموع الكلي:</span><span id="recGrandTotal" class="mono">0 د.ع</span></div>
+          <div style="display:flex;textContent = pharmacyProfile.pharmacistCtaDesc;
+  }
+
+  const wLink = document.getElementById('drawer justify-content:space-between;" id="recDiscountRow"><span>الخصم:</span><span id="recDiscountVal" class="mono">0 د.ع</span></div>
+          <div style="display:flex; justify-content:space-between;SocialWhatsapp');
+  const tLink = document.getElementById('drawerSocialTelegram');
+  const iLink = document.getElementById('drawerSocialInstagram font-size:14px; font-weight:900; margin-top:4px;"><span>المجموع الكلي:</span><span id="recGrandTotal" class="mono">0 د.ع</span></div>
         </div>
-        <div class="receipt-footer">
+        <div class="receipt-footer');
+  const pLink = document.getElementById('drawerSocialPhone');
+
+  const cleanWa = (pharmacyProfile.socialWhatsapp">
           <p style="margin:4px 0;">شكراً لتسوقكم معنا 🌸</p>
           <p style="margin:0; font-size:9px;">يرجى فحص الطلب عند الاستلام من المندوب</p>
         </div>
       </div>
 
-      <div class="no-print" style="display:flex; gap:8px; margin-top:14px;">
+      <div class="no-print" style="display:flex; gap:8px; margin-top:1 || "9647813703288").replace(/\+/g, '').trim();
+  if (wLink) wLink.href = `https://4px;">
         <button type="button" onclick="window.print()" class="admin-btn-save" style="margin:0; background:#10B981;">🖨️ طباعة الوصل الحراري</button>
-        <button type="button" onclick="closeReceiptModal()" style="padding:10px; font-weight:800; color:var(--text-soft);">إغلاق</button>
+        <buttonwa.me/${cleanWa}`;
+  if (tLink) tLink.href = pharmacyProfile.socialTelegram || type="button" onclick="closeReceiptModal()" style="padding:10px; font-weight:800; color:var(--text-soft);">إغلاق</button>
       </div>
     </div>
   </div>
 
-  <!-- Toast Notification Box -->
+  <!-- Toast Notification Box --> '#';
+  if (iLink) iLink.href = pharmacyProfile.socialInstagram || '#';
+  if (
   <div class="toast no-print" id="toast"></div>
 
   <!-- Main JavaScript File -->
   <script src="script.js"></script>
 
-  <!-- Subscription Gatekeeper & Role Restrictions Script -->
+  <!-- Subscription Gatekeeper, Low-Stock Check & Role Restrictions Script -->
   <script>
-    async function enforceSubscriptionAndRoleGates() {
+    async function enforceSubscriptionAndRolepLink) pLink.href = `tel:${pharmacyProfile.socialPhone || ''}`;
+}
+
+// ================= 28.Gates() {
       if (!isFirebaseConfigured || !db) return;
 
       const user = auth ? auth.currentUser : currentUser;
@@ -789,26 +1082,45 @@
 
       // 1. التحقق من حالة الاشتراك وتجميد الصيدلية
       try {
-        const snap = await dbPaths.pharmacyDoc().get();
+        const FIRESTORE REALTIME SYNC =================
+function initFirestoreSync() {
+  if (!isFirebaseConfigured || !db snap = await dbPaths.pharmacyDoc().get();
         if (snap.exists) {
           const pData = snap.data();
           const isSuspended = pData.isActive === false;
-          const todayStr = new Date().toISOString().split('T')[0];
+          const todayStr = new Date().toISOString) return;
+
+  // 1. مزامنة وثيقة الصيدلية الحالية وفحص صلاحية الاشتراك().split('T')[0];
           const isExpired = pData.subscriptionExpiry && pData.subscriptionExpiry < todayStr;
 
           if (!isSuper && (isSuspended || isExpired)) {
-            const lockGate = document.getElementById('subscriptionLockGate');
+            const lockGate = document.getElementById('subscription (Kill Switch)
+  dbPaths.pharmacyDoc().onSnapshot(doc => {
+    if (doc.exists) {
+      pharmLockGate');
             const titleEl = document.getElementById('lockGateTitle');
             const descEl = document.getElementById('lockGateDesc');
 
             if (lockGate) {
               lockGate.style.display = 'flex';
-              if (isSuspended) {
+              ifacyProfile = { ...pharmacyProfile, ...doc.data() };
+      if (pharmacyProfile.brandsData) brandsData = { ...brandsData, (isSuspended) {
                 titleEl.textContent = '⛔ تم تجميد متجر الصيدلية';
-                descEl.innerHTML = `تم إيقاف لوحة التحكم من قبل إدارة المنصة.<br>يرجى التواصل مع المشرف العام (<b class="mono" style="color:#fff;">hussaindark6@gmail.com</b>) لإعادة التفعيل.`;
+                descEl.innerHTML = `تم إيقاف لوحة التحكم من قبل إدارة المنصة.<br>يرجى التواصل مع المشرف العام (< ...pharmacyProfile.brandsData };
+      saveLocalState();
+      applyStoreSettings();
+      renderPromoBanners();
+      renderPromoCardsb class="mono" style="color:#fff;">hussaindark6@gmail.com</b>) لإعادة التفعيل.`;
               } else if (isExpired) {
                 titleEl.textContent = '⏳ انتهت فترة اشتراك الصيدلية';
-                descEl.innerHTML = `انتهت صلاحية اشتراك متجرك بتاريخ (<b class="mono" style="color:#F59E0B;">${pData.subscriptionExpiry}</b>).<br>يرجى التواصل مع المشرف العام (<b class="mono" style="color:#fff;">hussaindark6@gmail.com</b>) لتجديد الاشتراك.`;
+                descEl.innerHTML = `انتهListAdmin();
+      renderBrandStrip();
+      checkStorefrontSubscriptionLock();
+    }
+  }, err => console.warn(errت صلاحية اشتراك متجرك بتاريخ (<b class="mono" style="color:#F59E0B;">${pData.subscriptionExpiry}</b>).<br>يرجى التواصل مع المشرف العام (<b class="mono" style="color:#fff;">));
+
+  // 2. مزامنة الأقسام
+  dbPaths.categoriesCol().onSnapshot(hussaindark6@gmail.com</b>) لتجديد الاشتراك.`;
               }
             }
             return;
@@ -818,16 +1130,32 @@
         console.warn("Subscription check warning:", err);
       }
 
-      // 2. تطبيق نظام الصلاحيات المقيد للموظفين
+      // 2. فحص تنبيهات المخزون الذكي
+      checkLowStockAlerts();
+
+      // 3. تطبيق نظام الصلاحيات المقsnap => {
+    if (!snap.empty) {
+      const loaded = [];
+      snap.forEach(d => loaded.push({ id: d.id,يد للموظفين
       if (!isSuper && currentStaffData) {
         const role = currentStaffData.role;
         if (role === 'staff' || role === 'pharmacist') {
-          const sensitiveTabs = ['btnTabVDesign', 'btnTabVStaff', 'btnTabVAudit', 'btnTabVStats'];
+          const sensitiveTabs = ...d.data() }));
+      categories = loaded;
+      renderModernCategories();
+      renderAdminCategoriesList();
+      populateCategoryDropdowns();
+      update ['btnTabVDesign', 'btnTabVStaff', 'btnTabVAudit', 'btnTabVStats'];
           sensitiveTabs.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.style.display = 'none';
           });
-          switchAdminSection('products');
+          switchAdminSection('DiscountTargetOptions();
+    }
+  }, err => console.warn(err));
+
+  // 3. مزامنة البكجات
+products');
         }
       }
     }
