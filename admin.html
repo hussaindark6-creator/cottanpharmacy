@@ -187,7 +187,7 @@
       </div>
     </div>
 
-    <!-- 3. PRODUCT MANAGEMENT SECTION -->
+    <!-- 3. PRODUCT MANAGEMENT SECTION (مع نموذج التعديل والإضافة الكامل) -->
     <div id="adminSecProducts" style="display:none;">
       <div class="admin-fieldset">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -200,7 +200,7 @@
           <input type="hidden" id="adminProdDocId" value="">
           <div class="form-field">
             <label>اسم المنتج الكامل *</label>
-            <input type="text" id="adminProdName" placeholder="مثال: كريم سيرافي المرطب" required>
+            <input type="text" id="adminProdName" placeholder="مثال: كريم سيرافي المرطب للبشرة الجافة" required>
           </div>
           <div style="display:flex; gap:10px;">
             <div class="form-field" style="flex:1;">
@@ -245,17 +245,17 @@
             </div>
           </div>
           <div class="form-field">
-            <label>الوصف المفصل والفوائد</label>
-            <textarea id="adminProdDesc" rows="2" placeholder="فوائد المنتج ومميزاته..."></textarea>
+            <label>الوصف المفصل والفوائد الطبية *</label>
+            <textarea id="adminProdDesc" rows="3" placeholder="فوائد المنتج ومميزاته بالتفصيل..."></textarea>
           </div>
           <div style="display:flex; gap:10px;">
             <div class="form-field" style="flex:1;">
-              <label>المكونات الفعالة</label>
-              <input type="text" id="adminProdIng" placeholder="Hyaluronic Acid, Ceramides...">
+              <label>المكونات الفعالة والتركيبة (Ingredients)</label>
+              <input type="text" id="adminProdIng" placeholder="Hyaluronic Acid, Ceramides, Niacinamide...">
             </div>
             <div class="form-field" style="flex:1;">
-              <label>طريقة الاستخدام</label>
-              <input type="text" id="adminProdUsage" placeholder="يوضع صباحاً ومساءً...">
+              <label>طريقة الاستخدام والإرشادات (Usage)</label>
+              <input type="text" id="adminProdUsage" placeholder="يوضع صباحاً ومساءً على بشرة نظيفة...">
             </div>
           </div>
           <div class="admin-toggle-switch">
@@ -732,6 +732,95 @@
       </form>
     </div>
 
+  </div>
+
+  <!-- QUICK PRODUCT EDIT MODAL (مع كامل الحقول السريرية والتفاصيل) -->
+  <div class="admin-quick-modal-overlay" id="adminQuickEditModal">
+    <div class="admin-quick-card" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+      <div class="consult-header">
+        <h3 style="color:#111827;">✏️ تعديل تفاصيل المنتج والأدوية بالكامل</h3>
+        <button class="icon-btn" onclick="closeAdminQuickEditModal()">✕</button>
+      </div>
+      <div style="padding:16px; text-align:right;">
+        <input type="hidden" id="quickEditProdId">
+        
+        <div class="form-field">
+          <label>اسم المنتج الكامل *</label>
+          <input type="text" id="quickEditProdName" required>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+          <div class="form-field" style="flex:1;">
+            <label>الماركة / الشركة *</label>
+            <input type="text" id="quickEditProdBrand" required>
+          </div>
+          <div class="form-field" style="flex:1;">
+            <label>القسم / التصنيف *</label>
+            <select id="quickEditProdCat" required></select>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+          <div class="form-field" style="flex:1;">
+            <label>السعر الحالي (د.ع) *</label>
+            <input type="number" id="quickEditProdPrice" required>
+          </div>
+          <div class="form-field" style="flex:1;">
+            <label>السعر قبل الخصم (اختياري)</label>
+            <input type="number" id="quickEditProdOldPrice">
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+          <div class="form-field" style="flex:1;">
+            <label>الحجم / العبوة</label>
+            <input type="text" id="quickEditProdSize" placeholder="236 مل">
+          </div>
+          <div class="form-field" style="flex:1;">
+            <label>نوع العبوة (الأيقونة)</label>
+            <select id="quickEditProdType">
+              <option value="bottle">زجاجة (Bottle)</option>
+              <option value="jar">مرطبان (Jar)</option>
+              <option value="tube">أنبوب (Tube)</option>
+              <option value="spray">بخاخ (Spray)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label>رابط الصورة المباشر</label>
+          <input type="url" id="quickEditProdImg">
+        </div>
+
+        <div class="form-field">
+          <label>الوصف المفصل والفوائد الطبية</label>
+          <textarea id="quickEditProdDesc" rows="3" placeholder="تفاصيل المنتج..."></textarea>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+          <div class="form-field" style="flex:1;">
+            <label>المكونات الفعالة (Ingredients)</label>
+            <input type="text" id="quickEditProdIng" placeholder="المواد الفعالة...">
+          </div>
+          <div class="form-field" style="flex:1;">
+            <label>طريقة الاستخدام (Usage)</label>
+            <input type="text" id="quickEditProdUsage" placeholder="طريقة الاستعمال...">
+          </div>
+        </div>
+
+        <div class="admin-toggle-switch">
+          <span>متوفر في المخزون (In Stock)</span>
+          <input type="checkbox" id="quickEditProdInStock" style="width:20px; height:20px; cursor:pointer;">
+        </div>
+
+        <div class="admin-toggle-switch">
+          <span>تفعيل كعرض خاص (Special Offer)</span>
+          <input type="checkbox" id="quickEditProdIsOffer" style="width:20px; height:20px; cursor:pointer;">
+        </div>
+
+        <button class="admin-btn-save" onclick="saveAdminQuickEdit()">💾 حفظ التعديلات سحابياً</button>
+      </div>
+    </div>
   </div>
 
   <!-- 80mm THERMAL RECEIPT PRINT MODAL -->
