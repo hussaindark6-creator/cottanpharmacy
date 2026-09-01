@@ -1,19 +1,19 @@
 /* ==========================================================
-   Template: Default Classic (Fail-Safe Baseline)
+   Template: Default Classic (Fail-Safe Baseline & Real Ratings)
    File: /templates/template_default.js
+   Version: 2.0.0
    ========================================================== */
 
 const TemplateDefault = {
   id: 'template_default',
   name: 'القالب الافتراضي الكلاسيكي',
-  version: '1.0.0',
+  version: '2.0.0',
 
-  // 1. تطبيق السمات البصرية والألوان
+  // 1. تطبيق الألوان والسمات البصرية
   applyStyles(profile) {
     const root = document.documentElement;
     root.setAttribute('data-template', 'template_default');
     
-    // تطبيق اللون الأساسي الخاص بالصيدلية
     const primaryColor = profile.primaryColor || '#E85D8A';
     root.style.setProperty('--accent', primaryColor);
     root.style.setProperty('--rose-deep', primaryColor);
@@ -40,7 +40,7 @@ const TemplateDefault = {
     `;
   },
 
-  // 3. تصميم بطاقة المنتج (Product Card Layout)
+  // 3. تصميم بطاقة المنتج مع نظام التقييمات الحقيقي 100% وزر التعديل المباشر
   renderProductCard(p, helpers) {
     const color = helpers.getBrandColor(p.brand);
     const discountPct = p.oldPrice ? Math.round((1 - p.price / p.oldPrice) * 100) : null;
@@ -48,6 +48,13 @@ const TemplateDefault = {
     const inStock = (p.inStock !== false);
     const cleanImg = helpers.sanitizeUrl(p.imageUrl);
     const isAdmin = helpers.isCurrentUserAdmin();
+
+    // حساب وتنسيق التقييم الحقيقي الدقيق بدون أي أرقام وهمية
+    const reviewCount = Number(p.reviews || 0);
+    const avgRating = reviewCount > 0 ? Number(p.rating || 5.0).toFixed(1) : null;
+    const ratingHtml = reviewCount > 0 
+      ? `${helpers.starIcon()} <span class="mono" style="font-weight:800; color:var(--ink);">${avgRating}</span> <span style="font-size:10px; color:var(--text-soft);">(${reviewCount} ${reviewCount === 1 ? 'تقييم' : 'تقييمات'})</span>`
+      : `<span style="font-size:10.5px; color:var(--text-soft); font-weight:700;">⭐ جديد (0 تقييم)</span>`;
 
     return `
       <div class="product-card" onclick="openProduct('${helpers.sanitizeText(p.id)}', true)">
@@ -60,7 +67,9 @@ const TemplateDefault = {
         <div class="product-thumb" style="background:${color}18;">
           ${cleanImg ? `<img src="${cleanImg}" alt="${helpers.sanitizeText(p.name)}" loading="lazy">` : (helpers.icons[p.type] || helpers.icons.bottle)(color)}
         </div>
-        <div class="p-rating">${helpers.starIcon()} ${p.rating || 4.8} (${p.reviews || 80})</div>
+        <div class="p-rating" style="display:flex; align-items:center; gap:4px; margin-bottom:4px;">
+          ${ratingHtml}
+        </div>
         <div class="p-name">${helpers.sanitizeText(p.name)}</div>
         <div class="p-size">${helpers.sanitizeText(p.size || '')}</div>
         <div class="p-price-row">
@@ -73,16 +82,16 @@ const TemplateDefault = {
 
         ${isAdmin ? `
           <div class="admin-card-actions" onclick="event.stopPropagation()">
-            <button class="btn-admin-stock ${inStock ? 'is-in' : 'is-out'}" onclick="quickToggleStock('${helpers.sanitizeText(p.id)}')">${inStock ? 'متوفر 🟢' : 'نفذت 🔴'}</button>
-            <button class="btn-admin-price" onclick="quickEditPrice('${helpers.sanitizeText(p.id)}', ${p.price})">السعر 💰</button>
-            <button class="btn-admin-edit" onclick="openAdminQuickEditModal('${helpers.sanitizeText(p.id)}')">تعديل ✏️</button>
-            <button class="btn-admin-del" onclick="deleteProductConfirm('${helpers.sanitizeText(p.id)}', '${helpers.sanitizeText(p.name)}')">🗑️</button>
+            <button type="button" class="btn-admin-stock ${inStock ? 'is-in' : 'is-out'}" onclick="quickToggleStock('${helpers.sanitizeText(p.id)}')">${inStock ? 'متوفر 🟢' : 'نفذت 🔴'}</button>
+            <button type="button" class="btn-admin-price" onclick="quickEditPrice('${helpers.sanitizeText(p.id)}', ${p.price})">السعر 💰</button>
+            <button type="button" class="btn-admin-edit" onclick="openAdminQuickEditModal('${helpers.sanitizeText(p.id)}')">تعديل ✏️</button>
+            <button type="button" class="btn-admin-del" onclick="archiveProductConfirm('${helpers.sanitizeText(p.id)}', '${helpers.sanitizeText(p.name)}')">🗑️</button>
           </div>` : ''}
       </div>
     `;
   },
 
-  // 4. تصميم بطاقة البكج (Bundle Card Layout)
+  // 4. تصميم بطاقة البكج (Bundle Card)
   renderBundleCard(b, helpers) {
     const includedProds = (b.productIds || []).map(pid => helpers.findProduct(pid)).filter(Boolean);
     const cleanImg = helpers.sanitizeUrl(b.imageUrl);
@@ -119,7 +128,7 @@ const TemplateDefault = {
     `;
   },
 
-  // 5. تصميم بطاقة القسم (Category Layout)
+  // 5. تصميم بطاقة القسم (Category Card)
   renderCategoryCard(c, count, helpers) {
     const cleanImg = helpers.sanitizeUrl(c.imageUrl);
     return `
@@ -136,7 +145,6 @@ const TemplateDefault = {
   }
 };
 
-// دعم التحميل بنظام ES Modules و Window Global
 if (typeof window !== 'undefined') {
   window.TemplateDefault = TemplateDefault;
 }
