@@ -88,7 +88,7 @@
       </div>
     </header>
 
-    <!-- Navigation Tabs Navigation (Executive Tabbed Layout) -->
+    <!-- Navigation Tabs (تبويبات الواجهة التنفيذية) -->
     <nav class="bg-slate-900/60 border-b border-slate-800 sticky top-16 z-30 backdrop-blur-md">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex gap-2 overflow-x-auto py-2.5 scrollbar-none">
         <button id="tabBtnOverview" onclick="switchSuperTab('overview')" class="tab-btn active px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20">
@@ -99,6 +99,9 @@
         </button>
         <button id="tabBtnBilling" onclick="switchSuperTab('billing')" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2">
           📈 استهلاك البيانات والفوترة الذكية
+        </button>
+        <button id="tabBtnPaymentInfo" onclick="switchSuperTab('paymentInfo')" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2">
+          💳 بيانات الدفع الإلكتروني للسوبر أدمن
         </button>
         <button id="tabBtnReports" onclick="switchSuperTab('reports')" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2">
           📑 مركز التقارير والإكسل الموحد
@@ -144,7 +147,7 @@
 
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between shadow-sm">
             <div>
-              <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">طلبات المنصة المنفذة اليوم</div>
+              <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">طلبات المنصة اليوم</div>
               <div class="text-3xl font-black text-purple-400 font-mono" id="statTodayOrders">0</div>
             </div>
             <div class="w-12 h-12 bg-purple-500/10 border border-purple-500/20 rounded-xl flex items-center justify-center text-2xl text-purple-400">
@@ -153,7 +156,6 @@
           </div>
         </div>
 
-        <!-- Quick Summary Chart Card -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-md">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-sm font-black text-white flex items-center gap-2">
@@ -162,7 +164,7 @@
             <span class="text-xs text-emerald-400 font-mono bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">Active & Encrypted</span>
           </div>
           <p class="text-xs text-slate-400 leading-relaxed">
-            تعمل المنصة بمعمارية SaaS معزولة لكل صيدلية. يتم فحص الاشتراكات وتوجيه الطلبات وتوليد ملفات إكسل وتلغرام تلقائياً بدون تأخير.
+            تعمل المنصة بنظام SaaS معزول لكل صيدلية مع استخراج النطاقات الفرعية (Subdomains) وتوليد فواتير التيليجرام وملفات الإكسل الموحدة تلقائياً.
           </p>
         </div>
       </section>
@@ -177,7 +179,7 @@
               ✨
             </div>
             <div>
-              <h2 class="text-lg font-black text-white">إضافة صيدلية جديدة وتعيين القالب والاشتراك والتليجرام</h2>
+              <h2 class="text-lg font-black text-white">إضافة صيدلية جديدة وتعيين القالب والاشتراك والسقف الأقصى</h2>
               <p class="text-xs text-slate-400">التحكم الكامل ببيانات المستأجر والربط الفوري في قاعدة البيانات.</p>
             </div>
           </div>
@@ -201,8 +203,12 @@
                 <input type="text" id="inpWhatsapp" placeholder="9647813703288" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white font-mono placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition" required>
               </div>
               <div>
-                <label class="block text-xs font-bold text-slate-300 mb-2">سعر الاشتراك المخصص (د.ع) *</label>
+                <label class="block text-xs font-bold text-slate-300 mb-2">سعر الاشتراك الأساسي (د.ع) *</label>
                 <input type="number" id="inpSubscriptionPrice" placeholder="50000" min="0" step="5000" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-amber-400 font-mono font-bold placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition" required>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-300 mb-2">الحد الأقصى لسعر الاشتراك (Max Cap) *</label>
+                <input type="number" id="inpMaxPriceCap" placeholder="150000" min="0" step="5000" value="150000" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-emerald-400 font-mono font-bold placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition" required>
               </div>
               <div>
                 <label class="block text-xs font-bold text-slate-300 mb-2">تاريخ انتهاء الاشتراك *</label>
@@ -255,7 +261,7 @@
           </div>
 
           <div class="overflow-x-auto -mx-4 sm:mx-0">
-            <table class="w-full text-right text-sm min-w-[720px]">
+            <table class="w-full text-right text-sm min-w-[750px]">
               <thead class="bg-slate-950/60 text-slate-400 font-bold border-b border-slate-800 text-xs">
                 <tr>
                   <th class="py-3 px-4">الصيدلية</th>
@@ -278,7 +284,6 @@
 
       <!-- ================= TAB 3: DATA CONSUMPTION & DYNAMIC BILLING ================= -->
       <section id="secSuperBilling" class="tab-content hidden space-y-8">
-        <!-- Billing Settings Calculator Config Card -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-md">
           <div class="flex items-center justify-between pb-4 border-b border-slate-800 mb-6">
             <div>
@@ -312,12 +317,11 @@
           </div>
         </div>
 
-        <!-- Live Consumption & Dynamic Bill Calculation Table -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-8 shadow-md">
           <div class="flex items-center justify-between pb-6 border-b border-slate-800 mb-6">
             <div>
-              <h2 class="text-lg font-black text-white">استهلاك الصيدليات والفاتورة المقترحة تلقائياً</h2>
-              <p class="text-xs text-slate-400">يتم احتساب السعر التلقائي: (السعر الأساسي + رسوم الاستهلاك الزائد).</p>
+              <h2 class="text-lg font-black text-white">استهلاك الصيدليات والفاتورة المقترحة مع السقف الأقصى</h2>
+              <p class="text-xs text-slate-400">تطبيق معادلة: Math.min(السعر الأساسي + رسوم الاستهلاك، السقف الأقصى).</p>
             </div>
             <button onclick="calculateLiveConsumptionBilling()" class="text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl flex items-center gap-1.5 transition">
               🔄 إعادة احتساب الاستهلاك
@@ -325,16 +329,16 @@
           </div>
 
           <div class="overflow-x-auto -mx-4 sm:mx-0">
-            <table class="w-full text-right text-sm min-w-[700px]">
+            <table class="w-full text-right text-sm min-w-[750px]">
               <thead class="bg-slate-950/60 text-slate-400 font-bold border-b border-slate-800 text-xs">
                 <tr>
                   <th class="py-3 px-4">الصيدلية</th>
                   <th class="py-3 px-4">إجمالي الطلبات</th>
-                  <th class="py-3 px-4">المنتجات المخزنة</th>
-                  <th class="py-3 px-4">عمليات الـ DB المقدرة</th>
+                  <th class="py-3 px-4">المنتجات</th>
                   <th class="py-3 px-4">السعر الأساسي</th>
-                  <th class="py-3 px-4">تكلفة الاستهلاك</th>
-                  <th class="py-3 px-4 text-emerald-400">السعر المقترح النهائي</th>
+                  <th class="py-3 px-4">رسوم الاستهلاك</th>
+                  <th class="py-3 px-4 text-emerald-400">السعر المقترح</th>
+                  <th class="py-3 px-4 text-amber-400">السقف الأقصى</th>
                   <th class="py-3 px-4 text-center">الإجراء</th>
                 </tr>
               </thead>
@@ -346,7 +350,53 @@
         </div>
       </section>
 
-      <!-- ================= TAB 4: REPORTS & CONSOLIDATED EXCEL ================= -->
+      <!-- ================= TAB 4: SUPER ADMIN PAYMENT INFO ================= -->
+      <section id="secSuperPaymentInfo" class="tab-content hidden space-y-8">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl max-w-3xl mx-auto">
+          <div class="flex items-center gap-3 pb-6 border-b border-slate-800 mb-6">
+            <div class="w-10 h-10 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-center text-xl">
+              💳
+            </div>
+            <div>
+              <h2 class="text-lg font-black text-white">إدارة بطاقات ومحافظ الدفع الإلكتروني للسوبر أدمن</h2>
+              <p class="text-xs text-slate-400">هذه البيانات تظهر تلقائياً في لوحة تحكم كل صيدلية لتحويل مبالغ التجديد إليها.</p>
+            </div>
+          </div>
+
+          <form onsubmit="handleSaveSuperPaymentInfo(event)" class="space-y-5">
+            <div>
+              <label class="block text-xs font-bold text-slate-300 mb-2">اسم صاحب الحساب / المستفيد *</label>
+              <input type="text" id="payCardHolder" placeholder="Hussain Super Admin" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white font-mono" required>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-slate-300 mb-2">رقم بطاقة Qi Card / ماستركارد</label>
+                <input type="text" id="payQiCard" placeholder="5314 xxxx xxxx xxxx" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white font-mono">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-300 mb-2">رقم محفظة زين كاش (ZainCash)</label>
+                <input type="text" id="payZainCash" placeholder="07813703288" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white font-mono">
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-300 mb-2">رقم حساب بنك FIB (أو الآيبان)</label>
+              <input type="text" id="payFib" placeholder="FIB-12345678" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white font-mono">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-300 mb-2">ملاحظات وتعليمات التحويل للصيادلة</label>
+              <textarea id="payNotes" rows="2" placeholder="يرجى إرسال صورة وصل التحويل عبر الواتساب لتجديد الاشتراك فورياً." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white"></textarea>
+            </div>
+
+            <div class="pt-4 border-t border-slate-800 flex justify-end">
+              <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black px-8 py-3.5 rounded-xl shadow-lg transition">
+                💾 حفظ وتحديث بيانات الدفع لجميع الصيدليات
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- ================= TAB 5: REPORTS & CONSOLIDATED EXCEL ================= -->
       <section id="secSuperReports" class="tab-content hidden space-y-8">
         
         <!-- Master Consolidated SaaS Report Card -->
@@ -407,7 +457,7 @@
   <div id="fullEditModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between pb-4 border-b border-slate-800 mb-6">
-        <h3 class="font-black text-white text-base">✏️ تعديل إعدادات وقالب واشتراك الصيدلية</h3>
+        <h3 class="font-black text-white text-base">✏️ تعديل إعدادات وقالب واشتراك وسقف الصيدلية</h3>
         <button onclick="closeFullEditModal()" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
       </div>
 
@@ -418,7 +468,7 @@
           <div>
             <label class="block text-xs font-bold text-emerald-400 mb-1">معرف الرابط (Slug / ID) *</label>
             <input type="text" id="editSlugInp" class="w-full bg-slate-950 border border-emerald-500/50 rounded-xl px-4 py-2.5 text-sm text-emerald-400 font-mono focus:border-emerald-400" required oninput="this.value = this.value.toLowerCase().replace(/[^a-z0-9_-]/g, '')">
-            <p class="text-[10px] text-slate-500 mt-1">تعديل هذا الحقل يغير رابط المتجر مباشرة</p>
+            <p class="text-[10px] text-slate-500 mt-1">تعديل هذا الحقل ينقل بيانات الصيدلية للمعرف الجديد</p>
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-300 mb-1">اسم الصيدلية</label>
@@ -433,6 +483,10 @@
             <input type="number" id="editSubPrice" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-amber-400 font-mono font-bold" required>
           </div>
           <div>
+            <label class="block text-xs font-bold text-slate-300 mb-1">السقف الأقصى لسعر الاشتراك (Max Cap)</label>
+            <input type="number" id="editMaxPriceCap" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-emerald-400 font-mono font-bold" required>
+          </div>
+          <div>
             <label class="block text-xs font-bold text-slate-300 mb-1">تاريخ انتهاء الاشتراك</label>
             <input type="date" id="editSubExpiry" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white font-mono" required>
           </div>
@@ -444,7 +498,7 @@
               <option value="template_default">القالب 3: الافتراضي المرجعي (template_default.js)</option>
             </select>
           </div>
-          <div class="sm:col-span-2">
+          <div>
             <label class="block text-xs font-bold text-slate-300 mb-1">رقم الواتساب</label>
             <input type="text" id="editWhatsapp" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white font-mono" required>
           </div>
@@ -539,6 +593,8 @@
       if (savedCfg.orderUnitPrice) document.getElementById('cfgOrderUnitPrice').value = savedCfg.orderUnitPrice;
       if (savedCfg.freeProducts) document.getElementById('cfgFreeProducts').value = savedCfg.freeProducts;
       if (savedCfg.productUnitPrice) document.getElementById('cfgProductUnitPrice').value = savedCfg.productUnitPrice;
+
+      loadSuperAdminPaymentInfo();
     });
 
     function switchSuperTab(tabKey) {
@@ -557,6 +613,9 @@
         document.getElementById('tabBtnBilling').className = 'tab-btn active px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20';
         document.getElementById('secSuperBilling').classList.remove('hidden');
         calculateLiveConsumptionBilling();
+      } else if (tabKey === 'paymentInfo') {
+        document.getElementById('tabBtnPaymentInfo').className = 'tab-btn active px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20';
+        document.getElementById('secSuperPaymentInfo').classList.remove('hidden');
       } else if (tabKey === 'reports') {
         document.getElementById('tabBtnReports').className = 'tab-btn active px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20';
         document.getElementById('secSuperReports').classList.remove('hidden');
@@ -728,6 +787,7 @@
       const adminEmail = document.getElementById('inpAdminEmail').value.trim().toLowerCase();
       const whatsapp = document.getElementById('inpWhatsapp').value.trim().replace(/\+/g, '');
       const subPrice = Number(document.getElementById('inpSubscriptionPrice').value || 0);
+      const maxCap = Number(document.getElementById('inpMaxPriceCap').value || 150000);
       const expiryDate = document.getElementById('inpExpiryDate').value;
       const templateId = document.getElementById('inpTemplateId').value;
       const color = document.getElementById('inpPrimaryColor').value.trim();
@@ -749,6 +809,7 @@
           adminEmail: adminEmail,
           socialWhatsapp: whatsapp,
           subscriptionPrice: subPrice,
+          maxPriceCap: maxCap,
           subscriptionExpiry: expiryDate,
           templateId: templateId,
           primaryColor: color,
@@ -784,7 +845,7 @@
           addedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        showToast(`🎉 تم إنشاء صيدلية "${name}" وتفعيل القالب بنجاح!`);
+        showToast(`🎉 تم إنشاء صيدلية "${name}" بنجاح!`);
         document.getElementById('addPharmacyForm').reset();
         fetchPharmaciesList();
       } catch (err) {
@@ -795,7 +856,7 @@
       }
     }
 
-    // ================= TAB 3: DATA CONSUMPTION & DYNAMIC BILLING ENGINE =================
+    // ================= TAB 3: BILLING & CONSUMPTION WITH MAX CAP =================
     function saveBillingMultiplierSettings() {
       const config = {
         freeOrders: Number(document.getElementById('cfgFreeOrders').value || 100),
@@ -827,29 +888,30 @@
           const slug = doc.id;
           const data = doc.data();
           const basePrice = Number(data.subscriptionPrice || 0);
+          const maxCap = Number(data.maxPriceCap || 150000);
 
-          // Get counts
           const ordersSnap = await db.collection('pharmacies').doc(slug).collection('orders').get();
           const productsSnap = await db.collection('pharmacies').doc(slug).collection('products').get();
 
           const ordersCount = ordersSnap.size;
           const productsCount = productsSnap.size;
-          const estimatedDbOps = (ordersCount * 3) + (productsCount * 2) + 20;
 
           const extraOrdersCost = Math.max(0, ordersCount - freeOrders) * orderUnitPrice;
           const extraProductsCost = Math.max(0, productsCount - freeProducts) * productUnitPrice;
           const totalUsageFee = extraOrdersCost + extraProductsCost;
-          const finalCalculatedPrice = basePrice + totalUsageFee;
+          
+          // تطبيق السقف الأقصى بدقة
+          const finalCalculatedPrice = Math.min(basePrice + totalUsageFee, maxCap);
 
           rows.push(`
             <tr class="hover:bg-slate-800/40 transition">
               <td class="py-3.5 px-4 font-bold text-white">${escapeHtml(data.name || slug)}</td>
               <td class="py-3.5 px-4 font-mono">${ordersCount} طلب</td>
               <td class="py-3.5 px-4 font-mono">${productsCount} مادة</td>
-              <td class="py-3.5 px-4 font-mono text-slate-400">${estimatedDbOps.toLocaleString()} ops</td>
               <td class="py-3.5 px-4 font-mono text-slate-300">${basePrice.toLocaleString()} د.ع</td>
               <td class="py-3.5 px-4 font-mono ${totalUsageFee > 0 ? 'text-amber-400 font-bold' : 'text-slate-400'}">+${totalUsageFee.toLocaleString()} د.ع</td>
               <td class="py-3.5 px-4 font-mono text-emerald-400 font-black text-sm">${finalCalculatedPrice.toLocaleString()} د.ع</td>
+              <td class="py-3.5 px-4 font-mono text-amber-400 font-bold">${maxCap.toLocaleString()} د.ع</td>
               <td class="py-3.5 px-4 text-center">
                 <button onclick="applyDynamicPriceToPharmacy('${escapeHtml(slug)}', ${finalCalculatedPrice})" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-lg text-xs font-bold transition">
                   اعتماد السعر 💰
@@ -876,7 +938,46 @@
       }
     }
 
-    // ================= TAB 4: REPORTS HUB & CONSOLIDATED EXCEL =================
+    // ================= TAB 4: SUPER ADMIN PAYMENT INFO =================
+    async function loadSuperAdminPaymentInfo() {
+      if (!db) return;
+      try {
+        const snap = await db.collection('system').doc('payment_info').get();
+        if (snap.exists) {
+          const d = snap.data();
+          document.getElementById('payCardHolder').value = d.cardHolder || '';
+          document.getElementById('payQiCard').value = d.qiCardNumber || '';
+          document.getElementById('payZainCash').value = d.zainCashNumber || '';
+          document.getElementById('payFib').value = d.fibAccount || '';
+          document.getElementById('payNotes').value = d.notes || '';
+        }
+      } catch (e) {
+        console.warn("Load payment info error:", e);
+      }
+    }
+
+    async function handleSaveSuperPaymentInfo(e) {
+      e.preventDefault();
+      if (!db) return;
+
+      const payload = {
+        cardHolder: document.getElementById('payCardHolder').value.trim(),
+        qiCardNumber: document.getElementById('payQiCard').value.trim(),
+        zainCashNumber: document.getElementById('payZainCash').value.trim(),
+        fibAccount: document.getElementById('payFib').value.trim(),
+        notes: document.getElementById('payNotes').value.trim(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      try {
+        await db.collection('system').doc('payment_info').set(payload, { merge: true });
+        showToast('تم حفظ وتعميم بيانات الدفع الإلكتروني بنجاح! 💳');
+      } catch (err) {
+        showToast('خطأ: ' + err.message, true);
+      }
+    }
+
+    // ================= TAB 5: REPORTS HUB & CONSOLIDATED EXCEL =================
     function renderIndividualReportsList() {
       const tbody = document.getElementById('individualReportsTableBody');
       const slugs = Object.keys(window.cachedPharmaciesMap);
@@ -992,7 +1093,7 @@
     // ================= MASTER CONSOLIDATED REPORT =================
     async function generateMasterConsolidatedData() {
       const snap = await db.collection('pharmacies').get();
-      let csv = "Pharmacy Name,Tenant Slug,Admin Email,Status,Subscription Expiry,Base Subscription (IQD),Total Orders Count,Total Sales GMV (IQD)\n";
+      let csv = "Pharmacy Name,Tenant Slug,Admin Email,Status,Subscription Expiry,Base Subscription (IQD),Max Price Cap (IQD),Total Orders Count,Total Sales GMV (IQD)\n";
       
       let grandTotalOrders = 0;
       let grandTotalSales = 0;
@@ -1002,6 +1103,7 @@
         const slug = doc.id;
         const data = doc.data();
         const subPrice = Number(data.subscriptionPrice || 0);
+        const maxCap = Number(data.maxPriceCap || 150000);
         grandTotalSubscriptions += subPrice;
 
         const ordersSnap = await db.collection('pharmacies').doc(slug).collection('orders').get();
@@ -1013,10 +1115,10 @@
         grandTotalSales += storeSales;
 
         const status = data.isActive === false ? 'Suspended' : 'Active';
-        csv += `"${(data.name || slug).replace(/"/g, '""')}","${slug}","${data.adminEmail || ''}","${status}","${data.subscriptionExpiry || ''}","${subPrice}","${ordersCount}","${storeSales}"\n`;
+        csv += `"${(data.name || slug).replace(/"/g, '""')}","${slug}","${data.adminEmail || ''}","${status}","${data.subscriptionExpiry || ''}","${subPrice}","${maxCap}","${ordersCount}","${storeSales}"\n`;
       }
 
-      csv += `\n"GRAND TOTALS","${snap.size} Stores","","","","${grandTotalSubscriptions} IQD","${grandTotalOrders} Orders","${grandTotalSales} IQD"\n`;
+      csv += `\n"GRAND TOTALS","${snap.size} Stores","","","","${grandTotalSubscriptions} IQD","","${grandTotalOrders} Orders","${grandTotalSales} IQD"\n`;
       return { csv, totalStores: snap.size, grandTotalSubscriptions, grandTotalOrders, grandTotalSales };
     }
 
@@ -1079,7 +1181,7 @@
       }
     }
 
-    // ================= FULL EDIT MODAL (WITH SLUG MIGRATION) =================
+    // ================= FULL EDIT MODAL (WITH SLUG & MAX CAP) =================
     function openFullEditModal(slug) {
       const data = window.cachedPharmaciesMap[slug] || {};
       document.getElementById('editOldSlugId').value = slug;
@@ -1087,6 +1189,7 @@
       document.getElementById('editName').value = data.name || '';
       document.getElementById('editAdminEmail').value = data.adminEmail || '';
       document.getElementById('editSubPrice').value = data.subscriptionPrice || 0;
+      document.getElementById('editMaxPriceCap').value = data.maxPriceCap || 150000;
       document.getElementById('editSubExpiry').value = data.subscriptionExpiry || '';
       document.getElementById('editTemplateId').value = data.templateId || 'template_default';
       document.getElementById('editWhatsapp').value = data.socialWhatsapp || '';
@@ -1106,6 +1209,7 @@
       const name = document.getElementById('editName').value.trim();
       const adminEmail = document.getElementById('editAdminEmail').value.trim().toLowerCase();
       const price = Number(document.getElementById('editSubPrice').value);
+      const maxCap = Number(document.getElementById('editMaxPriceCap').value || 150000);
       const expiry = document.getElementById('editSubExpiry').value;
       const templateId = document.getElementById('editTemplateId').value;
       const whatsapp = document.getElementById('editWhatsapp').value.trim();
@@ -1123,6 +1227,7 @@
           name: name,
           adminEmail: adminEmail,
           subscriptionPrice: price,
+          maxPriceCap: maxCap,
           subscriptionExpiry: expiry,
           templateId: templateId,
           socialWhatsapp: whatsapp,
