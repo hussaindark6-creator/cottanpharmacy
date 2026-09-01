@@ -1,12 +1,13 @@
 /* ==========================================================
    Template: Clinical Blue Pro (Medical & Professional Theme)
    File: /templates/template_b.js
+   Version: 2.0.0
    ========================================================== */
 
 const TemplateB = {
   id: 'template_b',
   name: 'القالب الطبي الحديث (Clinical Blue Pro)',
-  version: '1.0.0',
+  version: '2.0.0',
 
   // 1. تطبيق السمات البصرية والألوان الخاصة بالقالب B
   applyStyles(profile) {
@@ -49,7 +50,7 @@ const TemplateB = {
     `;
   },
 
-  // 3. تصميم بطاقة المنتج الطبية (Clinical Product Card)
+  // 3. تصميم بطاقة المنتج الطبية مع التقييم الحقيقي وزر التعديل المباشر
   renderProductCard(p, helpers) {
     const color = helpers.getBrandColor(p.brand);
     const discountPct = p.oldPrice ? Math.round((1 - p.price / p.oldPrice) * 100) : null;
@@ -57,6 +58,15 @@ const TemplateB = {
     const inStock = (p.inStock !== false);
     const cleanImg = helpers.sanitizeUrl(p.imageUrl);
     const isAdmin = helpers.isCurrentUserAdmin();
+
+    // التقييم الحقيقي الموثق
+    const reviewCount = Number(p.reviews || 0);
+    const avgRating = reviewCount > 0 ? Number(p.rating || 5.0).toFixed(1) : null;
+    const ratingHtml = reviewCount > 0
+      ? `<div class="p-rating" style="font-size:11px; font-weight:700; color:#64748B; display:flex; align-items:center; gap:2px;">
+          ${helpers.starIcon()} <span class="mono" style="font-weight:800; color:#0F172A;">${avgRating}</span> <span style="font-size:10px; color:#94A3B8;">(${reviewCount})</span>
+        </div>`
+      : `<span style="font-size:10px; font-weight:800; color:#0284C7; background:#F0F9FF; padding:1px 6px; border-radius:4px; border:1px solid #BAE6FD;">⭐ صنف جديد</span>`;
 
     return `
       <div class="product-card" style="border-radius:12px; background:#fff; border:1px solid #E2E8F0; padding:12px; position:relative; display:flex; flex-direction:column; box-shadow:0 2px 8px rgba(0,0,0,0.03);" onclick="openProduct('${helpers.sanitizeText(p.id)}', true)">
@@ -73,9 +83,7 @@ const TemplateB = {
 
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:2px;">
           <span style="font-size:10px; font-weight:800; color:#0284C7; text-transform:uppercase; background:#F0F9FF; padding:1px 6px; border-radius:4px; border:1px solid #BAE6FD;">${helpers.sanitizeText(p.brand || 'معتمد')}</span>
-          <div class="p-rating" style="font-size:11px; font-weight:700; color:#64748B; display:flex; align-items:center; gap:2px;">
-            ${helpers.starIcon()} <span>${p.rating || 4.8}</span>
-          </div>
+          ${ratingHtml}
         </div>
 
         <div class="p-name" style="font-weight:700; font-size:13px; color:#0F172A; line-height:1.4; min-height:36px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; margin-bottom:4px;">
@@ -93,10 +101,10 @@ const TemplateB = {
 
         ${isAdmin ? `
           <div class="admin-card-actions" onclick="event.stopPropagation()" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:3px; margin-top:6px; padding-top:4px; border-top:1px dashed #CBD5E1;">
-            <button class="btn-admin-stock ${inStock ? 'is-in' : 'is-out'}" onclick="quickToggleStock('${helpers.sanitizeText(p.id)}')">${inStock ? 'متوفر' : 'نافذ'}</button>
-            <button class="btn-admin-price" onclick="quickEditPrice('${helpers.sanitizeText(p.id)}', ${p.price})">السعر</button>
-            <button class="btn-admin-edit" onclick="openAdminQuickEditModal('${helpers.sanitizeText(p.id)}')">تعديل</button>
-            <button class="btn-admin-del" onclick="deleteProductConfirm('${helpers.sanitizeText(p.id)}', '${helpers.sanitizeText(p.name)}')">🗑️</button>
+            <button type="button" class="btn-admin-stock ${inStock ? 'is-in' : 'is-out'}" onclick="quickToggleStock('${helpers.sanitizeText(p.id)}')">${inStock ? 'متوفر 🟢' : 'نافذ 🔴'}</button>
+            <button type="button" class="btn-admin-price" onclick="quickEditPrice('${helpers.sanitizeText(p.id)}', ${p.price})">السعر 💰</button>
+            <button type="button" class="btn-admin-edit" onclick="openAdminQuickEditModal('${helpers.sanitizeText(p.id)}')">تعديل ✏️</button>
+            <button type="button" class="btn-admin-del" onclick="archiveProductConfirm('${helpers.sanitizeText(p.id)}', '${helpers.sanitizeText(p.name)}')">🗑️</button>
           </div>` : ''}
       </div>
     `;
