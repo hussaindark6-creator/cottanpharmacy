@@ -73,7 +73,7 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         لوحة تحكم وإدارة المتجر الشاملة
       </h2>
-      <p id="adminWelcomeDesc">مرحباً بك — إدارة متكاملة للطلبات، الموظفين، المنتجات، والهوية البصرية.</p>
+      <p id="adminWelcomeDesc">مرحباً بك — إدارة متكاملة للطلبات، الموظفين، المنتجات، والاشتراكات.</p>
     </div>
 
     <!-- LOW STOCK ALERT BANNER (تنبيه المخزون الذكي) -->
@@ -95,6 +95,7 @@
       <button class="admin-tab-btn-v active" id="btnTabVStats" onclick="switchAdminSection('stats')">📊 الإحصائيات والأرباح</button>
       <button class="admin-tab-btn-v" id="btnTabVOrders" onclick="switchAdminSection('orders')">📦 إدارة الطلبات والشحن</button>
       <button class="admin-tab-btn-v" id="btnTabVProducts" onclick="switchAdminSection('products')">💊 إدارة المنتجات والأدوية</button>
+      <button class="admin-tab-btn-v" id="btnTabVTrash" onclick="switchAdminSection('trash')">🗑️ سلة المحذوفات (<span id="adminTrashCount">0</span>)</button>
       <button class="admin-tab-btn-v" id="btnTabVCats" onclick="switchAdminSection('cats')">🗂️ إدارة الأقسام</button>
       <button class="admin-tab-btn-v" id="btnTabVOffers" onclick="switchAdminSection('offers')">🏷️ الخصومات والعروض</button>
       <button class="admin-tab-btn-v" id="btnTabVBundles" onclick="switchAdminSection('bundles')">🎁 حزم وبكجات التوفير</button>
@@ -103,6 +104,7 @@
       <button class="admin-tab-btn-v" id="btnTabVNotifs" onclick="switchAdminSection('notifs')">📢 إرسال إشعار للمستخدمين</button>
       <button class="admin-tab-btn-v" id="btnTabVAudit" onclick="switchAdminSection('audit')">🛡️ سجل العمليات والحماية</button>
       <button class="admin-tab-btn-v" id="btnTabVStaff" onclick="switchAdminSection('staff')">👥 الموظفين والصلاحيات</button>
+      <button class="admin-tab-btn-v" id="btnTabVSubscription" onclick="switchAdminSection('subscription')">💳 بيانات الاشتراك والدفع</button>
       <button class="admin-tab-btn-v" id="btnTabVDesign" onclick="switchAdminSection('design')">🎨 الهوية البصرية والتصميم</button>
     </div>
 
@@ -187,7 +189,7 @@
       </div>
     </div>
 
-    <!-- 3. PRODUCT MANAGEMENT SECTION (مع نموذج التعديل والإضافة الكامل) -->
+    <!-- 3. PRODUCT MANAGEMENT SECTION -->
     <div id="adminSecProducts" style="display:none;">
       <div class="admin-fieldset">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -272,7 +274,21 @@
       </div>
     </div>
 
-    <!-- 4. CATEGORY MANAGEMENT SECTION -->
+    <!-- 4. TRASH BIN & RESTORE SECTION (سلة المحذوفات والأرشيف) -->
+    <div id="adminSecTrash" style="display:none;">
+      <div class="admin-fieldset" style="border-color:#FEE2E2;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <legend style="color:#DC2626; margin-bottom:0;">🗑️ سلة المحذوفات والأدوية المؤرشفة</legend>
+          <button type="button" onclick="fetchArchivedProducts()" style="color:#DC2626; font-size:11.5px; font-weight:800;">🔄 تحديث السلة</button>
+        </div>
+        <p style="font-size:12px; color:var(--text-soft); margin-top:-4px; margin-bottom:14px;">
+          المنتجات المحذوفة لا تظهر للزبائن في المتجر، ويمكنك استرجاعها بضغطة زر واحدة أو حذفها نهائياً:
+        </p>
+        <div id="adminTrashListGrid" style="display:flex; flex-direction:column; gap:8px;"></div>
+      </div>
+    </div>
+
+    <!-- 5. CATEGORY MANAGEMENT SECTION -->
     <div id="adminSecCats" style="display:none;">
       <div class="admin-fieldset">
         <legend id="adminCatFormTitle">إضافة قسم رئيسي جديد</legend>
@@ -317,7 +333,7 @@
       </div>
     </div>
 
-    <!-- 5. ADVANCED DISCOUNTS & PROMO CARDS -->
+    <!-- 6. ADVANCED DISCOUNTS & PROMO CARDS -->
     <div id="adminSecOffers" style="display:none;">
       <div class="admin-fieldset">
         <legend>🎯 تطبيق خصم ذكي مجمع وتحديث الأسعار فورياً (Bulk Discount Engine)</legend>
@@ -385,7 +401,7 @@
       </div>
     </div>
 
-    <!-- 6. PRODUCT BUNDLES / SAVINGS PACKS -->
+    <!-- 7. PRODUCT BUNDLES / SAVINGS PACKS -->
     <div id="adminSecBundles" style="display:none;">
       <div class="admin-fieldset">
         <legend id="adminBundleFormTitle">🎁 إضافة حزمة / بكج توفير جديد</legend>
@@ -434,7 +450,7 @@
       </div>
     </div>
 
-    <!-- 7. PROMO CODES / COUPONS MANAGEMENT -->
+    <!-- 8. PROMO CODES / COUPONS MANAGEMENT -->
     <div id="adminSecCoupons" style="display:none;">
       <div class="admin-fieldset">
         <legend id="adminCouponFormTitle">🎟️ إضافة كود خصم جديد (Server & Firestore Promo Code)</legend>
@@ -487,7 +503,7 @@
       </div>
     </div>
 
-    <!-- 8. BRAND MANAGEMENT SECTION -->
+    <!-- 9. BRAND MANAGEMENT SECTION -->
     <div id="adminSecBrands" style="display:none;">
       <div class="admin-fieldset">
         <legend id="adminBrandFormTitle">🏢 إضافة ماركة جديدة</legend>
@@ -521,7 +537,7 @@
       </div>
     </div>
 
-    <!-- 9. NOTIFICATIONS BROADCAST -->
+    <!-- 10. NOTIFICATIONS BROADCAST -->
     <div id="adminSecNotifs" style="display:none;">
       <div class="admin-fieldset">
         <legend>📢 إرسال إشعار وتنبيه عام لجميع مستخدمي الموقع</legend>
@@ -552,7 +568,7 @@
       </div>
     </div>
 
-    <!-- 10. AUDIT LOGS -->
+    <!-- 11. AUDIT LOGS -->
     <div id="adminSecAudit" style="display:none;">
       <div class="admin-fieldset">
         <legend>🛡️ إعدادات الحماية ومعدل الطلبات (Rate Limiting)</legend>
@@ -593,7 +609,7 @@
       </div>
     </div>
 
-    <!-- 11. STAFF & PERMISSIONS (RBAC) -->
+    <!-- 12. STAFF & PERMISSIONS (RBAC) -->
     <div id="adminSecStaff" style="display:none;">
       <div class="admin-fieldset">
         <legend>👥 إضافة موظف جديد للصيدلية ومنح الصلاحيات</legend>
@@ -627,7 +643,15 @@
       </div>
     </div>
 
-    <!-- 12. THEME & BRANDING CUSTOMIZATION -->
+    <!-- 13. SUBSCRIPTION & SUPER ADMIN PAYMENT PORTAL (بيانات الدفع والاشتراك) -->
+    <div id="adminSecSubscription" style="display:none;">
+      <div class="admin-fieldset">
+        <legend>💳 تفاصيل اشتراك الصيدلية وبيانات الدفع الإلكتروني</legend>
+        <div id="pharmacySubscriptionDetailsWrap"></div>
+      </div>
+    </div>
+
+    <!-- 14. THEME & BRANDING CUSTOMIZATION -->
     <div id="adminSecDesign" style="display:none;">
       <form onsubmit="handleSaveCustomization(event)">
         <fieldset class="admin-fieldset">
@@ -734,11 +758,11 @@
 
   </div>
 
-  <!-- QUICK PRODUCT EDIT MODAL (مع كامل الحقول السريرية والتفاصيل) -->
+  <!-- QUICK CLINICAL PRODUCT EDIT MODAL (التعديل السريري الكامل) -->
   <div class="admin-quick-modal-overlay" id="adminQuickEditModal">
     <div class="admin-quick-card" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
       <div class="consult-header">
-        <h3 style="color:#111827;">✏️ تعديل تفاصيل المنتج والأدوية بالكامل</h3>
+        <h3 style="color:#111827;">✏️ تعديل تفاصيل الدواء والمنتج بالكامل</h3>
         <button class="icon-btn" onclick="closeAdminQuickEditModal()">✕</button>
       </div>
       <div style="padding:16px; text-align:right;">
@@ -794,17 +818,17 @@
 
         <div class="form-field">
           <label>الوصف المفصل والفوائد الطبية</label>
-          <textarea id="quickEditProdDesc" rows="3" placeholder="تفاصيل المنتج..."></textarea>
+          <textarea id="quickEditProdDesc" rows="3" placeholder="تفاصيل المنتج والفوائد..."></textarea>
         </div>
 
         <div style="display:flex; gap:10px;">
           <div class="form-field" style="flex:1;">
-            <label>المكونات الفعالة (Ingredients)</label>
-            <input type="text" id="quickEditProdIng" placeholder="المواد الفعالة...">
+            <label>المكونات الفعالة والتركيبة (Ingredients)</label>
+            <input type="text" id="quickEditProdIng" placeholder="Hyaluronic Acid, Ceramides...">
           </div>
           <div class="form-field" style="flex:1;">
-            <label>طريقة الاستخدام (Usage)</label>
-            <input type="text" id="quickEditProdUsage" placeholder="طريقة الاستعمال...">
+            <label>طريقة الاستخدام والإرشادات (Usage)</label>
+            <input type="text" id="quickEditProdUsage" placeholder="يوضع صباحاً ومساءً...">
           </div>
         </div>
 
@@ -928,7 +952,7 @@
       if (!isSuper && currentStaffData) {
         const role = currentStaffData.role;
         if (role === 'staff' || role === 'pharmacist') {
-          const sensitiveTabs = ['btnTabVDesign', 'btnTabVStaff', 'btnTabVAudit', 'btnTabVStats'];
+          const sensitiveTabs = ['btnTabVDesign', 'btnTabVStaff', 'btnTabVAudit', 'btnTabVStats', 'btnTabVSubscription'];
           sensitiveTabs.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.style.display = 'none';
