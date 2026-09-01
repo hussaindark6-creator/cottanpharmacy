@@ -1,6 +1,6 @@
 /* ==========================================================
    SaaS Multi-Tenant Pharmacy Engine — script.js
-   Full Enterprise Edition with Live Sync & Clinical Editing
+   Version: 2.0.0 (Master Ultra-Scalable Engine)
    ========================================================== */
 
 // ================= 1. SUBDOMAIN & SLUG RESOLVER =================
@@ -90,7 +90,8 @@ const dbPaths = {
   bundlesCol: (pId = currentPharmacyId) => db.collection('pharmacies').doc(pId).collection('bundles'),
   couponsCol: (pId = currentPharmacyId) => db.collection('pharmacies').doc(pId).collection('coupons'),
   notificationsCol: (pId = currentPharmacyId) => db.collection('pharmacies').doc(pId).collection('notifications'),
-  analyticsDailyCol: (pId = currentPharmacyId) => db.collection('pharmacies').doc(pId).collection('analytics_daily')
+  analyticsDailyCol: (pId = currentPharmacyId) => db.collection('pharmacies').doc(pId).collection('analytics_daily'),
+  systemDoc: (docId = 'payment_info') => db.collection('system').doc(docId)
 };
 
 // ================= 4. SANITIZATION & SECURITY =================
@@ -222,6 +223,7 @@ let brandsData = {
 
 let categories = [];
 let products = [];
+let archivedProducts = []; // سلة المحذوفات
 let bundles = [];
 let notifications = [];
 let staffMembers = [];
@@ -274,6 +276,14 @@ let pharmacyProfile = {
   promoCards: []
 };
 
+let superAdminPaymentInfo = {
+  cardHolder: 'Hussain Super Admin',
+  qiCardNumber: '---- ---- ---- ----',
+  zainCashNumber: '07813703288',
+  fibAccount: 'FIB-12345678',
+  notes: 'يرجى إرسال صورة وصل التحويل عبر الواتساب لتجديد الاشتراك فورياً'
+};
+
 function fmtPrice(n) { return (Number(n) || 0).toLocaleString('en-US') + ' د.ع'; }
 function findProduct(id) { return products.find(p => String(p.id) === String(id)); }
 function findBundle(id) { return bundles.find(b => String(b.id) === String(id)); }
@@ -284,6 +294,7 @@ function saveLocalState() {
   localStorage.setItem(getStorageKey('wishlist'), JSON.stringify([...wishlist]));
   localStorage.setItem(getStorageKey('my_orders'), JSON.stringify(myOrders));
   localStorage.setItem(getStorageKey('store_settings'), JSON.stringify(pharmacyProfile));
+  localStorage.setItem(getStorageKey('products_cache'), JSON.stringify(products));
 }
 
 function getBrandColor(brandName) {
@@ -291,7 +302,7 @@ function getBrandColor(brandName) {
   return hashColor(brandName || 'Pharmacy');
 }
 
-// ================= 7. DYNAMIC THEME LOADER & FAIL-SAFE ENGINE =================
+// ================= 7. DYNAMIC THEME LOADER & FAIL-SAFE =================
 const TEMPLATE_MODULE_MAP = {
   'template-one': 'templates/template_a.js',
   'template_a': 'templates/template_a.js',
@@ -395,7 +406,7 @@ function checkStorefrontSubscriptionLock() {
 
 // ================= 9. SMART LOW-STOCK DETECTOR =================
 function checkLowStockAlerts() {
-  const outOfStock = products.filter(p => p.inStock === false);
+  const outOfStock = products.filter(p => p.inStock === false && p.isDeleted !== true);
   const alertBanner = document.getElementById('adminLowStockAlertBanner');
   const alertCount = document.getElementById('adminLowStockCount');
 
@@ -457,7 +468,7 @@ async function sendOrderToPharmacyTelegram(orderObj) {
   }
 }
 
-// ================= 11. CONFIRM ORDER =================
+// ================= 11. CONFIRM ORDER & GUEST CHECKOUT =================
 async function confirmOrder() {
   if (!lockAction('confirmOrder', 2500)) return;
 
@@ -623,7 +634,8 @@ async function applyPromoCode(code) {
         showToast('كود الخصم غير مفعل حالياً ❌');
         return;
       }
-      if (c.expiry && new Date(c.expiry) < new Date()) {
+      const todayStr = new Date().toISOString().split('T')[0];
+      if (c.expiry && c.expiry < todayStr) {
         showToast('كود الخصم منتهي الصلاحية ❌');
         return;
       }
@@ -732,7 +744,8 @@ async function deleteAdminCoupon(id) {
 function populateBundleProductsChecklist() {
   const container = document.getElementById('bundleProductsChecklist');
   if (!container) return;
-  container.innerHTML = products.map(p => `
+  const activeProds = products.filter(p => p.isDeleted !== true);
+  container.innerHTML = activeProds.map(p => `
     <label style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:700; margin-bottom:6px; cursor:pointer;">
       <input type="checkbox" value="${p.id}" class="bundle-prod-cb" style="width:16px; height:16px;">
       <span>${sanitizeText(p.name)} (${fmtPrice(p.price)})</span>
@@ -773,7 +786,7 @@ function renderBundleCardHTML(b) {
     try {
       return activeThemeModule.renderBundleCard(b, getTemplateHelpers());
     } catch (e) {
-      console.warn("[Theme Engine] خطأ في عرض بطاقة البكج، جاري استخدام العرض الافتراضي:", e);
+      console.warn("[Theme Engine] خطأ في عرض بطاقة البكج:", e);
     }
   }
 
@@ -782,30 +795,30 @@ function renderBundleCardHTML(b) {
 
   return `
     <div class="bundle-card">
-      <span class="bundle-savings-badge">${sanitizeText(b.savingsBadge || 'توفير فوري 💸')}</span>
+      <span class="bundle-savings-badge">${helpers.sanitizeText(b.savingsBadge || 'توفير فوري 💸')}</span>
       <div class="bundle-thumb-row">
         ${cleanImg ? `<img src="${cleanImg}" style="max-height:100px; object-fit:contain;">` : 
           includedProds.map((p, idx) => `
             <div class="bundle-thumb-item">
-              ${p.imageUrl ? `<img src="${sanitizeUrl(p.imageUrl)}">` : (icons[p.type || 'bottle'] || icons.bottle)(getBrandColor(p.brand))}
+              ${p.imageUrl ? `<img src="${helpers.sanitizeUrl(p.imageUrl)}">` : (helpers.icons[p.type || 'bottle'] || helpers.icons.bottle)(helpers.getBrandColor(p.brand))}
             </div>
             ${idx < includedProds.length - 1 ? '<span class="bundle-plus-icon">+</span>' : ''}
           `).join('')
         }
       </div>
-      <h3 class="bundle-title">${sanitizeText(b.title)}</h3>
-      <p class="bundle-desc">${sanitizeText(b.description)}</p>
+      <h3 class="bundle-title">${helpers.sanitizeText(b.title)}</h3>
+      <p class="bundle-desc">${helpers.sanitizeText(b.description)}</p>
       <div class="bundle-items-list">
         <b>مكونات البكج:</b>
-        ${includedProds.map(p => `<span>• ${sanitizeText(p.name)} (${sanitizeText(p.brand)})</span>`).join('')}
+        ${includedProds.map(p => `<span>• ${helpers.sanitizeText(p.name)} (${helpers.sanitizeText(p.brand)})</span>`).join('')}
       </div>
       <div class="bundle-price-box">
         <div>
-          <span class="p-price mono" style="font-size:17px; color:var(--rose-deep);">${fmtPrice(b.price)}</span>
-          ${b.oldPrice ? `<span class="p-oldprice mono" style="margin-inline-start:6px;">${fmtPrice(b.oldPrice)}</span>` : ''}
+          <span class="p-price mono" style="font-size:17px; color:var(--rose-deep);">${helpers.fmtPrice(b.price)}</span>
+          ${b.oldPrice ? `<span class="p-oldprice mono" style="margin-inline-start:6px;">${helpers.fmtPrice(b.oldPrice)}</span>` : ''}
         </div>
       </div>
-      <button class="add-cart-btn" onclick="addBundleToCart('${sanitizeText(b.id)}')">
+      <button class="add-cart-btn" onclick="addBundleToCart('${helpers.sanitizeText(b.id)}')">
         🎁 أضف البكج كاملاً للسلة
       </button>
     </div>
@@ -927,7 +940,7 @@ async function deleteAdminBundle(id) {
   }
 }
 
-// ================= 14. 80mm THERMAL RECEIPT PRINTING =================
+// ================= 14. 80mm THERMAL RECEIPTS =================
 function openReceiptModal(orderId) {
   const ord = myOrders.find(o => String(o.id) === String(orderId)) || (window.adminLastOrdersList && window.adminLastOrdersList.find(o => String(o.id) === String(orderId)));
   if (!ord) {
@@ -994,7 +1007,7 @@ function closeReceiptModal() {
   if (modal) modal.classList.remove('open');
 }
 
-// ================= 15. RATINGS & AUTOFILL =================
+// ================= 15. 100% REAL RATINGS ENGINE & AUTOFILL =================
 function rateProductInstant(stars) {
   if (!currentProductId) return;
   const p = findProduct(currentProductId);
@@ -1007,9 +1020,13 @@ function rateProductInstant(stars) {
   }
   localStorage.setItem(ratedKey, String(stars));
 
-  const currentTotal = (Number(p.rating) || 4.8) * (Number(p.reviews) || 80);
-  const newReviews = (Number(p.reviews) || 80) + 1;
-  const newRating = Number(((currentTotal + stars) / newReviews).toFixed(1));
+  // حساب التقييم الحقيقي الرياضي الدقيق
+  const currentReviews = Number(p.reviews || 0);
+  const currentRating = Number(p.rating || 5.0);
+
+  const newReviews = currentReviews + 1;
+  const newRating = Number((((currentRating * currentReviews) + stars) / newReviews).toFixed(1));
+
   p.rating = newRating;
   p.reviews = newReviews;
 
@@ -1083,7 +1100,8 @@ function updateDiscountTargetOptions() {
     sel.innerHTML = categories.map(c => `<option value="${sanitizeText(c.id)}">${sanitizeText(c.label)}</option>`).join('');
   } else if (scope === 'product') {
     lbl.textContent = 'اختيار المنتج المحدد *';
-    sel.innerHTML = products.map(p => `<option value="${sanitizeText(p.id)}">${sanitizeText(p.name)} (${fmtPrice(p.price)})</option>`).join('');
+    const activeProds = products.filter(p => p.isDeleted !== true);
+    sel.innerHTML = activeProds.map(p => `<option value="${sanitizeText(p.id)}">${sanitizeText(p.name)} (${fmtPrice(p.price)})</option>`).join('');
   }
 }
 
@@ -1102,10 +1120,11 @@ async function handleApplyBulkDiscount(e) {
   }
 
   let targetProducts = [];
-  if (scope === 'all') targetProducts = products.slice();
-  else if (scope === 'brand') targetProducts = products.filter(p => p.brand === target);
-  else if (scope === 'category') targetProducts = products.filter(p => p.category === target);
-  else if (scope === 'product') targetProducts = products.filter(p => String(p.id) === String(target));
+  const activeProds = products.filter(p => p.isDeleted !== true);
+  if (scope === 'all') targetProducts = activeProds.slice();
+  else if (scope === 'brand') targetProducts = activeProds.filter(p => p.brand === target);
+  else if (scope === 'category') targetProducts = activeProds.filter(p => p.category === target);
+  else if (scope === 'product') targetProducts = activeProds.filter(p => String(p.id) === String(target));
 
   if (targetProducts.length === 0) {
     showToast('لم يتم العثور على منتجات مطابقة');
@@ -1384,7 +1403,7 @@ function renderRealAnalyticsView() {
 
   const topOrdersEl = document.getElementById('adminTopOrderedList');
   if (topOrdersEl) {
-    const topOrdered = [...products].filter(p => (Number(p.orderCount) || 0) > 0)
+    const topOrdered = products.filter(p => (Number(p.orderCount) || 0) > 0 && p.isDeleted !== true)
       .sort((a, b) => (Number(b.orderCount) || 0) - (Number(a.orderCount) || 0))
       .slice(0, 5);
 
@@ -1401,7 +1420,7 @@ function renderRealAnalyticsView() {
 
   const topViewsEl = document.getElementById('adminTopViewedList');
   if (topViewsEl) {
-    const topViewed = [...products].filter(p => (p.views || 0) > 0).sort((a,b) => (b.views || 0) - (a.views || 0)).slice(0, 5);
+    const topViewed = products.filter(p => (p.views || 0) > 0 && p.isDeleted !== true).sort((a,b) => (b.views || 0) - (a.views || 0)).slice(0, 5);
     topViewsEl.innerHTML = topViewed.length === 0 ? `<div class="no-results" style="padding:20px 0;">لا توجد مشاهدات مسجلة اليوم بعد.</div>` : 
       topViewed.map((p, idx) => `
         <div class="admin-rank-item">
@@ -1424,7 +1443,6 @@ function listenToAdminOrdersRealtime() {
     adminOrdersUnsubscribe();
   }
 
-  // الاستماع اللحظي الفوري لأي طلب جديد يضاف لمجموعة الصيدلية
   adminOrdersUnsubscribe = dbPaths.ordersCol().onSnapshot(snap => {
     const orders = [];
     snap.forEach(d => orders.push({ id: d.id, ...d.data() }));
@@ -1557,7 +1575,6 @@ async function buildDetailedOrdersCSV() {
   if (orders.length === 0) orders = myOrders;
 
   let csv = "Order ID,Date & Time,Customer Name,Phone Number,Full Address,Delivery Method,Order Status,Items Ordered,Total Amount (IQD),Delivery Fee (IQD),Net Store (IQD)\n";
-  
   let totalCOD = 0, totalDelivery = 0, totalNetStore = 0;
 
   orders.forEach(o => {
@@ -1598,7 +1615,7 @@ async function exportOrdersToCSV() {
   } catch (e) { console.error(e); }
 }
 
-// ================= 21. PRODUCTS FULL CLINICAL CRUD =================
+// ================= 21. CLINICAL PRODUCTS CRUD & SOFT DELETE =================
 function toggleLowStockFilter() {
   isLowStockFilterActive = !isLowStockFilterActive;
   const btn = document.getElementById('btnFilterLowStock');
@@ -1632,10 +1649,10 @@ async function quickToggleStock(id) {
   showToast(newStock ? 'تم التعيين: متوفر 🟢' : 'تم التعيين: نفذت الكمية 🔴');
 }
 
-// فتح نافذة التعديل السريع مع تعبئة كامل الحقول الطبية والسريرية
+// فتح نافذة التعديل السريع السريري وتعبئة كامل البيانات
 function openAdminQuickEditModal(id) {
   if (!assertAdmin()) return;
-  const p = findProduct(id);
+  const p = findProduct(id) || archivedProducts.find(x => String(x.id) === String(id));
   if (!p) return;
 
   populateCategoryDropdowns();
@@ -1776,8 +1793,9 @@ async function handleAdminProductSave(e) {
     usage: sanitizeText(document.getElementById('adminProdUsage').value.trim()),
     inStock: document.getElementById('adminProdInStock').checked,
     isSpecialOffer: document.getElementById('adminProdIsOffer').checked,
-    rating: 4.8,
-    reviews: 80,
+    isDeleted: false,
+    rating: 0,
+    reviews: 0,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
 
@@ -1798,17 +1816,92 @@ async function handleAdminProductSave(e) {
   }
 }
 
-async function deleteProductConfirm(id, name) {
+// ----------------- سلة المحذوفات والأرشفة (SOFT DELETE & TRASH BIN) -----------------
+async function archiveProductConfirm(id, name) {
   if (!assertAdmin()) return;
-  if (confirm(`هل أنتِ متأكدة من حذف المنتج "${name}" نهائياً؟`)) {
-    if (db) await dbPaths.productsCol().doc(String(id)).delete();
-    showToast('تم حذف المنتج بنجاح ✓');
+  if (confirm(`هل أنتِ متأكدة من نقل المنتج "${name}" إلى سلة المحذوفات؟ (يمكنك استرجاعه بأي وقت)`)) {
+    if (db) {
+      await dbPaths.productsCol().doc(String(id)).set({
+        isDeleted: true,
+        deletedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      showToast(`تم نقل "${name}" إلى سلة المحذوفات 🗑️`);
+    }
   }
+}
+
+async function restoreProduct(id) {
+  if (!assertAdmin()) return;
+  if (db) {
+    await dbPaths.productsCol().doc(String(id)).set({
+      isDeleted: false,
+      restoredAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    showToast('تم استرجاع المنتج وإعادته للمتجر بنجاح! ♻️');
+    fetchArchivedProducts();
+  }
+}
+
+async function permanentDeleteProduct(id, name) {
+  if (!assertAdmin()) return;
+  if (confirm(`تحذير نهائي: هل تريد حذف "${name}" نهائياً من قاعدة البيانات بلا رجعة؟`)) {
+    if (db) {
+      await dbPaths.productsCol().doc(String(id)).delete();
+      showToast('تم حذف المنتج نهائياً من السيرفر');
+      fetchArchivedProducts();
+    }
+  }
+}
+
+async function fetchArchivedProducts() {
+  if (!isFirebaseConfigured || !db) return;
+  try {
+    const snap = await dbPaths.productsCol().where('isDeleted', '==', true).get();
+    archivedProducts = [];
+    snap.forEach(d => archivedProducts.push({ id: d.id, ...d.data() }));
+    renderTrashBinList();
+  } catch (e) {
+    console.warn("Archived products fetch error:", e);
+  }
+}
+
+function renderTrashBinList() {
+  const container = document.getElementById('adminTrashListGrid');
+  const countEl = document.getElementById('adminTrashCount');
+  if (countEl) countEl.textContent = archivedProducts.length;
+  if (!container) return;
+
+  if (archivedProducts.length === 0) {
+    container.innerHTML = `<div class="no-results" style="padding:20px 0;">سلة المحذوفات فارغة حالياً 🌸</div>`;
+    return;
+  }
+
+  container.innerHTML = archivedProducts.map(p => `
+    <div style="background:#fff; border:1.5px solid #FEE2E2; border-radius:12px; padding:12px 14px; display:flex; align-items:center; justify-content:space-between;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:40px; height:40px; border-radius:8px; background:#FEF2F2; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+          ${p.imageUrl ? `<img src="${sanitizeUrl(p.imageUrl)}" style="width:100%; height:100%; object-fit:cover;">` : icons.bottle('#EF4444')}
+        </div>
+        <div>
+          <div style="font-weight:800; font-size:13.5px; color:var(--ink);">${sanitizeText(p.name)} (${sanitizeText(p.brand || '')})</div>
+          <div style="font-size:11px; color:var(--text-soft); font-family:monospace;">${fmtPrice(p.price)}</div>
+        </div>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button type="button" onclick="restoreProduct('${sanitizeText(p.id)}')" style="background:#DCFCE7; color:#166534; font-weight:800; font-size:11px; padding:6px 12px; border-radius:8px;">
+          ♻️ استرجاع
+        </button>
+        <button type="button" onclick="permanentDeleteProduct('${sanitizeText(p.id)}', '${sanitizeText(p.name)}')" style="background:#FEE2E2; color:#991B1B; font-weight:800; font-size:11px; padding:6px 10px; border-radius:8px;">
+          حذف نهائي ❌
+        </button>
+      </div>
+    </div>
+  `).join('');
 }
 
 // ================= 22. ADMIN SECTIONS CONTROLLER =================
 function switchAdminSection(sec) {
-  const sections = ['Stats', 'Orders', 'Coupons', 'Bundles', 'Audit', 'Cats', 'Products', 'Offers', 'Brands', 'Notifs', 'Design', 'Staff'];
+  const sections = ['Stats', 'Orders', 'Products', 'Cats', 'Offers', 'Bundles', 'Coupons', 'Brands', 'Notifs', 'Audit', 'Staff', 'Design', 'Subscription', 'Trash'];
   
   sections.forEach(k => {
     const btn = document.getElementById('btnTabV' + k);
@@ -1820,13 +1913,13 @@ function switchAdminSection(sec) {
 
   if (sec === 'stats') fetchRealAnalytics();
   if (sec === 'orders') fetchAdminOrdersList();
+  if (sec === 'products') populateCategoryDropdowns();
   if (sec === 'coupons') fetchAdminCoupons();
   if (sec === 'bundles') {
     populateBundleProductsChecklist();
     renderAdminBundlesList();
   }
   if (sec === 'audit') fetchAuditLogs();
-  if (sec === 'products') populateCategoryDropdowns();
   if (sec === 'offers') {
     updateDiscountTargetOptions();
     renderPromoCardsListAdmin();
@@ -1834,6 +1927,8 @@ function switchAdminSection(sec) {
   if (sec === 'cats') renderAdminCategoriesList();
   if (sec === 'brands') renderAdminBrandsList();
   if (sec === 'staff') fetchStaffList();
+  if (sec === 'subscription') fetchSuperAdminPaymentInfo();
+  if (sec === 'trash') fetchArchivedProducts();
 }
 
 // ================= 23. CART & CHECKOUT =================
@@ -2060,7 +2155,7 @@ function renderListing() {
   };
   titleEl.textContent = titles[listingMode] || 'المنتجات';
 
-  let list = products.slice();
+  let list = products.filter(p => p.isDeleted !== true);
   if (listingMode === 'category') {
     list = list.filter(p => p.category === listingValue);
   } else if (listingMode === 'search') {
@@ -2103,7 +2198,7 @@ function renderHomeProductGrid() {
   const title = document.getElementById('homeGridTitle');
   if (!title) return;
   
-  let list = products.slice();
+  let list = products.filter(p => p.isDeleted !== true);
   if (homeActiveBrand === 'all') {
     title.textContent = 'الأكثر مبيعاً 🔥';
     list = list.sort((a, b) => (Number(b.orderCount) || 0) - (Number(a.orderCount) || 0));
@@ -2150,14 +2245,14 @@ function renderBrandStrip() {
 }
 
 function renderOffers() {
-  const discounted = products.filter(p => p.oldPrice || p.isSpecialOffer);
+  const discounted = products.filter(p => (p.oldPrice || p.isSpecialOffer) && p.isDeleted !== true);
   const countEl = document.getElementById('offersCount');
   if (countEl) countEl.textContent = discounted.length + ' عرض';
   renderProductGrid('offersGrid', discounted);
 }
 
 function renderWishlist() {
-  const list = products.filter(p => wishlist.has(p.id));
+  const list = products.filter(p => wishlist.has(p.id) && p.isDeleted !== true);
   renderProductGrid('wishlistGrid', list, 'قائمتك المفضلة فارغة حالياً 🌸');
 }
 
@@ -2264,7 +2359,7 @@ function renderProductGrid(targetId, list, emptyMsg) {
   const el = document.getElementById(targetId);
   if (!el) return;
 
-  let displayList = list.slice();
+  let displayList = (list || []).filter(p => p.isDeleted !== true);
   if (isLowStockFilterActive) {
     displayList = displayList.filter(p => p.inStock === false);
   }
@@ -2291,10 +2386,16 @@ function renderProductGrid(targetId, list, emptyMsg) {
     const inStock = (p.inStock !== false);
     const cleanImg = sanitizeUrl(p.imageUrl);
 
+    const reviewCount = Number(p.reviews || 0);
+    const avgRating = reviewCount > 0 ? Number(p.rating || 5.0).toFixed(1) : null;
+    const ratingHtml = reviewCount > 0
+      ? `${starIcon()} <span class="mono" style="font-weight:800;">${avgRating}</span> <span style="font-size:10px; color:var(--text-soft);">(${reviewCount})</span>`
+      : `<span style="font-size:10.5px; color:var(--text-soft); font-weight:700;">⭐ جديد (0 تقييم)</span>`;
+
     return `
       <div class="product-card" onclick="openProduct('${sanitizeText(p.id)}', true)">
         <button class="wish-btn ${isWished ? 'active' : ''}" onclick="event.stopPropagation(); toggleWishlist('${sanitizeText(p.id)}')">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="${isWished ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M12 21s-7.5-4.9-10-9.5C.5 7.8 2.7 4 6.5 4 9 4 11 5.5 12 7c1-1.5 3-3 5.5-3 3.8 0 6 3.8 4.5 7.5C19.5 16.1 12 21 12 21Z"/></svg>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="${isWished ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.5-4.9-10-9.5C.5 7.8 2.7 4 6.5 4 9 4 11 5.5 12 7c1-1.5 3-3 5.5-3 3.8 0 6 3.8 4.5 7.5C19.5 16.1 12 21 12 21Z"/></svg>
         </button>
         ${discountPct ? `<span class="discount-badge">خصم ${discountPct}%</span>` : ''}
         ${!inStock ? `<span class="badge-out-stock">نفذت الكمية</span>` : ''}
@@ -2302,7 +2403,9 @@ function renderProductGrid(targetId, list, emptyMsg) {
         <div class="product-thumb" style="background:${color}18;">
           ${cleanImg ? `<img src="${cleanImg}" alt="${sanitizeText(p.name)}" loading="lazy">` : (icons[p.type] || icons.bottle)(color)}
         </div>
-        <div class="p-rating">${starIcon()} ${p.rating || 4.8} (${p.reviews || 80})</div>
+        <div class="p-rating" style="display:flex; align-items:center; gap:4px; margin-bottom:4px;">
+          ${ratingHtml}
+        </div>
         <div class="p-name">${sanitizeText(p.name)}</div>
         <div class="p-size">${sanitizeText(p.size || '')}</div>
         <div class="p-price-row">
@@ -2315,10 +2418,10 @@ function renderProductGrid(targetId, list, emptyMsg) {
 
         ${isAdmin ? `
           <div class="admin-card-actions" onclick="event.stopPropagation()">
-            <button class="btn-admin-stock ${inStock ? 'is-in' : 'is-out'}" onclick="quickToggleStock('${sanitizeText(p.id)}')">${inStock ? 'متوفر 🟢' : 'نفذت 🔴'}</button>
-            <button class="btn-admin-price" onclick="quickEditPrice('${sanitizeText(p.id)}', ${p.price})">السعر 💰</button>
-            <button class="btn-admin-edit" onclick="openAdminQuickEditModal('${sanitizeText(p.id)}')">تعديل ✏️</button>
-            <button class="btn-admin-del" onclick="deleteProductConfirm('${sanitizeText(p.id)}', '${sanitizeText(p.name)}')">🗑️</button>
+            <button type="button" class="btn-admin-stock ${inStock ? 'is-in' : 'is-out'}" onclick="quickToggleStock('${sanitizeText(p.id)}')">${inStock ? 'متوفر 🟢' : 'نفذت 🔴'}</button>
+            <button type="button" class="btn-admin-price" onclick="quickEditPrice('${sanitizeText(p.id)}', ${p.price})">السعر 💰</button>
+            <button type="button" class="btn-admin-edit" onclick="openAdminQuickEditModal('${sanitizeText(p.id)}')">تعديل ✏️</button>
+            <button type="button" class="btn-admin-del" onclick="archiveProductConfirm('${sanitizeText(p.id)}', '${sanitizeText(p.name)}')">🗑️</button>
           </div>` : ''}
       </div>`;
   }).join('');
@@ -2341,7 +2444,10 @@ function renderProductDetailDOM(p) {
 
   document.getElementById('pdBrand').textContent = p.brand || '';
   document.getElementById('pdName').textContent = p.name + (p.size ? ' — ' + p.size : '');
-  document.getElementById('pdRating').innerHTML = `${starIcon()} ${p.rating || 4.8} (${p.reviews || 80} تقييم)`;
+
+  const reviewCount = Number(p.reviews || 0);
+  const avgRating = reviewCount > 0 ? Number(p.rating || 5.0).toFixed(1) : 'جديد';
+  document.getElementById('pdRating').innerHTML = `${starIcon()} ${avgRating} (${reviewCount} تقييم)`;
 
   const discountPct = p.oldPrice ? Math.round((1 - p.price/p.oldPrice) * 100) : null;
   document.getElementById('pdPriceRow').innerHTML = `
@@ -2353,9 +2459,9 @@ function renderProductDetailDOM(p) {
   stockEl.className = inStock ? 'pd-stock' : 'pd-stock out';
   stockEl.innerHTML = inStock ? `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" style="width:18px;height:18px;"><path d="M5 13l4 4L19 7"/></svg><span>متوفر بالمخزون</span>` : `<span>نفذت الكمية حالياً</span>`;
 
-  document.getElementById('pdTabDesc').textContent = p.description || 'منتج أصلي معتمد.';
-  document.getElementById('pdTabIng').textContent = p.ingredients || 'تركيبة غنية ومفحوصة جلدياً.';
-  document.getElementById('pdTabUse').textContent = p.usage || 'يُوضع على بشرة نظيفة وفق الإرشادات.';
+  document.getElementById('pdTabDesc').textContent = p.description || 'منتج أصلي معتمد من الصيدلية.';
+  document.getElementById('pdTabIng').textContent = p.ingredients || 'تركيبة غنية ومفحوصة جلدياً وطبياً.';
+  document.getElementById('pdTabUse').textContent = p.usage || 'يُوضع على بشرة نظيفة وفق الإرشادات الصيدلانية.';
   
   const rated = localStorage.getItem(getStorageKey('rated_' + p.id));
   document.querySelectorAll('.star-btn').forEach((btn, idx) => {
@@ -2456,7 +2562,7 @@ function renderCrossSelling(currentP) {
   if (!grid || !currentP) return;
 
   const suggestions = products
-    .filter(p => p.id !== currentP.id && (p.brand === currentP.brand || p.category !== currentP.category))
+    .filter(p => p.id !== currentP.id && p.isDeleted !== true && (p.brand === currentP.brand || p.category !== currentP.category))
     .slice(0, 4);
 
   renderProductGrid('pdSuggestedGrid', suggestions);
@@ -2470,7 +2576,7 @@ function renderModernCategories() {
   
   if (container) {
     container.innerHTML = categories.map(c => {
-      const count = products.filter(p => p.category === c.id).length;
+      const count = products.filter(p => p.category === c.id && p.isDeleted !== true).length;
       
       if (activeThemeModule && typeof activeThemeModule.renderCategoryCard === 'function') {
         try {
@@ -2509,7 +2615,7 @@ function renderAdminCategoriesList() {
   const container = document.getElementById('adminCategoriesListGrid');
   if (!container) return;
   container.innerHTML = categories.map(c => {
-    const count = products.filter(p => p.category === c.id).length;
+    const count = products.filter(p => p.category === c.id && p.isDeleted !== true).length;
     const cleanImg = sanitizeUrl(c.imageUrl);
     return `
       <div style="background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between;">
@@ -2782,7 +2888,73 @@ async function deleteStaffMember(staffId) {
   }
 }
 
-// ================= 29. THEME & BRANDING SAVER =================
+// ================= 29. SUPER ADMIN PAYMENT INFO SYNC FOR MERCHANTS =================
+async function fetchSuperAdminPaymentInfo() {
+  if (!isFirebaseConfigured || !db) return;
+  try {
+    const snap = await dbPaths.systemDoc('payment_info').get();
+    if (snap.exists) {
+      superAdminPaymentInfo = { ...superAdminPaymentInfo, ...snap.data() };
+    }
+    renderPharmacySubscriptionCard();
+  } catch (e) {
+    console.warn("Payment info fetch error:", e);
+  }
+}
+
+function renderPharmacySubscriptionCard() {
+  const container = document.getElementById('pharmacySubscriptionDetailsWrap');
+  if (!container) return;
+
+  const price = Number(pharmacyProfile.subscriptionPrice || 50000);
+  const expiry = pharmacyProfile.subscriptionExpiry || '2099-12-31';
+
+  // حساب الأيام المتبقية
+  const today = new Date();
+  const expDate = new Date(expiry);
+  const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
+  const isExp = diffDays <= 0;
+
+  container.innerHTML = `
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px; margin-bottom:18px;">
+      <div style="background:#F0FDF4; border:1.5px solid #BBF7D0; border-radius:14px; padding:14px; text-align:center;">
+        <div style="font-size:11.5px; font-weight:800; color:#15803D; margin-bottom:4px;">💰 سعر الاشتراك الشهري المعتمد</div>
+        <div class="mono" style="font-size:20px; font-weight:900; color:#166534;">${fmtPrice(price)}</div>
+      </div>
+      <div style="background:${isExp ? '#FEF2F2' : '#EFF6FF'}; border:1.5px solid ${isExp ? '#FECACA' : '#BFDBFE'}; border-radius:14px; padding:14px; text-align:center;">
+        <div style="font-size:11.5px; font-weight:800; color:${isExp ? '#DC2626' : '#1E40AF'}; margin-bottom:4px;">⏳ تاريخ انتهاء الصلاحية</div>
+        <div class="mono" style="font-size:16px; font-weight:900; color:${isExp ? '#991B1B' : '#1E3A8A'};">${expiry} (${isExp ? 'منتهي' : diffDays + ' يوم متبقي'})</div>
+      </div>
+    </div>
+
+    <!-- بيانات الدفع الإلكتروني للسوبر أدمن -->
+    <div style="background:#F8FAFC; border:1.5px solid #E2E8F0; border-radius:16px; padding:18px; text-align:right;">
+      <h4 style="margin:0 0 10px; font-size:14px; font-weight:900; color:#0F172A; display:flex; align-items:center; gap:6px;">
+        💳 بيانات بطاقات ومحافظ الدفع المعتمدة للمنصة:
+      </h4>
+      <div style="font-size:12.5px; color:#334155; line-height:1.8; space-y:6px;">
+        <div>👤 <b>اسم المستفيد:</b> <span class="mono">${sanitizeText(superAdminPaymentInfo.cardHolder || 'Hussain Admin')}</span></div>
+        <div>💳 <b>رقم بطاقة Qi Card / ماستركارد:</b> <span class="mono" style="background:#E2E8F0; padding:2px 8px; border-radius:6px; font-weight:900;">${sanitizeText(superAdminPaymentInfo.qiCardNumber || '----')}</span></div>
+        <div>📱 <b>محفظة زين كاش (ZainCash):</b> <span class="mono" style="background:#E2E8F0; padding:2px 8px; border-radius:6px; font-weight:900;">${sanitizeText(superAdminPaymentInfo.zainCashNumber || '07813703288')}</span></div>
+        <div>🏦 <b>حساب بنك FIB:</b> <span class="mono">${sanitizeText(superAdminPaymentInfo.fibAccount || 'N/A')}</span></div>
+        <div style="margin-top:8px; font-size:11.5px; color:#64748B;">📌 <i>${sanitizeText(superAdminPaymentInfo.notes || 'يرجى إرسال وصل التحويل عبر الواتساب للتجديد فورياً.')}</i></div>
+      </div>
+      
+      <div style="margin-top:14px; display:flex; gap:10px;">
+        <button type="button" onclick="sendRenewalReceiptWhatsApp(${price})" class="admin-btn-save" style="margin:0; background:linear-gradient(135deg, #25D366 0%, #128C7E 100%); font-size:13px;">
+          📲 إرسال إشعار السداد ووصل التحويل عبر واتساب
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function sendRenewalReceiptWhatsApp(price) {
+  const adminMsg = encodeURIComponent(`🌸 *طلب تجديد اشتراك صيدلية*\nاسم الصيدلية: ${pharmacyProfile.name}\nالمعرف: ${currentPharmacyId}\nالمبلغ المحول: ${price.toLocaleString()} د.ع\nتاريخ الطلب: ${new Date().toLocaleDateString('ar-IQ')}\nيرجى اعتماد التجديد.`);
+  window.open(`https://wa.me/9647813703288?text=${adminMsg}`, '_blank');
+}
+
+// ================= 30. THEME & BRANDING SAVER =================
 async function handleSaveCustomization(e) {
   e.preventDefault();
   if (!assertAdmin() || !lockAction('saveCustomization', 1200)) return;
@@ -2889,11 +3061,20 @@ function applyStoreSettings() {
   if (pLink) pLink.href = `tel:${pharmacyProfile.socialPhone || ''}`;
 }
 
-// ================= 30. FIRESTORE REALTIME SYNC =================
+// ================= 31. FIRESTORE REALTIME SYNC (WITH CACHE) =================
 function initFirestoreSync() {
   if (!isFirebaseConfigured || !db) return;
 
-  // 1. مزامنة وثيقة الصيدلية الحالية وفحص صلاحية الاشتراك (Kill Switch)
+  // جلب الكاش أولاً للسرعة القصوى
+  const cachedProds = localStorage.getItem(getStorageKey('products_cache'));
+  if (cachedProds) {
+    try {
+      products = JSON.parse(cachedProds);
+      renderCurrentActiveView();
+    } catch (e) {}
+  }
+
+  // 1. مزامنة وثيقة الصيدلية الحالية
   dbPaths.pharmacyDoc().onSnapshot(doc => {
     if (doc.exists) {
       pharmacyProfile = { ...pharmacyProfile, ...doc.data() };
@@ -2932,7 +3113,7 @@ function initFirestoreSync() {
     }
   }, err => console.warn(err));
 
-  // 4. مزامنة المنتجات وتنبيهات النواقص
+  // 4. مزامنة المنتجات وتحديث الكاش المحلي
   dbPaths.productsCol().onSnapshot(snap => {
     if (!snap.empty) {
       const loaded = [];
@@ -2945,6 +3126,7 @@ function initFirestoreSync() {
         }
       });
 
+      saveLocalState();
       renderCurrentActiveView();
       renderModernCategories();
       populateBundleProductsChecklist();
@@ -2957,7 +3139,7 @@ function initFirestoreSync() {
   recordRealVisit();
 }
 
-// ================= 31. NOTIFICATIONS =================
+// ================= 32. NOTIFICATIONS & BROADCAST =================
 function listenToNotifications() {
   if (!isFirebaseConfigured || !db) return;
   dbPaths.notificationsCol().orderBy('createdAt', 'desc').limit(20).onSnapshot(snap => {
@@ -3089,7 +3271,7 @@ async function handleSaveSecuritySettings(e) {
   }
 }
 
-// ================= 32. GOOGLE AUTH & REDIRECT HANDLER =================
+// ================= 33. GOOGLE AUTH & REDIRECT =================
 function updateUserHeaderProfile() {
   const chipAvatar = document.getElementById('userChipAvatar');
   const chipName = document.getElementById('userChipName');
@@ -3263,7 +3445,7 @@ function updateAdminInterfaceState() {
   }
 }
 
-// ================= 33. SHARE & CONSULTATION =================
+// ================= 34. SHARE & CONSULTATION =================
 function shareCurrentProduct() {
   if (!currentProductId) return;
   const p = findProduct(currentProductId);
@@ -3374,7 +3556,7 @@ function showToast(msg) {
   toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
 }
 
-// ================= 34. INITIALIZATION & BOOTSTRAP =================
+// ================= 35. INITIALIZATION & BOOTSTRAP =================
 window.addEventListener('DOMContentLoaded', async () => {
   patchTenantLinks();
   applyStoreSettings();
@@ -3404,6 +3586,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     renderAdminBrandsList();
     renderPromoCardsListAdmin();
     fetchStaffList();
+    fetchArchivedProducts();
+    fetchSuperAdminPaymentInfo();
     checkLowStockAlerts();
   }
 });
