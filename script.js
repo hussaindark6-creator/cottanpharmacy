@@ -1,6 +1,6 @@
 /* ==========================================================
    SaaS Multi-Tenant Pharmacy Engine — script.js
-   Version: 2.0.0 (Master Ultra-Scalable Engine)
+   Version: 3.0.0 (Master Enterprise Edition)
    ========================================================== */
 
 // ================= 1. SUBDOMAIN & SLUG RESOLVER =================
@@ -94,7 +94,7 @@ const dbPaths = {
   systemDoc: (docId = 'payment_info') => db.collection('system').doc(docId)
 };
 
-// ================= 4. SANITIZATION & SECURITY =================
+// ================= 4. SANITIZATION, FUZZY SEARCH & SECURITY =================
 function sanitizeText(str) {
   if (typeof str !== 'string') return str == null ? '' : String(str);
   return str
@@ -112,6 +112,19 @@ function sanitizeUrl(url) {
     return encodeURI(clean).replace(/"/g, '%22').replace(/'/g, '%27').replace(/</g, '%3C').replace(/>/g, '%3E');
   }
   return '';
+}
+
+// دالة تطبيع النصوص العربية والإنجليزية للبحث الذكي
+function normalizeArabic(text) {
+  if (!text) return '';
+  return String(text)
+    .toLowerCase()
+    .trim()
+    .replace(/[أإآ]/g, 'ا')
+    .replace(/ة/g, 'ه')
+    .replace(/ى/g, 'ي')
+    .replace(/[ًٌٍَُِّْ]/g, '')
+    .replace(/[\s\-_]+/g, ' ');
 }
 
 function isSuperAdmin() {
@@ -223,7 +236,7 @@ let brandsData = {
 
 let categories = [];
 let products = [];
-let archivedProducts = []; // سلة المحذوفات
+let archivedProducts = [];
 let bundles = [];
 let notifications = [];
 let staffMembers = [];
@@ -272,6 +285,7 @@ let pharmacyProfile = {
   isActive: true,
   subscriptionExpiry: '2099-12-31',
   subscriptionPrice: 50000,
+  maxPriceCap: 150000,
   telegramConfig: { botToken: '', chatId: '', enabled: false },
   promoCards: []
 };
@@ -382,6 +396,41 @@ function applyPharmacyTemplate(templateId = 'template-one') {
   htmlRoot.setAttribute('data-template', templateId);
 }
 
+// دالة تفاعلية لاختيار تركيز أو حجم الدواء مباشرة من الكارت (Variants Switching)
+function selectProductVariantCard(buttonEl, productId) {
+  const p = findProduct(productId);
+  if (!p) return;
+
+  const card = document.getElementById(`prod-card-${productId}`);
+  if (!card) return;
+
+  card.querySelectorAll('.p-variant-chip').forEach(btn => {
+    btn.style.background = '#fff';
+    btn.style.color = 'var(--ink)';
+    btn.classList.remove('active');
+  });
+
+  buttonEl.style.background = 'var(--surface)';
+  buttonEl.style.color = 'var(--rose-deep)';
+  buttonEl.classList.add('active');
+
+  const newPrice = Number(buttonEl.getAttribute('data-price') || p.price);
+  const newOldPrice = buttonEl.getAttribute('data-oldprice');
+
+  const priceValEl = document.getElementById(`price-val-${productId}`);
+  const oldPriceValEl = document.getElementById(`oldprice-val-${productId}`);
+
+  if (priceValEl) priceValEl.textContent = fmtPrice(newPrice);
+  if (oldPriceValEl) {
+    if (newOldPrice) {
+      oldPriceValEl.textContent = fmtPrice(Number(newOldPrice));
+      oldPriceValEl.style.display = 'inline';
+    } else {
+      oldPriceValEl.style.display = 'none';
+    }
+  }
+}
+
 // ================= 8. STOREFRONT KILL SWITCH =================
 function checkStorefrontSubscriptionLock() {
   const isSuspended = pharmacyProfile.isActive === false;
@@ -406,7 +455,7 @@ function checkStorefrontSubscriptionLock() {
 
 // ================= 9. SMART LOW-STOCK DETECTOR =================
 function checkLowStockAlerts() {
-  const outOfStock = products.filter(p => p.inStock === false && p.isDeleted !== true);
+  const outOfStock = products.filter(p => (p.inStock === false || (p.stockQuantity !== undefined && p.stockQuantity <= 0)) && p.isDeleted !== true);
   const alertBanner = document.getElementById('adminLowStockAlertBanner');
   const alertCount = document.getElementById('adminLowStockCount');
 
@@ -468,7 +517,7 @@ async function sendOrderToPharmacyTelegram(orderObj) {
   }
 }
 
-// ================= 11. CONFIRM ORDER & GUEST CHECKOUT =================
+// ================= 11. CONFIRM ORDER (WITH ATOMIC STOCK DECREMENT) =================
 async function confirmOrder() {
   if (!lockAction('confirmOrder', 2500)) return;
 
@@ -545,6 +594,7 @@ async function confirmOrder() {
   myOrders.unshift(newOrderObj);
   saveLocalState();
 
+  // الحفظ السحابي مع تخفيض المخزون الذري في Firestore
   if (db) {
     try {
       await dbPaths.ordersCol().doc(orderId).set({
@@ -554,9 +604,11 @@ async function confirmOrder() {
 
       itemsPayload.forEach(it => {
         if (!it.isBundle && it.id) {
-          dbPaths.productsCol().doc(String(it.id)).set({
-            orderCount: firebase.firestore.FieldValue.increment(Number(it.quantity || 1))
-          }, { merge: true }).catch(console.warn);
+          const prodRef = dbPaths.productsCol().doc(String(it.id));
+          prodRef.update({
+            orderCount: firebase.firestore.FieldValue.increment(Number(it.quantity || 1)),
+            stockQuantity: firebase.firestore.FieldValue.increment(-Number(it.quantity || 1))
+          }).catch(console.warn);
         }
       });
     } catch (e) {
@@ -795,30 +847,30 @@ function renderBundleCardHTML(b) {
 
   return `
     <div class="bundle-card">
-      <span class="bundle-savings-badge">${helpers.sanitizeText(b.savingsBadge || 'توفير فوري 💸')}</span>
+      <span class="bundle-savings-badge">${sanitizeText(b.savingsBadge || 'توفير فوري 💸')}</span>
       <div class="bundle-thumb-row">
         ${cleanImg ? `<img src="${cleanImg}" style="max-height:100px; object-fit:contain;">` : 
           includedProds.map((p, idx) => `
             <div class="bundle-thumb-item">
-              ${p.imageUrl ? `<img src="${helpers.sanitizeUrl(p.imageUrl)}">` : (helpers.icons[p.type || 'bottle'] || helpers.icons.bottle)(helpers.getBrandColor(p.brand))}
+              ${p.imageUrl ? `<img src="${sanitizeUrl(p.imageUrl)}">` : (icons[p.type || 'bottle'] || icons.bottle)(getBrandColor(p.brand))}
             </div>
             ${idx < includedProds.length - 1 ? '<span class="bundle-plus-icon">+</span>' : ''}
           `).join('')
         }
       </div>
-      <h3 class="bundle-title">${helpers.sanitizeText(b.title)}</h3>
-      <p class="bundle-desc">${helpers.sanitizeText(b.description)}</p>
+      <h3 class="bundle-title">${sanitizeText(b.title)}</h3>
+      <p class="bundle-desc">${sanitizeText(b.description)}</p>
       <div class="bundle-items-list">
         <b>مكونات البكج:</b>
-        ${includedProds.map(p => `<span>• ${helpers.sanitizeText(p.name)} (${helpers.sanitizeText(p.brand)})</span>`).join('')}
+        ${includedProds.map(p => `<span>• ${sanitizeText(p.name)} (${sanitizeText(p.brand)})</span>`).join('')}
       </div>
       <div class="bundle-price-box">
         <div>
-          <span class="p-price mono" style="font-size:17px; color:var(--rose-deep);">${helpers.fmtPrice(b.price)}</span>
-          ${b.oldPrice ? `<span class="p-oldprice mono" style="margin-inline-start:6px;">${helpers.fmtPrice(b.oldPrice)}</span>` : ''}
+          <span class="p-price mono" style="font-size:17px; color:var(--rose-deep);">${fmtPrice(b.price)}</span>
+          ${b.oldPrice ? `<span class="p-oldprice mono" style="margin-inline-start:6px;">${fmtPrice(b.oldPrice)}</span>` : ''}
         </div>
       </div>
-      <button class="add-cart-btn" onclick="addBundleToCart('${helpers.sanitizeText(b.id)}')">
+      <button class="add-cart-btn" onclick="addBundleToCart('${sanitizeText(b.id)}')">
         🎁 أضف البكج كاملاً للسلة
       </button>
     </div>
@@ -1020,7 +1072,7 @@ function rateProductInstant(stars) {
   }
   localStorage.setItem(ratedKey, String(stars));
 
-  // حساب التقييم الحقيقي الرياضي الدقيق
+  // حساب التقييم الحقيقي الدقيق رياضياً بدون أرقام مسبقة
   const currentReviews = Number(p.reviews || 0);
   const currentRating = Number(p.rating || 5.0);
 
@@ -1649,7 +1701,7 @@ async function quickToggleStock(id) {
   showToast(newStock ? 'تم التعيين: متوفر 🟢' : 'تم التعيين: نفذت الكمية 🔴');
 }
 
-// فتح نافذة التعديل السريع السريري وتعبئة كامل البيانات
+// فتح نافذة التعديل السريع السريري وتعبئة كامل البيانات الطبية
 function openAdminQuickEditModal(id) {
   if (!assertAdmin()) return;
   const p = findProduct(id) || archivedProducts.find(x => String(x.id) === String(id));
@@ -1663,6 +1715,7 @@ function openAdminQuickEditModal(id) {
   document.getElementById('quickEditProdPrice').value = p.price || '';
   if (document.getElementById('quickEditProdOldPrice')) document.getElementById('quickEditProdOldPrice').value = p.oldPrice || '';
   if (document.getElementById('quickEditProdSize')) document.getElementById('quickEditProdSize').value = p.size || '';
+  if (document.getElementById('quickEditProdStockQty')) document.getElementById('quickEditProdStockQty').value = (p.stockQuantity !== undefined ? p.stockQuantity : 10);
   document.getElementById('quickEditProdCat').value = p.category || (categories[0] ? categories[0].id : 'face');
   document.getElementById('quickEditProdType').value = p.type || 'bottle';
   document.getElementById('quickEditProdImg').value = p.imageUrl || '';
@@ -1691,6 +1744,7 @@ async function saveAdminQuickEdit() {
   const oldPriceVal = document.getElementById('quickEditProdOldPrice') ? document.getElementById('quickEditProdOldPrice').value.trim() : '';
   const oldPrice = oldPriceVal ? Number(oldPriceVal) : null;
   const size = document.getElementById('quickEditProdSize') ? document.getElementById('quickEditProdSize').value.trim() : 'عبوة قياسية';
+  const stockQty = document.getElementById('quickEditProdStockQty') ? Number(document.getElementById('quickEditProdStockQty').value || 10) : 10;
   const category = document.getElementById('quickEditProdCat').value;
   const type = document.getElementById('quickEditProdType').value;
   const imageUrl = sanitizeUrl(document.getElementById('quickEditProdImg').value.trim());
@@ -1711,13 +1765,14 @@ async function saveAdminQuickEdit() {
     price,
     oldPrice,
     size,
+    stockQuantity: stockQty,
     category,
     type,
     imageUrl,
     description,
     ingredients,
     usage,
-    inStock,
+    inStock: inStock && stockQty > 0,
     isSpecialOffer,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
@@ -1756,6 +1811,7 @@ function resetAdminProductForm() {
   document.getElementById('adminProdDesc').value = '';
   document.getElementById('adminProdIng').value = '';
   document.getElementById('adminProdUsage').value = '';
+  if (document.getElementById('adminProdStockQty')) document.getElementById('adminProdStockQty').value = '10';
   document.getElementById('adminProdInStock').checked = true;
   document.getElementById('adminProdIsOffer').checked = false;
   document.getElementById('adminProdImgPreviewBox').style.display = 'none';
@@ -1773,6 +1829,7 @@ async function handleAdminProductSave(e) {
   const price = Number(document.getElementById('adminProdPrice').value);
   const oldPriceVal = document.getElementById('adminProdOldPrice').value.trim();
   const oldPrice = oldPriceVal ? Number(oldPriceVal) : null;
+  const stockQty = document.getElementById('adminProdStockQty') ? Number(document.getElementById('adminProdStockQty').value || 10) : 10;
 
   if (!name || !brand || isNaN(price) || price <= 0) {
     showToast('يرجى التأكد من كتابة الاسم والماركة والسعر');
@@ -1785,13 +1842,14 @@ async function handleAdminProductSave(e) {
     category: sanitizeText(document.getElementById('adminProdCat').value),
     type: sanitizeText(document.getElementById('adminProdType').value || 'bottle'),
     size: sanitizeText(document.getElementById('adminProdSize').value.trim() || 'عبوة قياسية'),
+    stockQuantity: stockQty,
     price: price,
     oldPrice: oldPrice,
     imageUrl: sanitizeUrl(document.getElementById('adminProdImgUrl').value.trim()),
     description: sanitizeText(document.getElementById('adminProdDesc').value.trim()),
     ingredients: sanitizeText(document.getElementById('adminProdIng').value.trim()),
     usage: sanitizeText(document.getElementById('adminProdUsage').value.trim()),
-    inStock: document.getElementById('adminProdInStock').checked,
+    inStock: document.getElementById('adminProdInStock').checked && stockQty > 0,
     isSpecialOffer: document.getElementById('adminProdIsOffer').checked,
     isDeleted: false,
     rating: 0,
@@ -2127,6 +2185,7 @@ function openBestSellers() {
   showListingView();
 }
 
+// محرك البحث الذكي المطوّر لتطبيع الكلمات العربية والإنجليزية
 function onSearch(val) {
   const term = val.trim();
   if (!term) return;
@@ -2159,8 +2218,14 @@ function renderListing() {
   if (listingMode === 'category') {
     list = list.filter(p => p.category === listingValue);
   } else if (listingMode === 'search') {
-    const t = listingValue.toLowerCase();
-    list = list.filter(p => p.name.toLowerCase().includes(t) || (p.brand && p.brand.toLowerCase().includes(t)));
+    const qNorm = normalizeArabic(listingValue);
+    list = list.filter(p => {
+      const nameNorm = normalizeArabic(p.name || '');
+      const brandNorm = normalizeArabic(p.brand || '');
+      const descNorm = normalizeArabic(p.description || '');
+      const ingNorm = normalizeArabic(p.ingredients || '');
+      return nameNorm.includes(qNorm) || brandNorm.includes(qNorm) || descNorm.includes(qNorm) || ingNorm.includes(qNorm);
+    });
   } else if (listingMode === 'bestsellers') {
     list = list.sort((a, b) => (Number(b.orderCount) || 0) - (Number(a.orderCount) || 0));
   }
@@ -2361,7 +2426,7 @@ function renderProductGrid(targetId, list, emptyMsg) {
 
   let displayList = (list || []).filter(p => p.isDeleted !== true);
   if (isLowStockFilterActive) {
-    displayList = displayList.filter(p => p.inStock === false);
+    displayList = displayList.filter(p => p.inStock === false || (p.stockQuantity !== undefined && p.stockQuantity <= 0));
   }
 
   if (displayList.length === 0) {
@@ -2383,7 +2448,7 @@ function renderProductGrid(targetId, list, emptyMsg) {
     const color = getBrandColor(p.brand);
     const discountPct = p.oldPrice ? Math.round((1 - p.price/p.oldPrice) * 100) : null;
     const isWished = wishlist.has(p.id);
-    const inStock = (p.inStock !== false);
+    const inStock = (p.inStock !== false && (p.stockQuantity === undefined || p.stockQuantity > 0));
     const cleanImg = sanitizeUrl(p.imageUrl);
 
     const reviewCount = Number(p.reviews || 0);
@@ -2393,7 +2458,7 @@ function renderProductGrid(targetId, list, emptyMsg) {
       : `<span style="font-size:10.5px; color:var(--text-soft); font-weight:700;">⭐ جديد (0 تقييم)</span>`;
 
     return `
-      <div class="product-card" onclick="openProduct('${sanitizeText(p.id)}', true)">
+      <div class="product-card" id="prod-card-${sanitizeText(p.id)}" onclick="openProduct('${sanitizeText(p.id)}', true)">
         <button class="wish-btn ${isWished ? 'active' : ''}" onclick="event.stopPropagation(); toggleWishlist('${sanitizeText(p.id)}')">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="${isWished ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.5-4.9-10-9.5C.5 7.8 2.7 4 6.5 4 9 4 11 5.5 12 7c1-1.5 3-3 5.5-3 3.8 0 6 3.8 4.5 7.5C19.5 16.1 12 21 12 21Z"/></svg>
         </button>
@@ -2409,8 +2474,8 @@ function renderProductGrid(targetId, list, emptyMsg) {
         <div class="p-name">${sanitizeText(p.name)}</div>
         <div class="p-size">${sanitizeText(p.size || '')}</div>
         <div class="p-price-row">
-          <span class="p-price mono">${fmtPrice(p.price)}</span>
-          ${p.oldPrice ? `<span class="p-oldprice mono">${fmtPrice(p.oldPrice)}</span>` : ''}
+          <span class="p-price mono" id="price-val-${sanitizeText(p.id)}">${fmtPrice(p.price)}</span>
+          ${p.oldPrice ? `<span class="p-oldprice mono" id="oldprice-val-${sanitizeText(p.id)}">${fmtPrice(p.oldPrice)}</span>` : ''}
         </div>
         <button class="add-cart-btn" style="${!inStock ? 'opacity:0.6; pointer-events:none;' : ''}" onclick="event.stopPropagation(); addToCart('${sanitizeText(p.id)}')">
           ${inStock ? 'أضف إلى السلة' : 'غير متوفر'}
@@ -2418,7 +2483,7 @@ function renderProductGrid(targetId, list, emptyMsg) {
 
         ${isAdmin ? `
           <div class="admin-card-actions" onclick="event.stopPropagation()">
-            <button type="button" class="btn-admin-stock ${inStock ? 'is-in' : 'is-out'}" onclick="quickToggleStock('${sanitizeText(p.id)}')">${inStock ? 'متوفر 🟢' : 'نفذت 🔴'}</button>
+            <button type="button" class="btn-admin-stock ${inStock ? 'is-in' : 'is-out'}" onclick="quickToggleStock('${sanitizeText(p.id)}')">${inStock ? 'متوفر 🟢' : 'نافذ 🔴'}</button>
             <button type="button" class="btn-admin-price" onclick="quickEditPrice('${sanitizeText(p.id)}', ${p.price})">السعر 💰</button>
             <button type="button" class="btn-admin-edit" onclick="openAdminQuickEditModal('${sanitizeText(p.id)}')">تعديل ✏️</button>
             <button type="button" class="btn-admin-del" onclick="archiveProductConfirm('${sanitizeText(p.id)}', '${sanitizeText(p.name)}')">🗑️</button>
@@ -2455,9 +2520,9 @@ function renderProductDetailDOM(p) {
     ${p.oldPrice ? `<span class="pd-oldprice mono">${fmtPrice(p.oldPrice)}</span>` : ''}`;
 
   const stockEl = document.getElementById('pdStock');
-  const inStock = (p.inStock !== false);
+  const inStock = (p.inStock !== false && (p.stockQuantity === undefined || p.stockQuantity > 0));
   stockEl.className = inStock ? 'pd-stock' : 'pd-stock out';
-  stockEl.innerHTML = inStock ? `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" style="width:18px;height:18px;"><path d="M5 13l4 4L19 7"/></svg><span>متوفر بالمخزون</span>` : `<span>نفذت الكمية حالياً</span>`;
+  stockEl.innerHTML = inStock ? `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" style="width:18px;height:18px;"><path d="M5 13l4 4L19 7"/></svg><span>متوفر بالمخزون (${p.stockQuantity !== undefined ? p.stockQuantity : 'متوفر'} قطعة)</span>` : `<span>نفذت الكمية حالياً</span>`;
 
   document.getElementById('pdTabDesc').textContent = p.description || 'منتج أصلي معتمد من الصيدلية.';
   document.getElementById('pdTabIng').textContent = p.ingredients || 'تركيبة غنية ومفحوصة جلدياً وطبياً.';
@@ -2909,7 +2974,6 @@ function renderPharmacySubscriptionCard() {
   const price = Number(pharmacyProfile.subscriptionPrice || 50000);
   const expiry = pharmacyProfile.subscriptionExpiry || '2099-12-31';
 
-  // حساب الأيام المتبقية
   const today = new Date();
   const expDate = new Date(expiry);
   const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
@@ -2927,7 +2991,6 @@ function renderPharmacySubscriptionCard() {
       </div>
     </div>
 
-    <!-- بيانات الدفع الإلكتروني للسوبر أدمن -->
     <div style="background:#F8FAFC; border:1.5px solid #E2E8F0; border-radius:16px; padding:18px; text-align:right;">
       <h4 style="margin:0 0 10px; font-size:14px; font-weight:900; color:#0F172A; display:flex; align-items:center; gap:6px;">
         💳 بيانات بطاقات ومحافظ الدفع المعتمدة للمنصة:
@@ -2937,7 +3000,7 @@ function renderPharmacySubscriptionCard() {
         <div>💳 <b>رقم بطاقة Qi Card / ماستركارد:</b> <span class="mono" style="background:#E2E8F0; padding:2px 8px; border-radius:6px; font-weight:900;">${sanitizeText(superAdminPaymentInfo.qiCardNumber || '----')}</span></div>
         <div>📱 <b>محفظة زين كاش (ZainCash):</b> <span class="mono" style="background:#E2E8F0; padding:2px 8px; border-radius:6px; font-weight:900;">${sanitizeText(superAdminPaymentInfo.zainCashNumber || '07813703288')}</span></div>
         <div>🏦 <b>حساب بنك FIB:</b> <span class="mono">${sanitizeText(superAdminPaymentInfo.fibAccount || 'N/A')}</span></div>
-        <div style="margin-top:8px; font-size:11.5px; color:#64748B;">📌 <i>${sanitizeText(superAdminPaymentInfo.notes || 'يرجى إرسال وصل التحويل عبر الواتساب للتجديد فورياً.')}</i></div>
+        <div style="margin-top:8px; font-size:11.5px; color:#64748B;">📌 <i>${sanitizeText(superAdminPaymentInfo.notes || 'يرجى إرسال وصل التحويل عبر الواتساب لتجديد الاشتراك فورياً.')}</i></div>
       </div>
       
       <div style="margin-top:14px; display:flex; gap:10px;">
@@ -3065,7 +3128,6 @@ function applyStoreSettings() {
 function initFirestoreSync() {
   if (!isFirebaseConfigured || !db) return;
 
-  // جلب الكاش أولاً للسرعة القصوى
   const cachedProds = localStorage.getItem(getStorageKey('products_cache'));
   if (cachedProds) {
     try {
@@ -3074,7 +3136,6 @@ function initFirestoreSync() {
     } catch (e) {}
   }
 
-  // 1. مزامنة وثيقة الصيدلية الحالية
   dbPaths.pharmacyDoc().onSnapshot(doc => {
     if (doc.exists) {
       pharmacyProfile = { ...pharmacyProfile, ...doc.data() };
@@ -3088,7 +3149,6 @@ function initFirestoreSync() {
     }
   }, err => console.warn(err));
 
-  // 2. مزامنة الأقسام
   dbPaths.categoriesCol().onSnapshot(snap => {
     if (!snap.empty) {
       const loaded = [];
@@ -3101,7 +3161,6 @@ function initFirestoreSync() {
     }
   }, err => console.warn(err));
 
-  // 3. مزامنة البكجات
   dbPaths.bundlesCol().onSnapshot(snap => {
     if (!snap.empty) {
       const loaded = [];
@@ -3113,7 +3172,6 @@ function initFirestoreSync() {
     }
   }, err => console.warn(err));
 
-  // 4. مزامنة المنتجات وتحديث الكاش المحلي
   dbPaths.productsCol().onSnapshot(snap => {
     if (!snap.empty) {
       const loaded = [];
