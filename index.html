@@ -223,7 +223,7 @@
     <div class="wrap search-wrap">
       <div class="search-bar">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-        <input type="text" id="searchInput" placeholder="ابحثِ عن منتج، ماركة، أو مشكلة بشرة..." oninput="onSearch(this.value)">
+        <input type="text" id="searchInput" placeholder="ابحثِ عن اسم الدواء، المادة الفعالة، الماركة..." oninput="onSearch(this.value)">
       </div>
     </div>
   </header>
@@ -367,7 +367,7 @@
     </div>
   </div>
 
-  <!-- ============ 8. PRODUCT DETAIL VIEW ============ -->
+  <!-- ============ 8. PRODUCT DETAIL VIEW (WITH CLINICAL DETAILS & REAL RATINGS) ============ -->
   <div class="view" id="view-product">
     <div class="wrap">
       <div style="display:flex; align-items:center; justify-content:space-between; padding-top:6px;">
@@ -392,8 +392,8 @@
       </div>
 
       <div class="pd-tabs">
-        <button class="pd-tab active" onclick="switchPdTab('desc')">الوصف</button>
-        <button class="pd-tab" onclick="switchPdTab('ing')">المكونات</button>
+        <button class="pd-tab active" onclick="switchPdTab('desc')">الوصف الطبي</button>
+        <button class="pd-tab" onclick="switchPdTab('ing')">المكونات الفعالة</button>
         <button class="pd-tab" onclick="switchPdTab('use')">طريقة الاستخدام</button>
         <button class="pd-tab" onclick="switchPdTab('reviews')">التقييمات ⭐</button>
       </div>
@@ -404,7 +404,7 @@
       <!-- Star-Only Quick Rating Tab -->
       <div class="pd-tab-content" id="pdTabReviews">
         <div class="star-rating-box">
-          <h4>تقييم المنتج السريع ⭐</h4>
+          <h4>تقييم المنتج الفعلي ⭐</h4>
           <p style="font-size:12px; color:var(--text-soft); margin:0 0 8px;">اضغطي على النجمة لتقييم المنتج بنقرة واحدة:</p>
           <div class="star-rating-row" id="starRatingRow">
             <span class="star-btn" data-star="1" onclick="rateProductInstant(1)">★</span>
