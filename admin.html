@@ -190,7 +190,7 @@
       </div>
     </div>
 
-    <!-- 3. IMPORT FROM MASTER CATALOG (2-TIER HIERARCHY WITH 47 SUB-CATEGORIES) -->
+    <!-- 3. IMPORT FROM MASTER CATALOG (2-TIER CLASSIFICATION + DYNAMIC BRANDS) -->
     <div id="adminSecImport" style="display:none;">
       <div class="admin-fieldset" style="border-color:#10B981; background:#F0FDF4;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
@@ -234,9 +234,9 @@
         <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
           <input type="text" id="tenantImportSearchInput" oninput="filterTenantMasterCatalog()" placeholder="ابحث باسم المنتج، الماركة، أو الباركود..." style="flex:2; min-width:200px; padding:10px 14px; border:1.5px solid #A7F3D0; border-radius:12px; font-size:13px; outline:none; background:#fff;">
           
-          <!-- Dynamic English Sub-Category Dropdown -->
-          <select id="tenantImportSubCatFilter" onchange="filterTenantMasterCatalog()" style="flex:1.5; min-width:180px; padding:10px 12px; border:1.5px solid #A7F3D0; border-radius:12px; font-size:13px; font-weight:800; background:#fff; color:#047857;">
-            <option value="all">📂 جميع التصنيفات الفرعية (All)</option>
+          <!-- Dynamic English Sub-Category Dropdown (47 Subcategories) -->
+          <select id="tenantImportSubCatFilter" onchange="onTenantSubCategoryChanged()" style="flex:1.5; min-width:180px; padding:10px 12px; border:1.5px solid #A7F3D0; border-radius:12px; font-size:13px; font-weight:800; background:#fff; color:#047857;">
+            <option value="all">📂 جميع التصنيفات الفرعية (All Sub-Categories)</option>
           </select>
 
           <!-- Dynamic Brand Dropdown -->
@@ -1073,84 +1073,92 @@
     window.tenantCachedMasterCatalog = [];
     window.tenantActiveMainCategory = 'all';
 
-    // فاحص تصنيف متطور يطابق الـ 47 فئة مع أي منتج بذكاء
+    // فاحص تصنيف ذكي ومرن يطابق الـ 47 فئة مع أي صنف جديد في البنك المركزي
     function getItemClassification(item) {
       const cat = (item.category || '').toLowerCase().trim();
-      const subCat = (item.subCategory || '').trim();
+      const subCat = (item.subCategory || item.sub_category || '').toLowerCase().trim();
       const name = (item.name || '').toLowerCase().trim();
-      const stage = (item.milkStage || '').trim();
+      const stage = (item.milkStage || '').toLowerCase().trim();
       const formula = (item.specialFormulaTag || item.formulaType || '').toLowerCase();
 
       // 1. فحص حليب الأطفال
-      if (cat === 'baby_milk' || cat === 'milk' || subCat.includes('Stage') || stage || name.includes('حليب') || name.includes('lactonic') || name.includes('aptamil') || name.includes('bebelac') || name.includes('similac') || name.includes('nan') || name.includes('novalac') || name.includes('s-26') || name.includes('babyline') || name.includes('pediasure') || name.includes('infatrini') || name.includes('neocate')) {
-        let sub = subCat || stage || "Stage 1 (0-6M)";
-        if (name.includes('1') || name.includes('0-6')) sub = "Stage 1 (0-6M)";
-        else if (name.includes('2') || name.includes('6-12')) sub = "Stage 2 (6-12M)";
-        else if (name.includes('3') || name.includes('1-3')) sub = "Stage 3 (1-3Y)";
-        else if (name.includes('4')) sub = "Stage 4 (3Y+)";
-        else if (formula.includes('ar') || name.includes('ar') || name.includes('ارتجاع')) sub = "Special Care - Reflux";
-        else if (formula.includes('lf') || name.includes('lf') || name.includes('خالي')) sub = "Special Care - Lactose Free";
-        else if (formula.includes('comfort') || formula.includes('ec') || name.includes('مغص')) sub = "Special Care - Colic/Constipation";
-        else if (formula.includes('pepti') || formula.includes('ha') || name.includes('حساسية')) sub = "Special Care - Allergy/Hypoallergenic";
-        else if (name.includes('pediasure') || name.includes('بدياشور')) sub = "Nutritional Supplement (1-10Y)";
+      if (cat === 'baby_milk' || cat === 'milk' || subCat.includes('stage') || stage || name.includes('حليب') || name.includes('milk') || name.includes('lactonic') || name.includes('aptamil') || name.includes('bebelac') || name.includes('similac') || name.includes('nan') || name.includes('novalac') || name.includes('s-26') || name.includes('s26') || name.includes('babyline') || name.includes('pediasure') || name.includes('infatrini') || name.includes('neocate') || name.includes('blemil') || name.includes('fabimilk') || name.includes('rabelac') || name.includes('guigoz') || name.includes('frisolac') || name.includes('celia') || name.includes('sunny baby') || name.includes('evolac') || name.includes('nactalia') || name.includes('infalac')) {
+        let sub = "Stage 1 (0-6M)";
+        if (name.includes('1') || name.includes('0-6') || subCat.includes('1')) sub = "Stage 1 (0-6M)";
+        else if (name.includes('2') || name.includes('6-12') || subCat.includes('2')) sub = "Stage 2 (6-12M)";
+        else if (name.includes('3') || name.includes('1-3') || subCat.includes('3')) sub = "Stage 3 (1-3Y)";
+        else if (name.includes('4') || subCat.includes('4')) sub = "Stage 4 (3Y+)";
+        else if (formula.includes('ar') || name.includes('ar') || name.includes('reflux') || name.includes('ارتجاع') || subCat.includes('reflux')) sub = "Special Care - Reflux";
+        else if (formula.includes('lf') || name.includes('lf') || name.includes('lactose free') || name.includes('خالي') || subCat.includes('lactose free')) sub = "Special Care - Lactose Free";
+        else if (formula.includes('comfort') || formula.includes('ec') || name.includes('مغص') || subCat.includes('comfort') || subCat.includes('colic')) sub = "Special Care - Colic/Constipation";
+        else if (formula.includes('pepti') || formula.includes('ha') || name.includes('حساسية') || subCat.includes('allergy')) sub = "Special Care - Allergy/Hypoallergenic";
+        else if (name.includes('pre') || name.includes('premature') || formula.includes('premature')) sub = "Stage 1 (0-6M)";
+        else if (name.includes('pediasure') || name.includes('evoshure') || name.includes('بدياشور') || subCat.includes('supplement')) sub = "Nutritional Supplement (1-10Y)";
         
         return { main: 'baby_milk', sub: sub };
       }
 
       // 2. فحص عناية الطفل
-      if (cat === 'baby_care' || cat === 'baby' || name.includes('diaper') || name.includes('حفاض') || name.includes('wipes') || name.includes('مناديل')) {
+      if (cat === 'baby_care' || cat === 'baby' || name.includes('diaper') || name.includes('حفاض') || name.includes('wipes') || name.includes('مناديل') || subCat.includes('baby')) {
         let sub = "Baby Skincare";
-        if (name.includes('diaper') || name.includes('حفاض')) sub = "Baby Diaper";
-        else if (name.includes('wipes') || name.includes('مناديل')) sub = "Baby Wipes";
-        else if (name.includes('shampoo') || name.includes('wash') || name.includes('شامبو')) sub = "Baby Wash/Shampoo";
+        if (name.includes('diaper') || name.includes('حفاض') || subCat.includes('diaper')) sub = "Baby Diaper";
+        else if (name.includes('wipes') || name.includes('مناديل') || subCat.includes('wipes')) sub = "Baby Wipes";
+        else if (name.includes('shampoo') || name.includes('wash') || subCat.includes('wash')) sub = "Baby Wash/Shampoo";
+        else if (name.includes('accessory') || name.includes('bottle') || name.includes('رضاعة') || name.includes('لهاية')) sub = "Baby Care Accessory";
         return { main: 'baby_care', sub: sub };
       }
 
       // 3. فحص الأسنان
-      if (cat === 'dental' || name.includes('toothpaste') || name.includes('معجون') || name.includes('فرشاة') || name.includes('toothbrush') || name.includes('mouthwash') || name.includes('غسول فم')) {
+      if (cat === 'dental' || subCat.includes('tooth') || name.includes('toothpaste') || name.includes('معجون') || name.includes('فرشاة') || name.includes('mouthwash') || name.includes('غسول فم')) {
         let sub = "Toothpaste";
-        if (name.includes('toothbrush') || name.includes('فرشاة')) sub = "Toothbrush";
-        else if (name.includes('mouthwash') || name.includes('غسول فم')) sub = "Mouthwash";
+        if (name.includes('toothbrush') || name.includes('فرشاة') || subCat.includes('brush')) sub = "Toothbrush";
+        else if (name.includes('mouthwash') || name.includes('غسول فم') || subCat.includes('mouthwash')) sub = "Mouthwash";
         return { main: 'dental', sub: sub };
       }
 
       // 4. فحص الشعر
-      if (cat === 'hair' || name.includes('hair') || name.includes('شعر') || name.includes('shampoo') || name.includes('شامبو') || name.includes('conditioner') || name.includes('بلسم') || name.includes('olaplex') || name.includes('mielle') || name.includes('dercos') || name.includes('nizoral') || name.includes('cantu') || name.includes('k18')) {
+      if (cat === 'hair' || subCat.includes('hair') || subCat.includes('shampoo') || name.includes('hair') || name.includes('شعر') || name.includes('shampoo') || name.includes('شامبو') || name.includes('conditioner') || name.includes('بلسم') || name.includes('olaplex') || name.includes('mielle') || name.includes('dercos') || name.includes('nizoral') || name.includes('cantu') || name.includes('k18')) {
         let sub = "Hair Care";
-        if (name.includes('shampoo') || name.includes('شامبو')) sub = "Hair Care - Shampoo";
-        else if (name.includes('conditioner') || name.includes('بلسم')) sub = "Hair Care - Conditioner";
-        else if (name.includes('oil') || name.includes('زيت') || name.includes('styling') || name.includes('mask') || name.includes('ماسك')) sub = "Hair Care - Styling";
+        if (name.includes('shampoo') || name.includes('شامبو') || subCat.includes('shampoo')) sub = "Hair Care - Shampoo";
+        else if (name.includes('conditioner') || name.includes('بلسم') || subCat.includes('conditioner')) sub = "Hair Care - Conditioner";
+        else if (name.includes('oil') || name.includes('زيت') || name.includes('styling') || name.includes('mask') || name.includes('ماسك') || subCat.includes('styling')) sub = "Hair Care - Styling";
         return { main: 'hair', sub: sub };
       }
 
       // 5. فحص النظافة العامة
-      if (cat === 'hygiene' || name.includes('hand wash') || name.includes('غسول يدين')) {
+      if (cat === 'hygiene' || subCat.includes('hand') || name.includes('hand wash') || name.includes('غسول يدين')) {
         return { main: 'hygiene', sub: "Hand Wash" };
       }
 
-      // 6. الافتراضي: كوزمتك / عناية بالبشرة
-      let sub = subCat || "Skincare";
-      if (name.includes('cleanser') || name.includes('wash') || name.includes('غسول')) {
-        sub = name.includes('micellar') ? "Cleanser - Micellar Water" : "Cleanser";
-      } else if (name.includes('moisturiz') || name.includes('cream') || name.includes('lotion') || name.includes('مرطب') || name.includes('كريم')) {
+      // 6. كوزمتك وعناية بالبشرة
+      let sub = "Skincare";
+      if (name.includes('cleanser') || name.includes('wash') || name.includes('غسول') || subCat.includes('cleanse')) {
+        sub = (name.includes('micellar') || subCat.includes('micellar') || name.includes('ميسيلار')) ? "Cleanser - Micellar Water" : "Cleanser";
+      } else if (name.includes('moisturiz') || name.includes('cream') || name.includes('lotion') || name.includes('مرطب') || name.includes('كريم') || subCat.includes('moistur')) {
         sub = "Moisturizer";
-      } else if (name.includes('sun') || name.includes('spf') || name.includes('واقي')) {
+      } else if (name.includes('sun') || name.includes('spf') || name.includes('واقي') || subCat.includes('sun')) {
         sub = "Sunscreen";
-      } else if (name.includes('serum') || name.includes('سيروم') || name.includes('retinol') || name.includes('niacinamide')) {
+      } else if (name.includes('serum') || name.includes('سيروم') || name.includes('retinol') || name.includes('niacinamide') || subCat.includes('serum')) {
         sub = "Serum/Treatment";
-      } else if (name.includes('eye') || name.includes('عين')) {
+      } else if (name.includes('eye') || name.includes('عين') || subCat.includes('eye')) {
         sub = "Eye Care";
-      } else if (name.includes('lip') || name.includes('شفاه')) {
+      } else if (name.includes('lip') || name.includes('شفاه') || subCat.includes('lip')) {
         sub = "Lip Care";
-      } else if (name.includes('toner') || name.includes('تونر')) {
+      } else if (name.includes('toner') || name.includes('تونر') || subCat.includes('toner')) {
         sub = "Toner";
-      } else if (name.includes('peel') || name.includes('acid') || name.includes('مقشر')) {
+      } else if (name.includes('peel') || name.includes('acid') || name.includes('مقشر') || subCat.includes('exfoli')) {
         sub = "Exfoliant/Peeling";
-      } else if (name.includes('deodorant') || name.includes('roll-on') || name.includes('عرق')) {
+      } else if (name.includes('deodorant') || name.includes('roll-on') || name.includes('عرق') || subCat.includes('deodorant')) {
         sub = "Deodorant";
-      } else if (name.includes('oil') || name.includes('زيت')) {
+      } else if (name.includes('oil') || name.includes('زيت') || subCat.includes('oil')) {
         sub = "Body Oil";
-      } else if (name.includes('intimate') || name.includes('نسائي') || name.includes('حساسة')) {
+      } else if (name.includes('mask') || name.includes('ماسك') || subCat.includes('mask')) {
+        sub = "Mask";
+      } else if (name.includes('makeup') || name.includes('مكياج') || subCat.includes('makeup')) {
+        sub = "Makeup";
+      } else if (name.includes('soap') || name.includes('صابون') || subCat.includes('soap')) {
+        sub = "Bar Soap";
+      } else if (name.includes('intimate') || name.includes('نسائي') || name.includes('حساسة') || subCat.includes('intimate')) {
         sub = "Intimate Care";
       }
 
@@ -1171,13 +1179,13 @@
       filterTenantMasterCatalog();
     }
 
-    // تحديث قائمة التصنيفات الفرعية بالإنجليزية بناءً على القسم الرئيسي المختار
+    // تحديث قائمة التصنيفات الفرعية الـ 47 بالإنجليزية ديناميكياً
     function updateTenantSubCategoryDropdown() {
       const subSelect = document.getElementById('tenantImportSubCatFilter');
       if (!subSelect) return;
 
       if (window.tenantActiveMainCategory === 'all') {
-        subSelect.innerHTML = `<option value="all">📂 جميع التصنيفات الفرعية الـ 47 (All Sub-Categories)</option>`;
+        subSelect.innerHTML = `<option value="all">📂 جميع التصنيفات الفرعية (All Sub-Categories)</option>`;
         return;
       }
 
@@ -1188,7 +1196,7 @@
       }
     }
 
-    // تحديث قائمة الشركات ديناميكياً بحسب الفئات المختارة
+    // تحديث واستخراج قائمة الشركات تلقائياً من المنتجات الموجودة
     function updateTenantBrandDropdown() {
       const brandSelect = document.getElementById('tenantImportBrandFilter');
       const selectedSub = document.getElementById('tenantImportSubCatFilter') ? document.getElementById('tenantImportSubCatFilter').value : 'all';
@@ -1197,16 +1205,22 @@
       const brandsSet = new Set();
       window.tenantCachedMasterCatalog.forEach(item => {
         const cl = getItemClassification(item);
+
         if (window.tenantActiveMainCategory !== 'all' && cl.main !== window.tenantActiveMainCategory) return;
         if (selectedSub !== 'all' && cl.sub !== selectedSub) return;
 
-        const b = (item.brand || item.Brand || item.company || '').trim();
-        if (b && b !== 'عام') brandsSet.add(b);
+        const b = (item.brand || item.Brand || item.company || item.Company || item.manufacturer || '').trim();
+        if (b && b !== 'عام' && b !== '') brandsSet.add(b);
       });
 
       const sortedBrands = Array.from(brandsSet).sort();
       brandSelect.innerHTML = `<option value="all">🏢 جميع الشركات والماركات (${sortedBrands.length})</option>` + 
         sortedBrands.map(b => `<option value="${escapeHtml(b)}">${escapeHtml(b)}</option>`).join('');
+    }
+
+    function onTenantSubCategoryChanged() {
+      updateTenantBrandDropdown();
+      filterTenantMasterCatalog();
     }
 
     async function fetchTenantMasterCatalog() {
@@ -1254,7 +1268,7 @@
         // 1. فحص القسم الرئيسي
         if (window.tenantActiveMainCategory !== 'all' && cl.main !== window.tenantActiveMainCategory) return false;
 
-        // 2. فحص التصنيف الفرعي الإنجليزي الـ 47
+        // 2. فحص التصنيف الفرعي الـ 47
         if (selectedSub !== 'all' && cl.sub !== selectedSub) return false;
 
         // 3. فحص الشركة
@@ -1282,11 +1296,11 @@
         const defaultPrice = Number(item.price || item.suggestedPrice || 15000);
         const cl = getItemClassification(item);
         
-        let badgeColor = "background:#FCE7F3; color:#BE185D;"; // وردي كوزمتك
-        if (cl.main === 'baby_milk') badgeColor = "background:#E0F2FE; color:#0369A1;"; // أزرق حليب
-        else if (cl.main === 'hair') badgeColor = "background:#FEF3C7; color:#92400E;"; // عنبري شعر
-        else if (cl.main === 'dental') badgeColor = "background:#E0E7FF; color:#3730A3;"; // بنفسجي أسنان
-        else if (cl.main === 'baby_care') badgeColor = "background:#DCFCE7; color:#166534;"; // أخضر طفل
+        let badgeColor = "background:#FCE7F3; color:#BE185D;";
+        if (cl.main === 'baby_milk') badgeColor = "background:#E0F2FE; color:#0369A1;";
+        else if (cl.main === 'hair') badgeColor = "background:#FEF3C7; color:#92400E;";
+        else if (cl.main === 'dental') badgeColor = "background:#E0E7FF; color:#3730A3;";
+        else if (cl.main === 'baby_care') badgeColor = "background:#DCFCE7; color:#166534;";
 
         return `
           <div style="background:#fff; border:1.5px solid ${isImported ? '#BBF7D0' : '#E2E8F0'}; border-radius:14px; padding:14px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 2px 8px rgba(0,0,0,0.04); position:relative;">
