@@ -1,706 +1,2424 @@
 [
   {
-    "id": "sk_cerave_hydrating_cleanser_236ml",
-    "name": "غسول سيرافي المرطب للبشرة العادية إلى الجافة (CeraVe Hydrating Cleanser) - 236 مل",
+    "name": "CeraVe Foaming Facial Cleanser 236ml",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "CeraVe",
-    "category": "face",
-    "subCategory": "cleansers",
-    "type": "bottle",
-    "size": "236ml",
-    "price": 18000,
-    "suggestedPrice": 18000,
-    "stockQuantity": 25,
-    "inStock": true,
-    "description": "ينظف ويرطب البشرة بفعالية دون الإخلال بالحاجز الواقي الطبيعي للبشرة.",
-    "ingredients": "3 Essential Ceramides, Hyaluronic Acid, MVE Delivery Technology",
-    "usage": "يدلك على بشرة مبللة صباحاً ومساءً ثم يشطف بالماء الفاتر."
+    "description": "غسول رغوي للبشرة العادية إلى الدهنية ينظف دون الإضرار بحاجز البشرة"
   },
   {
-    "id": "sk_cerave_hydrating_cleanser_473ml",
-    "name": "غسول سيرافي المرطب حجم كبير (CeraVe Hydrating Cleanser) - 473 مل",
+    "name": "CeraVe Hydrating Facial Cleanser 236ml",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "CeraVe",
-    "category": "face",
-    "subCategory": "cleansers",
-    "type": "bottle",
-    "size": "473ml",
-    "price": 26000,
-    "suggestedPrice": 26000,
-    "stockQuantity": 20,
-    "inStock": true,
-    "description": "عبوة اقتصادية لترطيب وتنظيف البشرة الجافة والحفاظ على حاجز الدهون الطبيعي.",
-    "ingredients": "Ceramides 1, 3, 6-II, Hyaluronic Acid, Glycerin",
-    "usage": "يوضع على الوجه والرقبة مع تدليك خفيف ثم يغسل بالماء."
+    "description": "غسول منظف مرطب للبشرة الجافة إلى العادية يحافظ على رطوبة البشرة"
   },
   {
-    "id": "sk_cerave_foaming_cleanser_236ml",
-    "name": "غسول سيرافي الرغوي للبشرة العادية إلى الدهنية (CeraVe Foaming Cleanser) - 236 مل",
+    "name": "CeraVe Foaming Oil Control Cleanser",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "CeraVe",
-    "category": "face",
-    "subCategory": "cleansers",
-    "type": "bottle",
-    "size": "236ml",
-    "price": 18000,
-    "suggestedPrice": 18000,
-    "stockQuantity": 30,
-    "inStock": true,
-    "description": "يزيل الدهون الزائدة والشوائب والمكياج بلطف دون تجريد البشرة من رطوبتها.",
-    "ingredients": "Ceramides, Niacinamide (Vitamin B3), Hyaluronic Acid",
-    "usage": "يرغى مع قليل من الماء ويدلك بحركات دائرية على الوجه ثم يشطف."
+    "description": "غسول للبشرة الدهنية يقلل اللمعان الزائد ويحافظ على التوازن"
   },
   {
-    "id": "sk_cerave_foaming_cleanser_473ml",
-    "name": "غسول سيرافي الرغوي عبوة كبيرة (CeraVe Foaming Cleanser) - 473 مل",
+    "name": "CeraVe Moisturizing Cream 340g",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "CeraVe",
-    "category": "face",
-    "subCategory": "cleansers",
-    "type": "bottle",
-    "size": "473ml",
-    "price": 26000,
-    "suggestedPrice": 26000,
-    "stockQuantity": 20,
-    "inStock": true,
-    "description": "تنظيف عميق للمسام وتقليل اللمعان الدهني للبشرة المعرضة للحبوب.",
-    "ingredients": "Niacinamide, Ceramides, Amino Acid Surfactants",
-    "usage": "يستخدم يومياً صباحاً ومساءً لتنقية البشرة الدهنية والمختلطة."
+    "description": "كريم مرطب لكامل الجسم والوجه يحتوي على السيراميدات وحمض الهيالورونيك"
   },
   {
-    "id": "sk_cerave_sa_smoothing_cleanser_236ml",
-    "name": "غسول سيرافي إس إيه المنعم بحمض الساليسيليك (CeraVe SA Cleanser) - 236 مل",
+    "name": "CeraVe Moisturizing Lotion 236ml",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "CeraVe",
-    "category": "face",
-    "subCategory": "cleansers",
-    "type": "bottle",
-    "size": "236ml",
-    "price": 19500,
-    "suggestedPrice": 19500,
-    "stockQuantity": 30,
-    "inStock": true,
-    "description": "يقشر بلطف ويزيل خلايا الجلد الميتة وينعم ملمس البشرة الخشنة وجلد الدجاجة.",
-    "ingredients": "Salicylic Acid, Ceramides, Hyaluronic Acid, Niacinamide",
-    "usage": "يدلك على الوجه أو الجسم ويترك لمدة دقيقة ثم يشطف جيداً."
+    "description": "لوشن مرطب خفيف للبشرة الجافة إلى العادية"
   },
   {
-    "id": "sk_cerave_blemish_control_cleanser_236ml",
-    "name": "غسول سيرافي لمكافحة الحبوب والشوائب (CeraVe Blemish Control Cleanser) - 236 مل",
+    "name": "CeraVe SA Smoothing Cream 340g",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "CeraVe",
-    "category": "face",
-    "subCategory": "cleansers",
-    "type": "bottle",
-    "size": "236ml",
-    "price": 21000,
-    "suggestedPrice": 21000,
-    "stockQuantity": 25,
-    "inStock": true,
-    "description": "يحتوي على 2% حمض الساليسيليك وطين تنقية المسام لتقليل الرؤوس السوداء والبثور.",
-    "ingredients": "2% Salicylic Acid, Hectorite Clay, Ceramides, Niacinamide",
-    "usage": "يستخدم لتنظيف البشرة المصابة بالبثور مع تجنب منطقة حول العين."
+    "description": "كريم مقشر ومنعم للبشرة الجافة والخشنة يحتوي على حمض الساليسيليك"
   },
   {
-    "id": "sk_cerave_moisturizing_cream_454g",
-    "name": "كريم سيرافي المرطب للبشرة الجافة وشديدة الجفاف (CeraVe Moisturizing Cream) - 454 غرام",
+    "name": "CeraVe Facial Moisturizing Lotion PM",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "CeraVe",
-    "category": "moisturizer",
-    "subCategory": "creams",
-    "type": "jar",
-    "size": "454g",
-    "price": 27000,
-    "suggestedPrice": 27000,
-    "stockQuantity": 25,
-    "inStock": true,
-    "description": "ترطيب غني ومكثف يدوم 24 ساعة لترميم الحاجز الجلدي للوجه والجسم.",
-    "ingredients": "3 Essential Ceramides, Hyaluronic Acid, MVE Technology",
-    "usage": "يدهن بسخاء عند الحاجة على بشرة جافة ونظيفة."
+    "description": "مرطب ليلي للوجه يعمل على ترطيب البشرة أثناء النوم"
   },
   {
-    "id": "sk_cerave_moisturizing_lotion_236ml",
-    "name": "لوشن سيرافي المرطب اليومي خفيف القوام (CeraVe Moisturizing Lotion) - 236 مل",
+    "name": "CeraVe Facial Moisturizing Lotion AM SPF25",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "CeraVe",
-    "category": "moisturizer",
-    "subCategory": "lotions",
-    "type": "bottle",
-    "size": "236ml",
-    "price": 18500,
-    "suggestedPrice": 18500,
-    "stockQuantity": 20,
-    "inStock": true,
-    "description": "لوشن خفيف غير دهني سريع الامتصاص لترطيب دائم طوال اليوم.",
-    "ingredients": "Ceramides 1, 3, 6-II, Hyaluronic Acid, Glycerin",
-    "usage": "يوضع يومياً على الوجه والجسم بعد الاستحمام أو غسل الوجه."
+    "description": "مرطب نهاري للوجه مع حماية من الشمس SPF25"
   },
   {
-    "id": "sk_cerave_pm_facial_lotion_52ml",
-    "name": "لوشن سيرافي الليلي المرمم للوجه (CeraVe PM Facial Moisturizing Lotion) - 52 مل",
+    "name": "CeraVe Eye Repair Cream 14g",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "CeraVe",
-    "category": "moisturizer",
-    "subCategory": "face_creams",
-    "type": "bottle",
-    "size": "52ml",
-    "price": 22000,
-    "suggestedPrice": 22000,
-    "stockQuantity": 20,
-    "inStock": true,
-    "description": "مرطب ليلي فائق الخفة غني بالنياسيناميد لتهدئة البشرة وتجديد خلاياها أثناء النوم.",
-    "ingredients": "Niacinamide (4%), Ceramides, Hyaluronic Acid",
-    "usage": "يوضع على بشرة الوجه والرقبة ليلاً قبل النوم."
+    "description": "كريم مرطب لمنطقة العين يقلل الانتفاخ والهالات"
   },
   {
-    "id": "sk_cerave_resurfacing_retinol_serum_30ml",
-    "name": "سيروم سيرافي ريتينول لتجديد البشرة وآثار الحبوب (CeraVe Resurfacing Retinol) - 30 مل",
+    "name": "CeraVe Renewing SA Cleanser",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "CeraVe",
-    "category": "serum",
-    "subCategory": "anti_aging",
-    "type": "bottle",
-    "size": "30ml",
-    "price": 27000,
-    "suggestedPrice": 27000,
-    "stockQuantity": 15,
-    "inStock": true,
-    "description": "يقلل من مظهر التصبغات والندبات الناتجة عن حب الشباب ويضيق المسام الواسعة.",
-    "ingredients": "Encapsulated Retinol, Licorice Root Extract, Niacinamide, Ceramides",
-    "usage": "توضع قطرات قليلة ليلاً بالتدرج مع الالتزام بواقي الشمس نهاراً."
+    "description": "غسول مقشر يحتوي على حمض الساليسيليك لتجديد خلايا البشرة"
   },
   {
-    "id": "sk_cerave_eye_repair_cream_14ml",
-    "name": "كريم سيرافي المعالج للهالات والانتفاخ حول العين (CeraVe Eye Repair) - 14 مل",
+    "name": "CeraVe Acne Foaming Cream Cleanser",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "CeraVe",
-    "category": "face",
-    "subCategory": "eye_care",
-    "type": "tube",
-    "size": "14ml",
-    "price": 20000,
-    "suggestedPrice": 20000,
-    "stockQuantity": 20,
-    "inStock": true,
-    "description": "يفتح الهالات السوداء ويقلل من انتفاخ تحت العين بتركيبة بحرية ونباتية مهدئة.",
-    "ingredients": "Marine & Botanical Complex, Ceramides, Hyaluronic Acid, Niacinamide",
-    "usage": "يوضع بنقاط خفيفة تحت العين ويطبطب بلطف بأطراف الأصابع."
+    "description": "غسول رغوي لعلاج حب الشباب يحتوي على بيروكسيد البنزويل"
   },
   {
-    "id": "sk_laroche_effaclar_gel_200ml",
-    "name": "غسول لاروش بوزيه إيفاكلار المنقي للبشرة الدهنية (La Roche-Posay Effaclar) - 200 مل",
+    "name": "CeraVe Skin Renewing Vitamin C Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "CeraVe",
+    "description": "سيروم فيتامين سي لتفتيح البشرة وتوحيد لونها"
+  },
+  {
+    "name": "CeraVe Hydrating Hyaluronic Acid Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "CeraVe",
+    "description": "سيروم مرطب يحتوي على حمض الهيالورونيك"
+  },
+  {
+    "name": "CeraVe Resurfacing Retinol Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "CeraVe",
+    "description": "سيروم ريتينول لتجديد البشرة وتقليل المسام الواسعة"
+  },
+  {
+    "name": "CeraVe Healing Ointment 340g",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "CeraVe",
+    "description": "مرهم مرطب مكثف للبشرة الجافة جداً والمتشققة"
+  },
+  {
+    "name": "CeraVe Baby Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "CeraVe",
+    "description": "كريم مرطب لطيف مخصص لبشرة الأطفال الحساسة"
+  },
+  {
+    "name": "CeraVe Blemish Control Cleansing Gel",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "CeraVe",
+    "description": "جل منظف لعلاج البشرة المعرضة لحب الشباب"
+  },
+  {
+    "name": "CeraVe Ultra-Light Moisturizing Lotion SPF30",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "CeraVe",
+    "description": "مرطب خفيف جداً مع حماية شمسية للبشرة الدهنية"
+  },
+  {
+    "name": "CeraVe Sunscreen Face Sheer Mineral SPF50",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "CeraVe",
+    "description": "واقي شمس معدني خفيف للوجه بعامل حماية 50"
+  },
+  {
+    "name": "CeraVe Itch Relief Moisturizing Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "CeraVe",
+    "description": "كريم مرطب لتهدئة الحكة والبشرة الجافة جداً"
+  },
+  {
+    "name": "La Roche-Posay Effaclar Duo+",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "La Roche-Posay",
-    "category": "face",
-    "subCategory": "cleansers",
-    "type": "tube",
-    "size": "200ml",
-    "price": 24000,
-    "suggestedPrice": 24000,
-    "stockQuantity": 30,
-    "inStock": true,
-    "description": "ينقي المسام بعمق ويزيل الإفرازات الدهنية الزائدة ويمنع تكون البثور والرؤوس السوداء.",
-    "ingredients": "Zinc PCA, La Roche-Posay Thermal Spring Water, Cleansing Agents",
-    "usage": "يدلك على وجه مبلل صباحاً ومساءً حتى يرغى ثم يشطف بالماء."
+    "description": "كريم لعلاج حب الشباب وتقليل آثاره وتقشير البشرة"
   },
   {
-    "id": "sk_laroche_effaclar_gel_400ml",
-    "name": "غسول لاروش بوزيه إيفاكلار حجم كبير (Effaclar Purifying Gel) - 400 مل",
+    "name": "La Roche-Posay Toleriane Dermallergo Fluide",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "La Roche-Posay",
-    "category": "face",
-    "subCategory": "cleansers",
-    "type": "bottle",
-    "size": "400ml",
-    "price": 35000,
-    "suggestedPrice": 35000,
-    "stockQuantity": 20,
-    "inStock": true,
-    "description": "عبوة اقتصادية بمضخة لتنظيف البشرة الدهنية والمعرضة لحب الشباب يومياً.",
-    "ingredients": "Zinc PCA, Thermal Spring Water, pH 5.5",
-    "usage": "يستخدم كروتين تنظيف أساسي صباحاً ومساءً."
+    "description": "مرطب لطيف للبشرة الحساسة جداً والمعرضة للحساسية"
   },
   {
-    "id": "sk_laroche_effaclar_duo_plus_m_40ml",
-    "name": "علاج لاروش بوزيه إيفاكلار ديو بلس إم لحب الشباب (Effaclar Duo+ M) - 40 مل",
+    "name": "La Roche-Posay Anthelios UVMune 400 SPF50+",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "La Roche-Posay",
-    "category": "face",
-    "subCategory": "treatments",
-    "type": "tube",
-    "size": "40ml",
-    "price": 26000,
-    "suggestedPrice": 26000,
-    "stockQuantity": 35,
-    "inStock": true,
-    "description": "الجيل المطور مع Phylobioma لاستهداف بكتيريا الحبوب والتخلص من البثور والتصبغات خلال 8 ساعات.",
-    "ingredients": "Phylobioma, Procerad, Niacinamide, Salicylic Acid, LHA, Zinc PCA",
-    "usage": "يوضع على كامل الوجه صباحاً ومساءً بعد تنظيفه بالغسول."
+    "description": "واقي شمس بحماية عالية جداً من الأشعة فوق البنفسجية"
   },
   {
-    "id": "sk_laroche_effaclar_serum_30ml",
-    "name": "سيروم لاروش بوزيه إيفاكلار فائق التقشير (Effaclar Ultra Concentrated Serum) - 30 مل",
+    "name": "La Roche-Posay Cicaplast Baume B5",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "La Roche-Posay",
-    "category": "serum",
-    "subCategory": "treatments",
-    "type": "bottle",
-    "size": "30ml",
-    "price": 38000,
-    "suggestedPrice": 38000,
-    "stockQuantity": 20,
-    "inStock": true,
-    "description": "مزيج ثلاثي من الأحماض المقشرة لتضييق المسام، تنعيم البشرة، وإزالة آثار الحبوب المستعصية.",
-    "ingredients": "Salicylic Acid 1.5%, Glycolic Acid 3.5%, LHA 0.45%, Niacinamide",
-    "usage": "توضع 3-4 قطرات ليلاً على الوجه وتجنب ملامسة العينين."
+    "description": "بلسم مرمم للبشرة المتهيجة والجافة والمتشققة"
   },
   {
-    "id": "sk_laroche_cicaplast_baume_b5_plus_40ml",
-    "name": "مرهم لاروش بوزيه سيكابلاست بوم بي 5 بلس المرمم (Cicaplast Baume B5+) - 40 مل",
+    "name": "La Roche-Posay Effaclar Gel Cleanser",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "La Roche-Posay",
-    "category": "moisturizer",
-    "subCategory": "creams",
-    "type": "tube",
-    "size": "40ml",
-    "price": 18000,
-    "suggestedPrice": 18000,
-    "stockQuantity": 40,
-    "inStock": true,
-    "description": "مرمم فوري لتهيج الجلد، الحروق السطحية، جفاف البشرة بعد التقشير، والتهابات الأطفال.",
-    "ingredients": "Panthenol 5% (Vitamin B5), Madecassoside, Tribioma Prebiotic, Zinc, Manganese",
-    "usage": "يوضع مرتين يومياً على بشرة نظيفة وجافة على المناطق المتهيجة."
+    "description": "جل منظف للبشرة الدهنية والمعرضة لحب الشباب"
   },
   {
-    "id": "sk_laroche_cicaplast_baume_b5_plus_100ml",
-    "name": "مرهم لاروش بوزيه سيكابلاست بوم بي 5 بلس حجم كبير (Cicaplast B5+) - 100 مل",
+    "name": "La Roche-Posay Hyalu B5 Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "La Roche-Posay",
-    "category": "moisturizer",
-    "subCategory": "creams",
-    "type": "tube",
-    "size": "100ml",
-    "price": 32000,
-    "suggestedPrice": 32000,
-    "stockQuantity": 25,
-    "inStock": true,
-    "description": "الحجم الاقتصادي الكبير لترميم حاجز البشرة المتضرر وحمايتها من الندبات.",
-    "ingredients": "Madecassoside, 5% Panthenol, Copper-Zinc-Manganese Complex, Shea Butter",
-    "usage": "يدهن على الوجه، الشفاه، أو الجسم لتهدئة التحسس والجفاف الشديد."
+    "description": "سيروم مضاد للتجاعيد يحتوي على حمض الهيالورونيك"
   },
   {
-    "id": "sk_laroche_uvmune400_oil_control_50ml",
-    "name": "واقي شمس لاروش بوزيه أنثيليوس أويل كونترول فلويد (Anthelios UVMune 400) - 50 مل",
+    "name": "La Roche-Posay Toleriane Ultra Fluide",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "La Roche-Posay",
-    "category": "sunscreen",
-    "subCategory": "sun_care",
-    "type": "bottle",
-    "size": "50ml",
-    "price": 28000,
-    "suggestedPrice": 28000,
-    "stockQuantity": 40,
-    "inStock": true,
-    "description": "أعلى حماية من الأشعة فوق البنفسجية فائقة الطول (Ultra-Long UVA) مع لمسة نهائية مطفية تدوم 12 ساعة.",
-    "ingredients": "Mexoryl 400 Filter, Airlicium Technology, Netlock Technology, SPF 50+",
-    "usage": "يرج جيداً قبل الاستخدام ويوضع قبل التعرض للشمس بـ 20 دقيقة."
+    "description": "مرطب خفيف القوام للبشرة شديدة الحساسية"
   },
   {
-    "id": "sk_laroche_uvmune400_tinted_50ml",
-    "name": "واقي شمس لاروش بوزيه أنثيليوس ملون (Anthelios UVMune 400 Tinted Fluid) - 50 مل",
+    "name": "La Roche-Posay Lipikar Baume AP+M",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "La Roche-Posay",
-    "category": "sunscreen",
-    "subCategory": "sun_care",
-    "type": "bottle",
-    "size": "50ml",
-    "price": 28000,
-    "suggestedPrice": 28000,
-    "stockQuantity": 25,
-    "inStock": true,
-    "description": "حماية شمسية قصوى SPF 50+ مع تغطية لونية خفيفة توحد لون البشرة وتمنحها نضارة طبيعية.",
-    "ingredients": "Mexoryl 400, Mineral Pigments, Vitamin E, SPF 50+ / PA++++",
-    "usage": "يوضع كبديل خفيف لكريم الأساس الصباحي مع حماية قصوى."
+    "description": "بلسم مرطب لكامل الجسم للبشرة الجافة جداً والأكزيما"
   },
   {
-    "id": "sk_laroche_hyalu_b5_serum_30ml",
-    "name": "سيروم لاروش بوزيه هيالو بي 5 لنضارة وامتلاء البشرة (Hyalu B5 Serum) - 30 مل",
+    "name": "La Roche-Posay Pigmentclar Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "La Roche-Posay",
-    "category": "serum",
-    "subCategory": "anti_aging",
-    "type": "bottle",
-    "size": "30ml",
-    "price": 42000,
-    "suggestedPrice": 42000,
-    "stockQuantity": 20,
-    "inStock": true,
-    "description": "يعيد ملء الخطوط التعبيرية ويرطب بعمق ويعيد الحيوية والمرونة للبشرة الباهتة والمجهدة.",
-    "ingredients": "Pure Hyaluronic Acid (Duo Molecular), Vitamin B5 (Panthenol), Madecassoside",
-    "usage": "توضع 3-4 قطرات صباحاً ومساءً على بشرة رطبة قبل المرطب."
+    "description": "سيروم لتوحيد لون البشرة وتقليل التصبغات"
   },
   {
-    "id": "sk_laroche_pure_vitamin_c10_30ml",
-    "name": "سيروم لاروش بوزيه بيور فيتامين سي 10 للإشراقة (Pure Vitamin C10) - 30 مل",
+    "name": "La Roche-Posay Anthelios Age Correct SPF50",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "La Roche-Posay",
-    "category": "serum",
-    "subCategory": "brightening",
-    "type": "bottle",
-    "size": "30ml",
-    "price": 44000,
-    "suggestedPrice": 44000,
-    "stockQuantity": 15,
-    "inStock": true,
-    "description": "مضاد أكسدة نقي يحفز إنتاج الكولاجين، يفتح التصبغات، ويمنح البشرة إشراقة شبابية فورية.",
-    "ingredients": "10% Pure Vitamin C (Ascorbic Acid), Salicylic Acid, Neurosensine",
-    "usage": "توضع بضع قطرات صباحاً على الوجه والرقبة متبوعة بواقي شمس."
+    "description": "واقي شمس مضاد لعلامات التقدم بالسن"
   },
   {
-    "id": "sk_ordinary_niacinamide_10_zinc_1_30ml",
-    "name": "سيروم ذا اورديناري نياسيناميد 10% + زنك 1% (The Ordinary Niacinamide) - 30 مل",
+    "name": "La Roche-Posay Effaclar Micro-Peeling Gel",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "La Roche-Posay",
+    "description": "جل تقشير دقيق لتنقية مسام البشرة الدهنية"
+  },
+  {
+    "name": "La Roche-Posay Redermic C10",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "La Roche-Posay",
+    "description": "سيروم فيتامين سي لمكافحة علامات التقدم بالسن"
+  },
+  {
+    "name": "La Roche-Posay Cicaplast Levres Lipstick",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "La Roche-Posay",
+    "description": "بلسم مرمم للشفاه الجافة والمتشققة"
+  },
+  {
+    "name": "La Roche-Posay Toleriane Dermo Cleanser",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "La Roche-Posay",
+    "description": "غسول منظف لطيف للبشرة الحساسة"
+  },
+  {
+    "name": "La Roche-Posay Nutritic Intense Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "La Roche-Posay",
+    "description": "كريم مغذٍ مكثف للبشرة الجافة جداً"
+  },
+  {
+    "name": "The Ordinary Niacinamide 10% + Zinc 1%",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "The Ordinary",
-    "category": "serum",
-    "subCategory": "treatments",
-    "type": "bottle",
-    "size": "30ml",
-    "price": 12000,
-    "suggestedPrice": 12000,
-    "stockQuantity": 50,
-    "inStock": true,
-    "description": "ينظم الإفرازات الدهنية، يقلل احمرار البشرة، ويصغر مظهر المسام الواسعة بشكل ملحوظ.",
-    "ingredients": "Niacinamide (Vitamin B3) 10%, Zinc PCA 1%",
-    "usage": "يوضع على كامل الوجه صباحاً ومساءً قبل الكريمات الثقيلة."
+    "description": "سيروم لتقليل المسام الواسعة والتحكم في الزيوت"
   },
   {
-    "id": "sk_ordinary_niacinamide_10_zinc_1_60ml",
-    "name": "سيروم ذا اورديناري نياسيناميد عبوة مضاعفة (The Ordinary Niacinamide) - 60 مل",
+    "name": "The Ordinary Hyaluronic Acid 2% + B5",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "The Ordinary",
-    "category": "serum",
-    "subCategory": "treatments",
-    "type": "bottle",
-    "size": "60ml",
-    "price": 19500,
-    "suggestedPrice": 19500,
-    "stockQuantity": 35,
-    "inStock": true,
-    "description": "الحجم الاقتصادي المزدوج للتحكم في لمعان البشرة وتقليل التصبغات وآثار الحبوب.",
-    "ingredients": "Niacinamide 10%, Zinc PCA 1%",
-    "usage": "يستخدم يومياً كخطوة أساسية في روتين البشرة المختلطة والدهنية."
+    "description": "سيروم مرطب مكثف يمنح البشرة نعومة ورطوبة"
   },
   {
-    "id": "sk_ordinary_hyaluronic_acid_2_b5_30ml",
-    "name": "سيروم ذا اورديناري حمض الهيالورونيك 2% + بي 5 (Hyaluronic Acid 2% + B5) - 30 مل",
+    "name": "The Ordinary Retinol 0.5% in Squalane",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "The Ordinary",
-    "category": "serum",
-    "subCategory": "moisturizer",
-    "type": "bottle",
-    "size": "30ml",
-    "price": 12500,
-    "suggestedPrice": 12500,
-    "stockQuantity": 40,
-    "inStock": true,
-    "description": "يرطب طبقات الجلد المتعددة بعمق بفضل الأوزان الجزيئية المتنوعة للهيالورونيك أسيد.",
-    "ingredients": "Hyaluronic Acid (Low, Medium, High Molecular), Vitamin B5",
-    "usage": "توضع بضع قطرات على بشرة مبللة بالماء قبل استخدام المرطب."
+    "description": "سيروم ريتينول لمكافحة علامات التقدم بالسن"
   },
   {
-    "id": "sk_ordinary_aha_bha_peeling_solution_30ml",
-    "name": "مقشر الأحماض الأحمر ذا اورديناري (AHA 30% + BHA 2% Peeling Solution) - 30 مل",
+    "name": "The Ordinary AHA 30% + BHA 2% Peeling Solution",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "The Ordinary",
-    "category": "face",
-    "subCategory": "treatments",
-    "type": "bottle",
-    "size": "30ml",
-    "price": 13500,
-    "suggestedPrice": 13500,
-    "stockQuantity": 45,
-    "inStock": true,
-    "description": "تقشير كيميائي مكثف لتفتيح البشرة، تنظيف المسام العميقة، والتخلص من التصبغات.",
-    "ingredients": "Glycolic Acid, Lactic Acid, Salicylic Acid, Tasmanian Pepperberry, Black Carrot",
-    "usage": "يوضع على بشرة جافة ونظيفة تماماً لمدة 10 دقائق فقط ثم يغسل بالماء. يستخدم مرة أسبوعياً ليلاً."
+    "description": "محلول تقشير كيميائي لتجديد سطح البشرة"
   },
   {
-    "id": "sk_ordinary_glycolic_acid_7_toning_240ml",
-    "name": "تونر حمض الجليكوليك 7% المقشر من ذا اورديناري (Glycolic Acid 7%) - 240 مل",
+    "name": "The Ordinary Vitamin C Suspension 23%",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "The Ordinary",
-    "category": "face",
-    "subCategory": "toners",
-    "type": "bottle",
-    "size": "240ml",
-    "price": 18500,
-    "suggestedPrice": 18500,
-    "stockQuantity": 35,
-    "inStock": true,
-    "description": "يقشر سطح الجلد بلطف لتحسين النضارة، تفتيح الأماكن الداكنة في الجسم والوجه، وتوحيد الملمس.",
-    "ingredients": "Glycolic Acid 7%, Amino Acids, Aloe Vera, Ginseng, Tasmanian Pepperberry",
-    "usage": "يمسح بقطنة على الوجه أو الجسم ليلاً بعد التنظيف دون شطف."
+    "description": "سيروم فيتامين سي مركز لتفتيح البشرة وتوحيد لونها"
   },
   {
-    "id": "sk_ordinary_caffeine_solution_5_egcg_30ml",
-    "name": "سيروم الكافيين لمحيط العين من ذا اورديناري (Caffeine Solution 5% + EGCG) - 30 مل",
+    "name": "The Ordinary Salicylic Acid 2% Solution",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "The Ordinary",
-    "category": "face",
-    "subCategory": "eye_care",
-    "type": "bottle",
-    "size": "30ml",
-    "price": 12500,
-    "suggestedPrice": 12500,
-    "stockQuantity": 30,
-    "inStock": true,
-    "description": "يقلل من مظهر الهالات السوداء والانتفاخ وتجمع السوائل تحت العين بتركيز عالٍ من الكافيين والشاي الأخضر.",
-    "ingredients": "Caffeine 5%, EGCG (Epigallocatechin Gallatyl Glucoside), Hyaluronic Acid",
-    "usage": "يدلك بلطف حول مدار العين صباحاً ومساءً."
+    "description": "سيروم لعلاج حب الشباب وتنقية المسام"
   },
   {
-    "id": "sk_ordinary_alpha_arbutin_2_ha_30ml",
-    "name": "سيروم ألفا أربوتين 2% + هيالورونيك من ذا اورديناري (Alpha Arbutin 2% + HA) - 30 مل",
+    "name": "The Ordinary Buffet Multi-Technology Peptide Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "The Ordinary",
-    "category": "serum",
-    "subCategory": "brightening",
-    "type": "bottle",
-    "size": "30ml",
-    "price": 14000,
-    "suggestedPrice": 14000,
-    "stockQuantity": 25,
-    "inStock": true,
-    "description": "يستهدف البقع الداكنة والتصبغات والكلف ويوحد لون البشرة بتركيز نقي من الألفا أربوتين.",
-    "ingredients": "Alpha Arbutin 2%, Hydrolyzed Sodium Hyaluronate",
-    "usage": "توضع بضع قطرات على الوجه صباحاً ومساءً مع استخدام واقي شمس."
+    "description": "سيروم متعدد الببتيدات لمكافحة علامات التقدم بالسن"
   },
   {
-    "id": "sk_bioderma_sensibio_h2o_500ml",
-    "name": "ماء ميسيلار بايوديرما سينسيبيو للبشرة الحساسة (Sensibio H2O) - 500 مل",
+    "name": "The Ordinary Squalane Cleanser",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "The Ordinary",
+    "description": "غسول لطيف يزيل المكياج والشوائب دون تجفيف البشرة"
+  },
+  {
+    "name": "The Ordinary Glycolic Acid 7% Toning Solution",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "The Ordinary",
+    "description": "تونر مقشر لتحسين ملمس ونضارة البشرة"
+  },
+  {
+    "name": "The Ordinary Natural Moisturizing Factors + HA",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "The Ordinary",
+    "description": "مرطب يومي يحاكي عوامل الترطيب الطبيعية للبشرة"
+  },
+  {
+    "name": "The Ordinary Multi-Peptide Lash & Brow Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "The Ordinary",
+    "description": "سيروم للرموش والحواجب يحتوي على الببتيدات"
+  },
+  {
+    "name": "The Ordinary Azelaic Acid Suspension 10%",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "The Ordinary",
+    "description": "سيروم لتوحيد لون البشرة وعلاج الاحمرار"
+  },
+  {
+    "name": "The Ordinary Caffeine Solution 5% + EGCG",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "The Ordinary",
+    "description": "سيروم لمنطقة العين يقلل الانتفاخ والهالات الداكنة"
+  },
+  {
+    "name": "The Ordinary Marine Hyaluronics",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "The Ordinary",
+    "description": "سيروم ترطيب خفيف مستخلص من مصادر بحرية"
+  },
+  {
+    "name": "The Ordinary 100% Plant-Derived Squalane",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "The Ordinary",
+    "description": "زيت سكوالين نباتي لترطيب البشرة والشعر"
+  },
+  {
+    "name": "Bioderma Sensibio H2O Micellar Water 500ml",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "Bioderma",
-    "category": "face",
-    "subCategory": "cleansers",
-    "type": "bottle",
-    "size": "500ml",
-    "price": 22000,
-    "suggestedPrice": 22000,
-    "stockQuantity": 30,
-    "inStock": true,
-    "description": "يزيل المكياج المقاوم للماء والشوائب بلطف تام ويهدئ البشرة دون الحاجة للشطف.",
-    "ingredients": "Micellar Technology, Cucumis Sativus (Cucumber) Fruit Extract, D.A.F. Complex",
-    "usage": "تبلل قطنة وتمسح بها منطقة الوجه والعينين بلطف."
+    "description": "ماء ميسيلار لإزالة المكياج وتنظيف البشرة الحساسة"
   },
   {
-    "id": "sk_bioderma_sebium_gel_moussant_200ml",
-    "name": "غسول بايوديرما سيبيوم المنقي للبشرة الدهنية (Sebium Gel Moussant) - 200 مل",
+    "name": "Bioderma Sebium H2O Micellar Water",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "Bioderma",
-    "category": "face",
-    "subCategory": "cleansers",
-    "type": "tube",
-    "size": "200ml",
-    "price": 21000,
-    "suggestedPrice": 21000,
-    "stockQuantity": 25,
-    "inStock": true,
-    "description": "ينظف بلطف ويحد من إفراز الدهون ويمنع انسداد المسام بمركب Fluidactiv الحصري.",
-    "ingredients": "Zinc Sulfate, Copper Sulfate, Ginkgo Biloba, Fluidactiv Patent",
-    "usage": "يوضع على بشرة مبللة ويدلك حتى يرغى ثم يشطف جيداً."
+    "description": "ماء ميسيلار مخصص للبشرة الدهنية والمختلطة"
   },
   {
-    "id": "sk_bioderma_sebium_pore_refiner_30ml",
-    "name": "كريم بايوديرما سيبيوم لتضييق المسام (Sebium Pore Refiner) - 30 مل",
+    "name": "Bioderma Hydrabio H2O Micellar Water",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "Bioderma",
-    "category": "face",
-    "subCategory": "treatments",
-    "type": "tube",
-    "size": "30ml",
-    "price": 24000,
-    "suggestedPrice": 24000,
-    "stockQuantity": 20,
-    "inStock": true,
-    "description": "يقلل من حجم المسام الواسعة ويحسن ملمس البشرة ويمنع لمعان المنطقة التائية (T-Zone).",
-    "ingredients": "Agaric Acid, Salicylic Acid, Mattifying Powders, Fluidactiv",
-    "usage": "يوضع صباحاً على كامل الوجه أو منطقة الأنف والجبين قبل المكياج."
+    "description": "ماء ميسيلار مرطب للبشرة الجافة والحساسة"
   },
   {
-    "id": "sk_bioderma_photoderm_aquafluid_spf50_40ml",
-    "name": "واقي شمس بايوديرما فوتوديرم أكوا فلويد غير لامع (Photoderm Aquafluid) - 40 مل",
+    "name": "Bioderma Atoderm Intensive Baume",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "Bioderma",
-    "category": "sunscreen",
-    "subCategory": "sun_care",
-    "type": "tube",
-    "size": "40ml",
-    "price": 24000,
-    "suggestedPrice": 24000,
-    "stockQuantity": 30,
-    "inStock": true,
-    "description": "قوام مائي خفيف للغاية بلمسة جافة وحماية خلوية مضاعفة SPF 50+ بدون أثر أبيض.",
-    "ingredients": "Sun Active Defense Patent, Cellular Bioprotection, Mattifying Silica",
-    "usage": "يوضع بالتساوي على الوجه والرقبة قبل التعرض للشمس."
+    "description": "بلسم مرطب مكثف للبشرة الجافة جداً وفروة الرأس"
   },
   {
-    "id": "sk_bioderma_atoderm_huile_douche_1l",
-    "name": "زيت الاستحمام المرطب بايوديرما أتوديرم (Atoderm Huile de Douche) - 1 لتر",
+    "name": "Bioderma Atoderm Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "Bioderma",
-    "category": "body",
-    "subCategory": "body_wash",
-    "type": "bottle",
-    "size": "1000ml",
-    "price": 34000,
-    "suggestedPrice": 34000,
-    "stockQuantity": 15,
-    "inStock": true,
-    "description": "زيت منظف ومهدئ للبشرة الجافة وشديدة الجفاف والمعرضة للأكزيما لجميع أفراد العائلة.",
-    "ingredients": "Vegetal Biolipids, Vitamin PP (Niacinamide), Skin Barrier Therapy",
-    "usage": "يستخدم أثناء الاستحمام على بشرة مبللة ثم يشطف بلطف."
+    "description": "كريم مرطب يومي للبشرة الجافة إلى شديدة الجفاف"
   },
   {
-    "id": "sk_eucerin_oil_control_sun_gel_50ml",
-    "name": "واقي شمس يوسيرين جل كريم للتحكم بالدهون (Eucerin Oil Control SPF 50+) - 50 مل",
+    "name": "Bioderma Sebium Global Gel Moussant",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Bioderma",
+    "description": "جل منظف للبشرة الدهنية المعرضة لحب الشباب"
+  },
+  {
+    "name": "Bioderma Photoderm Max SPF50+",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Bioderma",
+    "description": "واقي شمس بحماية عالية جداً للبشرة الحساسة"
+  },
+  {
+    "name": "Bioderma Cicabio Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Bioderma",
+    "description": "كريم مرمم للبشرة المتضررة والجروح السطحية"
+  },
+  {
+    "name": "Bioderma Sebium Sensitive Gel",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Bioderma",
+    "description": "جل مهدئ للبشرة الدهنية الحساسة"
+  },
+  {
+    "name": "Bioderma Hydrabio Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Bioderma",
+    "description": "سيروم مرطب مكثف للبشرة الجافة والمتعبة"
+  },
+  {
+    "name": "Bioderma Sensibio Light Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Bioderma",
+    "description": "كريم خفيف مهدئ للبشرة الحساسة جداً"
+  },
+  {
+    "name": "Bioderma Atoderm Shower Oil",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Bioderma",
+    "description": "زيت استحمام مرطب للبشرة الجافة"
+  },
+  {
+    "name": "Vichy Mineral 89 Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Vichy",
+    "description": "سيروم مرطب ومقوٍ لحاجز البشرة يحتوي على المياه المعدنية"
+  },
+  {
+    "name": "Vichy Normaderm Phytosolution",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Vichy",
+    "description": "مرطب للبشرة الدهنية المعرضة لحب الشباب"
+  },
+  {
+    "name": "Vichy Liftactiv Supreme",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Vichy",
+    "description": "كريم مضاد للتجاعيد ومشدد للبشرة"
+  },
+  {
+    "name": "Vichy Capital Soleil SPF50",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Vichy",
+    "description": "واقي شمس بحماية عالية للوجه والجسم"
+  },
+  {
+    "name": "Vichy Aqualia Thermal Rich Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Vichy",
+    "description": "كريم مرطب مكثف للبشرة الجافة"
+  },
+  {
+    "name": "Vichy Normaderm Purifying Gel Cleanser",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Vichy",
+    "description": "غسول منظف للبشرة الدهنية المعرضة للشوائب"
+  },
+  {
+    "name": "Vichy Neovadiol Meno 5 Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Vichy",
+    "description": "كريم مخصص للبشرة الناضجة في مرحلة انقطاع الطمث"
+  },
+  {
+    "name": "Vichy Slow Age Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Vichy",
+    "description": "كريم لمكافحة علامات التقدم بالسن المبكرة"
+  },
+  {
+    "name": "Vichy Dercos Anti-Dandruff Shampoo",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Vichy",
+    "description": "شامبو لعلاج قشرة الشعر"
+  },
+  {
+    "name": "Vichy Purete Thermale Micellar Water",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Vichy",
+    "description": "ماء ميسيلار لتنظيف وإزالة المكياج بلطف"
+  },
+  {
+    "name": "Eucerin Hyaluron-Filler Day Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "Eucerin",
-    "category": "sunscreen",
-    "subCategory": "sun_care",
-    "type": "bottle",
-    "size": "50ml",
-    "price": 26000,
-    "suggestedPrice": 26000,
-    "stockQuantity": 45,
-    "inStock": true,
-    "description": "حماية متقدمة من أشعة UVA/UVB وضوء HEVIS مع تأثير مضاد للمعان يدوم 8 ساعات بفضل L-Carnitine.",
-    "ingredients": "Advanced Spectral Technology, L-Carnitine, Glycyrrhetinic Acid, Licochalcone A",
-    "usage": "يوضع صباحاً كخطوة أخيرة في روتين العناية قبل التعرض للشمس."
+    "description": "كريم نهاري مضاد للتجاعيد يحتوي على حمض الهيالورونيك"
   },
   {
-    "id": "sk_eucerin_anti_pigment_dual_serum_30ml",
-    "name": "سيروم يوسيرين المزدوج لعلاج التصبغات والبقع (Anti-Pigment Dual Serum) - 30 مل",
+    "name": "Eucerin UreaRepair Plus Lotion 10%",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "Eucerin",
-    "category": "serum",
-    "subCategory": "brightening",
-    "type": "bottle",
-    "size": "30ml",
-    "price": 48000,
-    "suggestedPrice": 48000,
-    "stockQuantity": 20,
-    "inStock": true,
-    "description": "يحتوي على مركب الثياميدول الحاصل على براءة اختراع لتقليل التصبغات بنسبة تصل إلى 75% ومنع ظهورها مجدداً.",
-    "ingredients": "Patented Thiamidol, Concentrated Hyaluronic Acid",
-    "usage": "يوضع مرة واحدة يومياً صباحاً أو مساءً على بشرة نظيفة."
+    "description": "لوشن مرطب مكثف للبشرة الجافة جداً يحتوي على اليوريا"
   },
   {
-    "id": "sk_eucerin_urearepair_10_lotion_250ml",
-    "name": "لوشن يوسيرين يوريا ريبير بلس 10% يوريا (UreaRepair Plus 10%) - 250 مل",
+    "name": "Eucerin Oil Control Dry Touch SPF50",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "Eucerin",
-    "category": "moisturizer",
-    "subCategory": "lotions",
-    "type": "bottle",
-    "size": "250ml",
-    "price": 24000,
-    "suggestedPrice": 24000,
-    "stockQuantity": 25,
-    "inStock": true,
-    "description": "راحة فورية وترطيب يدوم 48 ساعة للبشرة شديدة الجفاف والمتقشرة وجلد الدجاجة.",
-    "ingredients": "10% Urea, Ceramides, Natural Moisturizing Factors (NMFs)",
-    "usage": "يدلك على الجسم حتى يمتص تماماً مع التركيز على الكوعين والركبتين."
+    "description": "واقي شمس مطفي للمعان للبشرة الدهنية"
   },
   {
-    "id": "sk_cosrx_snail_96_mucin_essence_100ml",
-    "name": "إيسنس خلاصة الحلزون المتقدمة من كوسركس (COSRX Snail 96 Mucin) - 100 مل",
-    "brand": "COSRX",
-    "category": "serum",
-    "subCategory": "treatments",
-    "type": "bottle",
-    "size": "100ml",
-    "price": 19000,
-    "suggestedPrice": 19000,
-    "stockQuantity": 35,
-    "inStock": true,
-    "description": "يحتوي على 96% من هلام الحلزون المرشح لإصلاح حاجز البشرة، التهدئة، ومنح النضارة والامتلاء الزجاجي.",
-    "ingredients": "96.3% Snail Secretion Filtrate, Sodium Hyaluronate, Panthenol, Allantoin",
-    "usage": "توضع كمية مناسبة بعد التونر ويطبطب على الوجه حتى يمتص بالكامل."
+    "name": "Eucerin DermoPurifyer Cleansing Gel",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Eucerin",
+    "description": "جل منظف للبشرة الدهنية المعرضة لحب الشباب"
   },
   {
-    "id": "sk_cosrx_snail_92_all_in_one_cream_100g",
-    "name": "كريم الحلزون المتكامل أول إن ون من كوسركس (COSRX Snail 92 Cream) - 100 غرام",
-    "brand": "COSRX",
-    "category": "moisturizer",
-    "subCategory": "creams",
-    "type": "jar",
-    "size": "100g",
-    "price": 21000,
-    "suggestedPrice": 21000,
-    "stockQuantity": 25,
-    "inStock": true,
-    "description": "مرطب جل غني بنسبة 92% من إفرازات الحلزون لترطيب وتهدئة البشرة دون إثقال المسام.",
-    "ingredients": "92% Snail Secretion Filtrate, Hyaluronic Acid, Adenosine",
-    "usage": "يوضع كخطوة ترطيب نهائية صباحاً ومساءً."
+    "name": "Eucerin Atopicontrol Body Care Lotion",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Eucerin",
+    "description": "لوشن مهدئ للبشرة المعرضة للأكزيما والجفاف الشديد"
   },
   {
-    "id": "sk_anua_heartleaf_77_soothing_toner_250ml",
-    "name": "تونر أنوا المهدئ بخلاصة عشبة القلب 77% (Anua Heartleaf 77%) - 250 مل",
+    "name": "Eucerin Anti-Pigment Dual Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Eucerin",
+    "description": "سيروم مزدوج لتفتيح البقع الداكنة وتوحيد اللون"
+  },
+  {
+    "name": "Eucerin Volume-Filler Day Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Eucerin",
+    "description": "كريم نهاري لملء التجاعيد وشد البشرة الناضجة"
+  },
+  {
+    "name": "Eucerin pH5 Shower Oil",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Eucerin",
+    "description": "زيت استحمام لطيف للبشرة الحساسة والجافة"
+  },
+  {
+    "name": "Eucerin Sun Fluid Actinic Control SPF100",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Eucerin",
+    "description": "واقي شمس بحماية قصوى للبشرة المعرضة للتصبغات"
+  },
+  {
+    "name": "Eucerin Elasticity Filler Night Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Eucerin",
+    "description": "كريم ليلي لتحسين مرونة البشرة الناضجة"
+  },
+  {
+    "name": "Cetaphil Gentle Skin Cleanser 500ml",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Cetaphil",
+    "description": "غسول لطيف للبشرة الحساسة والجافة يزيل الشوائب دون تجفيف"
+  },
+  {
+    "name": "Cetaphil Moisturizing Cream 453g",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Cetaphil",
+    "description": "كريم مرطب مكثف للبشرة الجافة جداً"
+  },
+  {
+    "name": "Cetaphil Moisturizing Lotion 591ml",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Cetaphil",
+    "description": "لوشن مرطب يومي لكامل الجسم"
+  },
+  {
+    "name": "Cetaphil Oily Skin Cleanser",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Cetaphil",
+    "description": "غسول مخصص للبشرة الدهنية والمختلطة"
+  },
+  {
+    "name": "Cetaphil PRO Redness Control Cleanser",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Cetaphil",
+    "description": "غسول مهدئ للبشرة المعرضة للاحمرار"
+  },
+  {
+    "name": "Cetaphil Sun SPF50 Fluid",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Cetaphil",
+    "description": "واقي شمس خفيف القوام بحماية عالية"
+  },
+  {
+    "name": "Cetaphil Baby Wash & Shampoo",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Cetaphil",
+    "description": "غسول وشامبو لطيف مخصص لبشرة الأطفال"
+  },
+  {
+    "name": "Cetaphil Rich Hydrating Night Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Cetaphil",
+    "description": "كريم ليلي مرطب مكثف للبشرة الجافة"
+  },
+  {
+    "name": "Cetaphil DermaControl Oil Absorbing Moisturizer SPF30",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Cetaphil",
+    "description": "مرطب ماص للزيوت مع حماية شمسية للبشرة الدهنية"
+  },
+  {
+    "name": "Garnier Micellar Cleansing Water 400ml",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Garnier",
+    "description": "ماء ميسيلار لتنظيف البشرة وإزالة المكياج"
+  },
+  {
+    "name": "Garnier SkinActive Vitamin C Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Garnier",
+    "description": "سيروم فيتامين سي لتفتيح وتوحيد لون البشرة"
+  },
+  {
+    "name": "Garnier Bright Complete Vitamin C Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Garnier",
+    "description": "كريم مفتح للبشرة يحتوي على فيتامين سي ونياسيناميد"
+  },
+  {
+    "name": "Garnier Pure Active Anti-Acne Gel Wash",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Garnier",
+    "description": "غسول لعلاج حب الشباب وتنقية المسام"
+  },
+  {
+    "name": "Garnier Hyaluronic Aloe Moisture Bomb Mask",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Garnier",
+    "description": "ماسك ورقي مرطب يحتوي على حمض الهيالورونيك والصبار"
+  },
+  {
+    "name": "Garnier Fructis Hair Food Banana Mask",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Garnier",
+    "description": "ماسك شعر مغذٍ بمستخلص الموز للشعر الجاف"
+  },
+  {
+    "name": "Garnier Skin Naturals Rose Water Toner",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Garnier",
+    "description": "تونر بماء الورد لترطيب وتنعيم البشرة"
+  },
+  {
+    "name": "Garnier Ambre Solaire SPF50 Sun Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Garnier",
+    "description": "واقي شمس بحماية عالية للوجه والجسم"
+  },
+  {
+    "name": "Garnier Olia Permanent Hair Color",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Garnier",
+    "description": "صبغة شعر دائمة خالية من الأمونيا"
+  },
+  {
+    "name": "Garnier Men Power White Face Wash",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Garnier",
+    "description": "غسول للرجال يساعد على تفتيح البشرة"
+  },
+  {
+    "name": "Neutrogena Hydro Boost Water Gel",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Neutrogena",
+    "description": "جل مرطب خفيف يحتوي على حمض الهيالورونيك"
+  },
+  {
+    "name": "Neutrogena Deep Clean Facial Cleanser",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Neutrogena",
+    "description": "غسول للتنظيف العميق للبشرة"
+  },
+  {
+    "name": "Neutrogena Ultra Sheer Dry-Touch SPF50",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Neutrogena",
+    "description": "واقي شمس خفيف غير دهني بحماية عالية"
+  },
+  {
+    "name": "Neutrogena Rapid Wrinkle Repair Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Neutrogena",
+    "description": "سيروم بالريتينول لمكافحة التجاعيد"
+  },
+  {
+    "name": "Neutrogena Oil-Free Acne Wash",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Neutrogena",
+    "description": "غسول خالٍ من الزيوت لعلاج حب الشباب"
+  },
+  {
+    "name": "Neutrogena Norwegian Formula Hand Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Neutrogena",
+    "description": "كريم مكثف لترطيب اليدين الجافتين جداً"
+  },
+  {
+    "name": "Neutrogena Visibly Clear Pink Grapefruit Wash",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Neutrogena",
+    "description": "غسول بمستخلص الجريب فروت لتفتيح البشرة"
+  },
+  {
+    "name": "Neutrogena Hydro Boost Eye Gel-Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Neutrogena",
+    "description": "كريم جل لمنطقة العين لترطيب مكثف"
+  },
+  {
+    "name": "Neutrogena Bright Boost Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Neutrogena",
+    "description": "سيروم مضيء للبشرة يحسن الإشراقة"
+  },
+  {
+    "name": "Avene Thermal Spring Water Spray 300ml",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Avene",
+    "description": "بخاخ مياه حرارية مهدئة للبشرة الحساسة"
+  },
+  {
+    "name": "Avene Cicalfate+ Restorative Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Avene",
+    "description": "كريم مرمم للبشرة المتضررة والجروح السطحية"
+  },
+  {
+    "name": "Avene Hydrance Rich Hydrating Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Avene",
+    "description": "كريم مرطب مكثف للبشرة الجافة والحساسة"
+  },
+  {
+    "name": "Avene Cleanance Cleansing Gel",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Avene",
+    "description": "جل منظف للبشرة الدهنية المعرضة لحب الشباب"
+  },
+  {
+    "name": "Avene Very High Protection SPF50+",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Avene",
+    "description": "واقي شمس بحماية قصوى للبشرة الحساسة"
+  },
+  {
+    "name": "Avene Tolerance Extreme Cleansing Lotion",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Avene",
+    "description": "لوشن منظف لطيف جداً للبشرة شديدة الحساسية"
+  },
+  {
+    "name": "Avene A-Oxitive Antioxidant Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Avene",
+    "description": "سيروم مضاد للأكسدة لحماية البشرة من التقدم بالسن"
+  },
+  {
+    "name": "Avene XeraCalm A.D Lipid-Replenishing Balm",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Avene",
+    "description": "بلسم مرمم للبشرة المعرضة للأكزيما والجفاف الشديد"
+  },
+  {
+    "name": "COSRX Advanced Snail 96 Mucin Power Essence",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Cosrx",
+    "description": "إسنس مرطب ومجدد يحتوي على مخاط الحلزون"
+  },
+  {
+    "name": "COSRX Low pH Good Morning Gel Cleanser",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Cosrx",
+    "description": "غسول لطيف بدرجة حموضة منخفضة للاستخدام اليومي"
+  },
+  {
+    "name": "COSRX AHA/BHA Clarifying Treatment Toner",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Cosrx",
+    "description": "تونر مقشر لتنقية المسام وتحسين ملمس البشرة"
+  },
+  {
+    "name": "COSRX Salicylic Acid Daily Gentle Cleanser",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Cosrx",
+    "description": "غسول لطيف يحتوي على حمض الساليسيليك للبشرة المعرضة لحب الشباب"
+  },
+  {
+    "name": "COSRX Centella Blemish Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Cosrx",
+    "description": "كريم مهدئ يحتوي على السنتلا لعلاج آثار الحبوب"
+  },
+  {
+    "name": "COSRX Acne Pimple Master Patch",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Cosrx",
+    "description": "لصقات لعلاج حبوب الشباب الموضعية"
+  },
+  {
+    "name": "COSRX Hyaluronic Acid Hydra Power Essence",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Cosrx",
+    "description": "إسنس مرطب مكثف يحتوي على حمض الهيالورونيك"
+  },
+  {
+    "name": "COSRX The Vitamin C 23 Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Cosrx",
+    "description": "سيروم فيتامين سي مركز لتفتيح البشرة"
+  },
+  {
+    "name": "COSRX Advanced Snail 92 All in One Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Cosrx",
+    "description": "كريم مرطب متعدد الاستخدامات بمخاط الحلزون"
+  },
+  {
+    "name": "Anua Heartleaf 77% Soothing Toner",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "Anua",
-    "category": "face",
-    "subCategory": "toners",
-    "type": "bottle",
-    "size": "250ml",
-    "price": 23000,
-    "suggestedPrice": 23000,
-    "stockQuantity": 30,
-    "inStock": true,
-    "description": "التونر الكوري الأكثر شهرة لتهدئة الاحمرار، تقليل التهاب الحبوب، وموازنة حموضة البشرة.",
-    "ingredients": "77% Houttuynia Cordata (Heartleaf) Extract, Centella Asiatica, Panthenol",
-    "usage": "يوضع على قطنة أو براحة اليد ويطبطب بلطف على الوجه بعد الغسول."
+    "description": "تونر مهدئ يحتوي على نبات الهارتليف لتهدئة البشرة"
   },
   {
-    "id": "sk_beauty_of_joseon_relief_sun_rice_50ml",
-    "name": "واقي شمس بيوتي أوف جوسون بالأرز والبروبيوتك (Beauty of Joseon Relief Sun) - 50 مل",
+    "name": "Anua Heartleaf Pore Control Cleansing Oil",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Anua",
+    "description": "زيت منظف لإزالة المكياج وتنقية المسام"
+  },
+  {
+    "name": "Anua Niacinamide 10% + TXA Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Anua",
+    "description": "سيروم لتوحيد لون البشرة وتقليل المسام"
+  },
+  {
+    "name": "Anua Peach 70% Niacinamide Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Anua",
+    "description": "سيروم مرطب ومفتح يحتوي على مستخلص الخوخ"
+  },
+  {
+    "name": "Anua Heartleaf Quercetinol Pore Deep Cleansing Foam",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Anua",
+    "description": "غسول رغوي لتنقية المسام العميقة"
+  },
+  {
+    "name": "Anua Rice Ceramide Moisturizing Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Anua",
+    "description": "سيروم مرطب يحتوي على الأرز والسيراميد"
+  },
+  {
+    "name": "Beauty of Joseon Glow Serum Propolis + Niacinamide",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "Beauty of Joseon",
-    "category": "sunscreen",
-    "subCategory": "sun_care",
-    "type": "tube",
-    "size": "50ml",
-    "price": 18000,
-    "suggestedPrice": 18000,
-    "stockQuantity": 40,
-    "inStock": true,
-    "description": "واقي شمس كوري عضوي خفيف كالكريم المرطب، يمنح توهجاً طبيعياً دون لمعان دهني أو بياض.",
-    "ingredients": "30% Rice Extract, Grain Fermented Probiotics, Niacinamide, SPF 50+ PA++++",
-    "usage": "يوضع بالتساوي على الوجه والرقبة قبل 30 دقيقة من الخروج للشمس."
+    "description": "سيروم لإشراقة البشرة يحتوي على البروبوليس والنياسيناميد"
   },
   {
-    "id": "sk_beauty_of_joseon_glow_serum_30ml",
-    "name": "سيروم النضارة بالعكبر والنياسيناميد من بيوتي أوف جوسون (Glow Serum) - 30 مل",
+    "name": "Beauty of Joseon Relief Sun Rice + Probiotics SPF50",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "Beauty of Joseon",
-    "category": "serum",
-    "subCategory": "brightening",
-    "type": "bottle",
-    "size": "30ml",
-    "price": 17500,
-    "suggestedPrice": 17500,
-    "stockQuantity": 25,
-    "inStock": true,
-    "description": "مستوحى من الطب التقليدي الكوري لتهدئة البشرة المتهيجة وتضييق المسام وتفتيح البقع.",
-    "ingredients": "60% Propolis Extract, 2% Niacinamide, BHA, Tamanu Oil",
-    "usage": "توضع 2-3 قطرات على الوجه مع تدليك خفيف حتى تمتصه البشرة."
+    "description": "واقي شمس خفيف يحتوي على الأرز والبروبيوتيك"
   },
   {
-    "id": "sk_panoxyl_acne_foaming_wash_10_156g",
-    "name": "غسول بانوكسيل الرغوي المعالج لحب الشباب 10% بنزويل بيروكسايد (PanOxyl 10%) - 156 غرام",
-    "brand": "PanOxyl",
-    "category": "face",
-    "subCategory": "cleansers",
-    "type": "tube",
-    "size": "156g",
-    "price": 19000,
-    "suggestedPrice": 19000,
-    "stockQuantity": 35,
-    "inStock": true,
-    "description": "أقوى غسول طبي مضاد للبكتيريا المسببة لحب الشباب للوجه والظهر والصدر بأعلى تركيز علاجي.",
-    "ingredients": "10% Benzoyl Peroxide Maximum Strength",
-    "usage": "يدلك على الجلد المصاب لمدة دقيقة إلى دقيقتين ثم يشطف جيداً بالماء."
+    "name": "Beauty of Joseon Dynasty Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Beauty of Joseon",
+    "description": "كريم مغذٍ ومرطب يحتوي على الجينسنغ"
   },
   {
-    "id": "sk_paulas_choice_2_bha_liquid_118ml",
-    "name": "مقشر بولاز تشويس بحمض الساليسيليك 2% (Paula's Choice 2% BHA) - 118 مل",
+    "name": "Beauty of Joseon Ginseng Essence Water",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Beauty of Joseon",
+    "description": "تونر إسنس يحتوي على الجينسنغ للترطيب والتغذية"
+  },
+  {
+    "name": "Beauty of Joseon Radiance Cleansing Balm",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Beauty of Joseon",
+    "description": "بلسم منظف يزيل المكياج بلطف"
+  },
+  {
+    "name": "Beauty of Joseon Revive Eye Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Beauty of Joseon",
+    "description": "سيروم لمنطقة العين لتقليل التجاعيد والانتفاخ"
+  },
+  {
+    "name": "SOME BY MI AHA BHA PHA 30 Days Miracle Toner",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "SOME BY MI",
+    "description": "تونر مقشر لعلاج حب الشباب وتحسين ملمس البشرة"
+  },
+  {
+    "name": "SOME BY MI Snail Truecica Miracle Repair Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "SOME BY MI",
+    "description": "كريم مرمم يحتوي على مخاط الحلزون والسنتلا"
+  },
+  {
+    "name": "SOME BY MI Galactomyces Pure Vitamin C Glow Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "SOME BY MI",
+    "description": "سيروم لإشراقة البشرة يحتوي على فيتامين سي"
+  },
+  {
+    "name": "SOME BY MI Yuja Niacin Brightening Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "SOME BY MI",
+    "description": "سيروم لتفتيح البشرة يحتوي على اليوجا والنياسيناميد"
+  },
+  {
+    "name": "SOME BY MI Red Tea Tree Spot Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "SOME BY MI",
+    "description": "كريم موضعي لعلاج حب الشباب يحتوي على شجرة الشاي"
+  },
+  {
+    "name": "SKIN1004 Madagascar Centella Ampoule",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Skin1004",
+    "description": "أمبولة مهدئة تحتوي على السنتلا من مدغشقر"
+  },
+  {
+    "name": "SKIN1004 Madagascar Centella Toning Toner",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Skin1004",
+    "description": "تونر مهدئ ومرطب يحتوي على السنتلا"
+  },
+  {
+    "name": "SKIN1004 Madagascar Centella Cleansing Foam",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Skin1004",
+    "description": "غسول رغوي لطيف يحتوي على السنتلا"
+  },
+  {
+    "name": "SKIN1004 Madagascar Centella Light Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Skin1004",
+    "description": "كريم خفيف مرطب ومهدئ للبشرة الحساسة"
+  },
+  {
+    "name": "SKIN1004 Vegan Wave Deep Moisture Sun Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Skin1004",
+    "description": "واقي شمس مرطب مناسب للبشرة الحساسة"
+  },
+  {
+    "name": "L'Oreal Paris Revitalift Hyaluronic Acid Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "L'Oréal Paris",
+    "description": "سيروم مضاد للتجاعيد يحتوي على حمض الهيالورونيك"
+  },
+  {
+    "name": "L'Oreal Paris Revitalift Laser X3 Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "L'Oréal Paris",
+    "description": "كريم مضاد للتجاعيد بتركيبة متطورة"
+  },
+  {
+    "name": "L'Oreal Paris True Match Foundation",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "L'Oréal Paris",
+    "description": "كريم أساس بتغطية طبيعية يلائم درجات متعددة من البشرة"
+  },
+  {
+    "name": "L'Oreal Paris Micellar Water Complete Cleanser",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "L'Oréal Paris",
+    "description": "ماء ميسيلار لتنظيف وإزالة المكياج"
+  },
+  {
+    "name": "L'Oreal Paris Age Perfect Golden Age Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "L'Oréal Paris",
+    "description": "كريم مغذٍ للبشرة الناضجة"
+  },
+  {
+    "name": "L'Oreal Paris Glycolic Bright Dark Spot Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "L'Oréal Paris",
+    "description": "سيروم لتفتيح البقع الداكنة يحتوي على حمض الغليكوليك"
+  },
+  {
+    "name": "L'Oreal Paris Infallible Full Wear Concealer",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "L'Oréal Paris",
+    "description": "كونسيلر بتغطية عالية وثبات طويل"
+  },
+  {
+    "name": "L'Oreal Paris Elseve Total Repair 5 Shampoo",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "L'Oréal Paris",
+    "description": "شامبو لإصلاح الشعر التالف"
+  },
+  {
+    "name": "L'Oreal Paris Voluminous Mascara",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "L'Oréal Paris",
+    "description": "ماسكارا لتكثيف وإطالة الرموش"
+  },
+  {
+    "name": "Maybelline Fit Me Matte + Poreless Foundation",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Maybelline",
+    "description": "كريم أساس مطفي للمعان يخفي المسام الواسعة"
+  },
+  {
+    "name": "Maybelline Instant Age Rewind Concealer",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Maybelline",
+    "description": "كونسيلر يخفي الهالات السوداء وعلامات التعب"
+  },
+  {
+    "name": "Maybelline SuperStay Matte Ink Lipstick",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Maybelline",
+    "description": "أحمر شفاه سائل مطفي ثابت لساعات طويلة"
+  },
+  {
+    "name": "Maybelline Lash Sensational Mascara",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Maybelline",
+    "description": "ماسكارا لتكثيف الرموش بمظهر كامل"
+  },
+  {
+    "name": "Maybelline Fit Me Loose Finishing Powder",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Maybelline",
+    "description": "بودرة مثبتة للمكياج تمنح مظهراً مطفياً"
+  },
+  {
+    "name": "Maybelline Colossal Kajal Eyeliner",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Maybelline",
+    "description": "قلم كحل غامق يدوم طويلاً"
+  },
+  {
+    "name": "Maybelline Baby Skin Instant Pore Eraser",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Maybelline",
+    "description": "برايمر يخفي المسام الواسعة قبل المكياج"
+  },
+  {
+    "name": "Maybelline Superstay 24H Foundation",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Maybelline",
+    "description": "كريم أساس بثبات طويل يصل إلى 24 ساعة"
+  },
+  {
+    "name": "Revox B77 Niacinamide 10%",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Revox B77",
+    "description": "سيروم نياسيناميد لتقليل المسام والتحكم في الزيوت"
+  },
+  {
+    "name": "Revox B77 Retinol 1%",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Revox B77",
+    "description": "سيروم ريتينول مركز لمكافحة علامات التقدم بالسن"
+  },
+  {
+    "name": "Revox B77 Hyaluronic Acid 2% + B5",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Revox B77",
+    "description": "سيروم مرطب يحتوي على حمض الهيالورونيك وفيتامين ب5"
+  },
+  {
+    "name": "Revox B77 Vitamin C Suspension 23%",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Revox B77",
+    "description": "سيروم فيتامين سي مركز لتفتيح البشرة"
+  },
+  {
+    "name": "Revox B77 AHA 30% + BHA 2% Peeling Solution",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Revox B77",
+    "description": "محلول تقشير كيميائي لتحسين ملمس البشرة"
+  },
+  {
+    "name": "Revox B77 Azelaic Acid Suspension 10%",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Revox B77",
+    "description": "سيروم لتوحيد لون البشرة وعلاج الاحمرار"
+  },
+  {
+    "name": "Paula's Choice Skin Perfecting 2% BHA Liquid",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
     "brand": "Paula's Choice",
-    "category": "face",
-    "subCategory": "treatments",
-    "type": "bottle",
-    "size": "118ml",
-    "price": 46000,
-    "suggestedPrice": 46000,
-    "stockQuantity": 20,
-    "inStock": true,
-    "description": "المقشر السائل العالمي لتنظيف الرؤوس السوداء من داخل المسام وتنعيم التجاعيد الدقيقة.",
-    "ingredients": "2% Salicylic Acid (BHA), Green Tea Extract, Methylpropanediol",
-    "usage": "يوضع بقطنة على بشرة نظيفة ليلاً دون شطف متبوعاً بمرطب."
+    "description": "سيروم مقشر يحتوي على حمض الساليسيليك لتنقية المسام"
   },
   {
-    "id": "sk_simple_refreshing_facial_wash_150ml",
-    "name": "غسول سيمبل المنعش للوجه الخالي من العطور (Simple Refreshing Facial Wash) - 150 مل",
-    "brand": "Simple",
-    "category": "face",
-    "subCategory": "cleansers",
-    "type": "tube",
-    "size": "150ml",
-    "price": 8500,
-    "suggestedPrice": 8500,
-    "stockQuantity": 40,
-    "inStock": true,
-    "description": "غسول نقي 100% خالٍ من الصابون والعطور القاسية ومناسب للبشرة الحساسة جداً.",
-    "ingredients": "Pro-Vitamin B5, Vitamin E, Triple Purified Water",
-    "usage": "يرغى مع الماء ويدلك على الوجه ثم يشطف بلطف."
+    "name": "Paula's Choice 10% Niacinamide Booster",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Paula's Choice",
+    "description": "سيروم مركز للنياسيناميد لتحسين ملمس البشرة"
+  },
+  {
+    "name": "Paula's Choice Clinical Ceramide-Enriched Moisturizer",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Paula's Choice",
+    "description": "مرطب غني بالسيراميدات لتقوية حاجز البشرة"
+  },
+  {
+    "name": "Paula's Choice C15 Super Booster",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Paula's Choice",
+    "description": "سيروم فيتامين سي مركز لمكافحة علامات التقدم بالسن"
+  },
+  {
+    "name": "Paula's Choice Omega+ Complex Moisturizer",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Paula's Choice",
+    "description": "مرطب غني بالأوميغا لتغذية البشرة الجافة"
+  },
+  {
+    "name": "Paula's Choice Resist Anti-Aging Cleanser",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Paula's Choice",
+    "description": "غسول مضاد لعلامات التقدم بالسن"
+  },
+  {
+    "name": "QV Skin Lotion 250ml",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "QV",
+    "description": "لوشن مرطب لطيف للبشرة الجافة والحساسة"
+  },
+  {
+    "name": "QV Cream 250g",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "QV",
+    "description": "كريم مرطب مكثف لكامل الجسم"
+  },
+  {
+    "name": "QV Gentle Wash 250ml",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "QV",
+    "description": "غسول لطيف خالٍ من الصابون للبشرة الحساسة"
+  },
+  {
+    "name": "QV Intensive with Ceramides",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "QV",
+    "description": "كريم مكثف يحتوي على السيراميدات للبشرة شديدة الجفاف"
+  },
+  {
+    "name": "QV Face Ultra Moisturising Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "QV",
+    "description": "كريم مرطب مكثف مخصص لبشرة الوجه"
+  },
+  {
+    "name": "QV Baby Moisturising Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "QV",
+    "description": "كريم مرطب لطيف مخصص لبشرة الأطفال الحساسة"
+  },
+  {
+    "name": "Dexeryl Creme 250g",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Dexeryl",
+    "description": "كريم مرطب مكثف للبشرة الجافة جداً والأكزيما"
+  },
+  {
+    "name": "Dexeryl Creme 50g",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Dexeryl",
+    "description": "كريم مرطب مكثف بحجم صغير للاستخدام اليومي"
+  },
+  {
+    "name": "Bio-Oil Skincare Oil 200ml",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Bio-Oil",
+    "description": "زيت للعناية بالبشرة يساعد على تحسين مظهر الندبات وعلامات التمدد"
+  },
+  {
+    "name": "Bio-Oil Dry Skin Gel",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Bio-Oil",
+    "description": "جل مرطب للبشرة الجافة جداً"
+  },
+  {
+    "name": "Bio-Oil Face Range Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Bio-Oil",
+    "description": "سيروم للوجه يحسن مظهر البشرة والتصبغات"
+  },
+  {
+    "name": "Palmer's Cocoa Butter Formula Lotion",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Palmer's",
+    "description": "لوشن مرطب بزبدة الكاكاو لكامل الجسم"
+  },
+  {
+    "name": "Palmer's Cocoa Butter Formula Massage Cream for Stretch Marks",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Palmer's",
+    "description": "كريم لتحسين مظهر علامات التمدد"
+  },
+  {
+    "name": "Palmer's Skin Success Eventone Fade Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Palmer's",
+    "description": "كريم لتوحيد لون البشرة وتقليل البقع الداكنة"
+  },
+  {
+    "name": "Palmer's Cocoa Butter Formula Soap",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Palmer's",
+    "description": "صابون مرطب بزبدة الكاكاو"
+  },
+  {
+    "name": "Palmer's Shea Formula Body Lotion",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Palmer's",
+    "description": "لوشن مرطب بزبدة الشيا"
+  },
+  {
+    "name": "Nivea Creme 150ml",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Nivea",
+    "description": "كريم مرطب متعدد الاستخدامات لكامل الجسم والوجه"
+  },
+  {
+    "name": "Nivea Soft Moisturizing Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Nivea",
+    "description": "كريم مرطب خفيف سريع الامتصاص"
+  },
+  {
+    "name": "Nivea Q10 Power Anti-Wrinkle Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Nivea",
+    "description": "كريم مضاد للتجاعيد يحتوي على الكوإنزيم Q10"
+  },
+  {
+    "name": "Nivea Micellar Water",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Nivea",
+    "description": "ماء ميسيلار لتنظيف البشرة وإزالة المكياج"
+  },
+  {
+    "name": "Nivea Men Sensitive Shaving Foam",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Nivea",
+    "description": "رغوة حلاقة لطيفة للبشرة الحساسة"
+  },
+  {
+    "name": "Nivea Body Lotion Nourishing",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Nivea",
+    "description": "لوشن مغذٍ لكامل الجسم"
+  },
+  {
+    "name": "Nivea Sun Protect & Moisture SPF50",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Nivea",
+    "description": "واقي شمس مرطب بحماية عالية"
+  },
+  {
+    "name": "Nivea Deodorant Roll-On Pearl & Beauty",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Nivea",
+    "description": "مزيل عرق يمنح نعومة وحماية طوال اليوم"
+  },
+  {
+    "name": "Dove Beauty Bar Original",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Dove",
+    "description": "صابون مرطب بربع كريم مرطب"
+  },
+  {
+    "name": "Dove Body Wash Deeply Nourishing",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Dove",
+    "description": "غسول جسم مرطب ومغذٍ للبشرة"
+  },
+  {
+    "name": "Dove Intensive Repair Shampoo",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Dove",
+    "description": "شامبو لإصلاح الشعر التالف والمتقصف"
+  },
+  {
+    "name": "Dove Advanced Care Antiperspirant Deodorant",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Dove",
+    "description": "مزيل عرق مضاد للتعرق مع رعاية متقدمة للبشرة"
+  },
+  {
+    "name": "Dove Nourishing Body Lotion",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Dove",
+    "description": "لوشن مغذٍ للجسم يمنح نعومة طويلة الأمد"
+  },
+  {
+    "name": "Dove Hair Fall Rescue Conditioner",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Dove",
+    "description": "بلسم لتقوية الشعر وتقليل التساقط"
+  },
+  {
+    "name": "Olaplex No.3 Hair Perfector",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Olaplex",
+    "description": "معالج شعر منزلي لإصلاح الروابط الداخلية للشعر التالف"
+  },
+  {
+    "name": "Olaplex No.4 Bond Maintenance Shampoo",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Olaplex",
+    "description": "شامبو للحفاظ على قوة وصحة الشعر"
+  },
+  {
+    "name": "Olaplex No.5 Bond Maintenance Conditioner",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Olaplex",
+    "description": "بلسم مرطب يحافظ على قوة الشعر"
+  },
+  {
+    "name": "Olaplex No.7 Bonding Oil",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Olaplex",
+    "description": "زيت للشعر يمنح لمعاناً ونعومة فورية"
+  },
+  {
+    "name": "Olaplex No.6 Bond Smoother",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Olaplex",
+    "description": "كريم تصفيف يخفف من التجعد ويمنح نعومة"
+  },
+  {
+    "name": "Kerastase Nutritive Bain Satin Shampoo",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Kérastase",
+    "description": "شامبو مغذٍ للشعر الجاف"
+  },
+  {
+    "name": "Kerastase Resistance Ciment Anti-Usure",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Kérastase",
+    "description": "معالج مقوٍ لتقليل تقصف الشعر"
+  },
+  {
+    "name": "Kerastase Elixir Ultime Oil",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Kérastase",
+    "description": "زيت فاخر يمنح الشعر لمعاناً ونعومة"
+  },
+  {
+    "name": "Kerastase Densifique Bain Densite",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Kérastase",
+    "description": "شامبو لزيادة كثافة الشعر"
+  },
+  {
+    "name": "Kerastase Genesis Anti Hair-Fall Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Kérastase",
+    "description": "سيروم لفروة الرأس يقلل تساقط الشعر"
+  },
+  {
+    "name": "OGX Coconut Miracle Oil Shampoo",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "OGX",
+    "description": "شامبو بزيت جوز الهند لترطيب الشعر الجاف"
+  },
+  {
+    "name": "OGX Argan Oil of Morocco Shampoo",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "OGX",
+    "description": "شامبو بزيت الأرغان المغربي لتغذية الشعر"
+  },
+  {
+    "name": "OGX Biotin & Collagen Shampoo",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "OGX",
+    "description": "شامبو بالبيوتين والكولاجين لتكثيف الشعر"
+  },
+  {
+    "name": "OGX Keratin Oil Smoothing Conditioner",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "OGX",
+    "description": "بلسم بالكيراتين لتنعيم الشعر المجعد"
+  },
+  {
+    "name": "OGX Anti-Breakage Keratin Oil Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "OGX",
+    "description": "سيروم يحمي الشعر من التقصف"
+  },
+  {
+    "name": "Cantu Shea Butter Leave-In Conditioner",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Cantu",
+    "description": "بلسم بدون شطف بزبدة الشيا للشعر الجاف والمجعد"
+  },
+  {
+    "name": "Cantu Coconut Curling Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Cantu",
+    "description": "كريم لتشكيل الشعر المجعد والمموج"
+  },
+  {
+    "name": "Cantu Shea Butter Curling Custard",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Cantu",
+    "description": "جل لتشكيل الكيرلي بزبدة الشيا"
+  },
+  {
+    "name": "Cantu Hydrating Cream Conditioner",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Cantu",
+    "description": "بلسم مرطب للشعر الجاف"
+  },
+  {
+    "name": "Vichy Dercos Energising Shampoo",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Vichy Dercos",
+    "description": "شامبو منشط لفروة الرأس يقلل تساقط الشعر"
+  },
+  {
+    "name": "Vichy Dercos Kera-Solutions Shampoo",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Vichy Dercos",
+    "description": "شامبو مقوٍ للشعر التالف والمعرض للتقصف"
+  },
+  {
+    "name": "Vichy Dercos DS Anti-Dandruff Shampoo",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Vichy Dercos",
+    "description": "شامبو لعلاج قشرة فروة الرأس الجافة"
+  },
+  {
+    "name": "Vichy Dercos Neogenic Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Vichy Dercos",
+    "description": "سيروم لتحفيز نمو الشعر الجديد"
+  },
+  {
+    "name": "Schwarzkopf Gliss Hair Repair Shampoo",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Schwarzkopf",
+    "description": "شامبو لإصلاح الشعر التالف"
+  },
+  {
+    "name": "Schwarzkopf BC Bonacure Repair Rescue",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Schwarzkopf",
+    "description": "معالج احترافي لإصلاح الشعر التالف بعمق"
+  },
+  {
+    "name": "Schwarzkopf Live Color Hair Dye",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Schwarzkopf",
+    "description": "صبغة شعر سريعة وسهلة الاستخدام"
+  },
+  {
+    "name": "Schwarzkopf Got2b Hair Gel",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Schwarzkopf",
+    "description": "جل تثبيت قوي للشعر"
+  },
+  {
+    "name": "Garnier Fructis Hydra Recharge Shampoo",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Garnier Fructis",
+    "description": "شامبو مرطب للشعر الجاف"
+  },
+  {
+    "name": "Garnier Fructis Full & Plush Conditioner",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Garnier Fructis",
+    "description": "بلسم لتكثيف ونعومة الشعر"
+  },
+  {
+    "name": "Garnier Fructis Anti-Hair Fall Shampoo",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Garnier Fructis",
+    "description": "شامبو لتقوية الشعر وتقليل التساقط"
+  },
+  {
+    "name": "Garnier Fructis Style Fixing Gel",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Garnier Fructis",
+    "description": "جل تثبيت للشعر بلمسة نهائية قوية"
+  },
+  {
+    "name": "Pantene Pro-V Total Damage Care Shampoo",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Pantene",
+    "description": "شامبو لإصلاح الشعر التالف"
+  },
+  {
+    "name": "Pantene Pro-V Repair & Protect Conditioner",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Pantene",
+    "description": "بلسم لإصلاح وحماية الشعر من التلف"
+  },
+  {
+    "name": "Pantene 3 Minute Miracle Deep Conditioner",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Pantene",
+    "description": "معالج سريع لترميم الشعر بعمق في 3 دقائق"
+  },
+  {
+    "name": "Pantene Anti-Hair Fall Shampoo",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Pantene",
+    "description": "شامبو لتقوية جذور الشعر وتقليل التساقط"
+  },
+  {
+    "name": "SVR Sebiaclear Gel Moussant",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "SVR",
+    "description": "جل رغوي منظف للبشرة الدهنية المعرضة لحب الشباب"
+  },
+  {
+    "name": "SVR Topialyse Baume",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "SVR",
+    "description": "بلسم مرطب مكثف للبشرة الجافة جداً والأكزيما"
+  },
+  {
+    "name": "SVR Ampoule Anti-Age Absolute",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "SVR",
+    "description": "أمبولة مضادة لعلامات التقدم بالسن"
+  },
+  {
+    "name": "SVR Hydralane Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "SVR",
+    "description": "سيروم مرطب يحتوي على حمض الهيالورونيك"
+  },
+  {
+    "name": "Isdin Fotoprotector Fusion Water SPF50",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Isdin",
+    "description": "واقي شمس خفيف القوام بحماية عالية"
+  },
+  {
+    "name": "Isdin Ureadin Rx 10 Lotion",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Isdin",
+    "description": "لوشن مرطب مكثف يحتوي على اليوريا"
+  },
+  {
+    "name": "Isdin Isdinceutics Melatonik Night Serum",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Isdin",
+    "description": "سيروم ليلي مضاد للأكسدة"
+  },
+  {
+    "name": "Isdin Acniben Cleansing Gel",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Isdin",
+    "description": "جل منظف للبشرة المعرضة لحب الشباب"
+  },
+  {
+    "name": "Ducray Anaphase+ Anti-Hair Loss Shampoo",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Ducray",
+    "description": "شامبو مضاد لتساقط الشعر"
+  },
+  {
+    "name": "Ducray Kelual DS Anti-Dandruff Cream Shampoo",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Ducray",
+    "description": "شامبو كريمي لعلاج القشرة الشديدة"
+  },
+  {
+    "name": "Ducray Sabal Sebum-Regulating Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Ducray",
+    "description": "كريم لتنظيم إفراز الزهم في فروة الرأس"
+  },
+  {
+    "name": "Ducray Ictyane Creme",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Ducray",
+    "description": "كريم مرطب للبشرة الجافة"
+  },
+  {
+    "name": "Urgo Filmogel Cicatrisant",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Urgo",
+    "description": "جل مرمم يسرّع التئام الجروح السطحية"
+  },
+  {
+    "name": "Urgo Cor Callosites",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Urgo",
+    "description": "لصقات لعلاج الكالو والجلد السميك في القدمين"
+  },
+  {
+    "name": "Urgo Ampoules Anti-Cernes",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Urgo",
+    "description": "أمبولات لتقليل الهالات السوداء تحت العين"
+  },
+  {
+    "name": "ACM Sensifine AR Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "ACM",
+    "description": "كريم مهدئ للبشرة المعرضة للاحمرار والوردية"
+  },
+  {
+    "name": "ACM Depiderm Radiance Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "ACM",
+    "description": "كريم لتفتيح وتوحيد لون البشرة"
+  },
+  {
+    "name": "ACM Sebclair Cream",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "ACM",
+    "description": "كريم مهدئ للبشرة الدهنية المعرضة للالتهاب"
+  },
+  {
+    "name": "Vaseline Original Petroleum Jelly 100ml",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Vaseline",
+    "description": "جل بترولي مرطب لحماية وترطيب البشرة"
+  },
+  {
+    "name": "Vaseline Intensive Care Cocoa Radiant Lotion",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Vaseline",
+    "description": "لوشن مرطب بزبدة الكاكاو للجسم"
+  },
+  {
+    "name": "Vaseline Healthy Bright Serum-in-Lotion",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Vaseline",
+    "description": "لوشن مفتح يحتوي على سيروم لتوحيد لون البشرة"
+  },
+  {
+    "name": "Vaseline Lip Therapy Original",
+    "category": "Cosmetics",
+    "subCategory": "Skincare",
+    "brand": "Vaseline",
+    "description": "ملمع شفاه مرطب لعلاج الشفاه الجافة والمتشققة"
+  },
+  {
+    "name": "Aptamil Stage 1 (0-6M) 400g",
+    "category": "Baby Milk",
+    "subCategory": "Stage 1 (0-6M)",
+    "brand": "Aptamil",
+    "description": "حليب مخصص للرضع من عمر 0 إلى 6 أشهر يحتوي على البريبايوتكس لدعم النمو والمناعة"
+  },
+  {
+    "name": "Aptamil Stage 2 (6-12M) 400g",
+    "category": "Baby Milk",
+    "subCategory": "Stage 2 (6-12M)",
+    "brand": "Aptamil",
+    "description": "حليب متابعة للرضع من عمر 6 إلى 12 شهراً"
+  },
+  {
+    "name": "Aptamil Stage 3 (1-2Y) 400g",
+    "category": "Baby Milk",
+    "subCategory": "Stage 3 (1-2Y)",
+    "brand": "Aptamil",
+    "description": "حليب نمو للأطفال من عمر سنة إلى سنتين"
+  },
+  {
+    "name": "Aptamil Comfort 1",
+    "category": "Baby Milk",
+    "subCategory": "Special Care - Colic/Constipation",
+    "brand": "Aptamil",
+    "description": "حليب خاص لتخفيف المغص والإمساك عند الرضع"
+  },
+  {
+    "name": "Aptamil Anti-Reflux (AR)",
+    "category": "Baby Milk",
+    "subCategory": "Special Care - Reflux",
+    "brand": "Aptamil",
+    "description": "حليب خاص للرضع الذين يعانون من الارتجاع المعدي"
+  },
+  {
+    "name": "Aptamil Pepti Junior",
+    "category": "Baby Milk",
+    "subCategory": "Special Care - Allergy/Hypoallergenic",
+    "brand": "Aptamil",
+    "description": "حليب مخصص للرضع الذين يعانون من حساسية بروتين حليب البقر"
+  },
+  {
+    "name": "Bebelac Stage 1 (0-6M) 400g",
+    "category": "Baby Milk",
+    "subCategory": "Stage 1 (0-6M)",
+    "brand": "Bebelac",
+    "description": "حليب مخصص للرضع من الولادة حتى 6 أشهر"
+  },
+  {
+    "name": "Bebelac Stage 2 (6-12M) 400g",
+    "category": "Baby Milk",
+    "subCategory": "Stage 2 (6-12M)",
+    "brand": "Bebelac",
+    "description": "حليب متابعة للرضع من 6 إلى 12 شهراً"
+  },
+  {
+    "name": "Bebelac Stage 3 (1-3Y) 400g",
+    "category": "Baby Milk",
+    "subCategory": "Stage 3 (1-3Y)",
+    "brand": "Bebelac",
+    "description": "حليب نمو للأطفال من سنة إلى 3 سنوات"
+  },
+  {
+    "name": "Bebelac Comfort",
+    "category": "Baby Milk",
+    "subCategory": "Special Care - Colic/Constipation",
+    "brand": "Bebelac",
+    "description": "حليب لتخفيف مشاكل الهضم والمغص عند الرضع"
+  },
+  {
+    "name": "Bebelac AR (Anti-Reflux)",
+    "category": "Baby Milk",
+    "subCategory": "Special Care - Reflux",
+    "brand": "Bebelac",
+    "description": "حليب مضاد للارتجاع المعدي للرضع"
+  },
+  {
+    "name": "Similac Advance Stage 1",
+    "category": "Baby Milk",
+    "subCategory": "Stage 1 (0-6M)",
+    "brand": "Similac",
+    "description": "حليب للرضع من الولادة حتى 6 أشهر يحتوي على مزيج من الأوميغا 3 و6"
+  },
+  {
+    "name": "Similac Advance Stage 2",
+    "category": "Baby Milk",
+    "subCategory": "Stage 2 (6-12M)",
+    "brand": "Similac",
+    "description": "حليب متابعة للرضع من 6 إلى 12 شهراً"
+  },
+  {
+    "name": "Similac Gain Plus Stage 3",
+    "category": "Baby Milk",
+    "subCategory": "Stage 3 (1-3Y)",
+    "brand": "Similac",
+    "description": "حليب نمو للأطفال من سنة إلى 3 سنوات"
+  },
+  {
+    "name": "Similac Total Comfort",
+    "category": "Baby Milk",
+    "subCategory": "Special Care - Colic/Digestion",
+    "brand": "Similac",
+    "description": "حليب سهل الهضم للرضع الذين يعانون من المغص والغازات"
+  },
+  {
+    "name": "Similac Sensitive",
+    "category": "Baby Milk",
+    "subCategory": "Special Care - Lactose Sensitivity",
+    "brand": "Similac",
+    "description": "حليب مخصص للرضع الذين يعانون من حساسية اللاكتوز"
+  },
+  {
+    "name": "Similac Isomil (Soy-Based)",
+    "category": "Baby Milk",
+    "subCategory": "Special Care - Soy-Based",
+    "brand": "Similac",
+    "description": "حليب نباتي بديل قائم على فول الصويا لمن لديهم حساسية من حليب البقر"
+  },
+  {
+    "name": "Novalac Stage 1 (0-6M)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 1 (0-6M)",
+    "brand": "Novalac",
+    "description": "حليب للرضع من الولادة حتى 6 أشهر"
+  },
+  {
+    "name": "Novalac Stage 2 (6-12M)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 2 (6-12M)",
+    "brand": "Novalac",
+    "description": "حليب متابعة للرضع من 6 إلى 12 شهراً"
+  },
+  {
+    "name": "Novalac AC (Anti-Colic)",
+    "category": "Baby Milk",
+    "subCategory": "Special Care - Colic",
+    "brand": "Novalac",
+    "description": "حليب خاص لتخفيف المغص عند الرضع"
+  },
+  {
+    "name": "Novalac AR (Anti-Reflux)",
+    "category": "Baby Milk",
+    "subCategory": "Special Care - Reflux",
+    "brand": "Novalac",
+    "description": "حليب مضاد للارتجاع المعدي للرضع"
+  },
+  {
+    "name": "Novalac Transit",
+    "category": "Baby Milk",
+    "subCategory": "Special Care - Constipation",
+    "brand": "Novalac",
+    "description": "حليب لتخفيف الإمساك عند الرضع"
+  },
+  {
+    "name": "Nestle NAN Optipro Stage 1",
+    "category": "Baby Milk",
+    "subCategory": "Stage 1 (0-6M)",
+    "brand": "Nan (Nestlé)",
+    "description": "حليب للرضع من الولادة حتى 6 أشهر يحتوي على بروتين محسّن"
+  },
+  {
+    "name": "Nestle NAN Optipro Stage 2",
+    "category": "Baby Milk",
+    "subCategory": "Stage 2 (6-12M)",
+    "brand": "Nan (Nestlé)",
+    "description": "حليب متابعة للرضع من 6 إلى 12 شهراً"
+  },
+  {
+    "name": "Nestle NAN Optipro Stage 3",
+    "category": "Baby Milk",
+    "subCategory": "Stage 3 (1-3Y)",
+    "brand": "Nan (Nestlé)",
+    "description": "حليب نمو للأطفال من سنة إلى 3 سنوات"
+  },
+  {
+    "name": "Nestle NAN AR (Anti-Reflux)",
+    "category": "Baby Milk",
+    "subCategory": "Special Care - Reflux",
+    "brand": "Nan (Nestlé)",
+    "description": "حليب مضاد للارتجاع المعدي للرضع"
+  },
+  {
+    "name": "Nestle NAN Comfort",
+    "category": "Baby Milk",
+    "subCategory": "Special Care - Colic/Constipation",
+    "brand": "Nan (Nestlé)",
+    "description": "حليب سهل الهضم لتخفيف المغص والإمساك"
+  },
+  {
+    "name": "Nestle NAN Lactose Free",
+    "category": "Baby Milk",
+    "subCategory": "Special Care - Lactose Free",
+    "brand": "Nan (Nestlé)",
+    "description": "حليب خالٍ من اللاكتوز للرضع الذين يعانون من حساسية اللاكتوز"
+  },
+  {
+    "name": "Primalac Stage 1 (0-6M)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 1 (0-6M)",
+    "brand": "Primalac",
+    "description": "حليب للرضع من الولادة حتى 6 أشهر"
+  },
+  {
+    "name": "Primalac Stage 2 (6-12M)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 2 (6-12M)",
+    "brand": "Primalac",
+    "description": "حليب متابعة للرضع من 6 إلى 12 شهراً"
+  },
+  {
+    "name": "Primalac Stage 3 (1-3Y)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 3 (1-3Y)",
+    "brand": "Primalac",
+    "description": "حليب نمو للأطفال من سنة إلى 3 سنوات"
+  },
+  {
+    "name": "Primalac Gold Stage 4",
+    "category": "Baby Milk",
+    "subCategory": "Stage 4 (3Y+)",
+    "brand": "Primalac",
+    "description": "حليب للأطفال فوق 3 سنوات"
+  },
+  {
+    "name": "Celia Expert 1 (0-6M)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 1 (0-6M)",
+    "brand": "Celia",
+    "description": "حليب فرنسي للرضع من الولادة حتى 6 أشهر"
+  },
+  {
+    "name": "Celia Expert 2 (6-12M)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 2 (6-12M)",
+    "brand": "Celia",
+    "description": "حليب متابعة للرضع من 6 إلى 12 شهراً"
+  },
+  {
+    "name": "Celia AR (Anti-Reflux)",
+    "category": "Baby Milk",
+    "subCategory": "Special Care - Reflux",
+    "brand": "Celia",
+    "description": "حليب مضاد للارتجاع المعدي"
+  },
+  {
+    "name": "Celia Confort",
+    "category": "Baby Milk",
+    "subCategory": "Special Care - Colic/Constipation",
+    "brand": "Celia",
+    "description": "حليب لتخفيف المغص والإمساك عند الرضع"
+  },
+  {
+    "name": "PediaSure Complete Vanilla 400g",
+    "category": "Baby Milk",
+    "subCategory": "Nutritional Supplement (1-10Y)",
+    "brand": "Pediasure",
+    "description": "مكمل غذائي للأطفال من عمر سنة إلى 10 سنوات لدعم النمو"
+  },
+  {
+    "name": "PediaSure Complete Chocolate 400g",
+    "category": "Baby Milk",
+    "subCategory": "Nutritional Supplement (1-10Y)",
+    "brand": "Pediasure",
+    "description": "مكمل غذائي بنكهة الشوكولاتة لدعم نمو الأطفال"
+  },
+  {
+    "name": "PediaSure Grow & Gain Ready-to-Drink",
+    "category": "Baby Milk",
+    "subCategory": "Nutritional Supplement (1-10Y)",
+    "brand": "Pediasure",
+    "description": "مشروب غذائي جاهز لدعم النمو والوزن الصحي للأطفال"
+  },
+  {
+    "name": "Nido 1+ Growing Up Milk",
+    "category": "Baby Milk",
+    "subCategory": "Stage 4 (1Y+)",
+    "brand": "Nido",
+    "description": "حليب نمو للأطفال فوق سنة واحدة"
+  },
+  {
+    "name": "Nido 3+ Growing Up Milk",
+    "category": "Baby Milk",
+    "subCategory": "Stage 5 (3Y+)",
+    "brand": "Nido",
+    "description": "حليب نمو للأطفال فوق 3 سنوات"
+  },
+  {
+    "name": "Nido Fortificada Full Cream Milk Powder",
+    "category": "Baby Milk",
+    "subCategory": "Full Cream Milk Powder",
+    "brand": "Nido",
+    "description": "حليب بودرة كامل الدسم مدعم بالفيتامينات والمعادن"
+  },
+  {
+    "name": "Guigoz 1 (0-6M)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 1 (0-6M)",
+    "brand": "Guigoz",
+    "description": "حليب فرنسي للرضع من الولادة حتى 6 أشهر"
+  },
+  {
+    "name": "Guigoz 2 (6-12M)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 2 (6-12M)",
+    "brand": "Guigoz",
+    "description": "حليب متابعة للرضع من 6 إلى 12 شهراً"
+  },
+  {
+    "name": "Guigoz Transit Plus",
+    "category": "Baby Milk",
+    "subCategory": "Special Care - Constipation",
+    "brand": "Guigoz",
+    "description": "حليب لتخفيف الإمساك عند الرضع"
+  },
+  {
+    "name": "Guigoz Confort",
+    "category": "Baby Milk",
+    "subCategory": "Special Care - Colic/Digestion",
+    "brand": "Guigoz",
+    "description": "حليب سهل الهضم لتخفيف المغص"
+  },
+  {
+    "name": "Hero Baby 1 (0-6M)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 1 (0-6M)",
+    "brand": "Hero Baby",
+    "description": "حليب إسباني للرضع من الولادة حتى 6 أشهر"
+  },
+  {
+    "name": "Hero Baby 2 (6-12M)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 2 (6-12M)",
+    "brand": "Hero Baby",
+    "description": "حليب متابعة للرضع من 6 إلى 12 شهراً"
+  },
+  {
+    "name": "Hero Baby 3 (1-3Y)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 3 (1-3Y)",
+    "brand": "Hero Baby",
+    "description": "حليب نمو للأطفال من سنة إلى 3 سنوات"
+  },
+  {
+    "name": "Hero Baby Premium AR",
+    "category": "Baby Milk",
+    "subCategory": "Special Care - Reflux",
+    "brand": "Hero Baby",
+    "description": "حليب مضاد للارتجاع المعدي للرضع"
+  },
+  {
+    "name": "Blessa 1 (0-6M)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 1 (0-6M)",
+    "brand": "Blessa",
+    "description": "حليب للرضع من الولادة حتى 6 أشهر"
+  },
+  {
+    "name": "Blessa 2 (6-12M)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 2 (6-12M)",
+    "brand": "Blessa",
+    "description": "حليب متابعة للرضع من 6 إلى 12 شهراً"
+  },
+  {
+    "name": "Blessa 3 (1-3Y)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 3 (1-3Y)",
+    "brand": "Blessa",
+    "description": "حليب نمو للأطفال من سنة إلى 3 سنوات"
+  },
+  {
+    "name": "Ronalac 1 (0-6M)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 1 (0-6M)",
+    "brand": "Ronalac",
+    "description": "حليب للرضع من الولادة حتى 6 أشهر"
+  },
+  {
+    "name": "Ronalac 2 (6-12M)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 2 (6-12M)",
+    "brand": "Ronalac",
+    "description": "حليب متابعة للرضع من 6 إلى 12 شهراً"
+  },
+  {
+    "name": "Ronalac 3 (1-3Y)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 3 (1-3Y)",
+    "brand": "Ronalac",
+    "description": "حليب نمو للأطفال من سنة إلى 3 سنوات"
+  },
+  {
+    "name": "Ronalac Full Cream Milk Powder",
+    "category": "Baby Milk",
+    "subCategory": "Full Cream Milk Powder",
+    "brand": "Ronalac",
+    "description": "حليب بودرة كامل الدسم للعائلة"
+  },
+  {
+    "name": "Fabimilk 1 (0-6M)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 1 (0-6M)",
+    "brand": "Fabimilk",
+    "description": "حليب للرضع من الولادة حتى 6 أشهر"
+  },
+  {
+    "name": "Fabimilk 2 (6-12M)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 2 (6-12M)",
+    "brand": "Fabimilk",
+    "description": "حليب متابعة للرضع من 6 إلى 12 شهراً"
+  },
+  {
+    "name": "Fabimilk 3 (1-3Y)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 3 (1-3Y)",
+    "brand": "Fabimilk",
+    "description": "حليب نمو للأطفال من سنة إلى 3 سنوات"
+  },
+  {
+    "name": "Liptomil Plus 1 (0-6M)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 1 (0-6M)",
+    "brand": "Liptomil",
+    "description": "حليب للرضع من الولادة حتى 6 أشهر"
+  },
+  {
+    "name": "Liptomil Plus 2 (6-12M)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 2 (6-12M)",
+    "brand": "Liptomil",
+    "description": "حليب متابعة للرضع من 6 إلى 12 شهراً"
+  },
+  {
+    "name": "Liptomil Plus 3 (1-3Y)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 3 (1-3Y)",
+    "brand": "Liptomil",
+    "description": "حليب نمو للأطفال من سنة إلى 3 سنوات"
+  },
+  {
+    "name": "S-26 Gold Stage 1 (0-6M)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 1 (0-6M)",
+    "brand": "S-26 (Wyeth)",
+    "description": "حليب للرضع من الولادة حتى 6 أشهر"
+  },
+  {
+    "name": "S-26 Gold Stage 2 (6-12M)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 2 (6-12M)",
+    "brand": "S-26 (Wyeth)",
+    "description": "حليب متابعة للرضع من 6 إلى 12 شهراً"
+  },
+  {
+    "name": "S-26 Progress Stage 3 (1-3Y)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 3 (1-3Y)",
+    "brand": "S-26 (Wyeth)",
+    "description": "حليب نمو للأطفال من سنة إلى 3 سنوات"
+  },
+  {
+    "name": "S-26 Gold Comfort",
+    "category": "Baby Milk",
+    "subCategory": "Special Care - Colic/Digestion",
+    "brand": "S-26 (Wyeth)",
+    "description": "حليب سهل الهضم لتخفيف المغص عند الرضع"
+  },
+  {
+    "name": "Lactonic 1 (0-6M)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 1 (0-6M)",
+    "brand": "Lactonic",
+    "description": "حليب للرضع من الولادة حتى 6 أشهر"
+  },
+  {
+    "name": "Lactonic 2 (6-12M)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 2 (6-12M)",
+    "brand": "Lactonic",
+    "description": "حليب متابعة للرضع من 6 إلى 12 شهراً"
+  },
+  {
+    "name": "Lactonic 3 (1-3Y)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 3 (1-3Y)",
+    "brand": "Lactonic",
+    "description": "حليب نمو للأطفال من سنة إلى 3 سنوات"
+  },
+  {
+    "name": "Humana Expert 1 (0-6M)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 1 (0-6M)",
+    "brand": "Humana",
+    "description": "حليب ألماني للرضع من الولادة حتى 6 أشهر"
+  },
+  {
+    "name": "Humana Expert 2 (6-12M)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 2 (6-12M)",
+    "brand": "Humana",
+    "description": "حليب متابعة للرضع من 6 إلى 12 شهراً"
+  },
+  {
+    "name": "Humana AR (Anti-Reflux)",
+    "category": "Baby Milk",
+    "subCategory": "Special Care - Reflux",
+    "brand": "Humana",
+    "description": "حليب مضاد للارتجاع المعدي للرضع"
+  },
+  {
+    "name": "Humana Comfort",
+    "category": "Baby Milk",
+    "subCategory": "Special Care - Colic/Constipation",
+    "brand": "Humana",
+    "description": "حليب سهل الهضم لتخفيف المغص والإمساك"
+  },
+  {
+    "name": "Biomil 1 (0-6M)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 1 (0-6M)",
+    "brand": "Biomil",
+    "description": "حليب للرضع من الولادة حتى 6 أشهر"
+  },
+  {
+    "name": "Biomil 2 (6-12M)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 2 (6-12M)",
+    "brand": "Biomil",
+    "description": "حليب متابعة للرضع من 6 إلى 12 شهراً"
+  },
+  {
+    "name": "Biomil 3 (1-3Y)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 3 (1-3Y)",
+    "brand": "Biomil",
+    "description": "حليب نمو للأطفال من سنة إلى 3 سنوات"
+  },
+  {
+    "name": "Biomil AR (Anti-Reflux)",
+    "category": "Baby Milk",
+    "subCategory": "Special Care - Reflux",
+    "brand": "Biomil",
+    "description": "حليب مضاد للارتجاع المعدي للرضع"
+  },
+  {
+    "name": "Babyline 1 (0-6M)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 1 (0-6M)",
+    "brand": "Babyline",
+    "description": "حليب فرنسي للرضع من الولادة حتى 6 أشهر"
+  },
+  {
+    "name": "Babyline 2 (6-12M)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 2 (6-12M)",
+    "brand": "Babyline",
+    "description": "حليب متابعة للرضع من 6 إلى 12 شهراً"
+  },
+  {
+    "name": "Babyline 3 (1-3Y)",
+    "category": "Baby Milk",
+    "subCategory": "Stage 3 (1-3Y)",
+    "brand": "Babyline",
+    "description": "حليب نمو للأطفال من سنة إلى 3 سنوات"
   }
 ]
