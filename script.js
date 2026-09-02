@@ -1,6 +1,6 @@
 /* ==========================================================
    SaaS Multi-Tenant Pharmacy Engine — script.js
-   Version: 3.1.0 (Master Enterprise Edition + Crowdsourcing)
+   Version: 3.2.0 (Master Enterprise Edition + Full Integration)
    ========================================================== */
 
 // ================= 1. SUBDOMAIN & SLUG RESOLVER =================
@@ -1666,7 +1666,7 @@ async function exportOrdersToCSV() {
   } catch (e) { console.error(e); }
 }
 
-// ================= 21. PRODUCTS CRUD & AUTO-CROWDSOURCING HOOK =================
+// ================= 21. CLINICAL PRODUCTS CRUD & AUTO-CROWDSOURCING =================
 function toggleLowStockFilter() {
   isLowStockFilterActive = !isLowStockFilterActive;
   const btn = document.getElementById('btnFilterLowStock');
@@ -1716,14 +1716,26 @@ function openAdminQuickEditModal(id) {
   if (document.getElementById('quickEditProdStockQty')) document.getElementById('quickEditProdStockQty').value = (p.stockQuantity !== undefined ? p.stockQuantity : 10);
   document.getElementById('quickEditProdCat').value = p.category || (categories[0] ? categories[0].id : 'face');
   document.getElementById('quickEditProdType').value = p.type || 'bottle';
-  document.getElementById('quickEditProdImg').value = p.imageUrl || '';
+  
+  const imgUrlInp = document.getElementById('quickEditProdImg');
+  const imgPreviewEl = document.getElementById('quickEditProdImgPreviewEl');
+  const imgPreviewBox = document.getElementById('quickEditProdImgPreviewBox');
+  if (imgUrlInp) imgUrlInp.value = p.imageUrl || '';
+  if (p.imageUrl && imgPreviewEl && imgPreviewBox) {
+    imgPreviewEl.src = p.imageUrl;
+    imgPreviewBox.style.display = 'flex';
+  } else if (imgPreviewBox) {
+    imgPreviewBox.style.display = 'none';
+  }
+
   if (document.getElementById('quickEditProdDesc')) document.getElementById('quickEditProdDesc').value = p.description || '';
   if (document.getElementById('quickEditProdIng')) document.getElementById('quickEditProdIng').value = p.ingredients || '';
   if (document.getElementById('quickEditProdUsage')) document.getElementById('quickEditProdUsage').value = p.usage || '';
   if (document.getElementById('quickEditProdInStock')) document.getElementById('quickEditProdInStock').checked = (p.inStock !== false);
   if (document.getElementById('quickEditProdIsOffer')) document.getElementById('quickEditProdIsOffer').checked = !!p.isSpecialOffer;
 
-  document.getElementById('adminQuickEditModal').classList.add('open');
+  const modal = document.getElementById('adminQuickEditModal');
+  if (modal) modal.classList.add('open');
 }
 
 function closeAdminQuickEditModal() {
@@ -1776,7 +1788,7 @@ async function saveAdminQuickEdit() {
 
   if (db) await dbPaths.productsCol().doc(String(id)).set(updates, { merge: true });
   closeAdminQuickEditModal();
-  showToast('تم تحديث تفاصيل الصنف سحابياً ✓');
+  showToast('تم تحديث تفاصيل الصنف بالكامل سحابياً ✓');
 }
 
 function openAdminQuickAddModal() {
@@ -1792,7 +1804,7 @@ function previewAdminProdImg(url) {
   const box = document.getElementById('adminProdImgPreviewBox');
   const img = document.getElementById('adminProdImgPreviewEl');
   const cleanUrl = sanitizeUrl(url);
-  if (cleanUrl && box && img) { img.src = cleanUrl; box.style.display = 'block'; }
+  if (cleanUrl && box && img) { img.src = cleanUrl; box.style.display = 'flex'; }
   else if (box) { box.style.display = 'none'; }
 }
 
@@ -1866,7 +1878,6 @@ async function handleAdminProductSave(e) {
         const newRef = await dbPaths.productsCol().add(payload);
         
         // ================= AUTO-CROWDSOURCING PIPELINE =================
-        // إرسال نسخة من الصنف الجديد لجدول مراجعة السوبر أدمن لإغناء البنك الموحد
         try {
           const subDocId = `sub_${currentPharmacyId}_${newRef.id}`;
           await dbPaths.masterCatalogSubmissionsCol().doc(subDocId).set({
@@ -1884,7 +1895,7 @@ async function handleAdminProductSave(e) {
           console.warn("Crowdsourcing hook warning:", crowdErr);
         }
       }
-      showToast('تمت إضافة المنتج الجديد بنجاح وإرساله للبنك المركزي! ✓');
+      showToast('تمت إضافة المنتج وإرساله للبنك المركزي بنجاح! ✓');
     }
     resetAdminProductForm();
   } catch (err) {
@@ -1892,7 +1903,7 @@ async function handleAdminProductSave(e) {
   }
 }
 
-// ----------------- سلة المحذوفات والأرشفة (SOFT DELETE) -----------------
+// ----------------- سلة المحذوفات والأرشفة -----------------
 async function archiveProductConfirm(id, name) {
   if (!assertAdmin()) return;
   if (confirm(`هل أنتِ متأكدة من نقل المنتج "${name}" إلى سلة المحذوفات؟ (يمكنك استرجاعه بأي وقت)`)) {
