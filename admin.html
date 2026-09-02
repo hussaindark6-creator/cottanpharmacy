@@ -190,7 +190,7 @@
       </div>
     </div>
 
-    <!-- 3. IMPORT FROM MASTER CATALOG (SMART CLASSIFIER + DYNAMIC BRAND FILTER) -->
+    <!-- 3. IMPORT FROM MASTER CATALOG (2-TIER HIERARCHY WITH 47 SUB-CATEGORIES) -->
     <div id="adminSecImport" style="display:none;">
       <div class="admin-fieldset" style="border-color:#10B981; background:#F0FDF4;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
@@ -202,26 +202,44 @@
           </span>
         </div>
         <p style="font-size:12.5px; color:#166534; line-height:1.6; margin-bottom:14px;">
-          تصفح الأصناف حسب الفئة الرئيسية أو الماركة المحددة، وحدد <b>سعر البيع لديك والكمية</b> لإضافتها فورياً لمخزن صيدليتك:
+          تصفح الأصناف حسب الفئات الـ 6 الأساسية، ثم حدد التصنيف الفرعي الدقيق (Sub-Category) أو الشركة لتخصيص السعر والكمية:
         </p>
 
-        <!-- Smart Main Category Toggle (Cosmetic vs Baby Milk) -->
-        <div style="display:flex; gap:8px; margin-bottom:12px;">
-          <button type="button" id="btnCatFilterAll" onclick="selectTenantMainCategory('all')" class="consult-toggle-btn active" style="flex:1; font-weight:900; border-radius:10px; padding:10px;">
-            🌟 جميع الأصناف
+        <!-- Tier 1: Main Category Buttons -->
+        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;">
+          <button type="button" id="btnMainCat_all" onclick="selectTenantMainCategory('all')" class="consult-toggle-btn active" style="flex:1; min-width:110px; font-weight:900; border-radius:10px; padding:8px 6px; font-size:12px;">
+            🌟 الكل (All)
           </button>
-          <button type="button" id="btnCatFilterCosmetic" onclick="selectTenantMainCategory('cosmetics')" class="consult-toggle-btn" style="flex:1.5; font-weight:900; border-radius:10px; padding:10px;">
-            💄 كوزمتك وعناية (Cosmetics)
+          <button type="button" id="btnMainCat_cosmetics" onclick="selectTenantMainCategory('cosmetics')" class="consult-toggle-btn" style="flex:1.2; min-width:140px; font-weight:900; border-radius:10px; padding:8px 6px; font-size:12px;">
+            💄 كوزمتك/عناية
           </button>
-          <button type="button" id="btnCatFilterMilk" onclick="selectTenantMainCategory('baby_milk')" class="consult-toggle-btn" style="flex:1.5; font-weight:900; border-radius:10px; padding:10px;">
-            🍼 حليب وأغذية أطفال (Baby Milk)
+          <button type="button" id="btnMainCat_hair" onclick="selectTenantMainCategory('hair')" class="consult-toggle-btn" style="flex:1.1; min-width:120px; font-weight:900; border-radius:10px; padding:8px 6px; font-size:12px;">
+            💇‍♀️ عناية بالشعر
+          </button>
+          <button type="button" id="btnMainCat_dental" onclick="selectTenantMainCategory('dental')" class="consult-toggle-btn" style="flex:1.1; min-width:120px; font-weight:900; border-radius:10px; padding:8px 6px; font-size:12px;">
+            🪥 عناية بالأسنان
+          </button>
+          <button type="button" id="btnMainCat_baby_milk" onclick="selectTenantMainCategory('baby_milk')" class="consult-toggle-btn" style="flex:1.3; min-width:140px; font-weight:900; border-radius:10px; padding:8px 6px; font-size:12px;">
+            🍼 حليب أطفال
+          </button>
+          <button type="button" id="btnMainCat_baby_care" onclick="selectTenantMainCategory('baby_care')" class="consult-toggle-btn" style="flex:1.2; min-width:130px; font-weight:900; border-radius:10px; padding:8px 6px; font-size:12px;">
+            👶 عناية بالطفل
+          </button>
+          <button type="button" id="btnMainCat_hygiene" onclick="selectTenantMainCategory('hygiene')" class="consult-toggle-btn" style="flex:1; min-width:110px; font-weight:900; border-radius:10px; padding:8px 6px; font-size:12px;">
+            🧼 نظافة عامة
           </button>
         </div>
 
-        <!-- Search & Dynamic Brands Dropdown Filter -->
+        <!-- Tier 2: Search + English Sub-Categories Dropdown + Dynamic Brands Dropdown -->
         <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
           <input type="text" id="tenantImportSearchInput" oninput="filterTenantMasterCatalog()" placeholder="ابحث باسم المنتج، الماركة، أو الباركود..." style="flex:2; min-width:200px; padding:10px 14px; border:1.5px solid #A7F3D0; border-radius:12px; font-size:13px; outline:none; background:#fff;">
           
+          <!-- Dynamic English Sub-Category Dropdown -->
+          <select id="tenantImportSubCatFilter" onchange="filterTenantMasterCatalog()" style="flex:1.5; min-width:180px; padding:10px 12px; border:1.5px solid #A7F3D0; border-radius:12px; font-size:13px; font-weight:800; background:#fff; color:#047857;">
+            <option value="all">📂 جميع التصنيفات الفرعية (All)</option>
+          </select>
+
+          <!-- Dynamic Brand Dropdown -->
           <select id="tenantImportBrandFilter" onchange="filterTenantMasterCatalog()" style="flex:1.2; min-width:160px; padding:10px 12px; border:1.5px solid #A7F3D0; border-radius:12px; font-size:13px; font-weight:800; background:#fff; color:#047857;">
             <option value="all">🏢 جميع الشركات والماركات</option>
           </select>
@@ -988,9 +1006,8 @@
   <!-- Main JavaScript File -->
   <script src="script.js"></script>
 
-  <!-- Tenant Master Catalog Helpers & Direct Image Upload Script -->
+  <!-- Tenant Master Catalog Classification & Helpers Script -->
   <script>
-    // دالة حماية النصوص وتأمينها لمنع أخطاء ReferenceError
     function escapeHtml(str) {
       if (typeof sanitizeText === 'function') return sanitizeText(str);
       if (str == null) return '';
@@ -1002,37 +1019,194 @@
         .replace(/'/g, '&#039;');
     }
 
+    // ================= قاموس التصنيفات الـ 47 الدقيق =================
+    const MASTER_CATEGORIES_CONFIG = {
+      cosmetics: {
+        labelAr: "كوزمتك / عناية",
+        subCategories: [
+          "Cleanser", "Moisturizer", "Sunscreen", "Eye Care", 
+          "Serum/Treatment", "Skincare", "Lip Care", "Exfoliant/Peeling", 
+          "Toner", "Body Oil", "Mask", "Makeup", "Bar Soap", 
+          "Deodorant", "Cleanser - Micellar Water", "Intimate Care"
+        ]
+      },
+      hair: {
+        labelAr: "عناية بالشعر",
+        subCategories: [
+          "Hair Care - Shampoo", "Hair Care - Conditioner", 
+          "Hair Care - Styling", "Hair Care"
+        ]
+      },
+      dental: {
+        labelAr: "عناية بالأسنان",
+        subCategories: [
+          "Toothpaste", "Toothbrush", "Mouthwash"
+        ]
+      },
+      hygiene: {
+        labelAr: "نظافة عامة",
+        subCategories: [
+          "Hand Wash"
+        ]
+      },
+      baby_milk: {
+        labelAr: "حليب أطفال (Baby Milk)",
+        subCategories: [
+          "Stage 1 (0-6M)", "Stage 2 (6-12M)", "Stage 3 (1-2Y)", "Stage 3 (1-3Y)", 
+          "Stage 4 (1Y+)", "Stage 4 (3Y+)", "Stage 5 (3Y+)", "Full Cream Milk Powder", 
+          "Nutritional Supplement (1-10Y)", "Special Care - Colic", 
+          "Special Care - Colic/Constipation", "Special Care - Colic/Digestion", 
+          "Special Care - Constipation", "Special Care - Reflux", 
+          "Special Care - Allergy/Hypoallergenic", "Special Care - Lactose Sensitivity", 
+          "Special Care - Lactose Free", "Special Care - Soy-Based"
+        ]
+      },
+      baby_care: {
+        labelAr: "عناية بالطفل (Baby Care)",
+        subCategories: [
+          "Baby Diaper", "Baby Wipes", "Baby Wash/Shampoo", 
+          "Baby Skincare", "Baby Care Accessory"
+        ]
+      }
+    };
+
     window.tenantCachedMasterCatalog = [];
     window.tenantActiveMainCategory = 'all';
 
-    // فاحص ذكي وشامل للتعرف على حليب وأغذية الأطفال
-    function isBabyMilkItem(item) {
-      if (!item) return false;
+    // فاحص تصنيف متطور يطابق الـ 47 فئة مع أي منتج بذكاء
+    function getItemClassification(item) {
       const cat = (item.category || '').toLowerCase().trim();
-      const subCat = (item.subCategory || '').toLowerCase().trim();
+      const subCat = (item.subCategory || '').trim();
       const name = (item.name || '').toLowerCase().trim();
-      const brand = (item.brand || item.Brand || item.company || '').toLowerCase().trim();
+      const stage = (item.milkStage || '').trim();
+      const formula = (item.specialFormulaTag || item.formulaType || '').toLowerCase();
 
-      if (cat === 'baby' || cat === 'baby_milk' || cat === 'milk' || cat === 'infant_milk' || cat === 'حليب' || cat === 'اطفال' || cat === 'أطفال') return true;
-      if (subCat === 'infant_milk' || subCat === 'baby_milk' || subCat === 'milk') return true;
+      // 1. فحص حليب الأطفال
+      if (cat === 'baby_milk' || cat === 'milk' || subCat.includes('Stage') || stage || name.includes('حليب') || name.includes('lactonic') || name.includes('aptamil') || name.includes('bebelac') || name.includes('similac') || name.includes('nan') || name.includes('novalac') || name.includes('s-26') || name.includes('babyline') || name.includes('pediasure') || name.includes('infatrini') || name.includes('neocate')) {
+        let sub = subCat || stage || "Stage 1 (0-6M)";
+        if (name.includes('1') || name.includes('0-6')) sub = "Stage 1 (0-6M)";
+        else if (name.includes('2') || name.includes('6-12')) sub = "Stage 2 (6-12M)";
+        else if (name.includes('3') || name.includes('1-3')) sub = "Stage 3 (1-3Y)";
+        else if (name.includes('4')) sub = "Stage 4 (3Y+)";
+        else if (formula.includes('ar') || name.includes('ar') || name.includes('ارتجاع')) sub = "Special Care - Reflux";
+        else if (formula.includes('lf') || name.includes('lf') || name.includes('خالي')) sub = "Special Care - Lactose Free";
+        else if (formula.includes('comfort') || formula.includes('ec') || name.includes('مغص')) sub = "Special Care - Colic/Constipation";
+        else if (formula.includes('pepti') || formula.includes('ha') || name.includes('حساسية')) sub = "Special Care - Allergy/Hypoallergenic";
+        else if (name.includes('pediasure') || name.includes('بدياشور')) sub = "Nutritional Supplement (1-10Y)";
+        
+        return { main: 'baby_milk', sub: sub };
+      }
 
-      const milkKeywords = ['حليب', 'رضع', 'متابعة', 'stage 1', 'stage 2', 'stage 3', 'stage 4', 'مرحلة 1', 'مرحلة 2', 'مرحلة 3', '0-6', '6-12', '1-3', 'aptamil', 'bebelac', 'similac', 'nan', 'novalac', 'primalac', 's-26', 's26', 'babyline', 'lactonic', 'biomil', 'guigoz', 'frisolac', 'rabelac', 'pediasure', 'infatrini', 'neocate', 'blemil', 'fabimilk'];
-      return milkKeywords.some(kw => name.includes(kw) || brand.includes(kw));
+      // 2. فحص عناية الطفل
+      if (cat === 'baby_care' || cat === 'baby' || name.includes('diaper') || name.includes('حفاض') || name.includes('wipes') || name.includes('مناديل')) {
+        let sub = "Baby Skincare";
+        if (name.includes('diaper') || name.includes('حفاض')) sub = "Baby Diaper";
+        else if (name.includes('wipes') || name.includes('مناديل')) sub = "Baby Wipes";
+        else if (name.includes('shampoo') || name.includes('wash') || name.includes('شامبو')) sub = "Baby Wash/Shampoo";
+        return { main: 'baby_care', sub: sub };
+      }
+
+      // 3. فحص الأسنان
+      if (cat === 'dental' || name.includes('toothpaste') || name.includes('معجون') || name.includes('فرشاة') || name.includes('toothbrush') || name.includes('mouthwash') || name.includes('غسول فم')) {
+        let sub = "Toothpaste";
+        if (name.includes('toothbrush') || name.includes('فرشاة')) sub = "Toothbrush";
+        else if (name.includes('mouthwash') || name.includes('غسول فم')) sub = "Mouthwash";
+        return { main: 'dental', sub: sub };
+      }
+
+      // 4. فحص الشعر
+      if (cat === 'hair' || name.includes('hair') || name.includes('شعر') || name.includes('shampoo') || name.includes('شامبو') || name.includes('conditioner') || name.includes('بلسم') || name.includes('olaplex') || name.includes('mielle') || name.includes('dercos') || name.includes('nizoral') || name.includes('cantu') || name.includes('k18')) {
+        let sub = "Hair Care";
+        if (name.includes('shampoo') || name.includes('شامبو')) sub = "Hair Care - Shampoo";
+        else if (name.includes('conditioner') || name.includes('بلسم')) sub = "Hair Care - Conditioner";
+        else if (name.includes('oil') || name.includes('زيت') || name.includes('styling') || name.includes('mask') || name.includes('ماسك')) sub = "Hair Care - Styling";
+        return { main: 'hair', sub: sub };
+      }
+
+      // 5. فحص النظافة العامة
+      if (cat === 'hygiene' || name.includes('hand wash') || name.includes('غسول يدين')) {
+        return { main: 'hygiene', sub: "Hand Wash" };
+      }
+
+      // 6. الافتراضي: كوزمتك / عناية بالبشرة
+      let sub = subCat || "Skincare";
+      if (name.includes('cleanser') || name.includes('wash') || name.includes('غسول')) {
+        sub = name.includes('micellar') ? "Cleanser - Micellar Water" : "Cleanser";
+      } else if (name.includes('moisturiz') || name.includes('cream') || name.includes('lotion') || name.includes('مرطب') || name.includes('كريم')) {
+        sub = "Moisturizer";
+      } else if (name.includes('sun') || name.includes('spf') || name.includes('واقي')) {
+        sub = "Sunscreen";
+      } else if (name.includes('serum') || name.includes('سيروم') || name.includes('retinol') || name.includes('niacinamide')) {
+        sub = "Serum/Treatment";
+      } else if (name.includes('eye') || name.includes('عين')) {
+        sub = "Eye Care";
+      } else if (name.includes('lip') || name.includes('شفاه')) {
+        sub = "Lip Care";
+      } else if (name.includes('toner') || name.includes('تونر')) {
+        sub = "Toner";
+      } else if (name.includes('peel') || name.includes('acid') || name.includes('مقشر')) {
+        sub = "Exfoliant/Peeling";
+      } else if (name.includes('deodorant') || name.includes('roll-on') || name.includes('عرق')) {
+        sub = "Deodorant";
+      } else if (name.includes('oil') || name.includes('زيت')) {
+        sub = "Body Oil";
+      } else if (name.includes('intimate') || name.includes('نسائي') || name.includes('حساسة')) {
+        sub = "Intimate Care";
+      }
+
+      return { main: 'cosmetics', sub: sub };
     }
 
-    function selectTenantMainCategory(catType) {
-      window.tenantActiveMainCategory = catType;
+    function selectTenantMainCategory(catKey) {
+      window.tenantActiveMainCategory = catKey;
       
-      const btnAll = document.getElementById('btnCatFilterAll');
-      const btnCosmetic = document.getElementById('btnCatFilterCosmetic');
-      const btnMilk = document.getElementById('btnCatFilterMilk');
-      
-      if (btnAll) btnAll.classList.toggle('active', catType === 'all');
-      if (btnCosmetic) btnCosmetic.classList.toggle('active', catType === 'cosmetics');
-      if (btnMilk) btnMilk.classList.toggle('active', catType === 'baby_milk');
-      
+      const allButtons = ['all', 'cosmetics', 'hair', 'dental', 'baby_milk', 'baby_care', 'hygiene'];
+      allButtons.forEach(k => {
+        const btn = document.getElementById('btnMainCat_' + k);
+        if (btn) btn.classList.toggle('active', k === catKey);
+      });
+
+      updateTenantSubCategoryDropdown();
       updateTenantBrandDropdown();
       filterTenantMasterCatalog();
+    }
+
+    // تحديث قائمة التصنيفات الفرعية بالإنجليزية بناءً على القسم الرئيسي المختار
+    function updateTenantSubCategoryDropdown() {
+      const subSelect = document.getElementById('tenantImportSubCatFilter');
+      if (!subSelect) return;
+
+      if (window.tenantActiveMainCategory === 'all') {
+        subSelect.innerHTML = `<option value="all">📂 جميع التصنيفات الفرعية الـ 47 (All Sub-Categories)</option>`;
+        return;
+      }
+
+      const conf = MASTER_CATEGORIES_CONFIG[window.tenantActiveMainCategory];
+      if (conf && conf.subCategories) {
+        subSelect.innerHTML = `<option value="all">📂 جميع أقسام ${conf.labelAr} (All)</option>` + 
+          conf.subCategories.map(sub => `<option value="${escapeHtml(sub)}">${escapeHtml(sub)}</option>`).join('');
+      }
+    }
+
+    // تحديث قائمة الشركات ديناميكياً بحسب الفئات المختارة
+    function updateTenantBrandDropdown() {
+      const brandSelect = document.getElementById('tenantImportBrandFilter');
+      const selectedSub = document.getElementById('tenantImportSubCatFilter') ? document.getElementById('tenantImportSubCatFilter').value : 'all';
+      if (!brandSelect) return;
+
+      const brandsSet = new Set();
+      window.tenantCachedMasterCatalog.forEach(item => {
+        const cl = getItemClassification(item);
+        if (window.tenantActiveMainCategory !== 'all' && cl.main !== window.tenantActiveMainCategory) return;
+        if (selectedSub !== 'all' && cl.sub !== selectedSub) return;
+
+        const b = (item.brand || item.Brand || item.company || '').trim();
+        if (b && b !== 'عام') brandsSet.add(b);
+      });
+
+      const sortedBrands = Array.from(brandsSet).sort();
+      brandSelect.innerHTML = `<option value="all">🏢 جميع الشركات والماركات (${sortedBrands.length})</option>` + 
+        sortedBrands.map(b => `<option value="${escapeHtml(b)}">${escapeHtml(b)}</option>`).join('');
     }
 
     async function fetchTenantMasterCatalog() {
@@ -1059,6 +1233,7 @@
 
         if (badge) badge.textContent = `${window.tenantCachedMasterCatalog.length} صنف متاح`;
 
+        updateTenantSubCategoryDropdown();
         updateTenantBrandDropdown();
         filterTenantMasterCatalog();
       } catch (e) {
@@ -1066,44 +1241,27 @@
       }
     }
 
-    // تحديث قائمة الشركات ديناميكياً بحسب الفئة المختارة (كوزمتك أو حليب)
-    function updateTenantBrandDropdown() {
-      const brandSelect = document.getElementById('tenantImportBrandFilter');
-      if (!brandSelect) return;
-
-      const brandsSet = new Set();
-      window.tenantCachedMasterCatalog.forEach(item => {
-        const isMilk = isBabyMilkItem(item);
-        if (window.tenantActiveMainCategory === 'cosmetics' && isMilk) return;
-        if (window.tenantActiveMainCategory === 'baby_milk' && !isMilk) return;
-
-        const b = (item.brand || item.Brand || item.company || '').trim();
-        if (b && b !== 'عام') brandsSet.add(b);
-      });
-
-      const sortedBrands = Array.from(brandsSet).sort();
-      brandSelect.innerHTML = `<option value="all">🏢 جميع الشركات والماركات (${sortedBrands.length})</option>` + 
-        sortedBrands.map(b => `<option value="${escapeHtml(b)}">${escapeHtml(b)}</option>`).join('');
-    }
-
     function filterTenantMasterCatalog() {
       const q = (document.getElementById('tenantImportSearchInput').value || '').trim().toLowerCase();
+      const selectedSub = document.getElementById('tenantImportSubCatFilter') ? document.getElementById('tenantImportSubCatFilter').value : 'all';
       const selectedBrand = document.getElementById('tenantImportBrandFilter') ? document.getElementById('tenantImportBrandFilter').value : 'all';
       const grid = document.getElementById('tenantMasterCatalogGrid');
       if (!grid) return;
 
       const filtered = window.tenantCachedMasterCatalog.filter(item => {
-        const isMilk = isBabyMilkItem(item);
+        const cl = getItemClassification(item);
         
-        // فحص الفئة الرئيسية (Cosmetics vs Baby Milk)
-        if (window.tenantActiveMainCategory === 'cosmetics' && isMilk) return false;
-        if (window.tenantActiveMainCategory === 'baby_milk' && !isMilk) return false;
+        // 1. فحص القسم الرئيسي
+        if (window.tenantActiveMainCategory !== 'all' && cl.main !== window.tenantActiveMainCategory) return false;
 
-        // فحص الشركة / الماركة
+        // 2. فحص التصنيف الفرعي الإنجليزي الـ 47
+        if (selectedSub !== 'all' && cl.sub !== selectedSub) return false;
+
+        // 3. فحص الشركة
         const itemBrand = (item.brand || item.Brand || item.company || 'عام').trim();
         if (selectedBrand !== 'all' && itemBrand !== selectedBrand) return false;
 
-        // فحص البحث النصي
+        // 4. فحص البحث النصي
         const nameStr = (item.name || '').toLowerCase();
         const brandStr = itemBrand.toLowerCase();
         const barcodeStr = (item.barcode || '').toLowerCase();
@@ -1122,8 +1280,13 @@
       grid.innerHTML = filtered.map(item => {
         const isImported = existingIds.has(String(item.id));
         const defaultPrice = Number(item.price || item.suggestedPrice || 15000);
-        const isMilk = isBabyMilkItem(item);
-        const badgeTag = isMilk ? `<span style="background:#E0F2FE; color:#0369A1; font-size:10.5px; font-weight:900; padding:2px 7px; border-radius:6px;">🍼 حليب وأغذية أطفال</span>` : `<span style="background:#FCE7F3; color:#BE185D; font-size:10.5px; font-weight:900; padding:2px 7px; border-radius:6px;">💄 كوزمتك</span>`;
+        const cl = getItemClassification(item);
+        
+        let badgeColor = "background:#FCE7F3; color:#BE185D;"; // وردي كوزمتك
+        if (cl.main === 'baby_milk') badgeColor = "background:#E0F2FE; color:#0369A1;"; // أزرق حليب
+        else if (cl.main === 'hair') badgeColor = "background:#FEF3C7; color:#92400E;"; // عنبري شعر
+        else if (cl.main === 'dental') badgeColor = "background:#E0E7FF; color:#3730A3;"; // بنفسجي أسنان
+        else if (cl.main === 'baby_care') badgeColor = "background:#DCFCE7; color:#166534;"; // أخضر طفل
 
         return `
           <div style="background:#fff; border:1.5px solid ${isImported ? '#BBF7D0' : '#E2E8F0'}; border-radius:14px; padding:14px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 2px 8px rgba(0,0,0,0.04); position:relative;">
@@ -1132,7 +1295,7 @@
             <div>
               <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
                 <span style="font-size:11px; font-weight:900; color:var(--accent); text-transform:uppercase;">${escapeHtml(item.brand || 'عام')}</span>
-                ${badgeTag}
+                <span style="${badgeColor} font-size:10.5px; font-weight:900; padding:2px 7px; border-radius:6px;">${escapeHtml(cl.sub)}</span>
               </div>
               <h4 style="margin:0 0 6px; font-size:13.5px; font-weight:800; color:#111827; line-height:1.4;">
                 ${escapeHtml(item.name)}
@@ -1211,12 +1374,11 @@
       }
     }
 
-    // رفع الصور المباشر إلى Cloudflare R2
     async function uploadDirectImageFile(fileInput, targetHiddenUrlId, previewImgId, previewBoxId) {
       const file = fileInput.files[0];
       if (!file) return;
 
-      showToast('جاري معالجة ورفع الصورة... ⏳');
+      showToast('جاري رفع ومعالجة الصورة سحابياً... ⏳');
 
       try {
         const formData = new FormData();
@@ -1246,8 +1408,10 @@
         } else {
           const reader = new FileReader();
           reader.onload = function(e) {
-            if (document.getElementById(targetHiddenUrlId)) document.getElementById(targetHiddenUrlId).value = e.target.result;
-            if (previewImgId) document.getElementById(previewImgId).src = e.target.result;
+            const base64 = e.target.result;
+            const hiddenInp = document.getElementById(targetHiddenUrlId);
+            if (hiddenInp) hiddenInp.value = base64;
+            if (previewImgId) document.getElementById(previewImgId).src = base64;
             if (previewBoxId) document.getElementById(previewBoxId).style.display = 'flex';
             showToast('تم حفظ الصورة محلياً بنجاح ✓');
           };
@@ -1256,8 +1420,10 @@
       } catch (err) {
         const reader = new FileReader();
         reader.onload = function(e) {
-          if (document.getElementById(targetHiddenUrlId)) document.getElementById(targetHiddenUrlId).value = e.target.result;
-          if (previewImgId) document.getElementById(previewImgId).src = e.target.result;
+          const base64 = e.target.result;
+          const hiddenInp = document.getElementById(targetHiddenUrlId);
+          if (hiddenInp) hiddenInp.value = base64;
+          if (previewImgId) document.getElementById(previewImgId).src = base64;
           if (previewBoxId) document.getElementById(previewBoxId).style.display = 'flex';
           showToast('تم حفظ الصورة بنجاح ✓');
         };
