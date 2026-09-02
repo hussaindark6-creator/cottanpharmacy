@@ -190,7 +190,7 @@
       </div>
     </div>
 
-    <!-- 3. IMPORT FROM MASTER CATALOG (UPGRADED SMART ARCHIVE & BRAND FILTER) -->
+    <!-- 3. IMPORT FROM MASTER CATALOG (SMART CLASSIFIER + DYNAMIC BRAND FILTER) -->
     <div id="adminSecImport" style="display:none;">
       <div class="admin-fieldset" style="border-color:#10B981; background:#F0FDF4;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
@@ -220,9 +220,8 @@
 
         <!-- Search & Dynamic Brands Dropdown Filter -->
         <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
-          <input type="text" id="tenantImportSearchInput" oninput="filterTenantMasterCatalog()" placeholder="ابحث باسم المنتج أو الباركود..." style="flex:2; min-width:200px; padding:10px 14px; border:1.5px solid #A7F3D0; border-radius:12px; font-size:13px; outline:none; background:#fff;">
+          <input type="text" id="tenantImportSearchInput" oninput="filterTenantMasterCatalog()" placeholder="ابحث باسم المنتج، الماركة، أو الباركود..." style="flex:2; min-width:200px; padding:10px 14px; border:1.5px solid #A7F3D0; border-radius:12px; font-size:13px; outline:none; background:#fff;">
           
-          <!-- Dynamic Brands Extracted from Database -->
           <select id="tenantImportBrandFilter" onchange="filterTenantMasterCatalog()" style="flex:1.2; min-width:160px; padding:10px 12px; border:1.5px solid #A7F3D0; border-radius:12px; font-size:13px; font-weight:800; background:#fff; color:#047857;">
             <option value="all">🏢 جميع الشركات والماركات</option>
           </select>
@@ -831,7 +830,7 @@
 
   </div>
 
-  <!-- FULL CLINICAL PRODUCT EDIT MODAL (مفعل بالكامل مع رفع الصور والمكونات) -->
+  <!-- FULL CLINICAL PRODUCT EDIT MODAL -->
   <div class="admin-quick-modal-overlay" id="adminQuickEditModal">
     <div class="admin-quick-card" style="max-width: 620px; max-height: 90vh; overflow-y: auto;">
       <div class="consult-header">
@@ -994,13 +993,33 @@
     window.tenantCachedMasterCatalog = [];
     window.tenantActiveMainCategory = 'all';
 
+    // فاحص ذكي يتعرف على حليب الأطفال بدقة من الاسم، الماركة، أو القسم
+    function isBabyMilkItem(item) {
+      if (!item) return false;
+      const cat = (item.category || '').toLowerCase().trim();
+      const subCat = (item.subCategory || '').toLowerCase().trim();
+      const name = (item.name || '').toLowerCase().trim();
+      const brand = (item.brand || item.Brand || item.company || '').toLowerCase().trim();
+
+      if (cat === 'baby' || cat === 'baby_milk' || cat === 'milk' || cat === 'infant_milk' || cat === 'حليب' || cat === 'اطفال' || cat === 'أطفال') return true;
+      if (subCat === 'infant_milk' || subCat === 'baby_milk' || subCat === 'milk') return true;
+
+      const milkKeywords = ['حليب', 'رضع', 'متابعة', 'stage 1', 'stage 2', 'stage 3', 'stage 4', 'مرحلة 1', 'مرحلة 2', 'مرحلة 3', '0-6', '6-12', '1-3', 'aptamil', 'bebelac', 'similac', 'nan', 'novalac', 'primalac', 's-26', 's26', 'babyline', 'lactonic', 'biomil', 'guigoz', 'frisolac', 'rabelac', 'pediasure', 'infatrini', 'neocate', 'blemil', 'fabimilk'];
+      return milkKeywords.some(kw => name.includes(kw) || brand.includes(kw));
+    }
+
     function selectTenantMainCategory(catType) {
       window.tenantActiveMainCategory = catType;
       
-      document.getElementById('btnCatFilterAll').classList.toggle('active', catType === 'all');
-      document.getElementById('btnCatFilterCosmetic').classList.toggle('active', catType === 'cosmetics');
-      document.getElementById('btnCatFilterMilk').classList.toggle('active', catType === 'baby_milk');
+      const btnAll = document.getElementById('btnCatFilterAll');
+      const btnCosmetic = document.getElementById('btnCatFilterCosmetic');
+      const btnMilk = document.getElementById('btnCatFilterMilk');
       
+      if (btnAll) btnAll.classList.toggle('active', catType === 'all');
+      if (btnCosmetic) btnCosmetic.classList.toggle('active', catType === 'cosmetics');
+      if (btnMilk) btnMilk.classList.toggle('active', catType === 'baby_milk');
+      
+      updateTenantBrandDropdown();
       filterTenantMasterCatalog();
     }
 
@@ -1008,7 +1027,6 @@
       if (!isFirebaseConfigured || !db) return;
       const grid = document.getElementById('tenantMasterCatalogGrid');
       const badge = document.getElementById('masterCatalogCountBadge');
-      const brandSelect = document.getElementById('tenantImportBrandFilter');
       if (!grid) return;
 
       grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:30px; color:#047857; font-weight:800;">جاري تحميل بنك المنتجات المركزي...</div>`;
@@ -1016,27 +1034,44 @@
       try {
         const snap = await db.collection('system').doc('master_catalog').collection('products').get();
         window.tenantCachedMasterCatalog = [];
-        const brandsSet = new Set();
 
         snap.forEach(doc => {
-          const item = { id: doc.id, ...doc.data() };
+          const data = doc.data();
+          const item = { 
+            id: doc.id, 
+            ...data,
+            brand: data.brand || data.Brand || data.company || 'عام'
+          };
           window.tenantCachedMasterCatalog.push(item);
-          if (item.brand) brandsSet.add(item.brand.trim());
         });
 
         if (badge) badge.textContent = `${window.tenantCachedMasterCatalog.length} صنف متاح`;
 
-        // استخراج جميع الشركات والماركات في القائمة المنسدلة تلقائياً
-        if (brandSelect) {
-          const sortedBrands = Array.from(brandsSet).sort();
-          brandSelect.innerHTML = `<option value="all">🏢 جميع الشركات والماركات (${sortedBrands.length})</option>` + 
-            sortedBrands.map(b => `<option value="${escapeHtml(b)}">${escapeHtml(b)}</option>`).join('');
-        }
-
+        updateTenantBrandDropdown();
         filterTenantMasterCatalog();
       } catch (e) {
         grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:30px; color:#DC2626; font-weight:800;">خطأ بالتحميل: ${e.message}</div>`;
       }
+    }
+
+    // تحديث قائمة الشركات ديناميكياً بحسب الفئة المختارة
+    function updateTenantBrandDropdown() {
+      const brandSelect = document.getElementById('tenantImportBrandFilter');
+      if (!brandSelect) return;
+
+      const brandsSet = new Set();
+      window.tenantCachedMasterCatalog.forEach(item => {
+        const isMilk = isBabyMilkItem(item);
+        if (window.tenantActiveMainCategory === 'cosmetics' && isMilk) return;
+        if (window.tenantActiveMainCategory === 'baby_milk' && !isMilk) return;
+
+        const b = (item.brand || item.Brand || item.company || '').trim();
+        if (b && b !== 'عام') brandsSet.add(b);
+      });
+
+      const sortedBrands = Array.from(brandsSet).sort();
+      brandSelect.innerHTML = `<option value="all">🏢 جميع الشركات والماركات (${sortedBrands.length})</option>` + 
+        sortedBrands.map(b => `<option value="${escapeHtml(b)}">${escapeHtml(b)}</option>`).join('');
     }
 
     function filterTenantMasterCatalog() {
@@ -1046,26 +1081,23 @@
       if (!grid) return;
 
       const filtered = window.tenantCachedMasterCatalog.filter(item => {
-        // فحص الفئة الرئيسية (Cosmetics vs Baby Milk)
-        const isMilk = item.category === 'baby' || item.subCategory === 'infant_milk';
-        let matchesMainCategory = true;
-        if (window.tenantActiveMainCategory === 'cosmetics') {
-          matchesMainCategory = !isMilk;
-        } else if (window.tenantActiveMainCategory === 'baby_milk') {
-          matchesMainCategory = isMilk;
-        }
+        const isMilk = isBabyMilkItem(item);
+        
+        // فحص الفئة الرئيسية (Cosmetic vs Baby Milk)
+        if (window.tenantActiveMainCategory === 'cosmetics' && isMilk) return false;
+        if (window.tenantActiveMainCategory === 'baby_milk' && !isMilk) return false;
 
         // فحص الشركة / الماركة
-        const matchesBrand = (selectedBrand === 'all') || (item.brand && item.brand.trim() === selectedBrand);
+        const itemBrand = (item.brand || item.Brand || item.company || 'عام').trim();
+        if (selectedBrand !== 'all' && itemBrand !== selectedBrand) return false;
 
         // فحص البحث النصي
         const nameStr = (item.name || '').toLowerCase();
-        const brandStr = (item.brand || '').toLowerCase();
-        const stageStr = (item.milkStage || '').toLowerCase();
+        const brandStr = itemBrand.toLowerCase();
         const barcodeStr = (item.barcode || '').toLowerCase();
-        const matchesSearch = !q || nameStr.includes(q) || brandStr.includes(q) || stageStr.includes(q) || barcodeStr.includes(q);
+        const matchesSearch = !q || nameStr.includes(q) || brandStr.includes(q) || barcodeStr.includes(q);
 
-        return matchesMainCategory && matchesBrand && matchesSearch;
+        return matchesSearch;
       });
 
       if (filtered.length === 0) {
@@ -1078,8 +1110,8 @@
       grid.innerHTML = filtered.map(item => {
         const isImported = existingIds.has(String(item.id));
         const defaultPrice = Number(item.price || item.suggestedPrice || 15000);
-        const isMilk = item.category === 'baby' || item.subCategory === 'infant_milk';
-        const badgeTag = isMilk && item.milkStage ? `<span style="background:#E0F2FE; color:#0369A1; font-size:10.5px; font-weight:900; padding:2px 7px; border-radius:6px;">${item.milkStage}</span>` : '';
+        const isMilk = isBabyMilkItem(item);
+        const badgeTag = isMilk ? `<span style="background:#E0F2FE; color:#0369A1; font-size:10.5px; font-weight:900; padding:2px 7px; border-radius:6px;">🍼 حليب وأغذية أطفال</span>` : `<span style="background:#FCE7F3; color:#BE185D; font-size:10.5px; font-weight:900; padding:2px 7px; border-radius:6px;">💄 كوزمتك</span>`;
 
         return `
           <div style="background:#fff; border:1.5px solid ${isImported ? '#BBF7D0' : '#E2E8F0'}; border-radius:14px; padding:14px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 2px 8px rgba(0,0,0,0.04); position:relative;">
@@ -1172,7 +1204,7 @@
       const file = fileInput.files[0];
       if (!file) return;
 
-      showToast('جاري رفع ومعالجة الصورة سحابياً... ⏳');
+      showToast('جاري معالجة ورفع الصورة... ⏳');
 
       try {
         const formData = new FormData();
@@ -1180,9 +1212,7 @@
 
         const res = await fetch(`${WORKER_API_BASE}/api/upload`, {
           method: 'POST',
-          headers: {
-            'X-Pharmacy-Id': currentPharmacyId
-          },
+          headers: { 'X-Pharmacy-Id': currentPharmacyId },
           body: formData
         });
 
@@ -1202,7 +1232,6 @@
 
           showToast('تم رفع وحفظ الصورة بنجاح! 📸');
         } else {
-          // خطة بديلة (Base64 محلي إذا كان الوركر غير متصل)
           const reader = new FileReader();
           reader.onload = function(e) {
             const base64 = e.target.result;
@@ -1210,12 +1239,11 @@
             if (hiddenInp) hiddenInp.value = base64;
             if (previewImgId) document.getElementById(previewImgId).src = base64;
             if (previewBoxId) document.getElementById(previewBoxId).style.display = 'flex';
-            showToast('تم حفظ الصورة محلياً بنجاح ✓');
+            showToast('تم حفظ الصورة بنجاح ✓');
           };
           reader.readAsDataURL(file);
         }
       } catch (err) {
-        console.warn("Upload fallback to local preview:", err);
         const reader = new FileReader();
         reader.onload = function(e) {
           const base64 = e.target.result;
