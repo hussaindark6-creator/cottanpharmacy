@@ -1,6 +1,6 @@
 /* ==========================================================
    SaaS Multi-Tenant Pharmacy Engine — script.js
-   Version: 3.2.0 (Master Enterprise Edition + Full Integration)
+   Version: 3.3.0 (Master Enterprise Edition + Full Cloud R2 & Crowdsourcing)
    ========================================================== */
 
 // ================= 1. SUBDOMAIN & SLUG RESOLVER =================
@@ -594,7 +594,6 @@ async function confirmOrder() {
   myOrders.unshift(newOrderObj);
   saveLocalState();
 
-  // الحفظ السحابي وتخفيض المخزون الذري في Firestore
   if (db) {
     try {
       await dbPaths.ordersCol().doc(orderId).set({
@@ -1666,7 +1665,7 @@ async function exportOrdersToCSV() {
   } catch (e) { console.error(e); }
 }
 
-// ================= 21. CLINICAL PRODUCTS CRUD & AUTO-CROWDSOURCING =================
+// ================= 21. CLINICAL PRODUCTS CRUD, DIRECT UPLOAD & AUTO-CROWDSOURCING =================
 function toggleLowStockFilter() {
   isLowStockFilterActive = !isLowStockFilterActive;
   const btn = document.getElementById('btnFilterLowStock');
@@ -1700,6 +1699,7 @@ async function quickToggleStock(id) {
   showToast(newStock ? 'تم التعيين: متوفر 🟢' : 'تم التعيين: نفذت الكمية 🔴');
 }
 
+// فتح نافذة التعديل السريري الشامل
 function openAdminQuickEditModal(id) {
   if (!assertAdmin()) return;
   const p = findProduct(id) || archivedProducts.find(x => String(x.id) === String(id));
@@ -1717,6 +1717,7 @@ function openAdminQuickEditModal(id) {
   document.getElementById('quickEditProdCat').value = p.category || (categories[0] ? categories[0].id : 'face');
   document.getElementById('quickEditProdType').value = p.type || 'bottle';
   
+  // ضبط الصورة والمعاينة المباشرة
   const imgUrlInp = document.getElementById('quickEditProdImg');
   const imgPreviewEl = document.getElementById('quickEditProdImgPreviewEl');
   const imgPreviewBox = document.getElementById('quickEditProdImgPreviewBox');
@@ -1789,6 +1790,67 @@ async function saveAdminQuickEdit() {
   if (db) await dbPaths.productsCol().doc(String(id)).set(updates, { merge: true });
   closeAdminQuickEditModal();
   showToast('تم تحديث تفاصيل الصنف بالكامل سحابياً ✓');
+}
+
+// دالة رفع الصور المباشرة من الاستوديو أو الكاميرا إلى Cloudflare R2
+async function uploadDirectImageFile(fileInput, targetHiddenUrlId, previewImgId, previewBoxId) {
+  const file = fileInput.files[0];
+  if (!file) return;
+
+  showToast('جاري رفع ومعالجة الصورة سحابياً... ⏳');
+
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const res = await fetch(`${WORKER_API_BASE}/api/upload`, {
+      method: 'POST',
+      headers: {
+        'X-Pharmacy-Id': currentPharmacyId
+      },
+      body: formData
+    });
+
+    const data = await res.json();
+    if (data && data.success && data.imageUrl) {
+      const hiddenInp = document.getElementById(targetHiddenUrlId);
+      if (hiddenInp) hiddenInp.value = data.imageUrl;
+
+      if (previewImgId) {
+        const previewEl = document.getElementById(previewImgId);
+        if (previewEl) previewEl.src = data.imageUrl;
+      }
+      if (previewBoxId) {
+        const previewBox = document.getElementById(previewBoxId);
+        if (previewBox) previewBox.style.display = 'flex';
+      }
+
+      showToast('تم رفع وحفظ الصورة بنجاح! 📸');
+    } else {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const base64 = e.target.result;
+        const hiddenInp = document.getElementById(targetHiddenUrlId);
+        if (hiddenInp) hiddenInp.value = base64;
+        if (previewImgId) document.getElementById(previewImgId).src = base64;
+        if (previewBoxId) document.getElementById(previewBoxId).style.display = 'flex';
+        showToast('تم حفظ الصورة محلياً بنجاح ✓');
+      };
+      reader.readAsDataURL(file);
+    }
+  } catch (err) {
+    console.warn("Upload fallback to local preview:", err);
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const base64 = e.target.result;
+      const hiddenInp = document.getElementById(targetHiddenUrlId);
+      if (hiddenInp) hiddenInp.value = base64;
+      if (previewImgId) document.getElementById(previewImgId).src = base64;
+      if (previewBoxId) document.getElementById(previewBoxId).style.display = 'flex';
+      showToast('تم حفظ الصورة بنجاح ✓');
+    };
+    reader.readAsDataURL(file);
+  }
 }
 
 function openAdminQuickAddModal() {
@@ -1903,7 +1965,7 @@ async function handleAdminProductSave(e) {
   }
 }
 
-// ----------------- سلة المحذوفات والأرشفة -----------------
+// ----------------- سلة المحذوفات والأرشفة (SOFT DELETE) -----------------
 async function archiveProductConfirm(id, name) {
   if (!assertAdmin()) return;
   if (confirm(`هل أنتِ متأكدة من نقل المنتج "${name}" إلى سلة المحذوفات؟ (يمكنك استرجاعه بأي وقت)`)) {
@@ -2734,7 +2796,7 @@ function previewAdminCatImg(url) {
   const box = document.getElementById('adminCatImgPreviewBox');
   const img = document.getElementById('adminCatImgPreviewEl');
   const cleanUrl = sanitizeUrl(url);
-  if (cleanUrl && box && img) { img.src = cleanUrl; box.style.display = 'block'; }
+  if (cleanUrl && box && img) { img.src = cleanUrl; box.style.display = 'flex'; }
   else if (box) { box.style.display = 'none'; }
 }
 
@@ -3386,7 +3448,6 @@ function updateUserHeaderProfile() {
     }
   }
 }
-
 async function verifyStaffPermissions(user) {
   if (!user || !user.email) {
     currentStaffData = null;
