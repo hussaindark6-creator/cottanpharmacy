@@ -1,6 +1,6 @@
 /* ==========================================================
    SaaS Multi-Tenant Pharmacy Engine — script.js
-   Version: 3.0.0 (Master Enterprise Edition)
+   Version: 3.1.0 (Master Enterprise Edition + Crowdsourcing)
    ========================================================== */
 
 // ================= 1. SUBDOMAIN & SLUG RESOLVER =================
@@ -91,7 +91,9 @@ const dbPaths = {
   couponsCol: (pId = currentPharmacyId) => db.collection('pharmacies').doc(pId).collection('coupons'),
   notificationsCol: (pId = currentPharmacyId) => db.collection('pharmacies').doc(pId).collection('notifications'),
   analyticsDailyCol: (pId = currentPharmacyId) => db.collection('pharmacies').doc(pId).collection('analytics_daily'),
-  systemDoc: (docId = 'payment_info') => db.collection('system').doc(docId)
+  systemDoc: (docId = 'payment_info') => db.collection('system').doc(docId),
+  masterCatalogCol: () => db.collection('system').doc('master_catalog').collection('products'),
+  masterCatalogSubmissionsCol: () => db.collection('system').doc('master_catalog_submissions').collection('submissions')
 };
 
 // ================= 4. SANITIZATION, FUZZY SEARCH & SECURITY =================
@@ -114,7 +116,6 @@ function sanitizeUrl(url) {
   return '';
 }
 
-// دالة تطبيع النصوص العربية والإنجليزية للبحث الذكي
 function normalizeArabic(text) {
   if (!text) return '';
   return String(text)
@@ -316,7 +317,7 @@ function getBrandColor(brandName) {
   return hashColor(brandName || 'Pharmacy');
 }
 
-// ================= 7. DYNAMIC THEME LOADER & FAIL-SAFE =================
+// ================= 7. DYNAMIC THEME LOADER =================
 const TEMPLATE_MODULE_MAP = {
   'template-one': 'templates/template_a.js',
   'template_a': 'templates/template_a.js',
@@ -396,7 +397,6 @@ function applyPharmacyTemplate(templateId = 'template-one') {
   htmlRoot.setAttribute('data-template', templateId);
 }
 
-// دالة تفاعلية لاختيار تركيز أو حجم الدواء مباشرة من الكارت (Variants Switching)
 function selectProductVariantCard(buttonEl, productId) {
   const p = findProduct(productId);
   if (!p) return;
@@ -594,7 +594,7 @@ async function confirmOrder() {
   myOrders.unshift(newOrderObj);
   saveLocalState();
 
-  // الحفظ السحابي مع تخفيض المخزون الذري في Firestore
+  // الحفظ السحابي وتخفيض المخزون الذري في Firestore
   if (db) {
     try {
       await dbPaths.ordersCol().doc(orderId).set({
@@ -1072,7 +1072,6 @@ function rateProductInstant(stars) {
   }
   localStorage.setItem(ratedKey, String(stars));
 
-  // حساب التقييم الحقيقي الدقيق رياضياً بدون أرقام مسبقة
   const currentReviews = Number(p.reviews || 0);
   const currentRating = Number(p.rating || 5.0);
 
@@ -1485,7 +1484,7 @@ function renderRealAnalyticsView() {
   }
 }
 
-// ================= 19. REALTIME ORDERS SNAPSHOT (0-SECOND SYNC) =================
+// ================= 19. REALTIME ORDERS SNAPSHOT =================
 let adminOrdersUnsubscribe = null;
 
 function listenToAdminOrdersRealtime() {
@@ -1667,7 +1666,7 @@ async function exportOrdersToCSV() {
   } catch (e) { console.error(e); }
 }
 
-// ================= 21. CLINICAL PRODUCTS CRUD & SOFT DELETE =================
+// ================= 21. PRODUCTS CRUD & AUTO-CROWDSOURCING HOOK =================
 function toggleLowStockFilter() {
   isLowStockFilterActive = !isLowStockFilterActive;
   const btn = document.getElementById('btnFilterLowStock');
@@ -1701,7 +1700,6 @@ async function quickToggleStock(id) {
   showToast(newStock ? 'تم التعيين: متوفر 🟢' : 'تم التعيين: نفذت الكمية 🔴');
 }
 
-// فتح نافذة التعديل السريع السريري وتعبئة كامل البيانات الطبية
 function openAdminQuickEditModal(id) {
   if (!assertAdmin()) return;
   const p = findProduct(id) || archivedProducts.find(x => String(x.id) === String(id));
@@ -1733,7 +1731,6 @@ function closeAdminQuickEditModal() {
   if (m) m.classList.remove('open');
 }
 
-// حفظ كامل التعديلات الطبية للمنتج سحابياً
 async function saveAdminQuickEdit() {
   if (!assertAdmin()) return;
 
@@ -1779,7 +1776,7 @@ async function saveAdminQuickEdit() {
 
   if (db) await dbPaths.productsCol().doc(String(id)).set(updates, { merge: true });
   closeAdminQuickEditModal();
-  showToast('تم تحديث تفاصيل الدواء والمنتج سحابياً ✓');
+  showToast('تم تحديث تفاصيل الصنف سحابياً ✓');
 }
 
 function openAdminQuickAddModal() {
@@ -1865,8 +1862,29 @@ async function handleAdminProductSave(e) {
     } else {
       payload.views = 0;
       payload.orderCount = 0;
-      if (db) await dbPaths.productsCol().add(payload);
-      showToast('تمت إضافة المنتج الجديد بنجاح ✓');
+      if (db) {
+        const newRef = await dbPaths.productsCol().add(payload);
+        
+        // ================= AUTO-CROWDSOURCING PIPELINE =================
+        // إرسال نسخة من الصنف الجديد لجدول مراجعة السوبر أدمن لإغناء البنك الموحد
+        try {
+          const subDocId = `sub_${currentPharmacyId}_${newRef.id}`;
+          await dbPaths.masterCatalogSubmissionsCol().doc(subDocId).set({
+            submissionId: subDocId,
+            sourcePharmacyId: currentPharmacyId,
+            sourcePharmacyName: pharmacyProfile.name || currentPharmacyId,
+            productData: {
+              ...payload,
+              suggestedPrice: payload.price
+            },
+            status: 'pending_review',
+            submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        } catch (crowdErr) {
+          console.warn("Crowdsourcing hook warning:", crowdErr);
+        }
+      }
+      showToast('تمت إضافة المنتج الجديد بنجاح وإرساله للبنك المركزي! ✓');
     }
     resetAdminProductForm();
   } catch (err) {
@@ -1874,7 +1892,7 @@ async function handleAdminProductSave(e) {
   }
 }
 
-// ----------------- سلة المحذوفات والأرشفة (SOFT DELETE & TRASH BIN) -----------------
+// ----------------- سلة المحذوفات والأرشفة (SOFT DELETE) -----------------
 async function archiveProductConfirm(id, name) {
   if (!assertAdmin()) return;
   if (confirm(`هل أنتِ متأكدة من نقل المنتج "${name}" إلى سلة المحذوفات؟ (يمكنك استرجاعه بأي وقت)`)) {
@@ -1959,7 +1977,7 @@ function renderTrashBinList() {
 
 // ================= 22. ADMIN SECTIONS CONTROLLER =================
 function switchAdminSection(sec) {
-  const sections = ['Stats', 'Orders', 'Products', 'Cats', 'Offers', 'Bundles', 'Coupons', 'Brands', 'Notifs', 'Audit', 'Staff', 'Design', 'Subscription', 'Trash'];
+  const sections = ['Stats', 'Orders', 'Import', 'Products', 'Cats', 'Offers', 'Bundles', 'Coupons', 'Brands', 'Notifs', 'Audit', 'Staff', 'Design', 'Subscription', 'Trash'];
   
   sections.forEach(k => {
     const btn = document.getElementById('btnTabV' + k);
@@ -1971,6 +1989,7 @@ function switchAdminSection(sec) {
 
   if (sec === 'stats') fetchRealAnalytics();
   if (sec === 'orders') fetchAdminOrdersList();
+  if (sec === 'import' && typeof fetchTenantMasterCatalog === 'function') fetchTenantMasterCatalog();
   if (sec === 'products') populateCategoryDropdowns();
   if (sec === 'coupons') fetchAdminCoupons();
   if (sec === 'bundles') {
@@ -2185,7 +2204,6 @@ function openBestSellers() {
   showListingView();
 }
 
-// محرك البحث الذكي المطوّر لتطبيع الكلمات العربية والإنجليزية
 function onSearch(val) {
   const term = val.trim();
   if (!term) return;
@@ -2525,7 +2543,7 @@ function renderProductDetailDOM(p) {
   stockEl.innerHTML = inStock ? `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" style="width:18px;height:18px;"><path d="M5 13l4 4L19 7"/></svg><span>متوفر بالمخزون (${p.stockQuantity !== undefined ? p.stockQuantity : 'متوفر'} قطعة)</span>` : `<span>نفذت الكمية حالياً</span>`;
 
   document.getElementById('pdTabDesc').textContent = p.description || 'منتج أصلي معتمد من الصيدلية.';
-  document.getElementById('pdTabIng').textContent = p.ingredients || 'تركيبة غنية ومفحوصة جلدياً وطبياً.';
+  document.getElementById('pdTabIng').textContent = p.ingredients || p.medicalIndications || 'تركيبة غنية ومفحوصة جلدياً وطبياً.';
   document.getElementById('pdTabUse').textContent = p.usage || 'يُوضع على بشرة نظيفة وفق الإرشادات الصيدلانية.';
   
   const rated = localStorage.getItem(getStorageKey('rated_' + p.id));
@@ -2953,7 +2971,7 @@ async function deleteStaffMember(staffId) {
   }
 }
 
-// ================= 29. SUPER ADMIN PAYMENT INFO SYNC FOR MERCHANTS =================
+// ================= 29. SUPER ADMIN PAYMENT INFO =================
 async function fetchSuperAdminPaymentInfo() {
   if (!isFirebaseConfigured || !db) return;
   try {
@@ -3124,7 +3142,7 @@ function applyStoreSettings() {
   if (pLink) pLink.href = `tel:${pharmacyProfile.socialPhone || ''}`;
 }
 
-// ================= 31. FIRESTORE REALTIME SYNC (WITH CACHE) =================
+// ================= 31. FIRESTORE REALTIME SYNC =================
 function initFirestoreSync() {
   if (!isFirebaseConfigured || !db) return;
 
@@ -3647,5 +3665,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     fetchArchivedProducts();
     fetchSuperAdminPaymentInfo();
     checkLowStockAlerts();
+    if (typeof fetchTenantMasterCatalog === 'function') {
+      fetchTenantMasterCatalog();
+    }
   }
 });
