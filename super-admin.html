@@ -88,7 +88,7 @@
       </div>
     </header>
 
-    <!-- Navigation Tabs (تبويبات الواجهة التنفيذية) -->
+    <!-- Navigation Tabs -->
     <nav class="bg-slate-900/60 border-b border-slate-800 sticky top-16 z-30 backdrop-blur-md">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex gap-2 overflow-x-auto py-2.5 scrollbar-none">
         <button id="tabBtnOverview" onclick="switchSuperTab('overview')" class="tab-btn active px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20">
@@ -101,7 +101,10 @@
           📈 استهلاك البيانات والفوترة
         </button>
         <button id="tabBtnCatalog" onclick="switchSuperTab('catalog')" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2">
-          💊 بنك الأدوية والمنتجات الموحد
+          💊 بنك المنتجات المركزي (<span id="catTotalCountBadge">0</span>)
+        </button>
+        <button id="tabBtnCrowdsource" onclick="switchSuperTab('crowdsource')" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2">
+          📥 مراجعة مساهمات الصيدليات (<span id="crowdsourceBadge" class="text-amber-400 font-bold">0</span>)
         </button>
         <button id="tabBtnPaymentInfo" onclick="switchSuperTab('paymentInfo')" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2">
           💳 بيانات الدفع الإلكتروني
@@ -150,16 +153,15 @@
 
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between shadow-sm">
             <div>
-              <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">طلبات المنصة المنفذة اليوم</div>
-              <div class="text-3xl font-black text-purple-400 font-mono" id="statTodayOrders">0</div>
+              <div class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">أصناف البنك المركزي</div>
+              <div class="text-3xl font-black text-purple-400 font-mono" id="statMasterItemsCount">0</div>
             </div>
             <div class="w-12 h-12 bg-purple-500/10 border border-purple-500/20 rounded-xl flex items-center justify-center text-2xl text-purple-400">
-              📦
+              💊
             </div>
           </div>
         </div>
 
-        <!-- System Status Banner -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-md">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-sm font-black text-white flex items-center gap-2">
@@ -168,14 +170,13 @@
             <span class="text-xs text-emerald-400 font-mono bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">Active & Encrypted</span>
           </div>
           <p class="text-xs text-slate-400 leading-relaxed">
-            تعمل المنصة بنظام SaaS معزول لكل صيدلية مع استخراج النطاقات الفرعية (Subdomains) وتوليد فواتير التيليجرام وملفات الإكسل الموحدة تلقائياً.
+            تعمل المنصة بنظام SaaS معزول لكل صيدلية مع استخراج النطاقات الفرعية (Subdomains) وبنك منتجات موحد عالي السرعة.
           </p>
         </div>
       </section>
 
       <!-- ================= TAB 2: TENANTS & SUBSCRIPTIONS ================= -->
       <section id="secSuperTenants" class="tab-content hidden space-y-8">
-        
         <!-- Add New Pharmacy Card -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-md">
           <div class="flex items-center gap-3 pb-6 border-b border-slate-800 mb-6">
@@ -234,11 +235,11 @@
                 </div>
               </div>
               <div>
-                <label class="block text-xs font-bold text-slate-300 mb-2">توكن بوت تلغرام الصيدلية (Bot Token)</label>
+                <label class="block text-xs font-bold text-slate-300 mb-2">توكن بوت تلغرام الصيدلية</label>
                 <input type="text" id="inpTeleBotToken" placeholder="8714017218:AAEOy..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white font-mono placeholder-slate-600 focus:outline-none focus:border-blue-500 transition">
               </div>
               <div>
-                <label class="block text-xs font-bold text-slate-300 mb-2">معرف شات تلغرام الصيدلية (Chat ID)</label>
+                <label class="block text-xs font-bold text-slate-300 mb-2">معرف شات تلغرام الصيدلية</label>
                 <input type="text" id="inpTeleChatId" placeholder="-5458203370" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white font-mono placeholder-slate-600 focus:outline-none focus:border-blue-500 transition">
               </div>
             </div>
@@ -354,97 +355,138 @@
         </div>
       </section>
 
-      <!-- ================= TAB 4: GLOBAL MASTER MEDICINE CATALOG ================= -->
+      <!-- ================= TAB 4: MASTER CATALOG & BULK IMPORTER ================= -->
       <section id="secSuperCatalog" class="tab-content hidden space-y-8">
+        
+        <!-- Header Actions & Bulk Uploader -->
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800 mb-6">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5 pb-6 border-b border-slate-800 mb-6">
             <div>
-              <h2 class="text-lg font-black text-white flex items-center gap-2">
-                <span>💊</span> بنك الأدوية والمنتجات المركزي الموحد (Master Catalog)
+              <h2 class="text-xl font-black text-white flex items-center gap-2">
+                <span>💊</span> بنك المنتجات وحليب الأطفال المركزي (Master Catalog)
               </h2>
-              <p class="text-xs text-slate-400">أضف منتجات معتمدة لتتمكن أي صيدلية جديدة من استيرادها بنقرة زر واحدة.</p>
+              <p class="text-xs text-slate-400 mt-1">
+                قاعدة البيانات الموحدة للأصناف المعتمدة مع إمكانية رفع وتحديث الكتالوج دفعة واحدة من ملفات JSON/CSV.
+              </p>
             </div>
-            
-            <!-- Quick 1-Click Import Tool -->
-            <div class="flex items-center gap-2 bg-slate-950 border border-slate-800 p-2 rounded-2xl">
-              <select id="importTargetPharmacySelect" class="bg-slate-900 text-xs font-bold text-white px-3 py-2 rounded-xl border border-slate-700">
-                <option value="">اختر صيدلية للاستيراد إليها...</option>
-              </select>
-              <button onclick="handleBatchImportCatalogToStore()" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs px-4 py-2 rounded-xl transition flex items-center gap-1.5 shrink-0">
-                ⚡ استيراد الكتالوج للصيدلية
+
+            <div class="flex flex-wrap items-center gap-3">
+              <!-- Upload JSON Button -->
+              <label class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl transition cursor-pointer flex items-center gap-2 shadow-lg shadow-emerald-500/20">
+                <span>📥 رفع ملف بيانات (JSON Bulk Upload)</span>
+                <input type="file" id="masterJsonFileInput" accept=".json,.csv" class="hidden" onchange="handleMasterBulkUpload(event)">
+              </label>
+
+              <!-- Backup / Export JSON -->
+              <button onclick="exportMasterCatalogJSON()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs px-4 py-2.5 rounded-xl border border-slate-700 transition flex items-center gap-1.5">
+                💾 تصدير نسخة احتياطية (JSON)
               </button>
             </div>
           </div>
 
-          <!-- Add to Master Catalog Form -->
-          <form onsubmit="handleAddToMasterCatalog(event)" class="bg-slate-950 border border-slate-800 rounded-2xl p-5 mb-8 space-y-4">
-            <h3 class="text-xs font-bold text-emerald-400 mb-2">+ إضافة دواء أو منتج جديد لبنك الأدوية المركزي:</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <label class="block text-[11px] font-bold text-slate-300 mb-1">اسم المنتج الكامل *</label>
-                <input type="text" id="catItemName" placeholder="بانادول اكسترا 500mg" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" required>
-              </div>
-              <div>
-                <label class="block text-[11px] font-bold text-slate-300 mb-1">الماركة / الشركة *</label>
-                <input type="text" id="catItemBrand" placeholder="GSK" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white" required>
-              </div>
-              <div>
-                <label class="block text-[11px] font-bold text-slate-300 mb-1">السعر الاسترشادي (د.ع) *</label>
-                <input type="number" id="catItemPrice" placeholder="3000" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono" required>
-              </div>
-              <div>
-                <label class="block text-[11px] font-bold text-slate-300 mb-1">القسم</label>
-                <select id="catItemCategory" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-bold">
-                  <option value="face">العناية بالوجه</option>
-                  <option value="moisturizer">مرطبات</option>
-                  <option value="serum">سيرومات</option>
-                  <option value="sunscreen">واقي شمس</option>
-                  <option value="baby">أطفال</option>
-                  <option value="body">عناية بالجسم</option>
-                </select>
-              </div>
-              <div class="sm:col-span-2">
-                <label class="block text-[11px] font-bold text-slate-300 mb-1">المكونات الفعالة والتركيبة (Ingredients)</label>
-                <input type="text" id="catItemIng" placeholder="Paracetamol 500mg, Caffeine 65mg" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white">
-              </div>
-              <div class="sm:col-span-2">
-                <label class="block text-[11px] font-bold text-slate-300 mb-1">طريقة الاستخدام والإرشادات (Usage)</label>
-                <input type="text" id="catItemUsage" placeholder="قرصين كل 6 إلى 8 ساعات حسب الحاجة" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white">
-              </div>
-              <div class="sm:col-span-3">
-                <label class="block text-[11px] font-bold text-slate-300 mb-1">الوصف الطبي والمميزات</label>
-                <input type="text" id="catItemDesc" placeholder="مسكن للآلام وخافض للحرارة سريع المفعول..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white">
-              </div>
-              <div class="flex items-end">
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2.5 rounded-xl transition">
-                  + حفظ في البنك المركزي
-                </button>
-              </div>
+          <!-- Progress Bar during Bulk Upload -->
+          <div id="bulkUploadProgressBar" class="hidden mb-6 bg-slate-950 border border-slate-800 p-4 rounded-2xl space-y-2">
+            <div class="flex justify-between text-xs font-bold">
+              <span id="bulkUploadStatusText" class="text-emerald-400">جاري معالجة ورفع الأصناف...</span>
+              <span id="bulkUploadPercentText" class="text-white font-mono">0%</span>
             </div>
-          </form>
+            <div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
+              <div id="bulkUploadProgressFill" class="bg-emerald-500 h-full w-0 transition-all duration-200"></div>
+            </div>
+          </div>
+
+          <!-- Search & Filter Controls -->
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 mb-6">
+            <div class="sm:col-span-6">
+              <input type="text" id="masterSearchInput" oninput="filterMasterCatalog()" placeholder="ابحث باسم المنتج، البراند، أو الباركود..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
+            </div>
+            <div class="sm:col-span-3">
+              <select id="masterCategoryFilter" onchange="filterMasterCatalog()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white font-bold focus:outline-none focus:border-emerald-500">
+                <option value="all">جميع الأقسام والتصنيفات</option>
+                <option value="baby">حليب وأغذية الأطفال 🍼</option>
+                <option value="face">العناية بالوجه 🌸</option>
+                <option value="serum">السيرومات العلاجية ✨</option>
+                <option value="moisturizer">المرطبات 💧</option>
+                <option value="sunscreen">واقيات الشمس ☀️</option>
+                <option value="hair">العناية بالشعر 💇‍♀️</option>
+                <option value="body">العناية بالجسم 🛁</option>
+              </select>
+            </div>
+            <div class="sm:col-span-3 flex items-center justify-end">
+              <span class="text-xs text-slate-400 font-mono" id="masterFilteredCountText">عرض 0 من 0 صنف</span>
+            </div>
+          </div>
 
           <!-- Master Catalog Table -->
           <div class="overflow-x-auto -mx-4 sm:mx-0">
-            <table class="w-full text-right text-sm min-w-[700px]">
+            <table class="w-full text-right text-sm min-w-[750px]">
               <thead class="bg-slate-950/60 text-slate-400 font-bold border-b border-slate-800 text-xs">
                 <tr>
-                  <th class="py-3 px-4">اسم الدواء / المادة</th>
-                  <th class="py-3 px-4">الماركة</th>
-                  <th class="py-3 px-4">القسم</th>
-                  <th class="py-3 px-4">السعر</th>
-                  <th class="py-3 px-4">المكونات الفعالة</th>
-                  <th class="py-3 px-4 text-center">حذف</th>
+                  <th class="py-3.5 px-4">اسم الصنف / المنتج</th>
+                  <th class="py-3.5 px-4">الماركة</th>
+                  <th class="py-3.5 px-4">القسم / المرحلة</th>
+                  <th class="py-3.5 px-4">السعر المقترح</th>
+                  <th class="py-3.5 px-4">المكونات / الدواعي</th>
+                  <th class="py-3.5 px-4 text-center">الإجراء</th>
                 </tr>
               </thead>
               <tbody id="masterCatalogTableBody" class="divide-y divide-slate-800/60">
-                <tr><td colspan="6" class="text-center py-6 text-slate-500">جاري تحميل كتالوج الأدوية المركزي...</td></tr>
+                <tr><td colspan="6" class="text-center py-8 text-slate-500">جاري تحميل كتالوج الأصناف المركزي...</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Bar -->
+          <div class="flex items-center justify-between pt-6 border-t border-slate-800 mt-4 text-xs">
+            <button id="btnPrevMasterPage" onclick="changeMasterPage(-1)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-4 py-2 rounded-xl transition disabled:opacity-40" disabled>
+              ← الصفحة السابقة
+            </button>
+            <span class="font-mono text-slate-400" id="masterPaginationInfo">صفحة 1 من 1</span>
+            <button id="btnNextMasterPage" onclick="changeMasterPage(1)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-4 py-2 rounded-xl transition disabled:opacity-40">
+              الصفحة التالية →
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 5: CROWDSOURCING REVIEW QUEUE ================= -->
+      <section id="secSuperCrowdsource" class="tab-content hidden space-y-8">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl">
+          <div class="flex items-center justify-between pb-6 border-b border-slate-800 mb-6">
+            <div>
+              <h2 class="text-lg font-black text-white flex items-center gap-2">
+                <span>📥</span> مساهمات الصيدليات الجديدة (Crowdsourcing Review Queue)
+              </h2>
+              <p class="text-xs text-slate-400 mt-1">
+                الأصناف التي أضافتها الصيدليات يدوياً في مخازنها. يمكنك مراجعتها واعتمادها لتصبح متاحة لجميع الصيدليات بنقرة زر.
+              </p>
+            </div>
+            <button onclick="fetchCrowdsourcedSubmissions()" class="text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-4 py-2 rounded-xl flex items-center gap-1.5 transition">
+              🔄 تحديث القائمة
+            </button>
+          </div>
+
+          <div class="overflow-x-auto -mx-4 sm:mx-0">
+            <table class="w-full text-right text-sm min-w-[750px]">
+              <thead class="bg-slate-950/60 text-slate-400 font-bold border-b border-slate-800 text-xs">
+                <tr>
+                  <th class="py-3 px-4">الصيدلية المساهمة</th>
+                  <th class="py-3 px-4">اسم المنتج المقترح</th>
+                  <th class="py-3 px-4">الماركة</th>
+                  <th class="py-3 px-4">السعر المقترح</th>
+                  <th class="py-3 px-4">تاريخ الإضافة</th>
+                  <th class="py-3 px-4 text-center">القرار</th>
+                </tr>
+              </thead>
+              <tbody id="crowdsourceTableBody" class="divide-y divide-slate-800/60">
+                <tr><td colspan="6" class="text-center py-8 text-slate-500">جاري فحص مساهمات الصيدليات...</td></tr>
               </tbody>
             </table>
           </div>
         </div>
       </section>
 
-      <!-- ================= TAB 5: SUPER ADMIN PAYMENT INFO ================= -->
+      <!-- ================= TAB 6: SUPER ADMIN PAYMENT INFO ================= -->
       <section id="secSuperPaymentInfo" class="tab-content hidden space-y-8">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl max-w-3xl mx-auto">
           <div class="flex items-center gap-3 pb-6 border-b border-slate-800 mb-6">
@@ -490,9 +532,8 @@
         </div>
       </section>
 
-      <!-- ================= TAB 6: REPORTS & CONSOLIDATED EXCEL ================= -->
+      <!-- ================= TAB 7: REPORTS & CONSOLIDATED EXCEL ================= -->
       <section id="secSuperReports" class="tab-content hidden space-y-8">
-        
         <!-- Master Consolidated SaaS Report Card -->
         <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/40 border border-emerald-500/30 rounded-3xl p-6 sm:p-8 shadow-xl">
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -597,11 +638,11 @@
             <input type="text" id="editWhatsapp" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white font-mono" required>
           </div>
           <div class="sm:col-span-2">
-            <label class="block text-xs font-bold text-slate-300 mb-1">توكن بوت تلغرام الصيدلية (Telegram Bot Token)</label>
+            <label class="block text-xs font-bold text-slate-300 mb-1">توكن بوت تلغرام الصيدلية</label>
             <input type="text" id="editTeleBotToken" placeholder="8714017218:AAEOy..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white font-mono">
           </div>
           <div class="sm:col-span-2">
-            <label class="block text-xs font-bold text-slate-300 mb-1">معرف شات تلغرام الصيدلية (Telegram Chat ID)</label>
+            <label class="block text-xs font-bold text-slate-300 mb-1">معرف شات تلغرام الصيدلية</label>
             <input type="text" id="editTeleChatId" placeholder="-5458203370" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white font-mono">
           </div>
         </div>
@@ -615,7 +656,7 @@
     </div>
   </div>
 
-  <!-- 2. SUPER ADMIN PERSONAL TELEGRAM SETTINGS MODAL -->
+  <!-- 2. SUPER ADMIN TELEGRAM SETTINGS MODAL -->
   <div id="superTeleModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl">
       <div class="flex items-center justify-between pb-4 border-b border-slate-800 mb-4">
@@ -659,6 +700,9 @@
     let auth = null, db = null, currentUser = null;
     window.cachedPharmaciesMap = {};
     window.cachedMasterCatalog = [];
+    window.filteredMasterCatalog = [];
+    window.masterCurrentPage = 1;
+    const MASTER_PAGE_SIZE = 25;
 
     try {
       firebase.initializeApp(firebaseConfig);
@@ -710,7 +754,10 @@
         document.getElementById('tabBtnCatalog').className = 'tab-btn active px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20';
         document.getElementById('secSuperCatalog').classList.remove('hidden');
         fetchMasterCatalog();
-        populatePharmacyImportDropdown();
+      } else if (tabKey === 'crowdsource') {
+        document.getElementById('tabBtnCrowdsource').className = 'tab-btn active px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20';
+        document.getElementById('secSuperCrowdsource').classList.remove('hidden');
+        fetchCrowdsourcedSubmissions();
       } else if (tabKey === 'paymentInfo') {
         document.getElementById('tabBtnPaymentInfo').className = 'tab-btn active px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20';
         document.getElementById('secSuperPaymentInfo').classList.remove('hidden');
@@ -755,6 +802,8 @@
         gate.classList.add('hidden');
         app.classList.remove('hidden');
         fetchPharmaciesList();
+        fetchMasterCatalog();
+        fetchCrowdsourcedSubmissions();
       } else {
         if (auth) auth.signOut();
         gate.classList.remove('hidden');
@@ -1035,120 +1084,330 @@
       }
     }
 
-    // ================= TAB 4: GLOBAL MASTER MEDICINE CATALOG =================
+    // ================= TAB 4: MASTER CATALOG PAGINATION, SEARCH & BULK IMPORTER =================
     async function fetchMasterCatalog() {
       if (!db) return;
       const tbody = document.getElementById('masterCatalogTableBody');
-      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400">جاري تحميل كتالوج الأدوية المركزي...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400">جاري تحميل كتالوج الأصناف المركزي...</td></tr>`;
 
       try {
         const snap = await db.collection('system').doc('master_catalog').collection('products').get();
         window.cachedMasterCatalog = [];
-        const rows = [];
 
         snap.forEach(doc => {
-          const item = { id: doc.id, ...doc.data() };
-          window.cachedMasterCatalog.push(item);
-
-          rows.push(`
-            <tr class="hover:bg-slate-800/40 transition text-xs">
-              <td class="py-3 px-4 font-bold text-white">${escapeHtml(item.name || '')}</td>
-              <td class="py-3 px-4 font-bold text-emerald-400">${escapeHtml(item.brand || '')}</td>
-              <td class="py-3 px-4 text-slate-300">${escapeHtml(item.category || '')}</td>
-              <td class="py-3 px-4 font-mono text-amber-400 font-bold">${Number(item.price || 0).toLocaleString()} د.ع</td>
-              <td class="py-3 px-4 text-slate-400 max-w-xs truncate">${escapeHtml(item.ingredients || '—')}</td>
-              <td class="py-3 px-4 text-center">
-                <button onclick="deleteFromMasterCatalog('${escapeHtml(item.id)}')" class="text-red-400 hover:text-red-300 font-bold">🗑️</button>
-              </td>
-            </tr>
-          `);
+          window.cachedMasterCatalog.push({ id: doc.id, ...doc.data() });
         });
 
-        tbody.innerHTML = rows.length ? rows.join('') : `<tr><td colspan="6" class="text-center py-6 text-slate-500">لا توجد أدوية مضافة للبنك المركزي بعد.</td></tr>`;
+        document.getElementById('statMasterItemsCount').textContent = window.cachedMasterCatalog.length;
+        document.getElementById('catTotalCountBadge').textContent = window.cachedMasterCatalog.length;
+
+        filterMasterCatalog();
       } catch (e) {
         tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-red-400">خطأ: ${e.message}</td></tr>`;
       }
     }
 
-    function populatePharmacyImportDropdown() {
-      const sel = document.getElementById('importTargetPharmacySelect');
-      if (!sel) return;
-      const slugs = Object.keys(window.cachedPharmaciesMap);
-      sel.innerHTML = `<option value="">اختر صيدلية للاستيراد إليها...</option>` + slugs.map(slug => {
-        const d = window.cachedPharmaciesMap[slug];
-        return `<option value="${escapeHtml(slug)}">${escapeHtml(d.name || slug)} (${escapeHtml(slug)})</option>`;
-      }).join('');
+    function filterMasterCatalog() {
+      const q = (document.getElementById('masterSearchInput').value || '').trim().toLowerCase();
+      const cat = document.getElementById('masterCategoryFilter').value;
+
+      window.filteredMasterCatalog = window.cachedMasterCatalog.filter(item => {
+        const matchesCategory = (cat === 'all') || (item.category === cat) || (cat === 'baby' && item.subCategory === 'infant_milk');
+        const nameStr = (item.name || '').toLowerCase();
+        const brandStr = (item.brand || '').toLowerCase();
+        const barcodeStr = (item.barcode || '').toLowerCase();
+        const matchesSearch = !q || nameStr.includes(q) || brandStr.includes(q) || barcodeStr.includes(q);
+        return matchesCategory && matchesSearch;
+      });
+
+      document.getElementById('masterFilteredCountText').textContent = `عرض ${window.filteredMasterCatalog.length} من أصل ${window.cachedMasterCatalog.length} صنف`;
+      window.masterCurrentPage = 1;
+      renderMasterCatalogPage();
     }
 
-    async function handleAddToMasterCatalog(e) {
-      e.preventDefault();
-      if (!db) return;
+    function renderMasterCatalogPage() {
+      const tbody = document.getElementById('masterCatalogTableBody');
+      const totalItems = window.filteredMasterCatalog.length;
+      const totalPages = Math.ceil(totalItems / MASTER_PAGE_SIZE) || 1;
 
-      const payload = {
-        name: document.getElementById('catItemName').value.trim(),
-        brand: document.getElementById('catItemBrand').value.trim(),
-        price: Number(document.getElementById('catItemPrice').value || 0),
-        category: document.getElementById('catItemCategory').value,
-        ingredients: document.getElementById('catItemIng').value.trim(),
-        usage: document.getElementById('catItemUsage').value.trim(),
-        description: document.getElementById('catItemDesc').value.trim(),
-        size: 'عبوة قياسية',
-        type: 'bottle',
-        imageUrl: '',
-        stockQuantity: 10,
-        inStock: true,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      };
+      if (window.masterCurrentPage > totalPages) window.masterCurrentPage = totalPages;
+      if (window.masterCurrentPage < 1) window.masterCurrentPage = 1;
+
+      const startIndex = (window.masterCurrentPage - 1) * MASTER_PAGE_SIZE;
+      const pageItems = window.filteredMasterCatalog.slice(startIndex, startIndex + MASTER_PAGE_SIZE);
+
+      if (pageItems.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-500">لا توجد أصناف مطابقة للبحث أو الفلتر.</td></tr>`;
+      } else {
+        tbody.innerHTML = pageItems.map(item => {
+          const isMilk = item.category === 'baby' || item.subCategory === 'infant_milk';
+          const stageBadge = isMilk && item.milkStage ? `<span class="bg-blue-950 text-blue-400 border border-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full mr-1">${escapeHtml(item.milkStage)}</span>` : '';
+          
+          return `
+            <tr class="hover:bg-slate-800/40 transition text-xs">
+              <td class="py-3 px-4">
+                <div class="font-bold text-white">${escapeHtml(item.name || '')}</div>
+                <div class="text-[11px] text-slate-400">${escapeHtml(item.size || '')} ${item.barcode ? `· باركود: <span class="font-mono">${escapeHtml(item.barcode)}</span>` : ''}</div>
+              </td>
+              <td class="py-3 px-4 font-bold text-emerald-400">${escapeHtml(item.brand || '')}</td>
+              <td class="py-3 px-4 text-slate-300">
+                <span class="bg-slate-800 px-2 py-0.5 rounded border border-slate-700 font-bold">${escapeHtml(item.category || 'عام')}</span>
+                ${stageBadge}
+              </td>
+              <td class="py-3 px-4 font-mono text-amber-400 font-bold">${Number(item.price || item.suggestedPrice || 0).toLocaleString()} د.ع</td>
+              <td class="py-3 px-4 text-slate-400 max-w-xs truncate" title="${escapeHtml(item.ingredients || item.medicalIndications || '')}">
+                ${escapeHtml(item.ingredients || item.medicalIndications || '—')}
+              </td>
+              <td class="py-3 px-4 text-center">
+                <button onclick="deleteFromMasterCatalog('${escapeHtml(item.id)}')" class="text-red-400 hover:text-red-300 font-bold p-1 transition" title="حذف من البنك المركزي">
+                  🗑️
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      document.getElementById('masterPaginationInfo').textContent = `صفحة ${window.masterCurrentPage} من ${totalPages}`;
+      document.getElementById('btnPrevMasterPage').disabled = (window.masterCurrentPage <= 1);
+      document.getElementById('btnNextMasterPage').disabled = (window.masterCurrentPage >= totalPages);
+    }
+
+    function changeMasterPage(delta) {
+      window.masterCurrentPage += delta;
+      renderMasterCatalogPage();
+    }
+
+    async function handleMasterBulkUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const progressBox = document.getElementById('bulkUploadProgressBar');
+      const progressFill = document.getElementById('bulkUploadProgressFill');
+      const percentText = document.getElementById('bulkUploadPercentText');
+      const statusText = document.getElementById('bulkUploadStatusText');
+
+      progressBox.classList.remove('hidden');
+      progressFill.style.width = '5%';
+      percentText.textContent = '5%';
+      statusText.textContent = 'جاري قراءة الملف وتحليله...';
 
       try {
-        await db.collection('system').doc('master_catalog').collection('products').add(payload);
-        showToast('تمت إضافة الدواء لبنك الأدوية المركزي بنجاح! 💊');
-        e.target.reset();
+        const text = await file.text();
+        let items = [];
+
+        if (file.name.endsWith('.json')) {
+          items = JSON.parse(text);
+        } else if (file.name.endsWith('.csv')) {
+          items = parseCSVToMasterArray(text);
+        }
+
+        if (!Array.isArray(items) || items.length === 0) {
+          throw new Error('الملف فارغ أو لا يحتوي على مصفوفة بيانات صالحة.');
+        }
+
+        statusText.textContent = `تم قراءة ${items.length} صنف. جاري الحفظ والتسجيل السحابي في Firestore...`;
+
+        const CHUNK_SIZE = 400; // حد أمان Firestore Batch هو 500 عملية
+        const totalBatches = Math.ceil(items.length / CHUNK_SIZE);
+
+        for (let i = 0; i < totalBatches; i++) {
+          const chunk = items.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+          const batch = db.batch();
+
+          chunk.forEach(rawItem => {
+            const docId = rawItem.id ? String(rawItem.id).trim() : ('item_' + Math.random().toString(36).substring(2, 9));
+            const docRef = db.collection('system').doc('master_catalog').collection('products').doc(docId);
+            
+            const payload = {
+              id: docId,
+              name: rawItem.name || 'بدون اسم',
+              brand: rawItem.brand || 'عام',
+              category: rawItem.category || 'face',
+              subCategory: rawItem.subCategory || '',
+              milkStage: rawItem.milkStage || null,
+              ageGroup: rawItem.ageGroup || null,
+              formulaType: rawItem.formulaType || null,
+              specialFormulaTag: rawItem.specialFormulaTag || null,
+              type: rawItem.type || 'bottle',
+              size: rawItem.size || 'عبوة قياسية',
+              price: Number(rawItem.price || rawItem.suggestedPrice || 0),
+              suggestedPrice: Number(rawItem.suggestedPrice || rawItem.price || 0),
+              stockQuantity: Number(rawItem.stockQuantity || 10),
+              inStock: rawItem.inStock !== false,
+              description: rawItem.description || '',
+              ingredients: rawItem.ingredients || '',
+              medicalIndications: rawItem.medicalIndications || '',
+              keyNutrients: rawItem.keyNutrients || '',
+              usage: rawItem.usage || '',
+              barcode: rawItem.barcode || '',
+              imageUrl: rawItem.imageUrl || '',
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            batch.set(docRef, payload, { merge: true });
+          });
+
+          await batch.commit();
+
+          const pct = Math.round(((i + 1) / totalBatches) * 100);
+          progressFill.style.width = pct + '%';
+          percentText.textContent = pct + '%';
+        }
+
+        showToast(`🎉 تم رفع وحفظ ${items.length} صنف بنجاح في البنك المركزي!`);
+        statusText.textContent = 'اكتمل الرفع بنجاح! ✓';
+        setTimeout(() => progressBox.classList.add('hidden'), 2500);
         fetchMasterCatalog();
       } catch (err) {
-        showToast('خطأ: ' + err.message, true);
+        showToast('خطأ بالرفع: ' + err.message, true);
+        statusText.textContent = 'فشل الرفع: ' + err.message;
+      } finally {
+        event.target.value = '';
       }
     }
 
+    function parseCSVToMasterArray(csvText) {
+      const lines = csvText.split('\n').filter(l => l.trim().length > 0);
+      if (lines.length < 2) return [];
+      const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+      const list = [];
+
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+        const obj = {};
+        headers.forEach((h, idx) => {
+          obj[h] = cols[idx] || '';
+        });
+        if (obj.name) list.push(obj);
+      }
+      return list;
+    }
+
+    async function exportMasterCatalogJSON() {
+      if (!window.cachedMasterCatalog || window.cachedMasterCatalog.length === 0) {
+        showToast('البنك المركزي فارغ لا يوجد بيانات للتصدير', true);
+        return;
+      }
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.cachedMasterCatalog, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `Master_Catalog_Backup_${new Date().toISOString().split('T')[0]}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast('تم تصدير نسخة JSON من البنك المركزي بنجاح 💾');
+    }
+
     async function deleteFromMasterCatalog(id) {
-      if (!confirm('هل تريد حذف هذا الدواء من بنك الأدوية المركزي؟')) return;
+      if (!confirm('هل أنت متأكد من حذف هذا الصنف من بنك الأدوية والمنتجات المركزي؟')) return;
       try {
         await db.collection('system').doc('master_catalog').collection('products').doc(id).delete();
-        showToast('تم الحذف من الكتالوج المركزي');
+        showToast('تم حذف الصنف من الكتالوج المركزي');
         fetchMasterCatalog();
       } catch (e) {
         showToast('خطأ: ' + e.message, true);
       }
     }
 
-    async function handleBatchImportCatalogToStore() {
-      const targetSlug = document.getElementById('importTargetPharmacySelect').value;
-      if (!targetSlug) {
-        showToast('يرجى اختيار الصيدلية المستهدفة أولاً', true);
-        return;
-      }
-      if (!window.cachedMasterCatalog.length) {
-        showToast('بنك الأدوية المركزي فارغ، أضف أدوية أولاً', true);
-        return;
-      }
+    // ================= TAB 5: CROWDSOURCING SUBMISSIONS =================
+    async function fetchCrowdsourcedSubmissions() {
+      if (!db) return;
+      const tbody = document.getElementById('crowdsourceTableBody');
+      const badge = document.getElementById('crowdsourceBadge');
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400">جاري فحص مساهمات الصيدليات...</td></tr>`;
 
-      if (!confirm(`هل تريد استيراد ${window.cachedMasterCatalog.length} منتج إلى صيدلية (${targetSlug})؟`)) return;
-
-      showToast(`جاري استيراد المنتجات إلى (${targetSlug})...`);
       try {
-        const batch = db.batch();
-        window.cachedMasterCatalog.forEach(item => {
-          const docRef = db.collection('pharmacies').doc(targetSlug).collection('products').doc();
-          batch.set(docRef, { ...item, isDeleted: false, rating: 0, reviews: 0, views: 0, orderCount: 0 });
+        const snap = await db.collection('system').doc('master_catalog_submissions').collection('submissions').where('status', '==', 'pending_review').get();
+        badge.textContent = snap.size;
+
+        if (snap.empty) {
+          tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-500">لا توجد مساهمات معلقة حالياً من الصيدليات 🌸</td></tr>`;
+          return;
+        }
+
+        const rows = [];
+        snap.forEach(doc => {
+          const s = doc.data();
+          const p = s.productData || {};
+          const subId = doc.id;
+          const dateStr = s.submittedAt ? (s.submittedAt.toDate ? s.submittedAt.toDate().toLocaleDateString('ar-IQ') : String(s.submittedAt).split('T')[0]) : 'حديث';
+
+          rows.push(`
+            <tr class="hover:bg-slate-800/40 transition text-xs">
+              <td class="py-3 px-4">
+                <div class="font-bold text-white">${escapeHtml(s.sourcePharmacyName || s.sourcePharmacyId || 'صيدلية')}</div>
+                <div class="text-[11px] font-mono text-emerald-400">${escapeHtml(s.sourcePharmacyId || '')}</div>
+              </td>
+              <td class="py-3 px-4 font-bold text-white">${escapeHtml(p.name || 'منتج')}</td>
+              <td class="py-3 px-4 font-bold text-emerald-400">${escapeHtml(p.brand || '')}</td>
+              <td class="py-3 px-4 font-mono text-amber-400 font-bold">${Number(p.price || p.suggestedPrice || 0).toLocaleString()} د.ع</td>
+              <td class="py-3 px-4 text-slate-400 font-mono">${escapeHtml(dateStr)}</td>
+              <td class="py-3 px-4 text-center">
+                <div class="flex items-center justify-center gap-2">
+                  <button onclick="approveCrowdsourcedItem('${escapeHtml(subId)}')" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-lg font-bold transition">
+                    اعتماد ونشر ✅
+                  </button>
+                  <button onclick="rejectCrowdsourcedItem('${escapeHtml(subId)}')" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-3 py-1 rounded-lg font-bold transition">
+                    رفض ❌
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `);
         });
-        await batch.commit();
-        showToast(`🎉 تم استيراد ${window.cachedMasterCatalog.length} منتج بنجاح إلى صيدلية (${targetSlug})!`);
+
+        tbody.innerHTML = rows.join('');
       } catch (err) {
-        showToast('خطأ بالاستيراد: ' + err.message, true);
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-red-400">خطأ: ${err.message}</td></tr>`;
       }
     }
 
-    // ================= TAB 5: SUPER ADMIN PAYMENT INFO =================
+    async function approveCrowdsourcedItem(subId) {
+      if (!confirm('هل تريد اعتماد هذا الصنف وإضافته لبنك المنتجات المركزي العام؟')) return;
+      try {
+        const subDoc = await db.collection('system').doc('master_catalog_submissions').collection('submissions').doc(subId).get();
+        if (!subDoc.exists) return;
+        const subData = subDoc.data();
+        const p = subData.productData || {};
+
+        const docId = 'item_' + (p.barcode || Math.random().toString(36).substring(2, 9));
+        await db.collection('system').doc('master_catalog').collection('products').doc(docId).set({
+          ...p,
+          id: docId,
+          crowdsourcedBy: subData.sourcePharmacyId || 'pharmacy',
+          isVerified: true,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+
+        await db.collection('system').doc('master_catalog_submissions').collection('submissions').doc(subId).set({
+          status: 'approved',
+          reviewedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+
+        showToast('🎉 تم اعتماد الصنف ونشره في الكتالوج المركزي العام!');
+        fetchCrowdsourcedSubmissions();
+        fetchMasterCatalog();
+      } catch (err) {
+        showToast('خطأ بالاعتماد: ' + err.message, true);
+      }
+    }
+
+    async function rejectCrowdsourcedItem(subId) {
+      if (!confirm('هل أنت متأكد من رفض واستبعاد هذا الصنف المقترح؟')) return;
+      try {
+        await db.collection('system').doc('master_catalog_submissions').collection('submissions').doc(subId).set({
+          status: 'rejected',
+          reviewedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+        showToast('تم رفض الصنف المقترح');
+        fetchCrowdsourcedSubmissions();
+      } catch (err) {
+        showToast('خطأ: ' + err.message, true);
+      }
+    }
+
+    // ================= TAB 6: SUPER ADMIN PAYMENT INFO =================
     async function loadSuperAdminPaymentInfo() {
       if (!db) return;
       try {
@@ -1187,7 +1446,7 @@
       }
     }
 
-    // ================= TAB 6: REPORTS HUB & CONSOLIDATED EXCEL =================
+    // ================= TAB 7: REPORTS HUB & CONSOLIDATED EXCEL =================
     function renderIndividualReportsList() {
       const tbody = document.getElementById('individualReportsTableBody');
       const slugs = Object.keys(window.cachedPharmaciesMap);
@@ -1391,7 +1650,7 @@
       }
     }
 
-    // ================= FULL EDIT MODAL (WITH SLUG & MAX CAP) =================
+    // ================= FULL EDIT MODAL =================
     function openFullEditModal(slug) {
       const data = window.cachedPharmaciesMap[slug] || {};
       document.getElementById('editOldSlugId').value = slug;
