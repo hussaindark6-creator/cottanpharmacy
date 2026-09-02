@@ -23,7 +23,7 @@
 </head>
 <body>
 
-  <!-- ADMIN AUTHENTICATION GATE (حماية صفحة الأدمن) -->
+  <!-- ADMIN AUTHENTICATION GATE -->
   <div id="adminAuthGateModal">
     <div class="admin-gate-card">
       <div style="font-size:48px; margin-bottom:12px;">🔒</div>
@@ -36,7 +36,7 @@
     </div>
   </div>
 
-  <!-- SUBSCRIPTION / SUSPENDED BLOCK GATE (شاشة حظر انتهاء الاشتراك) -->
+  <!-- SUBSCRIPTION / SUSPENDED BLOCK GATE -->
   <div id="subscriptionLockGate" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(17, 24, 39, 0.96); backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:20px;">
     <div class="admin-gate-card" style="border:1.5px solid #EF4444; max-width:440px;">
       <div style="font-size:48px; margin-bottom:12px;">⚠️</div>
@@ -76,7 +76,7 @@
       <p id="adminWelcomeDesc">مرحباً بك — إدارة متكاملة للطلبات، الموظفين، المنتجات، والاشتراكات.</p>
     </div>
 
-    <!-- LOW STOCK ALERT BANNER (تنبيه المخزون الذكي) -->
+    <!-- LOW STOCK ALERT BANNER -->
     <div id="adminLowStockAlertBanner" style="display:none; background:#FEF3C7; border:1.5px solid #FDE68A; border-radius:14px; padding:12px 16px; margin-bottom:16px; align-items:center; justify-content:space-between;">
       <div style="display:flex; align-items:center; gap:10px;">
         <span style="font-size:22px;">⚠️</span>
@@ -90,7 +90,7 @@
       </button>
     </div>
 
-    <!-- ADMIN TABS NAVIGATION (تبويبات التحكم المنظمة) -->
+    <!-- ADMIN TABS NAVIGATION -->
     <div class="admin-tabs-nav-view">
       <button class="admin-tab-btn-v active" id="btnTabVStats" onclick="switchAdminSection('stats')">📊 الإحصائيات والأرباح</button>
       <button class="admin-tab-btn-v" id="btnTabVOrders" onclick="switchAdminSection('orders')">📦 إدارة الطلبات والشحن</button>
@@ -109,7 +109,7 @@
       <button class="admin-tab-btn-v" id="btnTabVDesign" onclick="switchAdminSection('design')">🎨 الهوية البصرية والتصميم</button>
     </div>
 
-    <!-- 1. REAL ANALYTICS & REVENUE SECTION -->
+    <!-- 1. REAL ANALYTICS SECTION -->
     <div id="adminSecStats">
       <div class="admin-stat-grid-v">
         <div class="admin-stat-card-v">
@@ -149,7 +149,7 @@
       </div>
     </div>
 
-    <!-- 2. ORDERS MANAGEMENT, THERMAL PRINT & EXCEL EXPORT -->
+    <!-- 2. ORDERS MANAGEMENT -->
     <div id="adminSecOrders" style="display:none;">
       <div class="admin-fieldset">
         <legend style="margin-bottom:8px;">📊 فلاتر تقارير المبيعات والتصدير الذكي</legend>
@@ -190,34 +190,41 @@
       </div>
     </div>
 
-    <!-- 3. IMPORT FROM MASTER CATALOG (NEW - واجهة استيراد الأصناف الذكية للصيدلي) -->
+    <!-- 3. IMPORT FROM MASTER CATALOG (UPGRADED SMART ARCHIVE & BRAND FILTER) -->
     <div id="adminSecImport" style="display:none;">
       <div class="admin-fieldset" style="border-color:#10B981; background:#F0FDF4;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
           <legend style="color:#047857; margin-bottom:0; font-weight:900;">
-            ⚡ استيراد فوري من بنك الأدوية والمنتجات المركزي الموحد
+            ⚡ استيراد ذكي من بنك المنتجات الموحد
           </legend>
           <span class="mono" id="masterCatalogCountBadge" style="font-size:11px; font-weight:900; background:#DCFCE7; color:#15803D; padding:3px 10px; border-radius:999px; border:1px solid #BBF7D0;">
             0 صنف متاح
           </span>
         </div>
         <p style="font-size:12.5px; color:#166534; line-height:1.6; margin-bottom:14px;">
-          اختر أي منتج أو حليب أطفال معتمد، وحدد <b>سعر البيع لديك والكمية المتوفرة</b> ليتم إضافته فورياً لمخزن صيدليتك بنقرة واحدة!
+          تصفح الأصناف حسب الفئة الرئيسية أو الماركة المحددة، وحدد <b>سعر البيع لديك والكمية</b> لإضافتها فورياً لمخزن صيدليتك:
         </p>
 
-        <!-- Search & Filters -->
+        <!-- Smart Main Category Toggle (Cosmetic vs Baby Milk) -->
+        <div style="display:flex; gap:8px; margin-bottom:12px;">
+          <button type="button" id="btnCatFilterAll" onclick="selectTenantMainCategory('all')" class="consult-toggle-btn active" style="flex:1; font-weight:900; border-radius:10px; padding:10px;">
+            🌟 جميع الأصناف
+          </button>
+          <button type="button" id="btnCatFilterCosmetic" onclick="selectTenantMainCategory('cosmetics')" class="consult-toggle-btn" style="flex:1.5; font-weight:900; border-radius:10px; padding:10px;">
+            💄 كوزمتك وعناية (Cosmetics)
+          </button>
+          <button type="button" id="btnCatFilterMilk" onclick="selectTenantMainCategory('baby_milk')" class="consult-toggle-btn" style="flex:1.5; font-weight:900; border-radius:10px; padding:10px;">
+            🍼 حليب وأغذية أطفال (Baby Milk)
+          </button>
+        </div>
+
+        <!-- Search & Dynamic Brands Dropdown Filter -->
         <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
-          <input type="text" id="tenantImportSearchInput" oninput="filterTenantMasterCatalog()" placeholder="ابحث باسم المنتج، الماركة، أو المرحلة (مثال: CeraVe أو Aptamil)..." style="flex:2; min-width:220px; padding:10px 14px; border:1.5px solid #A7F3D0; border-radius:12px; font-size:13px; outline:none; background:#fff;">
+          <input type="text" id="tenantImportSearchInput" oninput="filterTenantMasterCatalog()" placeholder="ابحث باسم المنتج أو الباركود..." style="flex:2; min-width:200px; padding:10px 14px; border:1.5px solid #A7F3D0; border-radius:12px; font-size:13px; outline:none; background:#fff;">
           
-          <select id="tenantImportCatFilter" onchange="filterTenantMasterCatalog()" style="flex:1; min-width:160px; padding:10px 12px; border:1.5px solid #A7F3D0; border-radius:12px; font-size:13px; font-weight:700; background:#fff;">
-            <option value="all">جميع التصنيفات</option>
-            <option value="baby">حليب وأغذية الأطفال 🍼</option>
-            <option value="face">العناية بالوجه 🌸</option>
-            <option value="serum">السيرومات العلاجية ✨</option>
-            <option value="moisturizer">المرطبات 💧</option>
-            <option value="sunscreen">واقيات الشمس ☀️</option>
-            <option value="hair">العناية بالشعر 💇‍♀️</option>
-            <option value="body">العناية بالجسم 🛁</option>
+          <!-- Dynamic Brands Extracted from Database -->
+          <select id="tenantImportBrandFilter" onchange="filterTenantMasterCatalog()" style="flex:1.2; min-width:160px; padding:10px 12px; border:1.5px solid #A7F3D0; border-radius:12px; font-size:13px; font-weight:800; background:#fff; color:#047857;">
+            <option value="all">🏢 جميع الشركات والماركات</option>
           </select>
         </div>
 
@@ -230,7 +237,7 @@
       </div>
     </div>
 
-    <!-- 4. PRODUCT MANAGEMENT SECTION -->
+    <!-- 4. PRODUCT MANAGEMENT SECTION (WITH DIRECT GALLERY IMAGE UPLOADER) -->
     <div id="adminSecProducts" style="display:none;">
       <div class="admin-fieldset">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -240,10 +247,9 @@
           </button>
         </div>
 
-        <!-- Auto-Crowdsourcing Notice -->
         <div style="background:#EFF6FF; border:1px solid #BFDBFE; color:#1E40AF; padding:8px 12px; border-radius:10px; font-size:11.5px; font-weight:700; margin-bottom:14px; display:flex; align-items:center; gap:8px;">
           <span>💡</span>
-          <span><b>ميزة المساهمة التلقائية:</b> عند إضافة صنف جديد غير مسجل في البنك المركزي، سيتم إرساله تلقائياً للسوبر أدمن لمراجعته ونشره للجميع مع وسم صيدليتكم كمساهم.</span>
+          <span><b>ميزة المساهمة التلقائية:</b> عند إضافة صنف جديد غير مسجل في البنك المركزي، سيتم إرساله تلقائياً للسوبر أدمن لمراجعته ونشره للجميع.</span>
         </div>
 
         <form id="adminProductFormV" onsubmit="handleAdminProductSave(event)">
@@ -268,7 +274,7 @@
               <input type="text" id="adminProdSize" placeholder="236 مل">
             </div>
             <div class="form-field" style="flex:1;">
-              <label>عدد القطع بالمخزن (Stock Quantity) *</label>
+              <label>عدد القطع بالمخزن *</label>
               <input type="number" id="adminProdStockQty" placeholder="10" value="10" min="0" required>
             </div>
             <div class="form-field" style="flex:1;">
@@ -291,13 +297,20 @@
               <input type="number" id="adminProdOldPrice" placeholder="30000" min="0">
             </div>
           </div>
+
+          <!-- DIRECT DEVICE IMAGE UPLOAD FIELD -->
           <div class="form-field">
-            <label>رابط الصورة المباشر (اختياري)</label>
-            <input type="url" id="adminProdImgUrl" placeholder="https://..." oninput="previewAdminProdImg(this.value)">
-            <div id="adminProdImgPreviewBox" style="margin-top:6px; display:none;">
-              <img id="adminProdImgPreviewEl" src="" style="height:70px; border-radius:8px; border:1px solid var(--line);" alt="Preview">
+            <label>صورة المنتج (اختيار مباشر من المعرض / الكاميرا)</label>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <input type="file" id="adminProdImgFileInput" accept="image/*" onchange="uploadDirectImageFile(this, 'adminProdImgUrl', 'adminProdImgPreviewEl', 'adminProdImgPreviewBox')" style="flex:1; padding:8px; border:1.5px dashed var(--line); border-radius:12px; background:#fff; font-size:12px;">
+              <input type="hidden" id="adminProdImgUrl" value="">
+            </div>
+            <div id="adminProdImgPreviewBox" style="margin-top:8px; display:none; align-items:center; gap:10px;">
+              <img id="adminProdImgPreviewEl" src="" style="height:70px; width:70px; object-fit:cover; border-radius:10px; border:1px solid var(--line);" alt="Preview">
+              <span style="font-size:11px; color:#16A34A; font-weight:800;">✅ تم تجهيز الصورة بنجاح</span>
             </div>
           </div>
+
           <div class="form-field">
             <label>الوصف المفصل والفوائد الطبية *</label>
             <textarea id="adminProdDesc" rows="3" placeholder="فوائد المنتج ومميزاته بالتفصيل..."></textarea>
@@ -326,7 +339,7 @@
       </div>
     </div>
 
-    <!-- 5. TRASH BIN & RESTORE SECTION -->
+    <!-- 5. TRASH BIN -->
     <div id="adminSecTrash" style="display:none;">
       <div class="admin-fieldset" style="border-color:#FEE2E2;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -340,7 +353,7 @@
       </div>
     </div>
 
-    <!-- 6. CATEGORY MANAGEMENT SECTION -->
+    <!-- 6. CATEGORY MANAGEMENT (WITH DIRECT GALLERY IMAGE UPLOAD) -->
     <div id="adminSecCats" style="display:none;">
       <div class="admin-fieldset">
         <legend id="adminCatFormTitle">إضافة قسم رئيسي جديد</legend>
@@ -355,9 +368,10 @@
             <input type="text" id="adminCatIdInput" placeholder="مثال: eye-care" required>
           </div>
           <div class="form-field">
-            <label>رابط صورة القسم المباشر (اختياري)</label>
-            <input type="url" id="adminCatImgUrl" placeholder="https://..." oninput="previewAdminCatImg(this.value)">
-            <div id="adminCatImgPreviewBox" style="margin-top:6px; display:none;">
+            <label>صورة القسم (من المعرض مباشرة)</label>
+            <input type="file" id="adminCatImgFileInput" accept="image/*" onchange="uploadDirectImageFile(this, 'adminCatImgUrl', 'adminCatImgPreviewEl', 'adminCatImgPreviewBox')" style="width:100%; padding:8px; border:1.5px dashed var(--line); border-radius:12px; background:#fff; font-size:12px;">
+            <input type="hidden" id="adminCatImgUrl" value="">
+            <div id="adminCatImgPreviewBox" style="margin-top:8px; display:none;">
               <img id="adminCatImgPreviewEl" src="" style="height:70px; border-radius:8px; border:1px solid var(--line); object-fit:cover;" alt="Category Preview">
             </div>
           </div>
@@ -385,10 +399,10 @@
       </div>
     </div>
 
-    <!-- 7. ADVANCED DISCOUNTS & PROMO CARDS -->
+    <!-- 7. OFFERS & PROMO CARDS -->
     <div id="adminSecOffers" style="display:none;">
       <div class="admin-fieldset">
-        <legend>🎯 تطبيق خصم ذكي مجمع وتحديث الأسعار فورياً (Bulk Discount Engine)</legend>
+        <legend>🎯 تطبيق خصم ذكي مجمع وتحديث الأسعار فورياً</legend>
         <form onsubmit="handleApplyBulkDiscount(event)">
           <div class="form-field">
             <label>نطاق تطبيق الخصم *</label>
@@ -438,8 +452,9 @@
               <input type="text" id="promoCardDiscountText" placeholder="مثال: خصم حتى 30%" required>
             </div>
             <div class="form-field" style="flex:1;">
-              <label>رابط صورة العرض (اختياري)</label>
-              <input type="url" id="promoCardImgUrl" placeholder="https://...">
+              <label>صورة العرض (من المعرض)</label>
+              <input type="file" accept="image/*" onchange="uploadDirectImageFile(this, 'promoCardImgUrl')" style="width:100%; padding:8px; border:1.5px dashed var(--line); border-radius:12px; font-size:11px;">
+              <input type="hidden" id="promoCardImgUrl" value="">
             </div>
           </div>
           <button type="submit" class="admin-btn-save" id="adminSavePromoCardBtn">💾 حفظ بطاقة العرض سحابياً</button>
@@ -453,7 +468,7 @@
       </div>
     </div>
 
-    <!-- 8. PRODUCT BUNDLES / SAVINGS PACKS -->
+    <!-- 8. BUNDLES -->
     <div id="adminSecBundles" style="display:none;">
       <div class="admin-fieldset">
         <legend id="adminBundleFormTitle">🎁 إضافة حزمة / بكج توفير جديد</legend>
@@ -483,8 +498,9 @@
               <input type="text" id="bundleSavingsInput" placeholder="وفر 16,000 د.ع 💸" value="وفر 15,000 د.ع 💸">
             </div>
             <div class="form-field" style="flex:1;">
-              <label>رابط صورة البكج (اختياري)</label>
-              <input type="url" id="bundleImgInput" placeholder="https://...">
+              <label>صورة البكج (من المعرض)</label>
+              <input type="file" accept="image/*" onchange="uploadDirectImageFile(this, 'bundleImgInput')" style="width:100%; padding:8px; border:1.5px dashed var(--line); border-radius:12px; font-size:11px;">
+              <input type="hidden" id="bundleImgInput" value="">
             </div>
           </div>
           <div class="form-field">
@@ -502,10 +518,10 @@
       </div>
     </div>
 
-    <!-- 9. PROMO CODES / COUPONS MANAGEMENT -->
+    <!-- 9. COUPONS -->
     <div id="adminSecCoupons" style="display:none;">
       <div class="admin-fieldset">
-        <legend id="adminCouponFormTitle">🎟️ إضافة كود خصم جديد (Server & Firestore Promo Code)</legend>
+        <legend id="adminCouponFormTitle">🎟️ إضافة كود خصم جديد</legend>
         <form id="adminCouponForm" onsubmit="handleAdminCouponSave(event)">
           <input type="hidden" id="couponDocId" value="">
           <div style="display:flex; gap:10px;">
@@ -555,7 +571,7 @@
       </div>
     </div>
 
-    <!-- 10. BRAND MANAGEMENT SECTION -->
+    <!-- 10. BRANDS (WITH DIRECT LOGO UPLOAD) -->
     <div id="adminSecBrands" style="display:none;">
       <div class="admin-fieldset">
         <legend id="adminBrandFormTitle">🏢 إضافة ماركة جديدة</legend>
@@ -572,8 +588,9 @@
             </div>
           </div>
           <div class="form-field">
-            <label>رابط شعار الماركة (اختياري)</label>
-            <input type="url" id="adminBrandLogoInput" placeholder="https://..." oninput="previewBrandLogoImg(this.value)">
+            <label>شعار الماركة (اختيار مباشر من المعرض)</label>
+            <input type="file" accept="image/*" onchange="uploadDirectImageFile(this, 'adminBrandLogoInput', 'adminBrandLogoPreviewImg', 'adminBrandLogoPreviewWrap')" style="width:100%; padding:8px; border:1.5px dashed var(--line); border-radius:12px; background:#fff; font-size:12px;">
+            <input type="hidden" id="adminBrandLogoInput" value="">
             <div id="adminBrandLogoPreviewWrap" style="margin-top:8px; display:none;">
               <img id="adminBrandLogoPreviewImg" src="" style="height:48px; border-radius:8px; border:1px solid var(--line); background:#fff; padding:3px;" alt="Logo Preview">
             </div>
@@ -589,7 +606,7 @@
       </div>
     </div>
 
-    <!-- 11. NOTIFICATIONS BROADCAST -->
+    <!-- 11. NOTIFICATIONS -->
     <div id="adminSecNotifs" style="display:none;">
       <div class="admin-fieldset">
         <legend>📢 إرسال إشعار وتنبيه عام لجميع مستخدمي الموقع</legend>
@@ -661,7 +678,7 @@
       </div>
     </div>
 
-    <!-- 13. STAFF & PERMISSIONS (RBAC) -->
+    <!-- 13. STAFF MANAGEMENT -->
     <div id="adminSecStaff" style="display:none;">
       <div class="admin-fieldset">
         <legend>👥 إضافة موظف جديد للصيدلية ومنح الصلاحيات</legend>
@@ -695,7 +712,7 @@
       </div>
     </div>
 
-    <!-- 14. SUBSCRIPTION & SUPER ADMIN PAYMENT PORTAL -->
+    <!-- 14. SUBSCRIPTION -->
     <div id="adminSecSubscription" style="display:none;">
       <div class="admin-fieldset">
         <legend>💳 تفاصيل اشتراك الصيدلية وبيانات الدفع الإلكتروني</legend>
@@ -703,7 +720,7 @@
       </div>
     </div>
 
-    <!-- 15. THEME & BRANDING CUSTOMIZATION -->
+    <!-- 15. DESIGN & BRANDING (WITH DIRECT BANNER UPLOAD) -->
     <div id="adminSecDesign" style="display:none;">
       <form onsubmit="handleSaveCustomization(event)">
         <fieldset class="admin-fieldset">
@@ -800,8 +817,12 @@
             <input type="text" id="adminHeroDescTitle" placeholder="منتجات أصلية لعناية صحية وجمال طبيعي">
           </div>
           <div class="form-field">
-            <label>رابط صورة العارضة (Direct Image URL)</label>
-            <input type="url" id="adminBannerImgInput" placeholder="https://...">
+            <label>صورة العارضة الرئيسية (من المعرض)</label>
+            <input type="file" accept="image/*" onchange="uploadDirectImageFile(this, 'adminBannerImgInput', 'adminBannerImgPreviewEl', 'adminBannerImgPreviewBox')" style="width:100%; padding:8px; border:1.5px dashed var(--line); border-radius:12px; background:#fff; font-size:12px;">
+            <input type="hidden" id="adminBannerImgInput" value="">
+            <div id="adminBannerImgPreviewBox" style="margin-top:8px; display:none;">
+              <img id="adminBannerImgPreviewEl" src="" style="height:70px; border-radius:8px; border:1px solid var(--line);" alt="Banner Preview">
+            </div>
           </div>
         </fieldset>
         <button type="submit" class="admin-btn-save" id="adminSaveDesignBtn">✨ حفظ وتطبيق جميع التعديلات سحابياً</button>
@@ -810,14 +831,14 @@
 
   </div>
 
-  <!-- QUICK CLINICAL PRODUCT EDIT MODAL -->
+  <!-- FULL CLINICAL PRODUCT EDIT MODAL (مفعل بالكامل مع رفع الصور والمكونات) -->
   <div class="admin-quick-modal-overlay" id="adminQuickEditModal">
-    <div class="admin-quick-card" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+    <div class="admin-quick-card" style="max-width: 620px; max-height: 90vh; overflow-y: auto;">
       <div class="consult-header">
-        <h3 style="color:#111827;">✏️ تعديل تفاصيل الدواء والمنتج بالكامل</h3>
+        <h3 style="color:#111827; font-weight:900;">✏️ تعديل تفاصيل الصنف بالكامل</h3>
         <button class="icon-btn" onclick="closeAdminQuickEditModal()">✕</button>
       </div>
-      <div style="padding:16px; text-align:right;">
+      <div style="padding:18px; text-align:right;">
         <input type="hidden" id="quickEditProdId">
         
         <div class="form-field">
@@ -838,7 +859,7 @@
 
         <div style="display:flex; gap:10px;">
           <div class="form-field" style="flex:1;">
-            <label>السعر الحالي (د.ع) *</label>
+            <label>سعر البيع الحالي (د.ع) *</label>
             <input type="number" id="quickEditProdPrice" required>
           </div>
           <div class="form-field" style="flex:1;">
@@ -853,7 +874,7 @@
             <input type="text" id="quickEditProdSize" placeholder="236 مل">
           </div>
           <div class="form-field" style="flex:1;">
-            <label>عدد القطع بالمخزن (Stock Quantity) *</label>
+            <label>الكمية بالمخزن *</label>
             <input type="number" id="quickEditProdStockQty" placeholder="10" min="0" required>
           </div>
           <div class="form-field" style="flex:1;">
@@ -867,9 +888,15 @@
           </div>
         </div>
 
+        <!-- DIRECT GALLERY IMAGE UPLOAD IN EDIT MODAL -->
         <div class="form-field">
-          <label>رابط الصورة المباشر</label>
-          <input type="url" id="quickEditProdImg">
+          <label>تغيير صورة الصنف (من المعرض مباشرة)</label>
+          <input type="file" accept="image/*" onchange="uploadDirectImageFile(this, 'quickEditProdImg', 'quickEditProdImgPreviewEl', 'quickEditProdImgPreviewBox')" style="width:100%; padding:8px; border:1.5px dashed var(--line); border-radius:12px; background:#fff; font-size:12px;">
+          <input type="hidden" id="quickEditProdImg" value="">
+          <div id="quickEditProdImgPreviewBox" style="margin-top:8px; display:none; align-items:center; gap:10px;">
+            <img id="quickEditProdImgPreviewEl" src="" style="height:70px; width:70px; object-fit:cover; border-radius:10px; border:1px solid var(--line);" alt="Edit Preview">
+            <span style="font-size:11px; color:#16A34A; font-weight:800;">✅ تم تحديث الصورة</span>
+          </div>
         </div>
 
         <div class="form-field">
@@ -962,14 +989,26 @@
   <!-- Main JavaScript File -->
   <script src="script.js"></script>
 
-  <!-- Tenant Master Catalog Search & Import Script Helpers -->
+  <!-- Tenant Master Catalog Helpers & Direct Image Upload Script -->
   <script>
     window.tenantCachedMasterCatalog = [];
+    window.tenantActiveMainCategory = 'all';
+
+    function selectTenantMainCategory(catType) {
+      window.tenantActiveMainCategory = catType;
+      
+      document.getElementById('btnCatFilterAll').classList.toggle('active', catType === 'all');
+      document.getElementById('btnCatFilterCosmetic').classList.toggle('active', catType === 'cosmetics');
+      document.getElementById('btnCatFilterMilk').classList.toggle('active', catType === 'baby_milk');
+      
+      filterTenantMasterCatalog();
+    }
 
     async function fetchTenantMasterCatalog() {
       if (!isFirebaseConfigured || !db) return;
       const grid = document.getElementById('tenantMasterCatalogGrid');
       const badge = document.getElementById('masterCatalogCountBadge');
+      const brandSelect = document.getElementById('tenantImportBrandFilter');
       if (!grid) return;
 
       grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:30px; color:#047857; font-weight:800;">جاري تحميل بنك المنتجات المركزي...</div>`;
@@ -977,12 +1016,23 @@
       try {
         const snap = await db.collection('system').doc('master_catalog').collection('products').get();
         window.tenantCachedMasterCatalog = [];
+        const brandsSet = new Set();
 
         snap.forEach(doc => {
-          window.tenantCachedMasterCatalog.push({ id: doc.id, ...doc.data() });
+          const item = { id: doc.id, ...doc.data() };
+          window.tenantCachedMasterCatalog.push(item);
+          if (item.brand) brandsSet.add(item.brand.trim());
         });
 
         if (badge) badge.textContent = `${window.tenantCachedMasterCatalog.length} صنف متاح`;
+
+        // استخراج جميع الشركات والماركات في القائمة المنسدلة تلقائياً
+        if (brandSelect) {
+          const sortedBrands = Array.from(brandsSet).sort();
+          brandSelect.innerHTML = `<option value="all">🏢 جميع الشركات والماركات (${sortedBrands.length})</option>` + 
+            sortedBrands.map(b => `<option value="${escapeHtml(b)}">${escapeHtml(b)}</option>`).join('');
+        }
+
         filterTenantMasterCatalog();
       } catch (e) {
         grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:30px; color:#DC2626; font-weight:800;">خطأ بالتحميل: ${e.message}</div>`;
@@ -991,25 +1041,38 @@
 
     function filterTenantMasterCatalog() {
       const q = (document.getElementById('tenantImportSearchInput').value || '').trim().toLowerCase();
-      const cat = document.getElementById('tenantImportCatFilter').value;
+      const selectedBrand = document.getElementById('tenantImportBrandFilter') ? document.getElementById('tenantImportBrandFilter').value : 'all';
       const grid = document.getElementById('tenantMasterCatalogGrid');
       if (!grid) return;
 
       const filtered = window.tenantCachedMasterCatalog.filter(item => {
-        const matchesCategory = (cat === 'all') || (item.category === cat) || (cat === 'baby' && item.subCategory === 'infant_milk');
+        // فحص الفئة الرئيسية (Cosmetics vs Baby Milk)
+        const isMilk = item.category === 'baby' || item.subCategory === 'infant_milk';
+        let matchesMainCategory = true;
+        if (window.tenantActiveMainCategory === 'cosmetics') {
+          matchesMainCategory = !isMilk;
+        } else if (window.tenantActiveMainCategory === 'baby_milk') {
+          matchesMainCategory = isMilk;
+        }
+
+        // فحص الشركة / الماركة
+        const matchesBrand = (selectedBrand === 'all') || (item.brand && item.brand.trim() === selectedBrand);
+
+        // فحص البحث النصي
         const nameStr = (item.name || '').toLowerCase();
         const brandStr = (item.brand || '').toLowerCase();
         const stageStr = (item.milkStage || '').toLowerCase();
-        const matchesSearch = !q || nameStr.includes(q) || brandStr.includes(q) || stageStr.includes(q);
-        return matchesCategory && matchesSearch;
+        const barcodeStr = (item.barcode || '').toLowerCase();
+        const matchesSearch = !q || nameStr.includes(q) || brandStr.includes(q) || stageStr.includes(q) || barcodeStr.includes(q);
+
+        return matchesMainCategory && matchesBrand && matchesSearch;
       });
 
       if (filtered.length === 0) {
-        grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:30px; color:#6B7280; font-weight:800;">لا توجد أصناف مطابقة للبحث أو الفلتر المحدد.</div>`;
+        grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:30px; color:#6B7280; font-weight:800;">لا توجد أصناف مطابقة للفئة أو الشركة المحددة.</div>`;
         return;
       }
 
-      // مطابقة الأصناف مع مخزن الصيدلية الحالي لمعرفة المستورد مسبقاً
       const existingIds = new Set((products || []).map(p => String(p.masterCatalogId || p.id)));
 
       grid.innerHTML = filtered.map(item => {
@@ -1095,7 +1158,6 @@
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
-        // الحفظ داخل مجموعة منتجات الصيدلية الحالية
         await dbPaths.productsCol().doc(String(masterId)).set(payload, { merge: true });
 
         showToast(`🎉 تم استيراد "${masterItem.name}" بنجاح إلى متجرك!`);
@@ -1105,41 +1167,67 @@
       }
     }
 
-    // ربط التبويب الجديد مع دالة التنقل
-    const origSwitchAdminSection = window.switchAdminSection;
-    window.switchAdminSection = function(sec) {
-      const btnImport = document.getElementById('btnTabVImport');
-      const secImport = document.getElementById('adminSecImport');
+    // رفع الصور المباشر إلى Cloudflare R2
+    async function uploadDirectImageFile(fileInput, targetHiddenUrlId, previewImgId, previewBoxId) {
+      const file = fileInput.files[0];
+      if (!file) return;
 
-      if (btnImport && secImport) {
-        const isTarget = (sec.toLowerCase() === 'import');
-        btnImport.classList.toggle('active', isTarget);
-        secImport.style.display = isTarget ? 'block' : 'none';
-        if (isTarget) fetchTenantMasterCatalog();
+      showToast('جاري رفع ومعالجة الصورة سحابياً... ⏳');
+
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const res = await fetch(`${WORKER_API_BASE}/api/upload`, {
+          method: 'POST',
+          headers: {
+            'X-Pharmacy-Id': currentPharmacyId
+          },
+          body: formData
+        });
+
+        const data = await res.json();
+        if (data && data.success && data.imageUrl) {
+          const hiddenInp = document.getElementById(targetHiddenUrlId);
+          if (hiddenInp) hiddenInp.value = data.imageUrl;
+
+          if (previewImgId) {
+            const previewEl = document.getElementById(previewImgId);
+            if (previewEl) previewEl.src = data.imageUrl;
+          }
+          if (previewBoxId) {
+            const previewBox = document.getElementById(previewBoxId);
+            if (previewBox) previewBox.style.display = 'flex';
+          }
+
+          showToast('تم رفع وحفظ الصورة بنجاح! 📸');
+        } else {
+          // خطة بديلة (Base64 محلي إذا كان الوركر غير متصل)
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const base64 = e.target.result;
+            const hiddenInp = document.getElementById(targetHiddenUrlId);
+            if (hiddenInp) hiddenInp.value = base64;
+            if (previewImgId) document.getElementById(previewImgId).src = base64;
+            if (previewBoxId) document.getElementById(previewBoxId).style.display = 'flex';
+            showToast('تم حفظ الصورة محلياً بنجاح ✓');
+          };
+          reader.readAsDataURL(file);
+        }
+      } catch (err) {
+        console.warn("Upload fallback to local preview:", err);
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const base64 = e.target.result;
+          const hiddenInp = document.getElementById(targetHiddenUrlId);
+          if (hiddenInp) hiddenInp.value = base64;
+          if (previewImgId) document.getElementById(previewImgId).src = base64;
+          if (previewBoxId) document.getElementById(previewBoxId).style.display = 'flex';
+          showToast('تم حفظ الصورة بنجاح ✓');
+        };
+        reader.readAsDataURL(file);
       }
-
-      const allSections = ['Stats', 'Orders', 'Import', 'Products', 'Cats', 'Offers', 'Bundles', 'Coupons', 'Brands', 'Notifs', 'Audit', 'Staff', 'Design', 'Subscription', 'Trash'];
-      allSections.forEach(k => {
-        const btn = document.getElementById('btnTabV' + k);
-        const el = document.getElementById('adminSec' + k);
-        const isTarget = (k.toLowerCase() === sec.toLowerCase());
-        if (btn) btn.classList.toggle('active', isTarget);
-        if (el) el.style.display = isTarget ? 'block' : 'none';
-      });
-
-      if (sec === 'stats') fetchRealAnalytics();
-      if (sec === 'orders') fetchAdminOrdersList();
-      if (sec === 'products') populateCategoryDropdowns();
-      if (sec === 'coupons') fetchAdminCoupons();
-      if (sec === 'bundles') { populateBundleProductsChecklist(); renderAdminBundlesList(); }
-      if (sec === 'audit') fetchAuditLogs();
-      if (sec === 'offers') { updateDiscountTargetOptions(); renderPromoCardsListAdmin(); }
-      if (sec === 'cats') renderAdminCategoriesList();
-      if (sec === 'brands') renderAdminBrandsList();
-      if (sec === 'staff') fetchStaffList();
-      if (sec === 'subscription') fetchSuperAdminPaymentInfo();
-      if (sec === 'trash') fetchArchivedProducts();
-    };
+    }
 
     async function enforceSubscriptionAndRoleGates() {
       if (!isFirebaseConfigured || !db) return;
