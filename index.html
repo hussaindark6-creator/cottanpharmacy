@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Embedded Critical Styles (حماية من الوميض FOUC وعزل تام للنوافذ المنبثقة) -->
+  <!-- Embedded Critical Styles -->
   <style>
     :root {
       --ink: #1F2937; --text-soft: #6B7280; --paper: #FFFFFF; --surface: #FFF0F3;
@@ -34,8 +34,9 @@
     .view { display: none !important; }
     .view.active { display: block !important; }
 
-    /* إخفاء تام للنوافذ المنبثقة وشاشة القفل لمنع تسريب النصوص في أسفل الصفحة */
-    .notif-modal-overlay, .success-modal-overlay, .iab-modal, .consult-modal-overlay, .welcome-modal-overlay, .receipt-modal-overlay, .storefront-freeze-overlay {
+    /* حماية من الوميض وإخفاء تام للنوافذ المنبثقة حتى استدعائها */
+    .notif-modal-overlay, .success-modal-overlay, .iab-modal, .consult-modal-overlay, 
+    .welcome-modal-overlay, .receipt-modal-overlay, .storefront-freeze-overlay, .admin-quick-modal-overlay {
       display: none !important;
       position: fixed;
       inset: 0;
@@ -46,7 +47,9 @@
       justify-content: center;
       padding: 20px;
     }
-    .notif-modal-overlay.open, .success-modal-overlay.open, .iab-modal.open, .consult-modal-overlay.open, .welcome-modal-overlay.open, .receipt-modal-overlay.open, .storefront-freeze-overlay.open {
+    .notif-modal-overlay.open, .success-modal-overlay.open, .iab-modal.open, 
+    .consult-modal-overlay.open, .welcome-modal-overlay.open, .receipt-modal-overlay.open, 
+    .storefront-freeze-overlay.open, .admin-quick-modal-overlay.open {
       display: flex !important;
     }
 
@@ -85,7 +88,7 @@
 </head>
 <body>
 
-  <!-- STOREFRONT FREEZE OVERLAY (شاشة القفل التلقائي في حال تجميد أو انتهاء اشتراك الصيدلية) -->
+  <!-- STOREFRONT FREEZE OVERLAY (قفل المتجر عند انتهاء الاشتراك أو الحظر) -->
   <div class="storefront-freeze-overlay" id="storefrontFreezeModal">
     <div class="welcome-card" style="border: 1.5px solid #EF4444; max-width: 420px; background: #fff; text-align: center;">
       <div style="font-size: 52px; margin-bottom: 12px;">🔒</div>
@@ -97,7 +100,7 @@
     </div>
   </div>
 
-  <!-- STICKY ADMIN BAR (يظهر للمشرفين والموظفين المصرح لهم فقط) -->
+  <!-- STICKY ADMIN BAR (يظهر لمشرف الصيدلية فقط) -->
   <div id="adminTopBar" class="admin-sticky-bar" style="display:none;">
     <div style="display:flex; align-items:center; gap:8px;">
       <span>⚙️ لوحة الإدارة والصلاحيات</span>
@@ -160,7 +163,7 @@
       </button>
     </div>
 
-    <!-- Social Channels (تتحدث ديناميكياً) -->
+    <!-- Social Channels -->
     <div class="drawer-social-section">
       <div class="drawer-social-title">تواصل معنا مباشرة 🌸</div>
       <div class="drawer-social-grid">
@@ -306,7 +309,7 @@
     </div>
   </div>
 
-  <!-- ============ 3. MODERN FULL-COVER CATEGORIES GRID VIEW ============ -->
+  <!-- ============ 3. MODERN CATEGORIES GRID VIEW ============ -->
   <div class="view" id="view-categories">
     <div class="wrap">
       <div class="section-head" style="margin-top:16px;">
@@ -367,7 +370,7 @@
     </div>
   </div>
 
-  <!-- ============ 8. PRODUCT DETAIL VIEW (WITH CLINICAL DETAILS & REAL RATINGS) ============ -->
+  <!-- ============ 8. PRODUCT DETAIL VIEW ============ -->
   <div class="view" id="view-product">
     <div class="wrap">
       <div style="display:flex; align-items:center; justify-content:space-between; padding-top:6px;">
@@ -401,7 +404,7 @@
       <div class="pd-tab-content" id="pdTabIng"></div>
       <div class="pd-tab-content" id="pdTabUse"></div>
       
-      <!-- Star-Only Quick Rating Tab -->
+      <!-- Star Quick Rating Tab -->
       <div class="pd-tab-content" id="pdTabReviews">
         <div class="star-rating-box">
           <h4>تقييم المنتج الفعلي ⭐</h4>
@@ -458,7 +461,7 @@
     </div>
   </div>
 
-  <!-- ============ 10. CHECKOUT VIEW (GUEST CHECKOUT READY) ============ -->
+  <!-- ============ 10. CHECKOUT VIEW ============ -->
   <div class="view" id="view-checkout">
     <div class="wrap">
       <div class="pd-back" onclick="showView('cart')">
@@ -630,7 +633,106 @@
     </div>
   </div>
 
-  <!-- Admin Quick Floating Action Button (+ إضافة منتج فوري للمشرف) -->
+  <!-- 6. CLINICAL PRODUCT EDIT MODAL (مدمج في المتجر لتمكين زر التعديل المباشر للأدمن) -->
+  <div class="admin-quick-modal-overlay" id="adminQuickEditModal">
+    <div class="admin-quick-card" style="max-width: 620px; max-height: 90vh; overflow-y: auto;">
+      <div class="consult-header">
+        <h3 style="color:#111827; font-weight:900;">✏️ تعديل تفاصيل الصنف بالكامل</h3>
+        <button class="icon-btn" onclick="closeAdminQuickEditModal()">✕</button>
+      </div>
+      <div style="padding:18px; text-align:right;">
+        <input type="hidden" id="quickEditProdId">
+        
+        <div class="form-field">
+          <label>اسم المنتج الكامل *</label>
+          <input type="text" id="quickEditProdName" required>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+          <div class="form-field" style="flex:1;">
+            <label>الماركة / الشركة *</label>
+            <input type="text" id="quickEditProdBrand" required>
+          </div>
+          <div class="form-field" style="flex:1;">
+            <label>القسم / التصنيف *</label>
+            <select id="quickEditProdCat" required></select>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+          <div class="form-field" style="flex:1;">
+            <label>سعر البيع الحالي (د.ع) *</label>
+            <input type="number" id="quickEditProdPrice" required>
+          </div>
+          <div class="form-field" style="flex:1;">
+            <label>السعر قبل الخصم (اختياري)</label>
+            <input type="number" id="quickEditProdOldPrice">
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+          <div class="form-field" style="flex:1;">
+            <label>الحجم / العبوة</label>
+            <input type="text" id="quickEditProdSize" placeholder="236 مل">
+          </div>
+          <div class="form-field" style="flex:1;">
+            <label>الكمية بالمخزن *</label>
+            <input type="number" id="quickEditProdStockQty" placeholder="10" min="0" required>
+          </div>
+          <div class="form-field" style="flex:1;">
+            <label>نوع العبوة (الأيقونة)</label>
+            <select id="quickEditProdType">
+              <option value="bottle">زجاجة (Bottle)</option>
+              <option value="jar">مرطبان (Jar)</option>
+              <option value="tube">أنبوب (Tube)</option>
+              <option value="spray">بخاخ (Spray)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- DIRECT GALLERY IMAGE UPLOAD IN EDIT MODAL -->
+        <div class="form-field">
+          <label>تغيير صورة الصنف (من المعرض مباشرة)</label>
+          <input type="file" accept="image/*" onchange="uploadDirectImageFile(this, 'quickEditProdImg', 'quickEditProdImgPreviewEl', 'quickEditProdImgPreviewBox')" style="width:100%; padding:8px; border:1.5px dashed var(--line); border-radius:12px; background:#fff; font-size:12px;">
+          <input type="hidden" id="quickEditProdImg" value="">
+          <div id="quickEditProdImgPreviewBox" style="margin-top:8px; display:none; align-items:center; gap:10px;">
+            <img id="quickEditProdImgPreviewEl" src="" style="height:70px; width:70px; object-fit:cover; border-radius:10px; border:1px solid var(--line);" alt="Edit Preview">
+            <span style="font-size:11px; color:#16A34A; font-weight:800;">✅ تم تحديث الصورة</span>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label>الوصف المفصل والفوائد الطبية</label>
+          <textarea id="quickEditProdDesc" rows="3" placeholder="تفاصيل المنتج والفوائد..."></textarea>
+        </div>
+
+        <div style="display:flex; gap:10px;">
+          <div class="form-field" style="flex:1;">
+            <label>المكونات الفعالة والتركيبة (Ingredients)</label>
+            <input type="text" id="quickEditProdIng" placeholder="Hyaluronic Acid, Ceramides...">
+          </div>
+          <div class="form-field" style="flex:1;">
+            <label>طريقة الاستخدام والإرشادات (Usage)</label>
+            <input type="text" id="quickEditProdUsage" placeholder="يوضع صباحاً ومساءً...">
+          </div>
+        </div>
+
+        <div class="admin-toggle-switch">
+          <span>متوفر في المخزون (In Stock)</span>
+          <input type="checkbox" id="quickEditProdInStock" style="width:20px; height:20px; cursor:pointer;">
+        </div>
+
+        <div class="admin-toggle-switch">
+          <span>تفعيل كعرض خاص (Special Offer)</span>
+          <input type="checkbox" id="quickEditProdIsOffer" style="width:20px; height:20px; cursor:pointer;">
+        </div>
+
+        <button class="admin-btn-save" onclick="saveAdminQuickEdit()">💾 حفظ التعديلات سحابياً</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Quick Floating Action Button -->
   <button id="adminFloatingAddBtn" class="admin-float-btn" style="display:none;" onclick="openAdminQuickAddModal()" title="إضافة منتج سريع">
     <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
   </button>
