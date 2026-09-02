@@ -69,7 +69,7 @@
           </div>
           <div>
             <h1 class="text-base font-black text-white leading-tight">Super Admin SaaS Executive Portal</h1>
-            <p class="text-xs text-slate-400">إدارة الاشتراكات، بنك الأدوية الموحد، والتقارير المحاسبية</p>
+            <p class="text-xs text-slate-400">إدارة الاشتراكات، بنك المنتجات الموحد، والتقارير المحاسبية</p>
           </div>
         </div>
 
@@ -105,6 +105,9 @@
         </button>
         <button id="tabBtnCrowdsource" onclick="switchSuperTab('crowdsource')" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2">
           📥 مراجعة مساهمات الصيدليات (<span id="crowdsourceBadge" class="text-amber-400 font-bold">0</span>)
+        </button>
+        <button id="tabBtnInfra" onclick="switchSuperTab('infra')" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2 bg-blue-950/40 border border-blue-800/50">
+          🚀 الاشتراكات بخدمات الموقع والترقية
         </button>
         <button id="tabBtnPaymentInfo" onclick="switchSuperTab('paymentInfo')" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2">
           💳 بيانات الدفع الإلكتروني
@@ -355,7 +358,7 @@
         </div>
       </section>
 
-      <!-- ================= TAB 4: MASTER CATALOG & BULK IMPORTER ================= -->
+      <!-- ================= TAB 4: MASTER CATALOG & BULK ACTIONS ================= -->
       <section id="secSuperCatalog" class="tab-content hidden space-y-8">
         
         <!-- Header Actions & Bulk Uploader -->
@@ -366,11 +369,16 @@
                 <span>💊</span> بنك المنتجات وحليب الأطفال المركزي (Master Catalog)
               </h2>
               <p class="text-xs text-slate-400 mt-1">
-                قاعدة البيانات الموحدة للأصناف المعتمدة مع إمكانية رفع وتحديث الكتالوج دفعة واحدة من ملفات JSON/CSV.
+                قاعدة البيانات الموحدة للأصناف المعتمدة مع إمكانية التحديد والحذف الجماعي الفوري ورفع ملفات JSON.
               </p>
             </div>
 
             <div class="flex flex-wrap items-center gap-3">
+              <!-- Bulk Delete Action Button (يظهر عند التحديد) -->
+              <button id="btnBulkDeleteMaster" onclick="handleBulkDeleteMasterProducts()" class="hidden bg-red-500/15 hover:bg-red-500/25 text-red-400 border border-red-500/40 px-4 py-2.5 rounded-xl font-black text-xs transition flex items-center gap-2 shadow-lg shadow-red-500/10">
+                <span>🗑️ حذف الأصناف المحددة (<span id="selectedMasterCount">0</span>)</span>
+              </button>
+
               <!-- Upload JSON Button -->
               <label class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl transition cursor-pointer flex items-center gap-2 shadow-lg shadow-emerald-500/20">
                 <span>📥 رفع ملف بيانات (JSON Bulk Upload)</span>
@@ -417,11 +425,14 @@
             </div>
           </div>
 
-          <!-- Master Catalog Table -->
+          <!-- Master Catalog Table with Select-All Checkbox -->
           <div class="overflow-x-auto -mx-4 sm:mx-0">
             <table class="w-full text-right text-sm min-w-[750px]">
               <thead class="bg-slate-950/60 text-slate-400 font-bold border-b border-slate-800 text-xs">
                 <tr>
+                  <th class="py-3.5 px-4 w-10 text-center">
+                    <input type="checkbox" id="selectAllMasterCheckbox" onchange="toggleSelectAllMaster(this)" class="w-4 h-4 rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-0 cursor-pointer">
+                  </th>
                   <th class="py-3.5 px-4">اسم الصنف / المنتج</th>
                   <th class="py-3.5 px-4">الماركة</th>
                   <th class="py-3.5 px-4">القسم / المرحلة</th>
@@ -431,7 +442,7 @@
                 </tr>
               </thead>
               <tbody id="masterCatalogTableBody" class="divide-y divide-slate-800/60">
-                <tr><td colspan="6" class="text-center py-8 text-slate-500">جاري تحميل كتالوج الأصناف المركزي...</td></tr>
+                <tr><td colspan="7" class="text-center py-8 text-slate-500">جاري تحميل كتالوج الأصناف المركزي...</td></tr>
               </tbody>
             </table>
           </div>
@@ -486,7 +497,139 @@
         </div>
       </section>
 
-      <!-- ================= TAB 6: SUPER ADMIN PAYMENT INFO ================= -->
+      <!-- ================= TAB 6: INFRASTRUCTURE & SCALING SUBSCRIPTIONS (NEW) ================= -->
+      <section id="secSuperInfra" class="tab-content hidden space-y-8">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl">
+          <div class="flex items-center gap-3 pb-6 border-b border-slate-800 mb-6">
+            <div class="w-12 h-12 bg-blue-500/10 border border-blue-500/30 rounded-2xl flex items-center justify-center text-2xl">
+              🚀
+            </div>
+            <div>
+              <h2 class="text-xl font-black text-white">مركز إدارة وتوسيع الاشتراكات السحابية (Infrastructure & Scaling Hub)</h2>
+              <p class="text-xs text-slate-400 mt-1">
+                عند وصول منصتك إلى عدد كبير من الصيدليات وتجاوز الحدود المجانية، يمكنك ترقية الخطط الرسمية مباشرة من هنا للحصول على سعة غير محدودة وأداء فائق.
+              </p>
+            </div>
+          </div>
+
+          <!-- Services Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            
+            <!-- Service 1: Firebase Firestore (Blaze Plan) -->
+            <div class="bg-slate-950 border border-slate-800 hover:border-amber-500/40 rounded-2xl p-5 flex flex-col justify-between transition group">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-2xl">🔥</span>
+                  <span class="bg-amber-500/10 text-amber-400 border border-amber-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full">قاعدة البيانات السحابية</span>
+                </div>
+                <h3 class="text-sm font-black text-white mb-1">Google Firebase (Blaze Plan)</h3>
+                <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+                  تخزين ومزامنة بيانات الصيدليات والطلبات وحسابات المستخدمين لحظياً.
+                </p>
+                <div class="bg-slate-900/80 rounded-xl p-3 text-xs space-y-1.5 mb-4 border border-slate-800/80">
+                  <div class="text-slate-300"><b>الحد المجاني (Spark):</b> 50k قراءة / 20k كتابة يومياً.</div>
+                  <div class="text-amber-400"><b>الترقية لـ (Blaze):</b> قراءات وكتابات لا نهائية وتوسيع فوري.</div>
+                  <div class="text-emerald-400 font-mono"><b>السعر:</b> الدفع حسب الاستهلاك (Pay as you go) يبدأ من $0.</div>
+                </div>
+              </div>
+              <a href="https://console.firebase.google.com/project/cottanpharmacy/usage" target="_blank" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs py-2.5 rounded-xl text-center transition shadow-lg shadow-amber-500/10 flex items-center justify-center gap-1.5">
+                <span>ترقية خطة Blaze في Firebase ↗️</span>
+              </a>
+            </div>
+
+            <!-- Service 2: Cloudflare Workers Paid -->
+            <div class="bg-slate-950 border border-slate-800 hover:border-orange-500/40 rounded-2xl p-5 flex flex-col justify-between transition group">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-2xl">⚡</span>
+                  <span class="bg-orange-500/10 text-orange-400 border border-orange-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full">محرك الـ API والـ Edge</span>
+                </div>
+                <h3 class="text-sm font-black text-white mb-1">Cloudflare Workers Paid</h3>
+                <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+                  تشغيل الـ API وفصل النطاقات الفرعية (Subdomains) وإرسال إشعارات التيليجرام.
+                </p>
+                <div class="bg-slate-900/80 rounded-xl p-3 text-xs space-y-1.5 mb-4 border border-slate-800/80">
+                  <div class="text-slate-300"><b>الحد المجاني:</b> 100,000 طلب يومياً (100k requests/day).</div>
+                  <div class="text-orange-400"><b>الترقية المدفوعة:</b> 10 ملايين طلب شهرياً مع وقت معالجة مفتوح 30s.</div>
+                  <div class="text-emerald-400 font-mono"><b>السعر:</b> 5$ / شهرياً (يشمل 10M طلب).</div>
+                </div>
+              </div>
+              <a href="https://dash.cloudflare.com/" target="_blank" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-black text-xs py-2.5 rounded-xl text-center transition shadow-lg shadow-orange-500/10 flex items-center justify-center gap-1.5">
+                <span>ترقية Workers في Cloudflare ↗️</span>
+              </a>
+            </div>
+
+            <!-- Service 3: Cloudflare R2 Storage (صور المنتجات) -->
+            <div class="bg-slate-950 border border-slate-800 hover:border-blue-500/40 rounded-2xl p-5 flex flex-col justify-between transition group">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-2xl">📦</span>
+                  <span class="bg-blue-500/10 text-blue-400 border border-blue-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full">تخزين صور المنتجات</span>
+                </div>
+                <h3 class="text-sm font-black text-white mb-1">Cloudflare R2 Object Storage</h3>
+                <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+                  تخزين سحابي عالي السرعة لصور الكتالوج دون أي تكاليف نقل بيانات (Zero Egress Fees).
+                </p>
+                <div class="bg-slate-900/80 rounded-xl p-3 text-xs space-y-1.5 mb-4 border border-slate-800/80">
+                  <div class="text-slate-300"><b>الحد المجاني:</b> 10 جيجابايت تخزين مجاني + باندويث لا نهائي.</div>
+                  <div class="text-blue-400"><b>الترقية:</b> سعة غير محدودة لملايين صور المنتجات.</div>
+                  <div class="text-emerald-400 font-mono"><b>السعر:</b> $0.015 لكل جيجابايت إضافي شهرياً.</div>
+                </div>
+              </div>
+              <a href="https://dash.cloudflare.com/?to=/:account/r2" target="_blank" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black text-xs py-2.5 rounded-xl text-center transition shadow-lg shadow-blue-500/10 flex items-center justify-center gap-1.5">
+                <span>إدارة وتوسيع R2 Storage ↗️</span>
+              </a>
+            </div>
+
+            <!-- Service 4: Cloudflare Pro Plan (حماية الدومين وتسريع الصور) -->
+            <div class="bg-slate-950 border border-slate-800 hover:border-purple-500/40 rounded-2xl p-5 flex flex-col justify-between transition group">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-2xl">🛡️</span>
+                  <span class="bg-purple-500/10 text-purple-400 border border-purple-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full">حماية النطاق وتسريع الويب</span>
+                </div>
+                <h3 class="text-sm font-black text-white mb-1">Cloudflare Pro Plan (Domain & WAF)</h3>
+                <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+                  ضغط الصور التلقائي (Polish/WebP)، جدار حماية WAF لمنع هجمات الـ DDoS، وتسريع كاش الشرق الأوسط.
+                </p>
+                <div class="bg-slate-900/80 rounded-xl p-3 text-xs space-y-1.5 mb-4 border border-slate-800/80">
+                  <div class="text-slate-300"><b>الخطة المجانية:</b> DNS وSSL وتوزيع كاش قياسي.</div>
+                  <div class="text-purple-400"><b>خطة Pro:</b> تحويل الصور لـ WebP وتصغير حجم المتجر بنسبة 60%.</div>
+                  <div class="text-emerald-400 font-mono"><b>السعر:</b> 20$ - 25$ / شهرياً لكل نطاق رسمي.</div>
+                </div>
+              </div>
+              <a href="https://dash.cloudflare.com/" target="_blank" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-black text-xs py-2.5 rounded-xl text-center transition shadow-lg shadow-purple-500/10 flex items-center justify-center gap-1.5">
+                <span>ترقية الدومين لخطة Pro ↗️</span>
+              </a>
+            </div>
+
+            <!-- Service 5: Telegram Bot API Management -->
+            <div class="bg-slate-950 border border-slate-800 hover:border-sky-500/40 rounded-2xl p-5 flex flex-col justify-between transition group">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-2xl">✈️</span>
+                  <span class="bg-sky-500/10 text-sky-400 border border-sky-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full">خوادم إشعارات التيليجرام</span>
+                </div>
+                <h3 class="text-sm font-black text-white mb-1">Telegram Bot API & Webhooks</h3>
+                <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+                  إرسال فواتير الطلبات اللحظية للصيادلة وتوليد تقارير السوبر أدمن المالية.
+                </p>
+                <div class="bg-slate-900/80 rounded-xl p-3 text-xs space-y-1.5 mb-4 border border-slate-800/80">
+                  <div class="text-slate-300"><b>الحد المجاني:</b> 30 رسالة / ثانية لكل بوت مجاناً 100%.</div>
+                  <div class="text-sky-400"><b>التوسيع:</b> ربط بوتات فرعية منفصلة لكل صيدلية (Multi-Bot).</div>
+                  <div class="text-emerald-400 font-mono"><b>السعر:</b> مجاني 100% (Free Open API).</div>
+                </div>
+              </div>
+              <a href="https://t.me/BotFather" target="_blank" class="w-full bg-sky-500 hover:bg-sky-600 text-slate-950 font-black text-xs py-2.5 rounded-xl text-center transition shadow-lg shadow-sky-500/10 flex items-center justify-center gap-1.5">
+                <span>فتح BotFather لإدارة البوتات ↗️</span>
+              </a>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 7: SUPER ADMIN PAYMENT INFO ================= -->
       <section id="secSuperPaymentInfo" class="tab-content hidden space-y-8">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl max-w-3xl mx-auto">
           <div class="flex items-center gap-3 pb-6 border-b border-slate-800 mb-6">
@@ -532,7 +675,7 @@
         </div>
       </section>
 
-      <!-- ================= TAB 7: REPORTS & CONSOLIDATED EXCEL ================= -->
+      <!-- ================= TAB 8: REPORTS & CONSOLIDATED EXCEL ================= -->
       <section id="secSuperReports" class="tab-content hidden space-y-8">
         <!-- Master Consolidated SaaS Report Card -->
         <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/40 border border-emerald-500/30 rounded-3xl p-6 sm:p-8 shadow-xl">
@@ -702,6 +845,7 @@
     window.cachedMasterCatalog = [];
     window.filteredMasterCatalog = [];
     window.masterCurrentPage = 1;
+    window.selectedMasterItemIds = new Set();
     const MASTER_PAGE_SIZE = 25;
 
     try {
@@ -758,6 +902,9 @@
         document.getElementById('tabBtnCrowdsource').className = 'tab-btn active px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20';
         document.getElementById('secSuperCrowdsource').classList.remove('hidden');
         fetchCrowdsourcedSubmissions();
+      } else if (tabKey === 'infra') {
+        document.getElementById('tabBtnInfra').className = 'tab-btn active px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 bg-blue-600 text-white shadow-lg shadow-blue-500/20';
+        document.getElementById('secSuperInfra').classList.remove('hidden');
       } else if (tabKey === 'paymentInfo') {
         document.getElementById('tabBtnPaymentInfo').className = 'tab-btn active px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20';
         document.getElementById('secSuperPaymentInfo').classList.remove('hidden');
@@ -1084,11 +1231,11 @@
       }
     }
 
-    // ================= TAB 4: MASTER CATALOG PAGINATION, SEARCH & BULK IMPORTER =================
+    // ================= TAB 4: MASTER CATALOG PAGINATION, SEARCH & BULK ACTIONS =================
     async function fetchMasterCatalog() {
       if (!db) return;
       const tbody = document.getElementById('masterCatalogTableBody');
-      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400">جاري تحميل كتالوج الأصناف المركزي...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-400">جاري تحميل كتالوج الأصناف المركزي...</td></tr>`;
 
       try {
         const snap = await db.collection('system').doc('master_catalog').collection('products').get();
@@ -1103,7 +1250,7 @@
 
         filterMasterCatalog();
       } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-red-400">خطأ: ${e.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-red-400">خطأ: ${e.message}</td></tr>`;
       }
     }
 
@@ -1137,14 +1284,18 @@
       const pageItems = window.filteredMasterCatalog.slice(startIndex, startIndex + MASTER_PAGE_SIZE);
 
       if (pageItems.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-500">لا توجد أصناف مطابقة للبحث أو الفلتر.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-500">لا توجد أصناف مطابقة للبحث أو الفلتر.</td></tr>`;
       } else {
         tbody.innerHTML = pageItems.map(item => {
           const isMilk = item.category === 'baby' || item.subCategory === 'infant_milk';
           const stageBadge = isMilk && item.milkStage ? `<span class="bg-blue-950 text-blue-400 border border-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full mr-1">${escapeHtml(item.milkStage)}</span>` : '';
-          
+          const isChecked = window.selectedMasterItemIds.has(item.id);
+
           return `
             <tr class="hover:bg-slate-800/40 transition text-xs">
+              <td class="py-3 px-4 text-center">
+                <input type="checkbox" value="${escapeHtml(item.id)}" ${isChecked ? 'checked' : ''} onchange="toggleMasterItemSelection(this, '${escapeHtml(item.id)}')" class="master-row-cb w-4 h-4 rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-0 cursor-pointer">
+              </td>
               <td class="py-3 px-4">
                 <div class="font-bold text-white">${escapeHtml(item.name || '')}</div>
                 <div class="text-[11px] text-slate-400">${escapeHtml(item.size || '')} ${item.barcode ? `· باركود: <span class="font-mono">${escapeHtml(item.barcode)}</span>` : ''}</div>
@@ -1159,7 +1310,7 @@
                 ${escapeHtml(item.ingredients || item.medicalIndications || '—')}
               </td>
               <td class="py-3 px-4 text-center">
-                <button onclick="deleteFromMasterCatalog('${escapeHtml(item.id)}')" class="text-red-400 hover:text-red-300 font-bold p-1 transition" title="حذف من البنك المركزي">
+                <button onclick="deleteFromMasterCatalog('${escapeHtml(item.id)}')" class="text-red-400 hover:text-red-300 font-bold p-1 transition" title="حذف صنف فردي">
                   🗑️
                 </button>
               </td>
@@ -1171,11 +1322,86 @@
       document.getElementById('masterPaginationInfo').textContent = `صفحة ${window.masterCurrentPage} من ${totalPages}`;
       document.getElementById('btnPrevMasterPage').disabled = (window.masterCurrentPage <= 1);
       document.getElementById('btnNextMasterPage').disabled = (window.masterCurrentPage >= totalPages);
+      updateSelectedMasterCount();
     }
 
     function changeMasterPage(delta) {
       window.masterCurrentPage += delta;
       renderMasterCatalogPage();
+    }
+
+    // ================= MULTI-SELECT & BULK DELETE =================
+    function toggleSelectAllMaster(mainCheckbox) {
+      const isChecked = mainCheckbox.checked;
+      const checkboxes = document.querySelectorAll('.master-row-cb');
+      checkboxes.forEach(cb => {
+        cb.checked = isChecked;
+        if (isChecked) {
+          window.selectedMasterItemIds.add(cb.value);
+        } else {
+          window.selectedMasterItemIds.delete(cb.value);
+        }
+      });
+      updateSelectedMasterCount();
+    }
+
+    function toggleMasterItemSelection(cb, id) {
+      if (cb.checked) {
+        window.selectedMasterItemIds.add(id);
+      } else {
+        window.selectedMasterItemIds.delete(id);
+      }
+      updateSelectedMasterCount();
+    }
+
+    function updateSelectedMasterCount() {
+      const count = window.selectedMasterItemIds.size;
+      const badge = document.getElementById('selectedMasterCount');
+      const bulkDelBtn = document.getElementById('btnBulkDeleteMaster');
+      const selectAllCb = document.getElementById('selectAllMasterCheckbox');
+
+      if (badge) badge.textContent = count;
+      if (bulkDelBtn) {
+        if (count > 0) bulkDelBtn.classList.remove('hidden');
+        else bulkDelBtn.classList.add('hidden');
+      }
+
+      const pageCheckboxes = document.querySelectorAll('.master-row-cb');
+      if (pageCheckboxes.length > 0) {
+        const allPageChecked = Array.from(pageCheckboxes).every(cb => cb.checked);
+        if (selectAllCb) selectAllCb.checked = allPageChecked;
+      }
+    }
+
+    async function handleBulkDeleteMasterProducts() {
+      const idsToDelete = Array.from(window.selectedMasterItemIds);
+      if (idsToDelete.length === 0) return;
+
+      if (!confirm(`تحذير: هل أنت متأكد من حذف (${idsToDelete.length}) صنف دفعة واحدة من البنك المركزي؟`)) return;
+
+      showToast(`جاري حذف ${idsToDelete.length} صنف من البنك المركزي...`);
+
+      const CHUNK_SIZE = 400;
+      const totalBatches = Math.ceil(idsToDelete.length / CHUNK_SIZE);
+
+      try {
+        for (let i = 0; i < totalBatches; i++) {
+          const chunk = idsToDelete.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+          const batch = db.batch();
+          chunk.forEach(id => {
+            const docRef = db.collection('system').doc('master_catalog').collection('products').doc(id);
+            batch.delete(docRef);
+          });
+          await batch.commit();
+        }
+
+        showToast(`🎉 تم حذف ${idsToDelete.length} صنف بنجاح من البنك المركزي!`);
+        window.selectedMasterItemIds.clear();
+        updateSelectedMasterCount();
+        fetchMasterCatalog();
+      } catch (err) {
+        showToast('خطأ أثناء الحذف الجماعي: ' + err.message, true);
+      }
     }
 
     async function handleMasterBulkUpload(event) {
@@ -1208,7 +1434,7 @@
 
         statusText.textContent = `تم قراءة ${items.length} صنف. جاري الحفظ والتسجيل السحابي في Firestore...`;
 
-        const CHUNK_SIZE = 400; // حد أمان Firestore Batch هو 500 عملية
+        const CHUNK_SIZE = 400;
         const totalBatches = Math.ceil(items.length / CHUNK_SIZE);
 
         for (let i = 0; i < totalBatches; i++) {
@@ -1407,7 +1633,7 @@
       }
     }
 
-    // ================= TAB 6: SUPER ADMIN PAYMENT INFO =================
+    // ================= TAB 7: SUPER ADMIN PAYMENT INFO =================
     async function loadSuperAdminPaymentInfo() {
       if (!db) return;
       try {
@@ -1446,7 +1672,7 @@
       }
     }
 
-    // ================= TAB 7: REPORTS HUB & CONSOLIDATED EXCEL =================
+    // ================= TAB 8: REPORTS HUB & CONSOLIDATED EXCEL =================
     function renderIndividualReportsList() {
       const tbody = document.getElementById('individualReportsTableBody');
       const slugs = Object.keys(window.cachedPharmaciesMap);
