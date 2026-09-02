@@ -94,7 +94,8 @@
     <div class="admin-tabs-nav-view">
       <button class="admin-tab-btn-v active" id="btnTabVStats" onclick="switchAdminSection('stats')">📊 الإحصائيات والأرباح</button>
       <button class="admin-tab-btn-v" id="btnTabVOrders" onclick="switchAdminSection('orders')">📦 إدارة الطلبات والشحن</button>
-      <button class="admin-tab-btn-v" id="btnTabVProducts" onclick="switchAdminSection('products')">💊 إدارة المنتجات والأدوية</button>
+      <button class="admin-tab-btn-v" id="btnTabVImport" onclick="switchAdminSection('import')" style="background:#059669; color:#fff; font-weight:900;">⚡ استيراد من بنك المنتجات</button>
+      <button class="admin-tab-btn-v" id="btnTabVProducts" onclick="switchAdminSection('products')">💊 منتجات ومخزن الصيدلية</button>
       <button class="admin-tab-btn-v" id="btnTabVTrash" onclick="switchAdminSection('trash')">🗑️ سلة المحذوفات (<span id="adminTrashCount">0</span>)</button>
       <button class="admin-tab-btn-v" id="btnTabVCats" onclick="switchAdminSection('cats')">🗂️ إدارة الأقسام</button>
       <button class="admin-tab-btn-v" id="btnTabVOffers" onclick="switchAdminSection('offers')">🏷️ الخصومات والعروض</button>
@@ -189,15 +190,62 @@
       </div>
     </div>
 
-    <!-- 3. PRODUCT MANAGEMENT SECTION -->
+    <!-- 3. IMPORT FROM MASTER CATALOG (NEW - واجهة استيراد الأصناف الذكية للصيدلي) -->
+    <div id="adminSecImport" style="display:none;">
+      <div class="admin-fieldset" style="border-color:#10B981; background:#F0FDF4;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <legend style="color:#047857; margin-bottom:0; font-weight:900;">
+            ⚡ استيراد فوري من بنك الأدوية والمنتجات المركزي الموحد
+          </legend>
+          <span class="mono" id="masterCatalogCountBadge" style="font-size:11px; font-weight:900; background:#DCFCE7; color:#15803D; padding:3px 10px; border-radius:999px; border:1px solid #BBF7D0;">
+            0 صنف متاح
+          </span>
+        </div>
+        <p style="font-size:12.5px; color:#166534; line-height:1.6; margin-bottom:14px;">
+          اختر أي منتج أو حليب أطفال معتمد، وحدد <b>سعر البيع لديك والكمية المتوفرة</b> ليتم إضافته فورياً لمخزن صيدليتك بنقرة واحدة!
+        </p>
+
+        <!-- Search & Filters -->
+        <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
+          <input type="text" id="tenantImportSearchInput" oninput="filterTenantMasterCatalog()" placeholder="ابحث باسم المنتج، الماركة، أو المرحلة (مثال: CeraVe أو Aptamil)..." style="flex:2; min-width:220px; padding:10px 14px; border:1.5px solid #A7F3D0; border-radius:12px; font-size:13px; outline:none; background:#fff;">
+          
+          <select id="tenantImportCatFilter" onchange="filterTenantMasterCatalog()" style="flex:1; min-width:160px; padding:10px 12px; border:1.5px solid #A7F3D0; border-radius:12px; font-size:13px; font-weight:700; background:#fff;">
+            <option value="all">جميع التصنيفات</option>
+            <option value="baby">حليب وأغذية الأطفال 🍼</option>
+            <option value="face">العناية بالوجه 🌸</option>
+            <option value="serum">السيرومات العلاجية ✨</option>
+            <option value="moisturizer">المرطبات 💧</option>
+            <option value="sunscreen">واقيات الشمس ☀️</option>
+            <option value="hair">العناية بالشعر 💇‍♀️</option>
+            <option value="body">العناية بالجسم 🛁</option>
+          </select>
+        </div>
+
+        <!-- Master Items Grid -->
+        <div id="tenantMasterCatalogGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:14px;">
+          <div style="grid-column:1/-1; text-align:center; padding:30px; color:#047857; font-weight:800;">
+            جاري جلب بيانات بنك المنتجات المركزي...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. PRODUCT MANAGEMENT SECTION -->
     <div id="adminSecProducts" style="display:none;">
       <div class="admin-fieldset">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-          <legend id="adminFormModeTitleV" style="margin:0;">إضافة منتج أو دواء جديد</legend>
+          <legend id="adminFormModeTitleV" style="margin:0;">إضافة منتج أو دواء جديد يدوياً</legend>
           <button type="button" onclick="toggleLowStockFilter()" id="btnFilterLowStock" style="background:#FEF3C7; color:#B45309; font-weight:800; font-size:11.5px; padding:6px 12px; border-radius:999px; border:1px solid #FDE68A;">
             ⚠️ عرض المنتجات النافذة فقط
           </button>
         </div>
+
+        <!-- Auto-Crowdsourcing Notice -->
+        <div style="background:#EFF6FF; border:1px solid #BFDBFE; color:#1E40AF; padding:8px 12px; border-radius:10px; font-size:11.5px; font-weight:700; margin-bottom:14px; display:flex; align-items:center; gap:8px;">
+          <span>💡</span>
+          <span><b>ميزة المساهمة التلقائية:</b> عند إضافة صنف جديد غير مسجل في البنك المركزي، سيتم إرساله تلقائياً للسوبر أدمن لمراجعته ونشره للجميع مع وسم صيدليتكم كمساهم.</span>
+        </div>
+
         <form id="adminProductFormV" onsubmit="handleAdminProductSave(event)">
           <input type="hidden" id="adminProdDocId" value="">
           <div class="form-field">
@@ -278,7 +326,7 @@
       </div>
     </div>
 
-    <!-- 4. TRASH BIN & RESTORE SECTION (سلة المحذوفات والأرشيف) -->
+    <!-- 5. TRASH BIN & RESTORE SECTION -->
     <div id="adminSecTrash" style="display:none;">
       <div class="admin-fieldset" style="border-color:#FEE2E2;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -292,7 +340,7 @@
       </div>
     </div>
 
-    <!-- 5. CATEGORY MANAGEMENT SECTION -->
+    <!-- 6. CATEGORY MANAGEMENT SECTION -->
     <div id="adminSecCats" style="display:none;">
       <div class="admin-fieldset">
         <legend id="adminCatFormTitle">إضافة قسم رئيسي جديد</legend>
@@ -337,7 +385,7 @@
       </div>
     </div>
 
-    <!-- 6. ADVANCED DISCOUNTS & PROMO CARDS -->
+    <!-- 7. ADVANCED DISCOUNTS & PROMO CARDS -->
     <div id="adminSecOffers" style="display:none;">
       <div class="admin-fieldset">
         <legend>🎯 تطبيق خصم ذكي مجمع وتحديث الأسعار فورياً (Bulk Discount Engine)</legend>
@@ -405,7 +453,7 @@
       </div>
     </div>
 
-    <!-- 7. PRODUCT BUNDLES / SAVINGS PACKS -->
+    <!-- 8. PRODUCT BUNDLES / SAVINGS PACKS -->
     <div id="adminSecBundles" style="display:none;">
       <div class="admin-fieldset">
         <legend id="adminBundleFormTitle">🎁 إضافة حزمة / بكج توفير جديد</legend>
@@ -454,7 +502,7 @@
       </div>
     </div>
 
-    <!-- 8. PROMO CODES / COUPONS MANAGEMENT -->
+    <!-- 9. PROMO CODES / COUPONS MANAGEMENT -->
     <div id="adminSecCoupons" style="display:none;">
       <div class="admin-fieldset">
         <legend id="adminCouponFormTitle">🎟️ إضافة كود خصم جديد (Server & Firestore Promo Code)</legend>
@@ -507,7 +555,7 @@
       </div>
     </div>
 
-    <!-- 9. BRAND MANAGEMENT SECTION -->
+    <!-- 10. BRAND MANAGEMENT SECTION -->
     <div id="adminSecBrands" style="display:none;">
       <div class="admin-fieldset">
         <legend id="adminBrandFormTitle">🏢 إضافة ماركة جديدة</legend>
@@ -541,7 +589,7 @@
       </div>
     </div>
 
-    <!-- 10. NOTIFICATIONS BROADCAST -->
+    <!-- 11. NOTIFICATIONS BROADCAST -->
     <div id="adminSecNotifs" style="display:none;">
       <div class="admin-fieldset">
         <legend>📢 إرسال إشعار وتنبيه عام لجميع مستخدمي الموقع</legend>
@@ -572,7 +620,7 @@
       </div>
     </div>
 
-    <!-- 11. AUDIT LOGS -->
+    <!-- 12. AUDIT LOGS -->
     <div id="adminSecAudit" style="display:none;">
       <div class="admin-fieldset">
         <legend>🛡️ إعدادات الحماية ومعدل الطلبات (Rate Limiting)</legend>
@@ -613,7 +661,7 @@
       </div>
     </div>
 
-    <!-- 12. STAFF & PERMISSIONS (RBAC) -->
+    <!-- 13. STAFF & PERMISSIONS (RBAC) -->
     <div id="adminSecStaff" style="display:none;">
       <div class="admin-fieldset">
         <legend>👥 إضافة موظف جديد للصيدلية ومنح الصلاحيات</legend>
@@ -647,7 +695,7 @@
       </div>
     </div>
 
-    <!-- 13. SUBSCRIPTION & SUPER ADMIN PAYMENT PORTAL -->
+    <!-- 14. SUBSCRIPTION & SUPER ADMIN PAYMENT PORTAL -->
     <div id="adminSecSubscription" style="display:none;">
       <div class="admin-fieldset">
         <legend>💳 تفاصيل اشتراك الصيدلية وبيانات الدفع الإلكتروني</legend>
@@ -655,7 +703,7 @@
       </div>
     </div>
 
-    <!-- 14. THEME & BRANDING CUSTOMIZATION -->
+    <!-- 15. THEME & BRANDING CUSTOMIZATION -->
     <div id="adminSecDesign" style="display:none;">
       <form onsubmit="handleSaveCustomization(event)">
         <fieldset class="admin-fieldset">
@@ -762,7 +810,7 @@
 
   </div>
 
-  <!-- QUICK CLINICAL PRODUCT EDIT MODAL (التعديل السريري الكامل مع المخزون والتفاصيل) -->
+  <!-- QUICK CLINICAL PRODUCT EDIT MODAL -->
   <div class="admin-quick-modal-overlay" id="adminQuickEditModal">
     <div class="admin-quick-card" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
       <div class="consult-header">
@@ -914,8 +962,185 @@
   <!-- Main JavaScript File -->
   <script src="script.js"></script>
 
-  <!-- Subscription Gatekeeper, Low-Stock Check & Role Restrictions Script -->
+  <!-- Tenant Master Catalog Search & Import Script Helpers -->
   <script>
+    window.tenantCachedMasterCatalog = [];
+
+    async function fetchTenantMasterCatalog() {
+      if (!isFirebaseConfigured || !db) return;
+      const grid = document.getElementById('tenantMasterCatalogGrid');
+      const badge = document.getElementById('masterCatalogCountBadge');
+      if (!grid) return;
+
+      grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:30px; color:#047857; font-weight:800;">جاري تحميل بنك المنتجات المركزي...</div>`;
+
+      try {
+        const snap = await db.collection('system').doc('master_catalog').collection('products').get();
+        window.tenantCachedMasterCatalog = [];
+
+        snap.forEach(doc => {
+          window.tenantCachedMasterCatalog.push({ id: doc.id, ...doc.data() });
+        });
+
+        if (badge) badge.textContent = `${window.tenantCachedMasterCatalog.length} صنف متاح`;
+        filterTenantMasterCatalog();
+      } catch (e) {
+        grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:30px; color:#DC2626; font-weight:800;">خطأ بالتحميل: ${e.message}</div>`;
+      }
+    }
+
+    function filterTenantMasterCatalog() {
+      const q = (document.getElementById('tenantImportSearchInput').value || '').trim().toLowerCase();
+      const cat = document.getElementById('tenantImportCatFilter').value;
+      const grid = document.getElementById('tenantMasterCatalogGrid');
+      if (!grid) return;
+
+      const filtered = window.tenantCachedMasterCatalog.filter(item => {
+        const matchesCategory = (cat === 'all') || (item.category === cat) || (cat === 'baby' && item.subCategory === 'infant_milk');
+        const nameStr = (item.name || '').toLowerCase();
+        const brandStr = (item.brand || '').toLowerCase();
+        const stageStr = (item.milkStage || '').toLowerCase();
+        const matchesSearch = !q || nameStr.includes(q) || brandStr.includes(q) || stageStr.includes(q);
+        return matchesCategory && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:30px; color:#6B7280; font-weight:800;">لا توجد أصناف مطابقة للبحث أو الفلتر المحدد.</div>`;
+        return;
+      }
+
+      // مطابقة الأصناف مع مخزن الصيدلية الحالي لمعرفة المستورد مسبقاً
+      const existingIds = new Set((products || []).map(p => String(p.masterCatalogId || p.id)));
+
+      grid.innerHTML = filtered.map(item => {
+        const isImported = existingIds.has(String(item.id));
+        const defaultPrice = Number(item.price || item.suggestedPrice || 15000);
+        const isMilk = item.category === 'baby' || item.subCategory === 'infant_milk';
+        const badgeTag = isMilk && item.milkStage ? `<span style="background:#E0F2FE; color:#0369A1; font-size:10.5px; font-weight:900; padding:2px 7px; border-radius:6px;">${item.milkStage}</span>` : '';
+
+        return `
+          <div style="background:#fff; border:1.5px solid ${isImported ? '#BBF7D0' : '#E2E8F0'}; border-radius:14px; padding:14px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 2px 8px rgba(0,0,0,0.04); position:relative;">
+            ${isImported ? `<span style="position:absolute; top:10px; left:10px; background:#DCFCE7; color:#15803D; font-size:10px; font-weight:900; padding:2px 8px; border-radius:999px;">✅ مستورد بمخزنك</span>` : ''}
+            
+            <div>
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                <span style="font-size:11px; font-weight:900; color:var(--accent); text-transform:uppercase;">${item.brand || 'عام'}</span>
+                ${badgeTag}
+              </div>
+              <h4 style="margin:0 0 6px; font-size:13.5px; font-weight:800; color:#111827; line-height:1.4;">
+                ${item.name}
+              </h4>
+              <p style="margin:0 0 8px; font-size:11.5px; color:#6B7280; line-height:1.4; max-height:48px; overflow:hidden;">
+                ${item.medicalIndications || item.ingredients || item.description || 'منتج أصلي معتمد.'}
+              </p>
+              <div style="font-size:11px; color:#64748B; margin-bottom:10px;">
+                السعر الاسترشادي: <b class="mono" style="color:#047857;">${defaultPrice.toLocaleString()} د.ع</b> (${item.size || 'قياسي'})
+              </div>
+            </div>
+
+            <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:10px; margin-top:8px;">
+              <div style="display:flex; gap:8px; margin-bottom:8px;">
+                <div style="flex:1.5;">
+                  <label style="font-size:10.5px; font-weight:800; display:block; margin-bottom:2px;">سعر البيع لديك (د.ع) *</label>
+                  <input type="number" id="inpImpPrice_${item.id}" value="${defaultPrice}" min="500" step="500" style="width:100%; padding:6px 8px; border:1px solid #CBD5E1; border-radius:8px; font-size:12px; font-family:monospace; font-weight:900; color:#047857; background:#fff;">
+                </div>
+                <div style="flex:1;">
+                  <label style="font-size:10.5px; font-weight:800; display:block; margin-bottom:2px;">الكمية *</label>
+                  <input type="number" id="inpImpQty_${item.id}" value="10" min="1" style="width:100%; padding:6px 8px; border:1px solid #CBD5E1; border-radius:8px; font-size:12px; font-family:monospace; font-weight:800; text-align:center; background:#fff;">
+                </div>
+              </div>
+
+              <button type="button" onclick="handleTenantImportSingle('${item.id}')" style="width:100%; background:${isImported ? '#059669' : 'var(--accent)'}; color:#fff; font-weight:900; font-size:12px; padding:9px; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; transition:transform .15s;">
+                <span>${isImported ? '🔄 تحديث السعر والكمية' : '⚡ استيراد لمخزن الصيدلية'}</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function handleTenantImportSingle(masterId) {
+      if (!isFirebaseConfigured || !db) return;
+      const masterItem = window.tenantCachedMasterCatalog.find(x => String(x.id) === String(masterId));
+      if (!masterItem) return;
+
+      const priceInp = document.getElementById(`inpImpPrice_${masterId}`);
+      const qtyInp = document.getElementById(`inpImpQty_${masterId}`);
+
+      const sellingPrice = Number(priceInp ? priceInp.value : masterItem.price || masterItem.suggestedPrice || 15000);
+      const stockQty = Number(qtyInp ? qtyInp.value : 10);
+
+      if (isNaN(sellingPrice) || sellingPrice <= 0) {
+        showToast('يرجى تحديد سعر بيع صحيح');
+        return;
+      }
+
+      showToast(`جاري استيراد "${masterItem.name}"...`);
+
+      try {
+        const payload = {
+          ...masterItem,
+          masterCatalogId: masterId,
+          price: sellingPrice,
+          oldPrice: null,
+          stockQuantity: stockQty,
+          inStock: stockQty > 0,
+          isDeleted: false,
+          isSpecialOffer: false,
+          rating: 0,
+          reviews: 0,
+          views: 0,
+          orderCount: 0,
+          importedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        // الحفظ داخل مجموعة منتجات الصيدلية الحالية
+        await dbPaths.productsCol().doc(String(masterId)).set(payload, { merge: true });
+
+        showToast(`🎉 تم استيراد "${masterItem.name}" بنجاح إلى متجرك!`);
+        filterTenantMasterCatalog();
+      } catch (err) {
+        showToast(`فشل الاستيراد: ${err.message}`);
+      }
+    }
+
+    // ربط التبويب الجديد مع دالة التنقل
+    const origSwitchAdminSection = window.switchAdminSection;
+    window.switchAdminSection = function(sec) {
+      const btnImport = document.getElementById('btnTabVImport');
+      const secImport = document.getElementById('adminSecImport');
+
+      if (btnImport && secImport) {
+        const isTarget = (sec.toLowerCase() === 'import');
+        btnImport.classList.toggle('active', isTarget);
+        secImport.style.display = isTarget ? 'block' : 'none';
+        if (isTarget) fetchTenantMasterCatalog();
+      }
+
+      const allSections = ['Stats', 'Orders', 'Import', 'Products', 'Cats', 'Offers', 'Bundles', 'Coupons', 'Brands', 'Notifs', 'Audit', 'Staff', 'Design', 'Subscription', 'Trash'];
+      allSections.forEach(k => {
+        const btn = document.getElementById('btnTabV' + k);
+        const el = document.getElementById('adminSec' + k);
+        const isTarget = (k.toLowerCase() === sec.toLowerCase());
+        if (btn) btn.classList.toggle('active', isTarget);
+        if (el) el.style.display = isTarget ? 'block' : 'none';
+      });
+
+      if (sec === 'stats') fetchRealAnalytics();
+      if (sec === 'orders') fetchAdminOrdersList();
+      if (sec === 'products') populateCategoryDropdowns();
+      if (sec === 'coupons') fetchAdminCoupons();
+      if (sec === 'bundles') { populateBundleProductsChecklist(); renderAdminBundlesList(); }
+      if (sec === 'audit') fetchAuditLogs();
+      if (sec === 'offers') { updateDiscountTargetOptions(); renderPromoCardsListAdmin(); }
+      if (sec === 'cats') renderAdminCategoriesList();
+      if (sec === 'brands') renderAdminBrandsList();
+      if (sec === 'staff') fetchStaffList();
+      if (sec === 'subscription') fetchSuperAdminPaymentInfo();
+      if (sec === 'trash') fetchArchivedProducts();
+    };
+
     async function enforceSubscriptionAndRoleGates() {
       if (!isFirebaseConfigured || !db) return;
 
