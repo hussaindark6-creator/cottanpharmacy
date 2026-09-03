@@ -1,13 +1,13 @@
 /* ==========================================================
    SaaS Multi-Tenant Engine — js/config.js
-   Version: 4.1.0 (Enterprise Subdomain & Cloud-Pages Resolver)
+   Version: 4.2.0 (Smart Subdomain & Cache-Sanitized Resolver)
    ========================================================== */
 
 export const DEFAULT_PHARMACY_ID = "cottanpharmacy";
 export const SUPER_ADMIN_EMAIL = "hussaindark6@gmail.com";
 export const WORKER_API_BASE = "https://cottanbackend.hussaindark6.workers.dev";
 
-// استخراج معرّف الصيدلية مع تجاهل دومينات الاستضافة السحابية
+// استخراج معرّف الصيدلية مع تنظيف الذاكرة المؤقتة من أي كاش قديم
 export function getActivePharmacyId() {
   const urlParams = new URLSearchParams(window.location.search);
   const paramId = urlParams.get('pharmacy') || urlParams.get('p_id') || urlParams.get('p') || urlParams.get('id');
@@ -18,14 +18,26 @@ export function getActivePharmacyId() {
     return cleanId;
   }
 
+  // تنظيف الذاكرة المؤقتة من أي قيمة خاطئة تم تخزينها سابقاً (مثل دومين الاستضافة)
   const cachedId = sessionStorage.getItem('saas_active_pharmacy_id');
-  if (cachedId && cachedId.trim()) {
+  const isPoisonedCache = cachedId && (
+    cachedId.includes('pages.dev') ||
+    cachedId.includes('pharmacies-') ||
+    cachedId.includes('workers.dev') ||
+    cachedId.includes('web.app') ||
+    cachedId.includes('firebaseapp') ||
+    cachedId.includes('localhost')
+  );
+
+  if (isPoisonedCache) {
+    sessionStorage.removeItem('saas_active_pharmacy_id');
+  } else if (cachedId && cachedId.trim()) {
     return cachedId.trim().toLowerCase();
   }
 
   const hostname = window.location.hostname.toLowerCase();
 
-  // دومينات الاستضافة السحابية التي يجب تجاهل تقسيمها كنطاق فرعي
+  // قائمة دومينات الاستضافة السحابية التي يجب تجاهل تقسيمها كنطاق فرعي
   const ignoredHostingDomains = [
     'pages.dev',
     'workers.dev',
