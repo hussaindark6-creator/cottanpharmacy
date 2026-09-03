@@ -2009,45 +2009,108 @@
       return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
   </script>
-<!-- 🟢 زر ترحيل الأسرار المخصص للآيباد (مؤقت) -->
-<button type="button" onclick="runIpadMigration()" style="position:fixed; bottom:20px; right:20px; z-index:99999; background:#10B981; color:#022c22; font-weight:900; font-size:13px; padding:12px 20px; border-radius:14px; border:2px solid #ffffff; box-shadow:0 10px 30px rgba(0,0,0,0.5); cursor:pointer;">
-  ⚡ ترحيل الأسرار (اضغط هنا من الآيباد)
-</button>
+<!-- 🟢 نافذة ترحيل الأسرار المحسنة للآيباد مع شاشة تتبع حية -->
+<div id="migrationBox" style="position:fixed; bottom:20px; right:20px; z-index:99999; background:#0f172a; border:2px solid #10b981; border-radius:16px; padding:16px; max-width:320px; width:90%; box-shadow:0 10px 30px rgba(0,0,0,0.7); font-family:sans-serif; text-align:right; color:#fff;">
+  <div style="font-weight:900; font-size:14px; margin-bottom:8px; color:#34d399; display:flex; justify-content:space-between; align-items:center;">
+    <span>⚡ أداة ترحيل الأسرار</span>
+    <span id="migStatusDot" style="width:10px; height:10px; border-radius:50%; background:#94a3b8;"></span>
+  </div>
+  
+  <div id="migLogs" style="background:#020617; border:1px solid #1e293b; border-radius:8px; padding:8px; font-size:11px; font-family:monospace; height:110px; overflow-y:auto; color:#cbd5e1; line-height:1.5; margin-bottom:10px;">
+    اضغط على الزر للبدء...
+  </div>
+
+  <button type="button" id="btnStartMig" onclick="startSafeMigration()" style="width:100%; background:#10b981; color:#022c22; font-weight:900; font-size:12px; padding:10px; border-radius:10px; border:none; cursor:pointer;">
+    بدء الترحيل الآمن الآن 🚀
+  </button>
+</div>
 
 <script>
-async function runIpadMigration() {
-  if (!confirm('هل تريد تشغيل ترحيل وفصل أسرار الصيدليات الآن؟')) return;
-  alert('⏳ جاري فحص وترحيل البيانات...');
+function logMig(msg, color = '#cbd5e1') {
+  const box = document.getElementById('migLogs');
+  if (box) {
+    box.innerHTML += `<div style="color:${color};">• ${msg}</div>`;
+    box.scrollTop = box.scrollHeight;
+  }
+}
+
+async function startSafeMigration() {
+  const btn = document.getElementById('btnStartMig');
+  const dot = document.getElementById('migStatusDot');
+  btn.disabled = true;
+  btn.style.opacity = '0.5';
+  dot.style.background = '#f59e0b';
+  document.getElementById('migLogs').innerHTML = '';
+
+  logMig('جاري التحقق من تسجيل الدخول...');
+
+  // 1. التحقق من المستخدم
+  const user = auth ? auth.currentUser : null;
+  if (!user) {
+    logMig('❌ يجب تسجيل الدخول بحساب السوبر أدمن أولاً!', '#ef4444');
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    dot.style.background = '#ef4444';
+    return;
+  }
+
+  logMig(`تم التحقق: ${user.email}`, '#34d399');
+  logMig('جاري جلب الصيدليات من Firestore...');
+
   try {
     const snap = await db.collection('pharmacies').get();
+    logMig(`تم العثور على (${snap.size}) صيدلية.`, '#38bdf8');
+
+    if (snap.empty) {
+      logMig('لا توجد صيدليات لترحيلها.', '#f59e0b');
+      dot.style.background = '#10b981';
+      return;
+    }
+
     let count = 0;
     for (const doc of snap.docs) {
       const data = doc.data();
       const tenantId = doc.id;
-      
-      // نقل الأسرار إلى وثيقة private_settings/config
-      if (data.telegramConfig || data.subscriptionPrice !== undefined) {
-        await db.collection('pharmacies').doc(tenantId)
-          .collection('private_settings').doc('config')
-          .set({
-            telegramConfig: data.telegramConfig || { botToken: '', chatId: '', enabled: false },
-            subscriptionPrice: data.subscriptionPrice || 50000,
-            maxPriceCap: data.maxPriceCap || 150000,
-            rateLimits: data.rateLimits || { maxOrdersPerHour: 15, maxReqsPerMin: 80 },
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-          }, { merge: true });
 
-        // حذف الحقول الحساسة من الوثيقة العامة
-        await db.collection('pharmacies').doc(tenantId).update({
-          telegramConfig: firebase.firestore.FieldValue.delete(),
-          rateLimits: firebase.firestore.FieldValue.delete()
-        });
-        count++;
+      logMig(`فحص الصيدلية: ${tenantId}...`);
+
+      // التحقق مما إذا كانت تحتاج ترحيل
+      const hasOldSecrets = data.telegramConfig || data.subscriptionPrice !== undefined;
+      
+      // حفظ المستند السري
+      await db.collection('pharmacies').doc(tenantId)
+        .collection('private_settings').doc('config')
+        .set({
+          telegramConfig: data.telegramConfig || { botToken: '', chatId: '', enabled: false },
+          subscriptionPrice: Number(data.subscriptionPrice) || 50000,
+          maxPriceCap: Number(data.maxPriceCap) || 150000,
+          rateLimits: data.rateLimits || { maxOrdersPerHour: 15, maxReqsPerMin: 80 },
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+
+      // تنظيف المستند العام
+      if (hasOldSecrets) {
+        const cleanUpdate = {};
+        if (data.telegramConfig) cleanUpdate.telegramConfig = firebase.firestore.FieldValue.delete();
+        if (data.rateLimits) cleanUpdate.rateLimits = firebase.firestore.FieldValue.delete();
+        
+        if (Object.keys(cleanUpdate).length > 0) {
+          await db.collection('pharmacies').doc(tenantId).update(cleanUpdate);
+        }
       }
+
+      count++;
+      logMig(`✅ تم ترحيل: ${tenantId}`, '#34d399');
     }
-    alert('🎉 تم ترحيل وحماية بيانات ' + count + ' صيدلية بنجاح!');
+
+    logMig(`🎉 اكتمل الترحيل بنجاح لـ (${count}) صيدلية!`, '#4ade80');
+    dot.style.background = '#10b981';
+    btn.textContent = '✅ اكتمل الترحيل بنجاح';
   } catch (err) {
-    alert('❌ حدث خطأ: ' + err.message);
+    logMig(`❌ خطأ: ${err.message}`, '#ef4444');
+    dot.style.background = '#ef4444';
+    btn.disabled = false;
+    btn.style.opacity = '1';
   }
 }
 </script>
