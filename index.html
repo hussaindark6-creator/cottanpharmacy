@@ -77,16 +77,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
-
-  <!-- Cloudflare Turnstile & Google Analytics -->
-  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-QC29GK2MDW"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-QC29GK2MDW');
-  </script>
 </head>
 <body>
 
@@ -116,34 +106,34 @@
   </div>
 
   <!-- SIDE MENU DRAWER OVERLAY -->
-  <div class="menu-overlay" id="menuOverlay" onclick="window.App.closeMenu()"></div>
+  <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
 
   <!-- SIDE MENU DRAWER -->
   <aside class="menu-drawer" id="menuDrawer">
     <div class="drawer-header">
       <h3 id="drawerLogoTitle">الصيدلية</h3>
-      <button onclick="window.App.closeMenu()" class="icon-btn" aria-label="إغلاق">
+      <button onclick="closeMenu()" class="icon-btn" aria-label="إغلاق">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
     <div class="menu-links">
-      <button class="menu-link" onclick="window.App.showView('home')">
+      <button class="menu-link" onclick="showView('home')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/></svg>
         الرئيسية
       </button>
-      <button class="menu-link" onclick="window.App.showView('categories')">
+      <button class="menu-link" onclick="showView('categories')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
         الأقسام والتصنيفات
       </button>
-      <button class="menu-link" onclick="window.App.showView('bundles')">
+      <button class="menu-link" onclick="showView('bundles')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
         حزم وبكجات التوفير 🎁
       </button>
-      <button class="menu-link" onclick="window.App.showView('orders')">
+      <button class="menu-link" onclick="showView('orders')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
         طلباتي 📦
       </button>
-      <button class="menu-link" id="drawerConsultBtn" onclick="document.getElementById('consultModal').classList.add('open'); window.App.closeMenu();">
+      <button class="menu-link" id="drawerConsultBtn" onclick="document.getElementById('consultModal').classList.add('open'); closeMenu();">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M12 7v6M9 10h6"/></svg>
         استشر الصيدلي مجاناً 🩺
       </button>
@@ -151,15 +141,15 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         لوحة تحكم المشرف ⚙️
       </a>
-      <button class="menu-link" onclick="window.App.showView('offers')">
+      <button class="menu-link" onclick="showView('offers')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12 12 20l-8-8V4h8Z"/><circle cx="8" cy="8" r="1.4" fill="currentColor" stroke="none"/></svg>
         العروض والخصومات
       </button>
-      <button class="menu-link" onclick="window.App.showView('wishlist')">
+      <button class="menu-link" onclick="showView('wishlist')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.5-4.9-10-9.5C.5 7.8 2.7 4 6.5 4 9 4 11 5.5 12 7c1-1.5 3-3 5.5-3 3.8 0 6 3.8 4.5 7.5C19.5 16.1 12 21 12 21Z"/></svg>
         المفضلة
       </button>
-      <button class="menu-link" onclick="window.App.showView('account')">
+      <button class="menu-link" onclick="showView('account')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>
         حسابي والتزامن
       </button>
@@ -189,12 +179,12 @@
   <!-- MAIN HEADER -->
   <header id="mainHeader">
     <div class="wrap nav">
-      <button class="icon-btn" onclick="window.App.openMenu()" aria-label="القائمة">
+      <button class="icon-btn" onclick="openMenu()" aria-label="القائمة">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
       </button>
       
       <!-- شعار الصيدلية المخصص -->
-      <div class="logo-block" onclick="window.App.showView('home')">
+      <div class="logo-block" onclick="showView('home')">
         <span class="logo-text" id="headerLogoText">الصيدلية</span>
         <span class="logo-mark" id="headerLogoMark">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent, #E85D8A)" stroke-width="2"><circle cx="12" cy="8" r="3"/><circle cx="8" cy="10" r="3"/><circle cx="16" cy="10" r="3"/><path d="M12 13v7"/></svg>
@@ -208,7 +198,7 @@
         </button>
 
         <div class="user-header-chip" id="userHeaderChip">
-          <div class="user-chip-main" onclick="window.App.showView('account')" title="حسابي">
+          <div class="user-chip-main" onclick="showView('account')" title="حسابي">
             <div class="user-chip-avatar" id="userChipAvatar">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px;"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>
             </div>
@@ -216,7 +206,7 @@
           </div>
         </div>
 
-        <button class="icon-btn" onclick="window.App.showView('cart')" aria-label="السلة">
+        <button class="icon-btn" onclick="showView('cart')" aria-label="السلة">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h2l2.4 12.4a2 2 0 0 0 2 1.6h8.4a2 2 0 0 0 2-1.6L22 8H6"/><circle cx="9" cy="21" r="1.4" fill="currentColor" stroke="none"/><circle cx="18" cy="21" r="1.4" fill="currentColor" stroke="none"/></svg>
           <span class="badge-count" id="cartBadge" style="display:none;">0</span>
         </button>
@@ -226,7 +216,7 @@
     <div class="wrap search-wrap">
       <div class="search-bar">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-        <input type="text" id="searchInput" placeholder="ابحثِ عن اسم الدواء، المادة الفعالة، الماركة..." oninput="window.App.onSearch(this.value)">
+        <input type="text" id="searchInput" placeholder="ابحثِ عن اسم الدواء، المادة الفعالة، الماركة..." oninput="onSearch(this.value)">
       </div>
     </div>
   </header>
@@ -234,7 +224,7 @@
   <!-- ============ 1. HOME VIEW ============ -->
   <main class="view active" id="view-home">
     <div class="wrap hero-wrap">
-      <div class="qutn-hybrid-banner" onclick="window.App.showView('categories')">
+      <div class="qutn-hybrid-banner" onclick="showView('categories')">
         <div class="banner-text-col">
           <h1 class="main-title" id="heroMainTitle">متجر الصيدلية</h1>
           <p class="sub-title" id="heroSubTitle">نحن هنا لتحسين صحتكم وجمالكم</p>
@@ -263,7 +253,7 @@
     <!-- Product Bundles Section -->
     <section class="wrap section" id="homeBundlesSection" style="display:none;">
       <div class="section-head">
-        <span class="see-all" onclick="window.App.showView('bundles')">عرض كل البكجات</span>
+        <span class="see-all" onclick="showView('bundles')">عرض كل البكجات</span>
         <h2>🎁 حزم وبكجات التوفير المميزة</h2>
       </div>
       <div class="bundle-grid" id="homeBundlesGrid"></div>
@@ -272,7 +262,7 @@
     <!-- Shop by Brand Section -->
     <section class="wrap section">
       <div class="section-head">
-        <span class="see-all" onclick="window.App.openBestSellers()">عرض الكل</span>
+        <span class="see-all" onclick="openBestSellers()">عرض الكل</span>
         <h2>تسوق حسب الماركة</h2>
       </div>
       <div class="brand-strip" id="brandStrip"></div>
@@ -281,7 +271,7 @@
     <!-- Best Sellers Section -->
     <section class="wrap section">
       <div class="section-head">
-        <span class="see-all" onclick="window.App.openBestSellers()">عرض الكل</span>
+        <span class="see-all" onclick="openBestSellers()">عرض الكل</span>
         <h2 id="homeGridTitle">الأكثر مبيعاً 🔥</h2>
       </div>
       <div class="product-grid" id="bestSellersGrid"></div>
@@ -296,7 +286,7 @@
   <!-- ============ 2. LISTING & SEARCH VIEW ============ -->
   <div class="view" id="view-listing">
     <div class="wrap">
-      <div class="pd-back" onclick="window.App.showView('home')">
+      <div class="pd-back" onclick="showView('home')">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
         رجوع للرئيسية
       </div>
@@ -323,7 +313,7 @@
   <!-- ============ 4. BUNDLES VIEW ============ -->
   <div class="view" id="view-bundles">
     <div class="wrap">
-      <div class="pd-back" onclick="window.App.showView('home')">
+      <div class="pd-back" onclick="showView('home')">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
         رجوع للرئيسية
       </div>
@@ -373,7 +363,7 @@
   <div class="view" id="view-product">
     <div class="wrap">
       <div style="display:flex; align-items:center; justify-content:space-between; padding-top:6px;">
-        <div class="pd-back" onclick="window.App.goBackFromProduct()">
+        <div class="pd-back" onclick="goBackFromProduct()">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
           رجوع
         </div>
@@ -390,10 +380,10 @@
       </div>
 
       <div class="pd-tabs">
-        <button class="pd-tab active" onclick="window.App.switchPdTab('desc')">الوصف الطبي</button>
-        <button class="pd-tab" onclick="window.App.switchPdTab('ing')">المكونات الفعالة</button>
-        <button class="pd-tab" onclick="window.App.switchPdTab('use')">طريقة الاستخدام</button>
-        <button class="pd-tab" onclick="window.App.switchPdTab('reviews')">التقييمات ⭐</button>
+        <button class="pd-tab active" onclick="switchPdTab('desc')">الوصف الطبي</button>
+        <button class="pd-tab" onclick="switchPdTab('ing')">المكونات الفعالة</button>
+        <button class="pd-tab" onclick="switchPdTab('use')">طريقة الاستخدام</button>
+        <button class="pd-tab" onclick="switchPdTab('reviews')">التقييمات ⭐</button>
       </div>
       <div class="pd-tab-content active" id="pdTabDesc"></div>
       <div class="pd-tab-content" id="pdTabIng"></div>
@@ -405,11 +395,11 @@
           <h4>تقييم المنتج الفعلي ⭐</h4>
           <p style="font-size:12px; color:var(--text-soft); margin:0 0 8px;">اضغطي على النجمة لتقييم المنتج بنقرة واحدة:</p>
           <div class="star-rating-row" id="starRatingRow">
-            <span class="star-btn" data-star="1" onclick="window.App.rateProductInstant(1)">★</span>
-            <span class="star-btn" data-star="2" onclick="window.App.rateProductInstant(2)">★</span>
-            <span class="star-btn" data-star="3" onclick="window.App.rateProductInstant(3)">★</span>
-            <span class="star-btn" data-star="4" onclick="window.App.rateProductInstant(4)">★</span>
-            <span class="star-btn" data-star="5" onclick="window.App.rateProductInstant(5)">★</span>
+            <span class="star-btn" data-star="1" onclick="rateProductInstant(1)">★</span>
+            <span class="star-btn" data-star="2" onclick="rateProductInstant(2)">★</span>
+            <span class="star-btn" data-star="3" onclick="rateProductInstant(3)">★</span>
+            <span class="star-btn" data-star="4" onclick="rateProductInstant(4)">★</span>
+            <span class="star-btn" data-star="5" onclick="rateProductInstant(5)">★</span>
           </div>
           <div id="instantRatingMsg" style="font-size:11.5px; font-weight:800; color:var(--accent); margin-top:8px;"></div>
         </div>
@@ -417,9 +407,9 @@
 
       <div class="pd-qty-row">
         <div class="pd-qty-stepper">
-          <button onclick="window.App.changePdQty(-1)">−</button>
+          <button onclick="changePdQty(-1)">−</button>
           <span class="val mono" id="pdQtyVal">1</span>
-          <button onclick="window.App.changePdQty(1)">+</button>
+          <button onclick="changePdQty(1)">+</button>
         </div>
         <button class="pd-add-btn" id="pdAddBtn">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h2l2.4 12.4a2 2 0 0 0 2 1.6h8.4a2 2 0 0 0 2-1.6L22 8H6"/></svg>
@@ -448,7 +438,7 @@
 
       <div class="promo-input-group" id="cartPromoGroup">
         <input type="text" id="cartPromoCodeInput" placeholder="أدخلي كود الخصم (مثال: SAVE10)">
-        <button type="button" onclick="window.App.applyPromoCode(document.getElementById('cartPromoCodeInput').value)">تطبيق الكود</button>
+        <button type="button" onclick="applyPromoCode(document.getElementById('cartPromoCodeInput').value)">تطبيق الكود</button>
       </div>
       <div id="appliedPromoBadge" style="display:none;"></div>
 
@@ -459,7 +449,7 @@
   <!-- ============ 10. CHECKOUT VIEW (CLEAN & NO GPS) ============ -->
   <div class="view" id="view-checkout">
     <div class="wrap">
-      <div class="pd-back" onclick="window.App.showView('cart')">
+      <div class="pd-back" onclick="showView('cart')">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
         رجوع للسلة
       </div>
@@ -470,7 +460,7 @@
 
       <div id="autofillNoticeBox" style="display:none;" class="autofill-indicator">
         <span>✨ تم ملء بياناتكِ المحفوظة تلقائياً</span>
-        <button type="button" onclick="window.App.clearSavedCustomerData()" style="color:#DC2626; font-size:11.5px; font-weight:800; text-decoration:underline;">مسح/تعديل</button>
+        <button type="button" onclick="clearSavedCustomerData()" style="color:#DC2626; font-size:11.5px; font-weight:800; text-decoration:underline;">مسح/تعديل</button>
       </div>
 
       <div class="form-field">
@@ -489,12 +479,12 @@
       <div class="form-field">
         <label>طريقة التوصيل</label>
         <div class="delivery-options">
-          <div class="delivery-opt selected" id="delStandard" onclick="window.App.selectDelivery('standard')">توصيل عادي<br><span style="font-weight:400;">24-48 ساعة</span></div>
-          <div class="delivery-opt" id="delExpress" onclick="window.App.selectDelivery('express')">توصيل سريع<br><span style="font-weight:400;">خلال يوم</span></div>
+          <div class="delivery-opt selected" id="delStandard" onclick="selectDelivery('standard')">توصيل عادي<br><span style="font-weight:400;">24-48 ساعة</span></div>
+          <div class="delivery-opt" id="delExpress" onclick="selectDelivery('express')">توصيل سريع<br><span style="font-weight:400;">خلال يوم</span></div>
         </div>
       </div>
       <div id="checkoutSummaryBlock"></div>
-      <button class="checkout-btn" id="confirmOrderBtn" onclick="window.App.executeAtomicOrderCheckout()">
+      <button class="checkout-btn" id="confirmOrderBtn" onclick="executeAtomicOrderCheckout()">
         تأكيد الطلب
       </button>
     </div>
@@ -523,7 +513,7 @@
         <span class="mono" id="welcomeCodeText">QUTN10</span>
         <button type="button" onclick="navigator.clipboard.writeText('QUTN10');">نسخ الكود 📋</button>
       </div>
-      <button class="welcome-action-btn" onclick="document.getElementById('welcomeOfferModal').classList.remove('open'); window.App.showView('home');">تسوقي الآن واستفيدي من الخصم ✨</button>
+      <button class="welcome-action-btn" onclick="document.getElementById('welcomeOfferModal').classList.remove('open'); showView('home');">تسوقي الآن واستفيدي من الخصم ✨</button>
     </div>
   </div>
 
@@ -574,8 +564,8 @@
       <h3>تم إتمام الطلب بنجاح!</h3>
       <p id="successModalMsg">شكراً لثقتكِ بنا. تم توثيق طلبكِ بنجاح، وجاري التوجيه للواتساب لتأكيد الشحن.</p>
       <div class="success-actions">
-        <button type="button" class="pd-add-btn" onclick="document.getElementById('orderSuccessModal').classList.remove('open'); window.App.showView('orders');">📦 متابعة طلباتي</button>
-        <button type="button" style="padding:10px; font-weight:800; color:var(--text-soft);" onclick="document.getElementById('orderSuccessModal').classList.remove('open'); window.App.showView('home');">العودة للرئيسية</button>
+        <button type="button" class="pd-add-btn" onclick="document.getElementById('orderSuccessModal').classList.remove('open'); showView('orders');">📦 متابعة طلباتي</button>
+        <button type="button" style="padding:10px; font-weight:800; color:var(--text-soft);" onclick="document.getElementById('orderSuccessModal').classList.remove('open'); showView('home');">العودة للرئيسية</button>
       </div>
     </div>
   </div>
@@ -593,7 +583,7 @@
         </button>
       </div>
       <div class="consult-body">
-        <form id="consultForm" onsubmit="event.preventDefault(); window.App.openWhatsapp(); document.getElementById('consultModal').classList.remove('open');">
+        <form id="consultForm" onsubmit="event.preventDefault(); openWhatsapp(); document.getElementById('consultModal').classList.remove('open');">
           <div class="form-field">
             <label>الاسم الكامل *</label>
             <input type="text" id="consultName" placeholder="مثال: سارة علي" required>
@@ -614,29 +604,80 @@
     </div>
   </div>
 
+  <!-- 6. 80mm THERMAL RECEIPT MODAL -->
+  <div class="receipt-modal-overlay" id="thermalReceiptModal">
+    <div class="receipt-modal-card">
+      <div class="no-print" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h4 style="margin:0; font-weight:900;">🖨️ معاينة بوليصة الشحن (80mm)</h4>
+        <button onclick="closeReceiptModal()" style="font-weight:900; font-size:16px;">✕</button>
+      </div>
+      
+      <div class="receipt-print-area" id="receiptPrintArea">
+        <div class="receipt-header">
+          <h3 id="recStoreHeaderTitle">الصيدلية 🌸</h3>
+          <p style="margin:2px 0; font-size:11px;">منتجات عناية وتجميل أصلية 100%</p>
+          <p style="margin:2px 0; font-size:10px;">هاتف: <span id="recStorePhone">07813703288</span></p>
+        </div>
+        <div class="receipt-divider"></div>
+        <div style="font-size:11px; margin-bottom:6px;">
+          <div><b>رقم الوصل:</b> <span class="mono" id="recOrderId">#ORD-123456</span></div>
+          <div><b>التاريخ:</b> <span id="recOrderDate"></span></div>
+          <div><b>العميل:</b> <span id="recCustName"></span></div>
+          <div><b>الهاتف:</b> <span id="recCustPhone" class="mono"></span></div>
+          <div><b>العنوان:</b> <span id="recCustAddress"></span></div>
+          <div><b>نوع التوصيل:</b> <span id="recDeliveryType"></span></div>
+        </div>
+        <div class="receipt-divider"></div>
+        <table class="receipt-table">
+          <thead>
+            <tr>
+              <th>المادة</th>
+              <th>العدد</th>
+              <th>السعر</th>
+            </tr>
+          </thead>
+          <tbody id="recItemsTbody"></tbody>
+        </table>
+        <div class="receipt-divider"></div>
+        <div style="font-size:12px; font-weight:800;">
+          <div style="display:flex; justify-content:space-between;"><span>أجرة التوصيل:</span><span id="recDeliveryFee" class="mono">0 د.ع</span></div>
+          <div style="display:flex; justify-content:space-between;" id="recDiscountRow"><span>الخصم:</span><span id="recDiscountVal" class="mono">0 د.ع</span></div>
+          <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:900; margin-top:4px;"><span>المجموع الكلي:</span><span id="recGrandTotal" class="mono">0 د.ع</span></div>
+        </div>
+        <div class="receipt-footer">
+          <p style="margin:4px 0;">شكراً لتسوقكم معنا 🌸</p>
+        </div>
+      </div>
+
+      <div class="no-print" style="display:flex; gap:8px; margin-top:14px;">
+        <button type="button" onclick="window.print()" class="admin-btn-save" style="margin:0; background:#10B981;">🖨️ طباعة الوصل الحراري</button>
+      </div>
+    </div>
+  </div>
+
   <!-- BOTTOM NAVIGATION BAR -->
   <nav class="bottom-nav">
-    <button class="bn-item" onclick="window.App.showView('account')" id="bn-account">
+    <button class="bn-item" onclick="showView('account')" id="bn-account">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>
       <span class="lbl" id="bnAccountLbl">حسابي</span>
     </button>
-    <button class="bn-item" onclick="window.App.showView('orders')" id="bn-orders">
+    <button class="bn-item" onclick="showView('orders')" id="bn-orders">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
       <span class="lbl">طلباتي</span>
     </button>
-    <button class="bn-item active" onclick="window.App.showView('home')" id="bn-home">
+    <button class="bn-item active" onclick="showView('home')" id="bn-home">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/></svg>
       <span class="lbl">الرئيسية</span>
     </button>
-    <button class="bn-item" onclick="window.App.showView('bundles')" id="bn-bundles">
+    <button class="bn-item" onclick="showView('bundles')" id="bn-bundles">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
       <span class="lbl">البكجات</span>
     </button>
-    <button class="bn-item" onclick="window.App.showView('categories')" id="bn-categories">
+    <button class="bn-item" onclick="showView('categories')" id="bn-categories">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
       <span class="lbl">الأقسام</span>
     </button>
-    <button class="bn-item" onclick="window.App.showView('cart')" id="bn-cart">
+    <button class="bn-item" onclick="showView('cart')" id="bn-cart">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h2l2.4 12.4a2 2 0 0 0 2 1.6h8.4a2 2 0 0 0 2-1.6L22 8H6"/><circle cx="9" cy="21" r="1.4" fill="currentColor" stroke="none"/><circle cx="18" cy="21" r="1.4" fill="currentColor" stroke="none"/></svg>
       <span class="lbl">السلة</span>
       <span class="badge-count" id="bnCartBadge" style="display:none;">0</span>
@@ -644,17 +685,14 @@
   </nav>
 
   <!-- WhatsApp Floating FAB -->
-  <button class="fab-whatsapp" onclick="window.App.openWhatsapp()" aria-label="واتساب">
+  <button class="fab-whatsapp" onclick="openWhatsapp()" aria-label="واتساب">
     <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.7 14.2c-.2.6-1.4 1.2-1.9 1.2-.5.1-1.1.1-1.8-.1-.4-.1-1-.3-1.7-.6-3-1.3-4.9-4.3-5.1-4.5-.1-.2-1.2-1.6-1.2-3s.8-2.2 1.1-2.5c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5.2.5.8 1.9.8 2.1.1.2.1.3 0 .5-.1.2-.1.3-.3.5-.1.2-.3.4-.4.5-.2.2-.3.4-.1.7.2.3.9 1.5 2 2.4 1.3 1.2 2.4 1.5 2.8 1.7.3.2.5.1.7-.1l.9-1c.2-.3.4-.2.7-.1l1.8.9c.3.1.5.2.5.4.1.2.1.7-.1 1.3Z"/></svg>
   </button>
 
   <!-- Toast Notification Box -->
   <div class="toast" id="toast"></div>
 
-  <!-- Turnstile Hidden Container -->
-  <div class="cf-turnstile" data-sitekey="0x4AAAAAAEYEmvDuF-QQDg0s" style="display: none;"></div>
-
-  <!-- 🌟 Native ES6 Module Entry Point -->
-  <script type="module" src="js/app.js"></script>
+  <!-- 🌟 Main Synchronous JavaScript Engine -->
+  <script src="js/app.js"></script>
 </body>
 </html>
