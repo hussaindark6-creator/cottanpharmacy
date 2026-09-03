@@ -190,7 +190,7 @@
       </div>
     </div>
 
-    <!-- 3. IMPORT FROM MASTER CATALOG (2-TIER CLASSIFICATION + DYNAMIC BRANDS) -->
+    <!-- 3. IMPORT FROM MASTER CATALOG (WITH DYNAMIC CUSTOM CATEGORY '+' CREATOR) -->
     <div id="adminSecImport" style="display:none;">
       <div class="admin-fieldset" style="border-color:#10B981; background:#F0FDF4;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
@@ -202,44 +202,20 @@
           </span>
         </div>
         <p style="font-size:12.5px; color:#166534; line-height:1.6; margin-bottom:14px;">
-          تصفح الأصناف حسب الفئات الـ 6 الأساسية، ثم حدد التصنيف الفرعي الدقيق (Sub-Category) أو الشركة لتخصيص السعر والكمية:
+          تصفح الأصناف حسب الفئات، أو أضف قسماً مخصصاً عبر زر <b>(+)</b> لأرشفة المكملات والمنتجات تلقائياً:
         </p>
 
-        <!-- Tier 1: Main Category Buttons -->
-        <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;">
-          <button type="button" id="btnMainCat_all" onclick="selectTenantMainCategory('all')" class="consult-toggle-btn active" style="flex:1; min-width:110px; font-weight:900; border-radius:10px; padding:8px 6px; font-size:12px;">
-            🌟 الكل (All)
-          </button>
-          <button type="button" id="btnMainCat_cosmetics" onclick="selectTenantMainCategory('cosmetics')" class="consult-toggle-btn" style="flex:1.2; min-width:140px; font-weight:900; border-radius:10px; padding:8px 6px; font-size:12px;">
-            💄 كوزمتك/عناية
-          </button>
-          <button type="button" id="btnMainCat_hair" onclick="selectTenantMainCategory('hair')" class="consult-toggle-btn" style="flex:1.1; min-width:120px; font-weight:900; border-radius:10px; padding:8px 6px; font-size:12px;">
-            💇‍♀️ عناية بالشعر
-          </button>
-          <button type="button" id="btnMainCat_dental" onclick="selectTenantMainCategory('dental')" class="consult-toggle-btn" style="flex:1.1; min-width:120px; font-weight:900; border-radius:10px; padding:8px 6px; font-size:12px;">
-            🪥 عناية بالأسنان
-          </button>
-          <button type="button" id="btnMainCat_baby_milk" onclick="selectTenantMainCategory('baby_milk')" class="consult-toggle-btn" style="flex:1.3; min-width:140px; font-weight:900; border-radius:10px; padding:8px 6px; font-size:12px;">
-            🍼 حليب أطفال
-          </button>
-          <button type="button" id="btnMainCat_baby_care" onclick="selectTenantMainCategory('baby_care')" class="consult-toggle-btn" style="flex:1.2; min-width:130px; font-weight:900; border-radius:10px; padding:8px 6px; font-size:12px;">
-            👶 عناية بالطفل
-          </button>
-          <button type="button" id="btnMainCat_hygiene" onclick="selectTenantMainCategory('hygiene')" class="consult-toggle-btn" style="flex:1; min-width:110px; font-weight:900; border-radius:10px; padding:8px 6px; font-size:12px;">
-            🧼 نظافة عامة
-          </button>
-        </div>
+        <!-- Tier 1: Dynamic Main Category Buttons Container + '+' Button -->
+        <div id="tenantMainCatButtonsContainer" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;"></div>
 
-        <!-- Tier 2: Search + English Sub-Categories Dropdown + Dynamic Brands Dropdown -->
+        <!-- Tier 2: Search + Sub-Categories + Dynamic Brands Dropdown -->
         <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
           <input type="text" id="tenantImportSearchInput" oninput="filterTenantMasterCatalog()" placeholder="ابحث باسم المنتج، الماركة، أو الباركود..." style="flex:2; min-width:200px; padding:10px 14px; border:1.5px solid #A7F3D0; border-radius:12px; font-size:13px; outline:none; background:#fff;">
           
-          <!-- Dynamic English Sub-Category Dropdown (47 Subcategories) -->
           <select id="tenantImportSubCatFilter" onchange="onTenantSubCategoryChanged()" style="flex:1.5; min-width:180px; padding:10px 12px; border:1.5px solid #A7F3D0; border-radius:12px; font-size:13px; font-weight:800; background:#fff; color:#047857;">
-            <option value="all">📂 جميع التصنيفات الفرعية (All Sub-Categories)</option>
+            <option value="all">📂 جميع التصنيفات الفرعية (All)</option>
           </select>
 
-          <!-- Dynamic Brand Dropdown -->
           <select id="tenantImportBrandFilter" onchange="filterTenantMasterCatalog()" style="flex:1.2; min-width:160px; padding:10px 12px; border:1.5px solid #A7F3D0; border-radius:12px; font-size:13px; font-weight:800; background:#fff; color:#047857;">
             <option value="all">🏢 جميع الشركات والماركات</option>
           </select>
@@ -315,7 +291,6 @@
             </div>
           </div>
 
-          <!-- DIRECT DEVICE IMAGE UPLOAD FIELD -->
           <div class="form-field">
             <label>صورة المنتج (اختيار مباشر من المعرض / الكاميرا)</label>
             <div style="display:flex; gap:10px; align-items:center;">
@@ -1000,13 +975,45 @@
     </div>
   </div>
 
+  <!-- ADD CUSTOM CATEGORY MODAL (نافذة إضافة قسم مخصص جديد) -->
+  <div class="admin-quick-modal-overlay" id="addCustomCategoryModal">
+    <div class="admin-quick-card" style="max-width: 460px;">
+      <div class="consult-header">
+        <h3 style="color:#047857; font-weight:900;">➕ إضافة قسم وأرشفة مخصصة</h3>
+        <button class="icon-btn" onclick="closeAddCustomCategoryModal()">✕</button>
+      </div>
+      <form onsubmit="handleSaveCustomCategory(event)" style="padding:18px; text-align:right;">
+        <div class="form-field">
+          <label>اسم القسم المخصص * (مثال: Supplements أو مكملات غذائية)</label>
+          <input type="text" id="customCatNameInput" placeholder="Supplements / مكملات غذائية" required>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <div class="form-field" style="flex:1;">
+            <label>الأيقونة / الرمز</label>
+            <input type="text" id="customCatIconInput" value="💊" placeholder="💊">
+          </div>
+        </div>
+        <div class="form-field">
+          <label>الكلمات المفتاحية للأرشفة التلقائية (مفصولة بفواصل)</label>
+          <textarea id="customCatKeywordsInput" rows="3" placeholder="supplement, vitamin, فيتامين, كولاجين, omega, zinc, now foods, solgar, vitabiotics"></textarea>
+          <p style="font-size:11px; color:#6B7280; margin-top:4px;">
+            سيقوم النظام بفحص كل المنتجات في البنك وأرشفة أي منتج يحتوي على هذه الكلمات داخل هذا القسم تلقائياً.
+          </p>
+        </div>
+        <button type="submit" class="admin-btn-save" style="background:#059669; font-weight:900;">
+          💾 حفظ القسم وتفعيل الأرشفة التلقائية
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- Toast Notification Box -->
   <div class="toast no-print" id="toast"></div>
 
   <!-- Main JavaScript File -->
   <script src="script.js"></script>
 
-  <!-- Tenant Master Catalog Classification & Helpers Script -->
+  <!-- Dynamic Classification & Custom Category Engine Script -->
   <script>
     function escapeHtml(str) {
       if (typeof sanitizeText === 'function') return sanitizeText(str);
@@ -1019,10 +1026,10 @@
         .replace(/'/g, '&#039;');
     }
 
-    // ================= قاموس التصنيفات الـ 47 الدقيق =================
     const MASTER_CATEGORIES_CONFIG = {
       cosmetics: {
         labelAr: "كوزمتك / عناية",
+        icon: "💄",
         subCategories: [
           "Cleanser", "Moisturizer", "Sunscreen", "Eye Care", 
           "Serum/Treatment", "Skincare", "Lip Care", "Exfoliant/Peeling", 
@@ -1032,6 +1039,7 @@
       },
       hair: {
         labelAr: "عناية بالشعر",
+        icon: "💇‍♀️",
         subCategories: [
           "Hair Care - Shampoo", "Hair Care - Conditioner", 
           "Hair Care - Styling", "Hair Care"
@@ -1039,18 +1047,21 @@
       },
       dental: {
         labelAr: "عناية بالأسنان",
+        icon: "🪥",
         subCategories: [
           "Toothpaste", "Toothbrush", "Mouthwash"
         ]
       },
       hygiene: {
         labelAr: "نظافة عامة",
+        icon: "🧼",
         subCategories: [
           "Hand Wash"
         ]
       },
       baby_milk: {
-        labelAr: "حليب أطفال (Baby Milk)",
+        labelAr: "حليب أطفال",
+        icon: "🍼",
         subCategories: [
           "Stage 1 (0-6M)", "Stage 2 (6-12M)", "Stage 3 (1-2Y)", "Stage 3 (1-3Y)", 
           "Stage 4 (1Y+)", "Stage 4 (3Y+)", "Stage 5 (3Y+)", "Full Cream Milk Powder", 
@@ -1062,7 +1073,8 @@
         ]
       },
       baby_care: {
-        labelAr: "عناية بالطفل (Baby Care)",
+        labelAr: "عناية بالطفل",
+        icon: "👶",
         subCategories: [
           "Baby Diaper", "Baby Wipes", "Baby Wash/Shampoo", 
           "Baby Skincare", "Baby Care Accessory"
@@ -1073,15 +1085,134 @@
     window.tenantCachedMasterCatalog = [];
     window.tenantActiveMainCategory = 'all';
 
-    // فاحص تصنيف ذكي ومرن يطابق الـ 47 فئة مع أي صنف جديد في البنك المركزي
+    // إدارة الأقسام المخصصة المحفوظة محلياً للصيدلية
+    function getSavedCustomCategories() {
+      try {
+        return JSON.parse(localStorage.getItem('saas_custom_categories_' + currentPharmacyId) || '[]');
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveCustomCategoriesList(list) {
+      localStorage.setItem('saas_custom_categories_' + currentPharmacyId, JSON.stringify(list));
+    }
+
+    function renderTenantMainCategoryButtons() {
+      const container = document.getElementById('tenantMainCatButtonsContainer');
+      if (!container) return;
+
+      const builtInList = [
+        { key: 'all', label: '🌟 الكل (All)' },
+        { key: 'cosmetics', label: '💄 كوزمتك/عناية' },
+        { key: 'hair', label: '💇‍♀️ عناية بالشعر' },
+        { key: 'dental', label: '🪥 عناية بالأسنان' },
+        { key: 'baby_milk', label: '🍼 حليب أطفال' },
+        { key: 'baby_care', label: '👶 عناية بالطفل' },
+        { key: 'hygiene', label: '🧼 نظافة عامة' }
+      ];
+
+      const customList = getSavedCustomCategories();
+
+      let html = builtInList.map(item => `
+        <button type="button" id="btnMainCat_${item.key}" onclick="selectTenantMainCategory('${item.key}')" class="consult-toggle-btn ${window.tenantActiveMainCategory === item.key ? 'active' : ''}" style="flex:1; min-width:110px; font-weight:900; border-radius:10px; padding:8px 6px; font-size:12px;">
+          ${item.label}
+        </button>
+      `).join('');
+
+      html += customList.map(c => `
+        <div style="position:relative; display:inline-flex; flex:1; min-width:130px;">
+          <button type="button" id="btnMainCat_${c.id}" onclick="selectTenantMainCategory('${c.id}')" class="consult-toggle-btn ${window.tenantActiveMainCategory === c.id ? 'active' : ''}" style="width:100%; font-weight:900; border-radius:10px; padding:8px 24px 8px 6px; font-size:12px; background:#ECFDF5; color:#047857; border-color:#6EE7B7;">
+            ${escapeHtml(c.icon || '💊')} ${escapeHtml(c.name)}
+          </button>
+          <span onclick="event.stopPropagation(); deleteCustomCategory('${c.id}')" style="position:absolute; top:8px; right:8px; font-size:10px; color:#DC2626; font-weight:900; cursor:pointer; background:#FEE2E2; width:16px; height:16px; border-radius:50%; display:flex; align-items:center; justify-content:center;" title="حذف هذا القسم">✕</span>
+        </div>
+      `).join('');
+
+      html += `
+        <button type="button" onclick="openAddCustomCategoryModal()" class="consult-toggle-btn" style="background:#F0FDF4; color:#059669; border:1.5px dashed #059669; font-weight:900; border-radius:10px; padding:8px 14px; font-size:12px; cursor:pointer;">
+          ➕ إضافة قسم مخصص
+        </button>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    function openAddCustomCategoryModal() {
+      const m = document.getElementById('addCustomCategoryModal');
+      if (m) m.classList.add('open');
+    }
+
+    function closeAddCustomCategoryModal() {
+      const m = document.getElementById('addCustomCategoryModal');
+      if (m) m.classList.remove('open');
+    }
+
+    function handleSaveCustomCategory(e) {
+      e.preventDefault();
+      const name = document.getElementById('customCatNameInput').value.trim();
+      const icon = document.getElementById('customCatIconInput').value.trim() || '💊';
+      const rawKeywords = document.getElementById('customCatKeywordsInput').value.trim();
+
+      if (!name) return;
+
+      const keywords = rawKeywords ? rawKeywords.split(',').map(k => k.trim().toLowerCase()).filter(Boolean) : [name.toLowerCase()];
+
+      const customList = getSavedCustomCategories();
+      const newId = 'custom_' + Date.now();
+
+      customList.push({
+        id: newId,
+        name: name,
+        icon: icon,
+        keywords: keywords
+      });
+
+      saveCustomCategoriesList(customList);
+      showToast(`🎉 تم إنشاء قسم "${name}" وتفعيل الأرشفة التلقائية له!`);
+      closeAddCustomCategoryModal();
+      document.getElementById('customCatNameInput').value = '';
+      
+      renderTenantMainCategoryButtons();
+      selectTenantMainCategory(newId);
+    }
+
+    function deleteCustomCategory(id) {
+      if (!confirm('هل تريد إزالة هذا القسم المخصص من قائمتك؟')) return;
+      let customList = getSavedCustomCategories();
+      customList = customList.filter(c => c.id !== id);
+      saveCustomCategoriesList(customList);
+      showToast('تمت إزالة القسم المخصص');
+      
+      if (window.tenantActiveMainCategory === id) {
+        window.tenantActiveMainCategory = 'all';
+      }
+      renderTenantMainCategoryButtons();
+      selectTenantMainCategory(window.tenantActiveMainCategory);
+    }
+
+    // فاحص تصنيف ذكي وشامل يطابق الأقسام المخصصة والأصلية الـ 47
     function getItemClassification(item) {
       const cat = (item.category || '').toLowerCase().trim();
       const subCat = (item.subCategory || item.sub_category || '').toLowerCase().trim();
       const name = (item.name || '').toLowerCase().trim();
+      const desc = (item.description || item.medicalIndications || '').toLowerCase().trim();
+      const brand = (item.brand || item.Brand || item.company || '').toLowerCase().trim();
       const stage = (item.milkStage || '').toLowerCase().trim();
       const formula = (item.specialFormulaTag || item.formulaType || '').toLowerCase();
 
-      // 1. فحص حليب الأطفال
+      // فحص الأقسام المخصصة المضافة من قبل الصيدلي أولاً
+      const customList = getSavedCustomCategories();
+      for (const customCat of customList) {
+        const matches = (customCat.keywords || []).some(kw => 
+          name.includes(kw) || cat.includes(kw) || subCat.includes(kw) || desc.includes(kw) || brand.includes(kw)
+        );
+        if (matches) {
+          return { main: customCat.id, sub: customCat.name, isCustom: true };
+        }
+      }
+
+      // 1. حليب الأطفال
       if (cat === 'baby_milk' || cat === 'milk' || subCat.includes('stage') || stage || name.includes('حليب') || name.includes('milk') || name.includes('lactonic') || name.includes('aptamil') || name.includes('bebelac') || name.includes('similac') || name.includes('nan') || name.includes('novalac') || name.includes('s-26') || name.includes('s26') || name.includes('babyline') || name.includes('pediasure') || name.includes('infatrini') || name.includes('neocate') || name.includes('blemil') || name.includes('fabimilk') || name.includes('rabelac') || name.includes('guigoz') || name.includes('frisolac') || name.includes('celia') || name.includes('sunny baby') || name.includes('evolac') || name.includes('nactalia') || name.includes('infalac')) {
         let sub = "Stage 1 (0-6M)";
         if (name.includes('1') || name.includes('0-6') || subCat.includes('1')) sub = "Stage 1 (0-6M)";
@@ -1092,13 +1223,11 @@
         else if (formula.includes('lf') || name.includes('lf') || name.includes('lactose free') || name.includes('خالي') || subCat.includes('lactose free')) sub = "Special Care - Lactose Free";
         else if (formula.includes('comfort') || formula.includes('ec') || name.includes('مغص') || subCat.includes('comfort') || subCat.includes('colic')) sub = "Special Care - Colic/Constipation";
         else if (formula.includes('pepti') || formula.includes('ha') || name.includes('حساسية') || subCat.includes('allergy')) sub = "Special Care - Allergy/Hypoallergenic";
-        else if (name.includes('pre') || name.includes('premature') || formula.includes('premature')) sub = "Stage 1 (0-6M)";
         else if (name.includes('pediasure') || name.includes('evoshure') || name.includes('بدياشور') || subCat.includes('supplement')) sub = "Nutritional Supplement (1-10Y)";
-        
         return { main: 'baby_milk', sub: sub };
       }
 
-      // 2. فحص عناية الطفل
+      // 2. عناية الطفل
       if (cat === 'baby_care' || cat === 'baby' || name.includes('diaper') || name.includes('حفاض') || name.includes('wipes') || name.includes('مناديل') || subCat.includes('baby')) {
         let sub = "Baby Skincare";
         if (name.includes('diaper') || name.includes('حفاض') || subCat.includes('diaper')) sub = "Baby Diaper";
@@ -1108,7 +1237,7 @@
         return { main: 'baby_care', sub: sub };
       }
 
-      // 3. فحص الأسنان
+      // 3. الأسنان
       if (cat === 'dental' || subCat.includes('tooth') || name.includes('toothpaste') || name.includes('معجون') || name.includes('فرشاة') || name.includes('mouthwash') || name.includes('غسول فم')) {
         let sub = "Toothpaste";
         if (name.includes('toothbrush') || name.includes('فرشاة') || subCat.includes('brush')) sub = "Toothbrush";
@@ -1116,7 +1245,7 @@
         return { main: 'dental', sub: sub };
       }
 
-      // 4. فحص الشعر
+      // 4. الشعر
       if (cat === 'hair' || subCat.includes('hair') || subCat.includes('shampoo') || name.includes('hair') || name.includes('شعر') || name.includes('shampoo') || name.includes('شامبو') || name.includes('conditioner') || name.includes('بلسم') || name.includes('olaplex') || name.includes('mielle') || name.includes('dercos') || name.includes('nizoral') || name.includes('cantu') || name.includes('k18')) {
         let sub = "Hair Care";
         if (name.includes('shampoo') || name.includes('شامبو') || subCat.includes('shampoo')) sub = "Hair Care - Shampoo";
@@ -1125,7 +1254,7 @@
         return { main: 'hair', sub: sub };
       }
 
-      // 5. فحص النظافة العامة
+      // 5. النظافة العامة
       if (cat === 'hygiene' || subCat.includes('hand') || name.includes('hand wash') || name.includes('غسول يدين')) {
         return { main: 'hygiene', sub: "Hand Wash" };
       }
@@ -1168,24 +1297,23 @@
     function selectTenantMainCategory(catKey) {
       window.tenantActiveMainCategory = catKey;
       
-      const allButtons = ['all', 'cosmetics', 'hair', 'dental', 'baby_milk', 'baby_care', 'hygiene'];
-      allButtons.forEach(k => {
-        const btn = document.getElementById('btnMainCat_' + k);
-        if (btn) btn.classList.toggle('active', k === catKey);
-      });
-
+      renderTenantMainCategoryButtons();
       updateTenantSubCategoryDropdown();
       updateTenantBrandDropdown();
       filterTenantMasterCatalog();
     }
 
-    // تحديث قائمة التصنيفات الفرعية الـ 47 بالإنجليزية ديناميكياً
     function updateTenantSubCategoryDropdown() {
       const subSelect = document.getElementById('tenantImportSubCatFilter');
       if (!subSelect) return;
 
       if (window.tenantActiveMainCategory === 'all') {
         subSelect.innerHTML = `<option value="all">📂 جميع التصنيفات الفرعية (All Sub-Categories)</option>`;
+        return;
+      }
+
+      if (window.tenantActiveMainCategory.startsWith('custom_')) {
+        subSelect.innerHTML = `<option value="all">📂 جميع أصناف هذا القسم المخصص (All)</option>`;
         return;
       }
 
@@ -1196,7 +1324,6 @@
       }
     }
 
-    // تحديث واستخراج قائمة الشركات تلقائياً من المنتجات الموجودة
     function updateTenantBrandDropdown() {
       const brandSelect = document.getElementById('tenantImportBrandFilter');
       const selectedSub = document.getElementById('tenantImportSubCatFilter') ? document.getElementById('tenantImportSubCatFilter').value : 'all';
@@ -1247,6 +1374,7 @@
 
         if (badge) badge.textContent = `${window.tenantCachedMasterCatalog.length} صنف متاح`;
 
+        renderTenantMainCategoryButtons();
         updateTenantSubCategoryDropdown();
         updateTenantBrandDropdown();
         filterTenantMasterCatalog();
@@ -1265,17 +1393,12 @@
       const filtered = window.tenantCachedMasterCatalog.filter(item => {
         const cl = getItemClassification(item);
         
-        // 1. فحص القسم الرئيسي
         if (window.tenantActiveMainCategory !== 'all' && cl.main !== window.tenantActiveMainCategory) return false;
-
-        // 2. فحص التصنيف الفرعي الـ 47
         if (selectedSub !== 'all' && cl.sub !== selectedSub) return false;
 
-        // 3. فحص الشركة
         const itemBrand = (item.brand || item.Brand || item.company || 'عام').trim();
         if (selectedBrand !== 'all' && itemBrand !== selectedBrand) return false;
 
-        // 4. فحص البحث النصي
         const nameStr = (item.name || '').toLowerCase();
         const brandStr = itemBrand.toLowerCase();
         const barcodeStr = (item.barcode || '').toLowerCase();
@@ -1301,6 +1424,7 @@
         else if (cl.main === 'hair') badgeColor = "background:#FEF3C7; color:#92400E;";
         else if (cl.main === 'dental') badgeColor = "background:#E0E7FF; color:#3730A3;";
         else if (cl.main === 'baby_care') badgeColor = "background:#DCFCE7; color:#166534;";
+        else if (cl.isCustom) badgeColor = "background:#ECFDF5; color:#047857; border:1px solid #A7F3D0;";
 
         return `
           <div style="background:#fff; border:1.5px solid ${isImported ? '#BBF7D0' : '#E2E8F0'}; border-radius:14px; padding:14px; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 2px 8px rgba(0,0,0,0.04); position:relative;">
