@@ -1,6 +1,6 @@
 /* ==========================================================
    SaaS Multi-Tenant Pharmacy — COMPLETE MASTER STYLESHEET
-   Version: 3.2.0 (Master Enterprise Edition)
+   Version: 4.0.0 (Master Enterprise Edition - Zero Omission)
    ========================================================== */
 
 :root, html[data-theme="light"] {
@@ -29,10 +29,10 @@
 }
 
 /* ==========================================================
-   MULTI-TEMPLATE SYSTEM OVERRIDES (القوالب المتعددة المدمجة)
+   MULTI-TEMPLATE SYSTEM OVERRIDES (القوالب المتعددة)
    ========================================================== */
 
-/* Template 2: Clinical Blue & Medical Pro (القالب الطبي الحديث) */
+/* Template 2: Clinical Blue Pro (القالب الطبي الحديث) */
 html[data-template="template-two"], html[data-template="template_b"] {
   --surface: #F0F9FF;
   --surface-hover: #E0F2FE;
@@ -65,24 +65,13 @@ html[data-template="template_b"] .checkout-btn {
   letter-spacing: 0.2px;
 }
 
-/* Template 3: Emerald Luxury & Organic (القالب الزمردي الفاخر) */
-html[data-template="template-three"] {
-  --surface: #F2FBF7;
-  --surface-hover: #E1F7EC;
-  --line: #D1FAE5;
-  --rose: #6EE7B7;
-  --rose-deep: #059669;
-  --accent: #059669;
-  --accent-dark: #047857;
+/* Template 3: Soft Aesthetic Rose (القالب العصري الناعم) */
+html[data-template="template_a"], html[data-template="template-one"] {
   --radius-lg: 24px;
   --radius-md: 18px;
-  --radius-sm: 14px;
-  --shadow-soft: 0 6px 24px rgba(5, 150, 105, 0.08);
-}
-html[data-template="template-three"] .product-card:hover,
-html[data-template="template-three"] .bundle-card:hover {
-  border-color: var(--accent);
-  box-shadow: 0 12px 30px rgba(5, 150, 105, 0.15);
+  --radius-sm: 12px;
+  --shadow-soft: 0 8px 25px rgba(232, 93, 138, 0.08);
+  --shadow-hover: 0 12px 30px rgba(232, 93, 138, 0.16);
 }
 
 /* ==========================================================
@@ -213,7 +202,7 @@ svg {
 }
 
 /* ==========================================================
-   ANNOUNCEMENT BAR & HEADER (تم إلغاء التثبيت المزعج للسكرول)
+   ANNOUNCEMENT BAR & HEADER
    ========================================================== */
 .announcement-bar {
   background: var(--surface);
@@ -360,12 +349,6 @@ header {
   object-fit: cover; 
 }
 
-.user-chip-avatar svg { 
-  width: 16px !important; 
-  height: 16px !important; 
-  color: var(--accent); 
-}
-
 .user-chip-name { 
   font-size: 11.5px; 
   font-weight: 800; 
@@ -374,20 +357,6 @@ header {
   white-space: nowrap; 
   overflow: hidden; 
   text-overflow: ellipsis; 
-}
-
-.user-chip-logout-btn {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: #FEE2E2;
-  color: var(--red);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all .15s;
-  border: 1px solid #FECACA;
 }
 
 .search-wrap { 
@@ -551,7 +520,6 @@ header {
 
 .drawer-social-icon:hover { 
   transform: scale(1.1); 
-  color: var(--accent-dark); 
 }
 
 .drawer-footer { 
@@ -561,11 +529,10 @@ header {
 }
 
 /* ==========================================================
-   HERO BANNER
+   HERO BANNER & PHARMACIST CTA
    ========================================================== */
 .hero-wrap { 
   padding: 10px 0 14px; 
-  margin-top: 2px;
 }
 
 .qutn-hybrid-banner {
@@ -620,9 +587,6 @@ header {
   font-size: clamp(12px, 1.4vw, 15px); 
   font-weight: 600; 
   margin: 0; 
-  display: flex; 
-  align-items: center; 
-  gap: 6px; 
 }
 
 .banner-model-col { 
@@ -648,14 +612,6 @@ header {
   -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 100%); 
 }
 
-@media (max-width: 600px) {
-  .qutn-hybrid-banner { padding: 18px 14px; min-height: 165px; }
-  .banner-model-col { width: 44%; }
-}
-
-/* ==========================================================
-   PHARMACIST CTA BANNER
-   ========================================================== */
 .consult-cta-banner {
   background: linear-gradient(135deg, var(--surface) 0%, var(--surface-hover) 100%);
   border: 1.5px solid var(--line);
@@ -666,14 +622,7 @@ header {
   gap: 14px;
   cursor: pointer;
   box-shadow: var(--shadow-soft);
-  transition: all .25s ease;
   margin: 6px 0 16px;
-}
-
-.consult-cta-banner:hover { 
-  transform: translateY(-2px); 
-  box-shadow: var(--shadow-hover); 
-  border-color: var(--rose); 
 }
 
 .consult-cta-icon { 
@@ -686,7 +635,6 @@ header {
   align-items: center; 
   justify-content: center; 
   flex-shrink: 0; 
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06); 
 }
 
 .consult-cta-text { 
@@ -705,7 +653,6 @@ header {
   margin: 0; 
   font-size: 12px; 
   color: var(--text-soft); 
-  line-height: 1.4; 
 }
 
 .consult-cta-btn { 
@@ -715,12 +662,10 @@ header {
   font-weight: 800; 
   padding: 8px 16px; 
   border-radius: 999px; 
-  white-space: nowrap; 
-  box-shadow: 0 3px 10px rgba(0,0,0,0.1); 
 }
 
 /* ==========================================================
-   BRAND STRIP
+   BRAND STRIP & CHIPS
    ========================================================== */
 .section { 
   padding: 10px 0; 
@@ -794,7 +739,6 @@ header {
   overflow: hidden;
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.04);
   transition: all .2s ease;
-  position: relative;
 }
 
 .brand-chip.active .brand-chip-img-box {
@@ -831,7 +775,6 @@ header {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 76px;
-  line-height: 1.2;
 }
 
 .brand-chip.active .brand-chip-title {
@@ -852,13 +795,6 @@ header {
   gap: 2px;
   color: var(--accent);
   box-shadow: 0 3px 12px rgba(0,0,0,0.04);
-  transition: all .2s ease;
-}
-
-.brand-chip.active .brand-chip-all-box {
-  border-color: var(--rose-deep);
-  border-width: 2.5px;
-  background: #FFE4EA;
 }
 
 /* ==========================================================
@@ -977,7 +913,7 @@ header {
 }
 
 /* ==========================================================
-   PRODUCT GRID & CARDS
+   PRODUCT CARDS & GRIDS
    ========================================================== */
 .product-grid { 
   display: grid; 
@@ -1076,11 +1012,6 @@ header {
   position: relative; 
 }
 
-.product-thumb svg { 
-  width: 48%; 
-  height: 48%; 
-}
-
 .product-thumb img { 
   width: 100%; 
   height: 100%; 
@@ -1160,7 +1091,7 @@ header {
 }
 
 /* ==========================================================
-   ADMIN ACTIONS ON CARDS & FLOATING BUTTON
+   ADMIN CARD ACTIONS & FLOATING BUTTON
    ========================================================== */
 .admin-card-actions { 
   display: grid; 
@@ -1200,10 +1131,6 @@ header {
   box-shadow: 0 8px 24px rgba(17, 24, 39, 0.4);
   cursor: pointer;
   transition: transform .2s;
-}
-
-.admin-float-btn:hover {
-  transform: scale(1.08);
 }
 
 .no-results { 
@@ -1261,24 +1188,12 @@ header {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  position: relative;
 }
 
 .modern-cat-img-wrap img { 
   width: 100%; 
   height: 100%; 
   object-fit: cover; 
-  transition: transform .3s ease; 
-}
-
-.modern-cat-card:hover .modern-cat-img-wrap img { 
-  transform: scale(1.05); 
-}
-
-.modern-cat-img-wrap svg { 
-  width: 44px; 
-  height: 44px; 
-  color: var(--accent); 
 }
 
 .modern-cat-info { 
@@ -1336,11 +1251,6 @@ header {
   overflow: hidden; 
 }
 
-.promo-thumb svg { 
-  width: 55%; 
-  height: 55%; 
-}
-
 .promo-thumb img { 
   width: 100%; 
   height: 100%; 
@@ -1375,7 +1285,6 @@ header {
   font-size: 12px; 
   padding: 8px 18px; 
   border-radius: 999px; 
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
 }
 
 .promo-input-group { 
@@ -1398,10 +1307,6 @@ header {
   outline: none; 
 }
 
-.promo-input-group input:focus { 
-  border-color: var(--accent); 
-}
-
 .promo-input-group button { 
   background: #111827; 
   color: #fff; 
@@ -1409,12 +1314,6 @@ header {
   border-radius: 12px; 
   font-weight: 800; 
   font-size: 12.5px; 
-  white-space: nowrap; 
-  transition: all .2s; 
-}
-
-.promo-input-group button:hover { 
-  background: var(--accent); 
 }
 
 .applied-promo-tag { 
@@ -1477,7 +1376,6 @@ header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: relative;
   margin: 14px 0 12px;
   padding: 0 4px;
 }
@@ -1490,7 +1388,6 @@ header {
   font-size: 10px;
   font-weight: 800;
   color: var(--text-soft);
-  z-index: 2;
 }
 
 .order-step-dot {
@@ -1502,12 +1399,10 @@ header {
   align-items: center;
   justify-content: center;
   font-size: 10px;
-  color: #6B7280;
 }
 
 .order-step.done .order-step-dot { background: #DCFCE7; color: #16A34A; }
 .order-step.active .order-step-dot { background: var(--accent); color: #fff; }
-.order-step.done, .order-step.active { color: var(--ink); }
 
 .order-item-row { 
   display: flex; 
@@ -1534,11 +1429,6 @@ header {
   padding: 3px 0;
 }
 
-.order-pricing-row.discount-row {
-  color: #16A34A;
-  font-weight: 800;
-}
-
 .order-card-footer { 
   display: flex; 
   justify-content: space-between; 
@@ -1558,34 +1448,11 @@ header {
   padding: 5px 12px;
   border-radius: 8px;
   border: 1px solid #FECACA;
-  cursor: pointer;
-  transition: all .15s;
-}
-
-.btn-cancel-order:hover {
-  background: #FCA5A5;
 }
 
 /* ==========================================================
-   PRODUCT DETAIL VIEW & STAR RATINGS
+   PRODUCT DETAIL VIEW & TABS
    ========================================================== */
-.share-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--surface);
-  color: var(--accent);
-  padding: 6px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.share-btn:hover {
-  background: var(--surface-hover);
-}
-
 .pd-image { 
   aspect-ratio: 1/1; 
   width: 100%; 
@@ -1597,11 +1464,6 @@ header {
   margin: 10px 0 16px; 
   border: 1px solid var(--line); 
   overflow: hidden; 
-}
-
-.pd-image svg { 
-  width: 44%; 
-  height: 44%; 
 }
 
 .pd-image img { 
@@ -1622,7 +1484,6 @@ header {
   font-weight: 900; 
   margin: 6px 0 8px; 
   line-height: 1.4; 
-  color: var(--ink); 
 }
 
 .pd-rating { 
@@ -1633,12 +1494,6 @@ header {
   color: var(--text-soft); 
   font-weight: 700; 
   margin-bottom: 12px; 
-}
-
-.pd-rating svg { 
-  width: 12px; 
-  height: 12px; 
-  color: var(--gold); 
 }
 
 .pd-price-row { 
@@ -1660,16 +1515,6 @@ header {
   text-decoration: line-through; 
 }
 
-.pd-discount { 
-  background: var(--surface); 
-  color: var(--accent); 
-  font-weight: 800; 
-  font-size: 12px; 
-  padding: 4px 10px; 
-  border-radius: 999px; 
-  border: 1px solid var(--line); 
-}
-
 .pd-stock { 
   display: inline-flex; 
   align-items: center; 
@@ -1678,10 +1523,6 @@ header {
   font-weight: 800; 
   font-size: 12.5px; 
   margin: 6px 0 16px; 
-}
-
-.pd-stock.out { 
-  color: var(--red); 
 }
 
 .pd-tabs { 
@@ -1729,13 +1570,6 @@ header {
   margin-bottom: 14px;
 }
 
-.star-rating-box h4 {
-  margin: 0 0 8px;
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--rose-deep);
-}
-
 .star-rating-row {
   display: flex;
   align-items: center;
@@ -1747,14 +1581,11 @@ header {
 .star-btn {
   font-size: 30px;
   color: #D1D5DB;
-  transition: transform .15s, color .15s;
   cursor: pointer;
-  line-height: 1;
 }
 
-.star-btn.hovered, .star-btn.active {
+.star-btn.active {
   color: var(--gold);
-  transform: scale(1.15);
 }
 
 .pd-qty-row { 
@@ -1800,7 +1631,6 @@ header {
   align-items: center; 
   justify-content: center; 
   gap: 8px; 
-  box-shadow: 0 4px 16px rgba(0,0,0,0.1); 
 }
 
 /* ==========================================================
@@ -1825,11 +1655,6 @@ header {
   justify-content: center; 
   overflow: hidden; 
   border: 1px solid var(--line); 
-}
-
-.cart-item .thumb svg { 
-  width: 32px; 
-  height: 32px; 
 }
 
 .cart-item .thumb img { 
@@ -1897,11 +1722,6 @@ header {
   padding: 8px 0; 
 }
 
-.summary-row.discount-row {
-  color: #16A34A;
-  font-weight: 800;
-}
-
 .summary-row.total { 
   font-weight: 900; 
   font-size: 17.5px; 
@@ -1924,7 +1744,6 @@ header {
   justify-content: center; 
   gap: 8px; 
   margin-top: 18px; 
-  box-shadow: 0 4px 16px rgba(0,0,0,0.1); 
 }
 
 .autofill-indicator {
@@ -2043,23 +1862,6 @@ header {
   color: var(--text-soft); 
 }
 
-.sync-indicator { 
-  display: inline-flex; 
-  align-items: center; 
-  gap: 6px; 
-  font-size: 11.5px; 
-  font-weight: 700; 
-  color: var(--green); 
-  margin-top: 4px; 
-}
-
-.sync-dot { 
-  width: 8px; 
-  height: 8px; 
-  border-radius: 50%; 
-  background: var(--green); 
-}
-
 .auth-btn-google { 
   width: 100%; 
   background: #fff; 
@@ -2073,19 +1875,6 @@ header {
   align-items: center; 
   justify-content: center; 
   gap: 12px; 
-  box-shadow: 0 3px 10px rgba(0,0,0,0.06); 
-}
-
-.auth-btn-logout { 
-  width: 100%; 
-  background: #FEE2E2; 
-  color: var(--red); 
-  font-weight: 800; 
-  font-size: 13.5px; 
-  padding: 12px; 
-  border-radius: 999px; 
-  text-align: center; 
-  margin-top: 10px; 
 }
 
 /* ==========================================================
@@ -2152,23 +1941,15 @@ header {
 .welcome-code-box button { background: var(--accent); color: #fff; font-weight: 800; font-size: 11.5px; padding: 6px 12px; border-radius: 8px; }
 .welcome-action-btn { width: 100%; background: var(--accent); color: #fff; font-weight: 900; font-size: 14px; padding: 13px; border-radius: 999px; }
 
-.consult-modal-card { max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
 .consult-header { padding: 16px 20px 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
 .consult-badge-pill { display: inline-block; background: var(--surface); color: var(--accent); font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 999px; margin-bottom: 4px; }
-.consult-body { padding: 18px 20px; overflow-y: auto; flex: 1; text-align: right; }
-.consult-toggle-group { display: flex; gap: 8px; }
-.consult-toggle-btn { flex: 1; padding: 9px 6px; border: 1.5px solid var(--line); border-radius: 12px; background: #fff; font-size: 12.5px; font-weight: 700; color: var(--ink); cursor: pointer; text-align: center; transition: all .15s; }
-.consult-toggle-btn.active { border-color: var(--accent); background: var(--surface); color: var(--rose-deep); font-weight: 800; }
-.consult-submit-btn { width: 100%; background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); color: #fff; font-weight: 900; font-size: 14.5px; padding: 13px; border-radius: 999px; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 14px; }
+.consult-body { padding: 18px 20px; overflow-y: auto; text-align: right; }
+.consult-submit-btn { width: 100%; background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); color: #fff; font-weight: 900; font-size: 14.5px; padding: 13px; border-radius: 999px; margin-top: 14px; }
 
 .notif-list { padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
 .notif-item { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 12px 14px; text-align: right; }
-.notif-item-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-.notif-item-title { font-weight: 800; font-size: 13.5px; color: var(--rose-deep); }
-.notif-item-time { font-size: 10.5px; color: var(--text-soft); }
 
 .success-icon-badge { width: 72px; height: 72px; border-radius: 50%; background: #DCFCE7; color: #16A34A; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 34px; }
-.success-actions { display: flex; flex-direction: column; gap: 8px; }
 
 .iab-icon { width: 64px; height: 64px; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; border: 1.5px solid var(--line); color: var(--accent); }
 .iab-step { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--surface); border-radius: 12px; margin-bottom: 8px; font-size: 13px; font-weight: 700; color: var(--ink); }
@@ -2188,7 +1969,7 @@ header {
 .receipt-print-area {
   background: #fff;
   color: #000;
-  font-family: 'IBM Plex Mono', 'Cairo', monospace;
+  font-family: 'IBM Plex Mono', monospace;
   font-size: 12px;
   line-height: 1.4;
   padding: 10px 4px;
@@ -2199,12 +1980,6 @@ header {
   border-bottom: 1.5px dashed #000;
   padding-bottom: 8px;
   margin-bottom: 8px;
-}
-
-.receipt-header h3 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 900;
 }
 
 .receipt-table {
@@ -2364,13 +2139,8 @@ header {
   cursor: pointer; 
 }
 
-.pd-back svg { 
-  width: 18px; 
-  height: 18px; 
-}
-
 /* ==========================================================
-   ADMIN PANEL VIEW STYLES
+   ADMIN PANEL VIEW STYLES (لوحة تحكم الصيدلية)
    ========================================================== */
 .admin-nav-header { background: #111827; color: #fff; padding: 14px 0; border-bottom: 1px solid #374151; position: sticky; top: 0; z-index: 100; }
 .admin-nav-wrap { display: flex; align-items: center; justify-content: space-between; }
@@ -2431,9 +2201,6 @@ header {
 .log-table th { background: #F3F4F6; padding: 8px 10px; font-weight: 800; border-bottom: 1px solid var(--line); color: var(--ink); }
 .log-table td { padding: 9px 10px; border-bottom: 1px solid var(--line); color: var(--text-soft); }
 .log-badge { display: inline-block; padding: 2px 7px; border-radius: 6px; font-size: 10.5px; font-weight: 800; background: var(--surface); color: var(--accent); border: 1px solid var(--line); }
-
-.admin-copy-code-box { background: #111827; color: #F3F4F6; border-radius: var(--radius-lg); padding: 22px; margin-bottom: 24px; text-align: center; border: 1px solid #374151; }
-.btn-copy-full-code { background: linear-gradient(135deg, #10B981 0%, #059669 100%); color: #fff; font-weight: 900; font-size: 14px; padding: 12px 28px; border-radius: 999px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
 
 /* ==========================================================
    TOAST NOTIFICATION
