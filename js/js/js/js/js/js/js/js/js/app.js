@@ -1,7 +1,10 @@
 /* ==========================================================
    SaaS Multi-Tenant Engine — js/app.js
-   Version: 4.1.0 (Master Application Coordinator)
+   Version: 4.2.0 (Master Zero-Crash Application Coordinator)
    ========================================================== */
+
+// 🌟 تهيئة كائن window.App في السطر الأول لمنع أي خطأ في المتصفح
+window.App = window.App || {};
 
 import { 
   db, auth, isFirebaseConfigured, dbPaths, currentPharmacyId, 
@@ -851,7 +854,7 @@ export function renderAccountView() {
 
   const user = auth ? auth.currentUser : null;
   if (user) {
-    const isAdmin = isCurrentUserAdmin();
+    const isAdmin = isCurrentUserAdmin(pharmacyProfile, currentStaffData);
     const cleanPhoto = sanitizeUrl(user.photoURL);
     container.innerHTML = `
       <div class="account-card">
@@ -1016,8 +1019,8 @@ export function showToast(msg) {
   toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
 }
 
-// ================= 5. GLOBAL BRIDGE (نافذة الربط المباشرة مع HTML) =================
-window.App = {
+// ================= 5. GLOBAL BRIDGE & BINDINGS =================
+Object.assign(window.App, {
   showView,
   addToCart,
   addBundleToCart,
@@ -1063,7 +1066,7 @@ window.App = {
       showToast('تم تحديث السعر ✓');
     }
   },
-  openAdminQuickEditModal: (id) => {
+  openAdminQuickEditModal: () => {
     window.location.href = getTenantUrl('admin.html');
   },
   archiveProductConfirm: async (id, name) => {
@@ -1073,7 +1076,16 @@ window.App = {
       showToast('تم نقل المنتج للمحذوفات 🗑️');
     }
   }
-};
+});
+
+// تصدير دوال عامة موازية لضمان عمل أي استدعاء مباشر في HTML
+window.showView = showView;
+window.openProduct = openProduct;
+window.addToCart = addToCart;
+window.openCategory = openCategory;
+window.openMenu = openMenu;
+window.closeMenu = closeMenu;
+window.openWhatsapp = openWhatsapp;
 
 // تهيئة التطبيق فور تحميل الصفحة
 window.addEventListener('DOMContentLoaded', () => {
