@@ -190,7 +190,7 @@
       </div>
     </div>
 
-    <!-- 3. IMPORT FROM MASTER CATALOG (WITH DYNAMIC CUSTOM CATEGORY '+' CREATOR) -->
+    <!-- 3. IMPORT FROM MASTER CATALOG (2-TIER CLASSIFICATION + CUSTOM '+' CATEGORY) -->
     <div id="adminSecImport" style="display:none;">
       <div class="admin-fieldset" style="border-color:#10B981; background:#F0FDF4;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
@@ -291,6 +291,7 @@
             </div>
           </div>
 
+          <!-- DIRECT DEVICE IMAGE UPLOAD FIELD -->
           <div class="form-field">
             <label>صورة المنتج (اختيار مباشر من المعرض / الكاميرا)</label>
             <div style="display:flex; gap:10px; align-items:center;">
@@ -712,15 +713,27 @@
       </div>
     </div>
 
-    <!-- 15. DESIGN & BRANDING -->
+    <!-- 15. DESIGN & BRANDING (WITH DIRECT PHARMACY LOGO & BANNER UPLOAD) -->
     <div id="adminSecDesign" style="display:none;">
       <form onsubmit="handleSaveCustomization(event)">
         <fieldset class="admin-fieldset">
-          <legend>🎨 اسم الصيدلية واللون الرئيسي (Brand Identity)</legend>
+          <legend>🎨 اسم الصيدلية وشعارها واللون الرئيسي (Brand Identity)</legend>
           <div class="form-field">
             <label>اسم الصيدلية الرسمي *</label>
             <input type="text" id="adminPharmacyNameInput" placeholder="مثال: صيدلية القطن" required>
           </div>
+          
+          <!-- DIRECT PHARMACY LOGO UPLOAD (اختيار شعار الصيدلية من المعرض) -->
+          <div class="form-field">
+            <label>شعار الصيدلية (Logo) - اختيار مباشر من المعرض / الكاميرا</label>
+            <input type="file" accept="image/*" onchange="uploadDirectImageFile(this, 'adminPharmacyLogoInput', 'adminPharmacyLogoPreviewEl', 'adminPharmacyLogoPreviewBox')" style="width:100%; padding:8px; border:1.5px dashed var(--line); border-radius:12px; background:#fff; font-size:12px;">
+            <input type="hidden" id="adminPharmacyLogoInput" value="">
+            <div id="adminPharmacyLogoPreviewBox" style="margin-top:8px; display:none; align-items:center; gap:10px;">
+              <img id="adminPharmacyLogoPreviewEl" src="" style="height:50px; width:50px; object-fit:cover; border-radius:50%; border:1.5px solid var(--line);" alt="Logo Preview">
+              <span style="font-size:11px; color:#16A34A; font-weight:800;">✅ تم تجهيز الشعار بنجاح</span>
+            </div>
+          </div>
+
           <div style="display:flex; align-items:center; justify-content:space-between; gap:14px; background:#F9FAFB; padding:12px 14px; border-radius:12px; margin-top:8px;">
             <div>
               <div style="font-weight:800; font-size:13.5px; color:var(--ink);">اللون الرئيسي للموقع (Theme Color)</div>
@@ -975,7 +988,7 @@
     </div>
   </div>
 
-  <!-- ADD CUSTOM CATEGORY MODAL (نافذة إضافة قسم مخصص جديد) -->
+  <!-- ADD CUSTOM CATEGORY MODAL -->
   <div class="admin-quick-modal-overlay" id="addCustomCategoryModal">
     <div class="admin-quick-card" style="max-width: 460px;">
       <div class="consult-header">
@@ -1085,7 +1098,6 @@
     window.tenantCachedMasterCatalog = [];
     window.tenantActiveMainCategory = 'all';
 
-    // إدارة الأقسام المخصصة المحفوظة محلياً للصيدلية
     function getSavedCustomCategories() {
       try {
         return JSON.parse(localStorage.getItem('saas_custom_categories_' + currentPharmacyId) || '[]');
@@ -1191,7 +1203,6 @@
       selectTenantMainCategory(window.tenantActiveMainCategory);
     }
 
-    // فاحص تصنيف ذكي وشامل يطابق الأقسام المخصصة والأصلية الـ 47
     function getItemClassification(item) {
       const cat = (item.category || '').toLowerCase().trim();
       const subCat = (item.subCategory || item.sub_category || '').toLowerCase().trim();
@@ -1201,7 +1212,7 @@
       const stage = (item.milkStage || '').toLowerCase().trim();
       const formula = (item.specialFormulaTag || item.formulaType || '').toLowerCase();
 
-      // فحص الأقسام المخصصة المضافة من قبل الصيدلي أولاً
+      // فحص الأقسام المخصصة أولاً
       const customList = getSavedCustomCategories();
       for (const customCat of customList) {
         const matches = (customCat.keywords || []).some(kw => 
@@ -1223,6 +1234,7 @@
         else if (formula.includes('lf') || name.includes('lf') || name.includes('lactose free') || name.includes('خالي') || subCat.includes('lactose free')) sub = "Special Care - Lactose Free";
         else if (formula.includes('comfort') || formula.includes('ec') || name.includes('مغص') || subCat.includes('comfort') || subCat.includes('colic')) sub = "Special Care - Colic/Constipation";
         else if (formula.includes('pepti') || formula.includes('ha') || name.includes('حساسية') || subCat.includes('allergy')) sub = "Special Care - Allergy/Hypoallergenic";
+        else if (name.includes('pre') || name.includes('premature') || formula.includes('premature')) sub = "Stage 1 (0-6M)";
         else if (name.includes('pediasure') || name.includes('evoshure') || name.includes('بدياشور') || subCat.includes('supplement')) sub = "Nutritional Supplement (1-10Y)";
         return { main: 'baby_milk', sub: sub };
       }
