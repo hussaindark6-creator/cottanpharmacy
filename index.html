@@ -7,25 +7,67 @@
   <meta name="theme-color" content="#ffffff">
   <title>متجر الصيدلية | منصة العناية والصحة</title>
 
-  <!-- 🩺 كاشف الأخطاء المباشر على شاشة الآيباد -->
-  <script>
-    window.addEventListener('error', function(e) {
-      if (e.message) {
-        alert('🚨 تم كشف الخطأ في الكود:\nالرسالة: ' + e.message + '\nالملف: ' + (e.filename || 'غير محدد') + '\nالسطر: ' + e.lineno);
-      } else if (e.target && e.target.src) {
-        alert('🚨 فشل تحميل ملف من السيرفر (404 Not Found):\n' + e.target.src);
-      }
-    }, true);
-
-    window.addEventListener('unhandledrejection', function(e) {
-      alert('🚨 خطأ اتصال أو استدعاء سحابي:\n' + (e.reason ? (e.reason.message || e.reason) : e));
-    });
-  </script>
-
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Embedded Critical Styles -->
+  <style>
+    :root {
+      --ink: #1F2937; --text-soft: #6B7280; --paper: #FFFFFF; --surface: #FFF0F3;
+      --surface-hover: #FFE4EA; --line: #FFE4E8; --rose: #FFB7C5; --rose-deep: #E85D8A;
+      --accent: #E85D8A; --accent-dark: #C7436E; --gold: #F2B807; --green: #16A34A; --red: #DC2626;
+      --radius-lg: 20px; --radius-md: 16px; --radius-sm: 12px;
+      --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.05);
+      --shadow-hover: 0 10px 26px rgba(0, 0, 0, 0.12);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; padding: 0; background: #FFFFFF; color: var(--ink); font-family: 'Cairo', sans-serif; line-height: 1.6; padding-bottom: 84px; min-height: 100vh; }
+    .mono { font-family: 'IBM Plex Mono', monospace; }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+    img { max-width: 100%; display: block; }
+    svg { max-width: 100%; height: auto; vertical-align: middle; }
+    .wrap { max-width: 540px; margin: 0 auto; padding: 0 16px; }
+    @media (min-width: 768px) { .wrap { max-width: 820px; } }
+    @media (min-width: 1024px) { .wrap { max-width: 1100px; } }
+    
+    .view { display: none !important; }
+    .view.active { display: block !important; }
+
+    /* إخفاء صارم لكافة النوافذ المنبثقة افتراضياً */
+    .notif-modal-overlay, .success-modal-overlay, .iab-modal, .consult-modal-overlay, 
+    .welcome-modal-overlay, .receipt-modal-overlay, .storefront-freeze-overlay {
+      display: none !important;
+      position: fixed;
+      inset: 0;
+      z-index: 150;
+      background: rgba(31, 41, 55, 0.65);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .notif-modal-overlay.open, .success-modal-overlay.open, .iab-modal.open, 
+    .consult-modal-overlay.open, .welcome-modal-overlay.open, .receipt-modal-overlay.open, 
+    .storefront-freeze-overlay.open {
+      display: flex !important;
+    }
+
+    .storefront-freeze-overlay {
+      z-index: 999999 !important;
+      background: rgba(17, 24, 39, 0.96) !important;
+      backdrop-filter: blur(10px) !important;
+    }
+
+    .menu-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 70; opacity: 0; pointer-events: none; transition: opacity .25s; }
+    .menu-overlay.open { opacity: 1; pointer-events: auto; }
+    .menu-drawer { position: fixed; top: 0; bottom: 0; right: 0; width: min(300px, 82vw); background: #fff; z-index: 80; transform: translateX(100%); transition: transform .3s ease; padding: 24px 18px; overflow-y: auto; display: flex; flex-direction: column; }
+    .menu-drawer.open { transform: translateX(0); }
+    .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--accent); color: #fff; padding: 12px 24px; border-radius: 999px; font-weight: 800; font-size: 13px; z-index: 200; opacity: 0; transition: all .25s; pointer-events: none; }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  </style>
 
   <!-- Complete External Stylesheet -->
   <link rel="stylesheet" href="style.css">
@@ -35,21 +77,11 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
-
-  <!-- Cloudflare Turnstile & Analytics -->
-  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-QC29GK2MDW"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-QC29GK2MDW');
-  </script>
 </head>
 <body>
 
-  <!-- STOREFRONT FREEZE OVERLAY -->
-  <div class="storefront-freeze-overlay" id="storefrontFreezeModal">
+  <!-- STOREFRONT FREEZE OVERLAY (مخفي افتراضياً) -->
+  <div class="storefront-freeze-overlay" id="storefrontFreezeModal" style="display: none !important;">
     <div class="welcome-card" style="border: 1.5px solid #EF4444; max-width: 420px; background: #fff; text-align: center;">
       <div style="font-size: 52px; margin-bottom: 12px;">🔒</div>
       <h3 style="color: #DC2626; font-size: 20px; font-weight: 900; margin: 0 0 8px;">المتجر متوقف مؤقتاً</h3>
@@ -74,34 +106,34 @@
   </div>
 
   <!-- SIDE MENU DRAWER OVERLAY -->
-  <div class="menu-overlay" id="menuOverlay" onclick="window.App.closeMenu()"></div>
+  <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
 
   <!-- SIDE MENU DRAWER -->
   <aside class="menu-drawer" id="menuDrawer">
     <div class="drawer-header">
       <h3 id="drawerLogoTitle">الصيدلية</h3>
-      <button onclick="window.App.closeMenu()" class="icon-btn" aria-label="إغلاق">
+      <button onclick="closeMenu()" class="icon-btn" aria-label="إغلاق">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
     <div class="menu-links">
-      <button class="menu-link" onclick="window.App.showView('home')">
+      <button class="menu-link" onclick="showView('home')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/></svg>
         الرئيسية
       </button>
-      <button class="menu-link" onclick="window.App.showView('categories')">
+      <button class="menu-link" onclick="showView('categories')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
         الأقسام والتصنيفات
       </button>
-      <button class="menu-link" onclick="window.App.showView('bundles')">
+      <button class="menu-link" onclick="showView('bundles')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
         حزم وبكجات التوفير 🎁
       </button>
-      <button class="menu-link" onclick="window.App.showView('orders')">
+      <button class="menu-link" onclick="showView('orders')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         طلباتي 📦
       </button>
-      <button class="menu-link" id="drawerConsultBtn" onclick="document.getElementById('consultModal').classList.add('open'); window.App.closeMenu();">
+      <button class="menu-link" id="drawerConsultBtn" onclick="document.getElementById('consultModal').classList.add('open'); closeMenu();">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M12 7v6M9 10h6"/></svg>
         استشر الصيدلي مجاناً 🩺
       </button>
@@ -109,15 +141,15 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         لوحة تحكم المشرف ⚙️
       </a>
-      <button class="menu-link" onclick="window.App.showView('offers')">
+      <button class="menu-link" onclick="showView('offers')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12 12 20l-8-8V4h8Z"/><circle cx="8" cy="8" r="1.4" fill="currentColor" stroke="none"/></svg>
         العروض والخصومات
       </button>
-      <button class="menu-link" onclick="window.App.showView('wishlist')">
+      <button class="menu-link" onclick="showView('wishlist')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.5-4.9-10-9.5C.5 7.8 2.7 4 6.5 4 9 4 11 5.5 12 7c1-1.5 3-3 5.5-3 3.8 0 6 3.8 4.5 7.5C19.5 16.1 12 21 12 21Z"/></svg>
         المفضلة
       </button>
-      <button class="menu-link" onclick="window.App.showView('account')">
+      <button class="menu-link" onclick="showView('account')">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>
         حسابي والتزامن
       </button>
@@ -147,11 +179,11 @@
   <!-- MAIN HEADER -->
   <header id="mainHeader">
     <div class="wrap nav">
-      <button class="icon-btn" onclick="window.App.openMenu()" aria-label="القائمة">
+      <button class="icon-btn" onclick="openMenu()" aria-label="القائمة">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
       </button>
       
-      <div class="logo-block" onclick="window.App.showView('home')">
+      <div class="logo-block" onclick="showView('home')">
         <span class="logo-text" id="headerLogoText">الصيدلية</span>
         <span class="logo-mark" id="headerLogoMark">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent, #E85D8A)" stroke-width="2"><circle cx="12" cy="8" r="3"/><circle cx="8" cy="10" r="3"/><circle cx="16" cy="10" r="3"/><path d="M12 13v7"/></svg>
@@ -165,7 +197,7 @@
         </button>
 
         <div class="user-header-chip" id="userHeaderChip">
-          <div class="user-chip-main" onclick="window.App.showView('account')" title="حسابي">
+          <div class="user-chip-main" onclick="showView('account')" title="حسابي">
             <div class="user-chip-avatar" id="userChipAvatar">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px;"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>
             </div>
@@ -173,7 +205,7 @@
           </div>
         </div>
 
-        <button class="icon-btn" onclick="window.App.showView('cart')" aria-label="السلة">
+        <button class="icon-btn" onclick="showView('cart')" aria-label="السلة">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h2l2.4 12.4a2 2 0 0 0 2 1.6h8.4a2 2 0 0 0 2-1.6L22 8H6"/><circle cx="9" cy="21" r="1.4" fill="currentColor" stroke="none"/><circle cx="18" cy="21" r="1.4" fill="currentColor" stroke="none"/></svg>
           <span class="badge-count" id="cartBadge" style="display:none;">0</span>
         </button>
@@ -183,7 +215,7 @@
     <div class="wrap search-wrap">
       <div class="search-bar">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-        <input type="text" id="searchInput" placeholder="ابحثِ عن اسم الدواء، المادة الفعالة، الماركة..." oninput="window.App.onSearch(this.value)">
+        <input type="text" id="searchInput" placeholder="ابحثِ عن اسم الدواء، المادة الفعالة، الماركة..." oninput="onSearch(this.value)">
       </div>
     </div>
   </header>
@@ -191,7 +223,7 @@
   <!-- ============ 1. HOME VIEW ============ -->
   <main class="view active" id="view-home">
     <div class="wrap hero-wrap">
-      <div class="qutn-hybrid-banner" onclick="window.App.showView('categories')">
+      <div class="qutn-hybrid-banner" onclick="showView('categories')">
         <div class="banner-text-col">
           <h1 class="main-title" id="heroMainTitle">متجر الصيدلية</h1>
           <p class="sub-title" id="heroSubTitle">نحن هنا لتحسين صحتكم وجمالكم</p>
@@ -220,7 +252,7 @@
     <!-- Product Bundles Section -->
     <section class="wrap section" id="homeBundlesSection" style="display:none;">
       <div class="section-head">
-        <span class="see-all" onclick="window.App.showView('bundles')">عرض كل البكجات</span>
+        <span class="see-all" onclick="showView('bundles')">عرض كل البكجات</span>
         <h2>🎁 حزم وبكجات التوفير المميزة</h2>
       </div>
       <div class="bundle-grid" id="homeBundlesGrid"></div>
@@ -229,7 +261,7 @@
     <!-- Shop by Brand Section -->
     <section class="wrap section">
       <div class="section-head">
-        <span class="see-all" onclick="window.App.openBestSellers()">عرض الكل</span>
+        <span class="see-all" onclick="openBestSellers()">عرض الكل</span>
         <h2>تسوق حسب الماركة</h2>
       </div>
       <div class="brand-strip" id="brandStrip"></div>
@@ -238,7 +270,7 @@
     <!-- Best Sellers Section -->
     <section class="wrap section">
       <div class="section-head">
-        <span class="see-all" onclick="window.App.openBestSellers()">عرض الكل</span>
+        <span class="see-all" onclick="openBestSellers()">عرض الكل</span>
         <h2 id="homeGridTitle">الأكثر مبيعاً 🔥</h2>
       </div>
       <div class="product-grid" id="bestSellersGrid"></div>
@@ -253,7 +285,7 @@
   <!-- ============ 2. LISTING & SEARCH VIEW ============ -->
   <div class="view" id="view-listing">
     <div class="wrap">
-      <div class="pd-back" onclick="window.App.showView('home')">
+      <div class="pd-back" onclick="showView('home')">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
         رجوع للرئيسية
       </div>
@@ -280,7 +312,7 @@
   <!-- ============ 4. BUNDLES VIEW ============ -->
   <div class="view" id="view-bundles">
     <div class="wrap">
-      <div class="pd-back" onclick="window.App.showView('home')">
+      <div class="pd-back" onclick="showView('home')">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
         رجوع للرئيسية
       </div>
@@ -330,7 +362,7 @@
   <div class="view" id="view-product">
     <div class="wrap">
       <div style="display:flex; align-items:center; justify-content:space-between; padding-top:6px;">
-        <div class="pd-back" onclick="window.App.goBackFromProduct()">
+        <div class="pd-back" onclick="goBackFromProduct()">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
           رجوع
         </div>
@@ -347,36 +379,19 @@
       </div>
 
       <div class="pd-tabs">
-        <button class="pd-tab active" onclick="window.App.switchPdTab('desc')">الوصف الطبي</button>
-        <button class="pd-tab" onclick="window.App.switchPdTab('ing')">المكونات الفعالة</button>
-        <button class="pd-tab" onclick="window.App.switchPdTab('use')">طريقة الاستخدام</button>
-        <button class="pd-tab" onclick="window.App.switchPdTab('reviews')">التقييمات ⭐</button>
+        <button class="pd-tab active" onclick="switchPdTab('desc')">الوصف الطبي</button>
+        <button class="pd-tab" onclick="switchPdTab('ing')">المكونات الفعالة</button>
+        <button class="pd-tab" onclick="switchPdTab('use')">طريقة الاستخدام</button>
       </div>
       <div class="pd-tab-content active" id="pdTabDesc"></div>
       <div class="pd-tab-content" id="pdTabIng"></div>
       <div class="pd-tab-content" id="pdTabUse"></div>
 
-      <!-- Star Quick Rating Tab -->
-      <div class="pd-tab-content" id="pdTabReviews">
-        <div class="star-rating-box">
-          <h4>تقييم المنتج الفعلي ⭐</h4>
-          <p style="font-size:12px; color:var(--text-soft); margin:0 0 8px;">اضغطي على النجمة لتقييم المنتج بنقرة واحدة:</p>
-          <div class="star-rating-row" id="starRatingRow">
-            <span class="star-btn" data-star="1" onclick="window.App.rateProductInstant(1)">★</span>
-            <span class="star-btn" data-star="2" onclick="window.App.rateProductInstant(2)">★</span>
-            <span class="star-btn" data-star="3" onclick="window.App.rateProductInstant(3)">★</span>
-            <span class="star-btn" data-star="4" onclick="window.App.rateProductInstant(4)">★</span>
-            <span class="star-btn" data-star="5" onclick="window.App.rateProductInstant(5)">★</span>
-          </div>
-          <div id="instantRatingMsg" style="font-size:11.5px; font-weight:800; color:var(--accent); margin-top:8px;"></div>
-        </div>
-      </div>
-
       <div class="pd-qty-row">
         <div class="pd-qty-stepper">
-          <button onclick="window.App.changePdQty(-1)">−</button>
+          <button onclick="changePdQty(-1)">−</button>
           <span class="val mono" id="pdQtyVal">1</span>
-          <button onclick="window.App.changePdQty(1)">+</button>
+          <button onclick="changePdQty(1)">+</button>
         </div>
         <button class="pd-add-btn" id="pdAddBtn">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h2l2.4 12.4a2 2 0 0 0 2 1.6h8.4a2 2 0 0 0 2-1.6L22 8H6"/></svg>
@@ -403,12 +418,6 @@
       </div>
       <div id="cartItemsList"></div>
 
-      <div class="promo-input-group" id="cartPromoGroup">
-        <input type="text" id="cartPromoCodeInput" placeholder="أدخلي كود الخصم (مثال: SAVE10)">
-        <button type="button" onclick="window.App.applyPromoCode(document.getElementById('cartPromoCodeInput').value)">تطبيق الكود</button>
-      </div>
-      <div id="appliedPromoBadge" style="display:none;"></div>
-
       <div id="cartSummaryBlock"></div>
     </div>
   </div>
@@ -416,7 +425,7 @@
   <!-- ============ 10. CHECKOUT VIEW ============ -->
   <div class="view" id="view-checkout">
     <div class="wrap">
-      <div class="pd-back" onclick="window.App.showView('cart')">
+      <div class="pd-back" onclick="showView('cart')">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
         رجوع للسلة
       </div>
@@ -427,7 +436,7 @@
 
       <div id="autofillNoticeBox" style="display:none;" class="autofill-indicator">
         <span>✨ تم ملء بياناتكِ المحفوظة تلقائياً</span>
-        <button type="button" onclick="window.App.clearSavedCustomerData()" style="color:#DC2626; font-size:11.5px; font-weight:800; text-decoration:underline;">مسح/تعديل</button>
+        <button type="button" onclick="clearSavedCustomerData()" style="color:#DC2626; font-size:11.5px; font-weight:800; text-decoration:underline;">مسح/تعديل</button>
       </div>
 
       <div class="form-field">
@@ -446,12 +455,12 @@
       <div class="form-field">
         <label>طريقة التوصيل</label>
         <div class="delivery-options">
-          <div class="delivery-opt selected" id="delStandard" onclick="window.App.selectDelivery('standard')">توصيل عادي<br><span style="font-weight:400;">24-48 ساعة</span></div>
-          <div class="delivery-opt" id="delExpress" onclick="window.App.selectDelivery('express')">توصيل سريع<br><span style="font-weight:400;">خلال يوم</span></div>
+          <div class="delivery-opt selected" id="delStandard" onclick="selectDelivery('standard')">توصيل عادي<br><span style="font-weight:400;">24-48 ساعة</span></div>
+          <div class="delivery-opt" id="delExpress" onclick="selectDelivery('express')">توصيل سريع<br><span style="font-weight:400;">خلال يوم</span></div>
         </div>
       </div>
       <div id="checkoutSummaryBlock"></div>
-      <button class="checkout-btn" id="confirmOrderBtn" onclick="window.App.executeAtomicOrderCheckout()">
+      <button class="checkout-btn" id="confirmOrderBtn" onclick="executeAtomicOrderCheckout()">
         تأكيد الطلب
       </button>
     </div>
@@ -469,46 +478,7 @@
   </div>
 
   <!-- ============ MODALS & POPUPS ============ -->
-  <!-- 1. Smart Welcome Discount Popup -->
-  <div class="welcome-modal-overlay" id="welcomeOfferModal">
-    <div class="welcome-card">
-      <button class="welcome-close-btn" onclick="document.getElementById('welcomeOfferModal').classList.remove('open')">✕</button>
-      <div style="font-size:44px; margin-bottom:6px;">🌸</div>
-      <h3>أهلاً بكِ معنا!</h3>
-      <p>يسعدنا انضمامكِ إلينا. احصلي على خصم فوري على طلبكِ الأول باستخدام الكود أدناه:</p>
-      <div class="welcome-code-box">
-        <span class="mono" id="welcomeCodeText">QUTN10</span>
-        <button type="button" onclick="navigator.clipboard.writeText('QUTN10');">نسخ الكود 📋</button>
-      </div>
-      <button class="welcome-action-btn" onclick="document.getElementById('welcomeOfferModal').classList.remove('open'); window.App.showView('home');">تسوقي الآن واستفيدي من الخصم ✨</button>
-    </div>
-  </div>
-
-  <!-- 2. In-App Browser Guidance Modal -->
-  <div class="iab-modal" id="iabModal">
-    <div class="iab-content">
-      <div class="iab-icon">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-      </div>
-      <h3 class="iab-title">فتح في متصفح خارجي</h3>
-      <div class="iab-desc">
-        تطبيقات مثل (تلغرام، إنستغرام، تيك توك) تمنع تسجيل الدخول عبر Google بداخلها لأسباب أمنية. للاستمرار بسهولة:
-        <div style="margin-top:12px;">
-          <div class="iab-step">
-            <div class="iab-step-num">1</div>
-            <div>اضغطي على القائمة أو الثلاث نقاط <strong>(•••)</strong> أعلى الشاشة</div>
-          </div>
-          <div class="iab-step">
-            <div class="iab-step-num">2</div>
-            <div>اختاري <strong>فتح في المتصفح / Open in Chrome أو Safari</strong></div>
-          </div>
-        </div>
-      </div>
-      <button class="iab-close-btn" onclick="document.getElementById('iabModal').classList.remove('open')">حسناً، فهمت</button>
-    </div>
-  </div>
-
-  <!-- 3. Notifications Modal -->
+  <!-- 1. Notifications Modal -->
   <div class="notif-modal-overlay" id="notifModal">
     <div class="notif-modal-card">
       <div class="consult-header">
@@ -524,20 +494,20 @@
     </div>
   </div>
 
-  <!-- 4. Order Success Modal -->
+  <!-- 2. Order Success Modal -->
   <div class="success-modal-overlay" id="orderSuccessModal">
     <div class="success-card">
       <div class="success-icon-badge">🌸</div>
       <h3>تم إتمام الطلب بنجاح!</h3>
       <p id="successModalMsg">شكراً لثقتكِ بنا. تم توثيق طلبكِ بنجاح، وجاري التوجيه للواتساب لتأكيد الشحن.</p>
       <div class="success-actions">
-        <button type="button" class="pd-add-btn" onclick="document.getElementById('orderSuccessModal').classList.remove('open'); window.App.showView('orders');">📦 متابعة طلباتي</button>
-        <button type="button" style="padding:10px; font-weight:800; color:var(--text-soft);" onclick="document.getElementById('orderSuccessModal').classList.remove('open'); window.App.showView('home');">العودة للرئيسية</button>
+        <button type="button" class="pd-add-btn" onclick="document.getElementById('orderSuccessModal').classList.remove('open'); showView('orders');">📦 متابعة طلباتي</button>
+        <button type="button" style="padding:10px; font-weight:800; color:var(--text-soft);" onclick="document.getElementById('orderSuccessModal').classList.remove('open'); showView('home');">العودة للرئيسية</button>
       </div>
     </div>
   </div>
 
-  <!-- 5. Pharmacist Direct Consultation Modal -->
+  <!-- 3. Pharmacist Direct Consultation Modal -->
   <div class="consult-modal-overlay" id="consultModal">
     <div class="consult-modal-card">
       <div class="consult-header">
@@ -550,7 +520,7 @@
         </button>
       </div>
       <div class="consult-body">
-        <form id="consultForm" onsubmit="event.preventDefault(); window.App.openWhatsapp(); document.getElementById('consultModal').classList.remove('open');">
+        <form id="consultForm" onsubmit="event.preventDefault(); openWhatsapp(); document.getElementById('consultModal').classList.remove('open');">
           <div class="form-field">
             <label>الاسم الكامل *</label>
             <input type="text" id="consultName" placeholder="مثال: سارة علي" required>
@@ -571,12 +541,12 @@
     </div>
   </div>
 
-  <!-- 6. 80mm THERMAL RECEIPT MODAL -->
+  <!-- 4. 80mm THERMAL RECEIPT MODAL -->
   <div class="receipt-modal-overlay" id="thermalReceiptModal">
     <div class="receipt-modal-card">
       <div class="no-print" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
         <h4 style="margin:0; font-weight:900;">🖨️ معاينة بوليصة الشحن (80mm)</h4>
-        <button onclick="window.App.closeReceiptModal()" style="font-weight:900; font-size:16px;">✕</button>
+        <button onclick="closeReceiptModal()" style="font-weight:900; font-size:16px;">✕</button>
       </div>
       
       <div class="receipt-print-area" id="receiptPrintArea">
@@ -624,27 +594,27 @@
 
   <!-- BOTTOM NAVIGATION BAR -->
   <nav class="bottom-nav">
-    <button class="bn-item" onclick="window.App.showView('account')" id="bn-account">
+    <button class="bn-item" onclick="showView('account')" id="bn-account">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>
       <span class="lbl" id="bnAccountLbl">حسابي</span>
     </button>
-    <button class="bn-item" onclick="window.App.showView('orders')" id="bn-orders">
+    <button class="bn-item" onclick="showView('orders')" id="bn-orders">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
       <span class="lbl">طلباتي</span>
     </button>
-    <button class="bn-item active" onclick="window.App.showView('home')" id="bn-home">
+    <button class="bn-item active" onclick="showView('home')" id="bn-home">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/></svg>
       <span class="lbl">الرئيسية</span>
     </button>
-    <button class="bn-item" onclick="window.App.showView('bundles')" id="bn-bundles">
+    <button class="bn-item" onclick="showView('bundles')" id="bn-bundles">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
       <span class="lbl">البكجات</span>
     </button>
-    <button class="bn-item" onclick="window.App.showView('categories')" id="bn-categories">
+    <button class="bn-item" onclick="showView('categories')" id="bn-categories">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
       <span class="lbl">الأقسام</span>
     </button>
-    <button class="bn-item" onclick="window.App.showView('cart')" id="bn-cart">
+    <button class="bn-item" onclick="showView('cart')" id="bn-cart">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h2l2.4 12.4a2 2 0 0 0 2 1.6h8.4a2 2 0 0 0 2-1.6L22 8H6"/><circle cx="9" cy="21" r="1.4" fill="currentColor" stroke="none"/><circle cx="18" cy="21" r="1.4" fill="currentColor" stroke="none"/></svg>
       <span class="lbl">السلة</span>
       <span class="badge-count" id="bnCartBadge" style="display:none;">0</span>
@@ -652,14 +622,14 @@
   </nav>
 
   <!-- WhatsApp Floating FAB -->
-  <button class="fab-whatsapp" onclick="window.App.openWhatsapp()" aria-label="واتساب">
+  <button class="fab-whatsapp" onclick="openWhatsapp()" aria-label="واتساب">
     <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.7 14.2c-.2.6-1.4 1.2-1.9 1.2-.5.1-1.1.1-1.8-.1-.4-.1-1-.3-1.7-.6-3-1.3-4.9-4.3-5.1-4.5-.1-.2-1.2-1.6-1.2-3s.8-2.2 1.1-2.5c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5.2.5.8 1.9.8 2.1.1.2.1.3 0 .5-.1.2-.1.3-.3.5-.1.2-.3.4-.4.5-.2.2-.3.4-.1.7.2.3.9 1.5 2 2.4 1.3 1.2 2.4 1.5 2.8 1.7.3.2.5.1.7-.1l.9-1c.2-.3.4-.2.7-.1l1.8.9c.3.1.5.2.5.4.1.2.1.7-.1 1.3Z"/></svg>
   </button>
 
   <!-- Toast Notification Box -->
   <div class="toast" id="toast"></div>
 
-  <!-- 🌟 تشغيل الموديول مع كاسر الكاش -->
-<script type="module" src="app.js"></script>
+  <!-- 🌟 تشغيل المحرك الرئيسي المستقل والمباشر -->
+  <script src="app.js"></script>
 </body>
 </html>
