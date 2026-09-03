@@ -1,12 +1,27 @@
 /* ==========================================================
    SaaS Multi-Tenant Engine — js/state.js
-   Version: 4.2.0 (Tenant-Isolated State & Pure Management)
+   Version: 4.4.0 (Crash-Safe State & Protected Storage)
    ========================================================== */
 
 import { currentPharmacyId } from './config.js';
 import { sanitizeText } from './security.js';
 
 export const getStorageKey = (key) => `saas_${currentPharmacyId}_${key}`;
+
+// 🛡️ دالة قراءة آمنة تمنع انهيار المتصفح لو كانت الذاكرة بها قيم تالفة
+function safeJSONParse(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw || raw === 'undefined' || raw === '[object Object]' || raw === 'null') {
+      return fallback;
+    }
+    const parsed = JSON.parse(raw);
+    return parsed !== null && parsed !== undefined ? parsed : fallback;
+  } catch (e) {
+    console.warn(`Safe Storage Reset for ${key}:`, e);
+    return fallback;
+  }
+}
 
 export let currentUser = null;
 export let currentStaffData = null;
@@ -28,10 +43,10 @@ export let bundles = [];
 export let notifications = [];
 export let staffMembers = [];
 
-export let cart = JSON.parse(localStorage.getItem(getStorageKey('cart')) || '{}');
-export let wishlist = new Set(JSON.parse(localStorage.getItem(getStorageKey('wishlist')) || '[]'));
-export let readNotifs = new Set(JSON.parse(localStorage.getItem(getStorageKey('read_notifs')) || '[]'));
-export let myOrders = JSON.parse(localStorage.getItem(getStorageKey('my_orders')) || '[]');
+export let cart = safeJSONParse(getStorageKey('cart'), {});
+export let wishlist = new Set(safeJSONParse(getStorageKey('wishlist'), []));
+export let readNotifs = new Set(safeJSONParse(getStorageKey('read_notifs'), []));
+export let myOrders = safeJSONParse(getStorageKey('my_orders'), []);
 
 export let currentView = 'home';
 export let listingMode = null, listingValue = null, listingCatActive = 'all';
@@ -42,15 +57,9 @@ export let isLowStockFilterActive = false;
 export let previousViewBeforeProduct = 'home';
 export let previousScrollBeforeProduct = 0;
 
-export let totalOrdersCount = 0;
-export let todayVisitsCount = 0;
-export let todayRevenue = 0;
-export let monthlyRevenue = 0;
-export let weeklyVisitsData = [];
-
 export let pharmacyProfile = {
   id: currentPharmacyId,
-  name: 'الصيدلية',
+  name: 'صيدلية القطن',
   templateId: 'template_default',
   primaryColor: '#E85D8A',
   logoUrl: '',
@@ -115,11 +124,15 @@ export function getBrandColor(brandName) {
 }
 
 export function saveLocalState() {
-  localStorage.setItem(getStorageKey('cart'), JSON.stringify(cart));
-  localStorage.setItem(getStorageKey('wishlist'), JSON.stringify([...wishlist]));
-  localStorage.setItem(getStorageKey('my_orders'), JSON.stringify(myOrders));
-  localStorage.setItem(getStorageKey('store_settings'), JSON.stringify(pharmacyProfile));
-  localStorage.setItem(getStorageKey('products_cache'), JSON.stringify(products));
+  try {
+    localStorage.setItem(getStorageKey('cart'), JSON.stringify(cart));
+    localStorage.setItem(getStorageKey('wishlist'), JSON.stringify([...wishlist]));
+    localStorage.setItem(getStorageKey('my_orders'), JSON.stringify(myOrders));
+    localStorage.setItem(getStorageKey('store_settings'), JSON.stringify(pharmacyProfile));
+    localStorage.setItem(getStorageKey('products_cache'), JSON.stringify(products));
+  } catch (e) {
+    console.warn("Storage save fallback:", e);
+  }
 }
 
 export const icons = {
