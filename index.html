@@ -456,7 +456,7 @@
     </div>
   </div>
 
-  <!-- ============ 10. CHECKOUT VIEW (WITH GPS PIN) ============ -->
+  <!-- ============ 10. CHECKOUT VIEW (CLEAN & NO GPS) ============ -->
   <div class="view" id="view-checkout">
     <div class="wrap">
       <div class="pd-back" onclick="window.App.showView('cart')">
@@ -484,15 +484,6 @@
       <div class="form-field">
         <label>العنوان بالتفصيل *</label>
         <textarea id="custAddress" rows="3" placeholder="المحافظة، المنطقة، أقرب نقطة دالة..." required></textarea>
-      </div>
-
-      <!-- 📍 GPS GEOLOCATION PIN BUTTON -->
-      <div class="form-field">
-        <label>موقع التوصيل الدقيق (GPS)</label>
-        <input type="hidden" id="custLocationUrl" value="">
-        <button type="button" id="btnGetLocation" onclick="window.App.captureCustomerGeolocation()" style="width:100%; background:#EFF6FF; color:#1D4ED8; border:1.5px dashed #3B82F6; font-weight:800; font-size:12.5px; padding:12px; border-radius:14px; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer; transition:all .2s;">
-          <span>📍 تحديد موقعي الحالي بدقة وتثبيته على الخريطة</span>
-        </button>
       </div>
 
       <div class="form-field">
