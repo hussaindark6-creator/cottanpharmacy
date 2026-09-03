@@ -1,6 +1,6 @@
 /* ==========================================================
    SaaS Multi-Tenant Pharmacy Engine — script.js
-   Version: 3.3.0 (Master Enterprise Edition + Full Cloud R2 & Crowdsourcing)
+   Version: 3.4.0 (Master Enterprise Edition + Custom Logo & Cloud R2)
    ========================================================== */
 
 // ================= 1. SUBDOMAIN & SLUG RESOLVER =================
@@ -107,6 +107,10 @@ function sanitizeText(str) {
     .replace(/'/g, '&#039;');
 }
 
+function escapeHtml(str) {
+  return sanitizeText(str);
+}
+
 function sanitizeUrl(url) {
   if (!url || typeof url !== 'string') return '';
   const clean = url.trim();
@@ -197,6 +201,64 @@ async function apiFetch(endpoint, options = {}) {
     return await res.json();
   } catch (err) {
     return { success: false, fallback: true };
+  }
+}
+
+// دالة رفع الصور المباشرة من الاستوديو أو الكاميرا إلى Cloudflare R2
+async function uploadDirectImageFile(fileInput, targetHiddenUrlId, previewImgId, previewBoxId) {
+  const file = fileInput.files[0];
+  if (!file) return;
+
+  showToast('جاري رفع ومعالجة الصورة سحابياً... ⏳');
+
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const res = await fetch(`${WORKER_API_BASE}/api/upload`, {
+      method: 'POST',
+      headers: { 'X-Pharmacy-Id': currentPharmacyId },
+      body: formData
+    });
+
+    const data = await res.json();
+    if (data && data.success && data.imageUrl) {
+      const hiddenInp = document.getElementById(targetHiddenUrlId);
+      if (hiddenInp) hiddenInp.value = data.imageUrl;
+
+      if (previewImgId) {
+        const previewEl = document.getElementById(previewImgId);
+        if (previewEl) previewEl.src = data.imageUrl;
+      }
+      if (previewBoxId) {
+        const previewBox = document.getElementById(previewBoxId);
+        if (previewBox) previewBox.style.display = 'flex';
+      }
+
+      showToast('تم رفع وحفظ الصورة بنجاح! 📸');
+    } else {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const base64 = e.target.result;
+        const hiddenInp = document.getElementById(targetHiddenUrlId);
+        if (hiddenInp) hiddenInp.value = base64;
+        if (previewImgId) document.getElementById(previewImgId).src = base64;
+        if (previewBoxId) document.getElementById(previewBoxId).style.display = 'flex';
+        showToast('تم حفظ الصورة محلياً بنجاح ✓');
+      };
+      reader.readAsDataURL(file);
+    }
+  } catch (err) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const base64 = e.target.result;
+      const hiddenInp = document.getElementById(targetHiddenUrlId);
+      if (hiddenInp) hiddenInp.value = base64;
+      if (previewImgId) document.getElementById(previewImgId).src = base64;
+      if (previewBoxId) document.getElementById(previewBoxId).style.display = 'flex';
+      showToast('تم حفظ الصورة بنجاح ✓');
+    };
+    reader.readAsDataURL(file);
   }
 }
 
@@ -496,7 +558,7 @@ async function sendOrderToPharmacyTelegram(orderObj) {
       `━━━━━━━━━━━━━━━━━━━\n` +
       `💵 *المجموع الفرعي:* \`${fmtPrice(orderObj.subtotal)}\`\n` +
       `${promoInfo}` +
-      `🚚 *أجرة التوصيل:* \`${fmtPrice(orderObj.deliveryFee)}\`\n` +
+      `🚚 *أجرة التوصيل:* ${fmtPrice(orderObj.deliveryFee)}\n` +
       `💰 *المجموع النهائي للدفع:* *${fmtPrice(orderObj.total)}*\n` +
       `━━━━━━━━━━━━━━━━━━━\n` +
       `✨ *تم استلام الطلب من المتجر الإلكتروني* 🌸`;
@@ -846,7 +908,7 @@ function renderBundleCardHTML(b) {
 
   return `
     <div class="bundle-card">
-      <span class="bundle-savings-badge">${sanitizeText(b.savingsBadge || 'توفير فوري 💸')}</span>
+      <span class="bundle-savings-badge">${helpers ? helpers.sanitizeText(b.savingsBadge || 'توفير فوري 💸') : (b.savingsBadge || 'توفير فوري 💸')}</span>
       <div class="bundle-thumb-row">
         ${cleanImg ? `<img src="${cleanImg}" style="max-height:100px; object-fit:contain;">` : 
           includedProds.map((p, idx) => `
@@ -1730,7 +1792,7 @@ function openAdminQuickEditModal(id) {
   }
 
   if (document.getElementById('quickEditProdDesc')) document.getElementById('quickEditProdDesc').value = p.description || '';
-  if (document.getElementById('quickEditProdIng')) document.getElementById('quickEditProdIng').value = p.ingredients || '';
+  if (document.getElementById('quickEditProdIng')) document.getElementById('quickEditProdIng').value = p.ingredients || p.medicalIndications || '';
   if (document.getElementById('quickEditProdUsage')) document.getElementById('quickEditProdUsage').value = p.usage || '';
   if (document.getElementById('quickEditProdInStock')) document.getElementById('quickEditProdInStock').checked = (p.inStock !== false);
   if (document.getElementById('quickEditProdIsOffer')) document.getElementById('quickEditProdIsOffer').checked = !!p.isSpecialOffer;
@@ -1790,67 +1852,6 @@ async function saveAdminQuickEdit() {
   if (db) await dbPaths.productsCol().doc(String(id)).set(updates, { merge: true });
   closeAdminQuickEditModal();
   showToast('تم تحديث تفاصيل الصنف بالكامل سحابياً ✓');
-}
-
-// دالة رفع الصور المباشرة من الاستوديو أو الكاميرا إلى Cloudflare R2
-async function uploadDirectImageFile(fileInput, targetHiddenUrlId, previewImgId, previewBoxId) {
-  const file = fileInput.files[0];
-  if (!file) return;
-
-  showToast('جاري رفع ومعالجة الصورة سحابياً... ⏳');
-
-  try {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const res = await fetch(`${WORKER_API_BASE}/api/upload`, {
-      method: 'POST',
-      headers: {
-        'X-Pharmacy-Id': currentPharmacyId
-      },
-      body: formData
-    });
-
-    const data = await res.json();
-    if (data && data.success && data.imageUrl) {
-      const hiddenInp = document.getElementById(targetHiddenUrlId);
-      if (hiddenInp) hiddenInp.value = data.imageUrl;
-
-      if (previewImgId) {
-        const previewEl = document.getElementById(previewImgId);
-        if (previewEl) previewEl.src = data.imageUrl;
-      }
-      if (previewBoxId) {
-        const previewBox = document.getElementById(previewBoxId);
-        if (previewBox) previewBox.style.display = 'flex';
-      }
-
-      showToast('تم رفع وحفظ الصورة بنجاح! 📸');
-    } else {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const base64 = e.target.result;
-        const hiddenInp = document.getElementById(targetHiddenUrlId);
-        if (hiddenInp) hiddenInp.value = base64;
-        if (previewImgId) document.getElementById(previewImgId).src = base64;
-        if (previewBoxId) document.getElementById(previewBoxId).style.display = 'flex';
-        showToast('تم حفظ الصورة محلياً بنجاح ✓');
-      };
-      reader.readAsDataURL(file);
-    }
-  } catch (err) {
-    console.warn("Upload fallback to local preview:", err);
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const base64 = e.target.result;
-      const hiddenInp = document.getElementById(targetHiddenUrlId);
-      if (hiddenInp) hiddenInp.value = base64;
-      if (previewImgId) document.getElementById(previewImgId).src = base64;
-      if (previewBoxId) document.getElementById(previewBoxId).style.display = 'flex';
-      showToast('تم حفظ الصورة بنجاح ✓');
-    };
-    reader.readAsDataURL(file);
-  }
 }
 
 function openAdminQuickAddModal() {
@@ -3108,7 +3109,7 @@ function sendRenewalReceiptWhatsApp(price) {
   window.open(`https://wa.me/9647813703288?text=${adminMsg}`, '_blank');
 }
 
-// ================= 30. THEME & BRANDING SAVER =================
+// ================= 30. THEME, LOGO & BRANDING CUSTOMIZATION =================
 async function handleSaveCustomization(e) {
   e.preventDefault();
   if (!assertAdmin() || !lockAction('saveCustomization', 1200)) return;
@@ -3128,6 +3129,7 @@ async function handleSaveCustomization(e) {
 
   const newSettings = {
     name: sanitizeText(getVal('adminPharmacyNameInput', pharmacyProfile.name || 'الصيدلية')),
+    logoUrl: sanitizeUrl(getVal('adminPharmacyLogoInput', pharmacyProfile.logoUrl || '')),
     primaryColor: primaryColor,
     deliveryFeeStandard: deliveryStd,
     deliveryFeeExpress: deliveryExp,
@@ -3150,7 +3152,7 @@ async function handleSaveCustomization(e) {
   pharmacyProfile = { ...pharmacyProfile, ...newSettings };
   saveLocalState();
   applyStoreSettings();
-  showToast('تم تطبيق وحفظ الهوية سحابياً! ✨');
+  showToast('تم تطبيق وحفظ الهوية والشعار سحابياً! ✨');
 
   try {
     if (db) await dbPaths.pharmacyDoc().set(newSettings, { merge: true });
@@ -3172,6 +3174,26 @@ function applyStoreSettings() {
   const drawerLogoTitle = document.getElementById('drawerLogoTitle');
   if (headerLogoText) headerLogoText.textContent = pharmacyProfile.name || 'الصيدلية';
   if (drawerLogoTitle) drawerLogoTitle.textContent = pharmacyProfile.name || 'الصيدلية';
+
+  // عرض شعار الصيدلية المخصص في واجهة المتجر
+  const headerLogoMark = document.getElementById('headerLogoMark');
+  if (headerLogoMark) {
+    if (pharmacyProfile.logoUrl) {
+      headerLogoMark.innerHTML = `<img src="${sanitizeUrl(pharmacyProfile.logoUrl)}" alt="Logo" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    } else {
+      headerLogoMark.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent, #E85D8A)" stroke-width="2"><circle cx="12" cy="8" r="3"/><circle cx="8" cy="10" r="3"/><circle cx="16" cy="10" r="3"/><path d="M12 13v7"/></svg>`;
+    }
+  }
+
+  // ملء حقول ومعاينة الشعار في لوحة الأدمن
+  const adminLogoInput = document.getElementById('adminPharmacyLogoInput');
+  const adminLogoPreview = document.getElementById('adminPharmacyLogoPreviewEl');
+  const adminLogoBox = document.getElementById('adminPharmacyLogoPreviewBox');
+  if (adminLogoInput && pharmacyProfile.logoUrl) {
+    adminLogoInput.value = pharmacyProfile.logoUrl;
+    if (adminLogoPreview) adminLogoPreview.src = pharmacyProfile.logoUrl;
+    if (adminLogoBox) adminLogoBox.style.display = 'flex';
+  }
 
   const annEl = document.getElementById('announcementBar');
   const annTextEl = document.getElementById('announcementText');
@@ -3448,6 +3470,7 @@ function updateUserHeaderProfile() {
     }
   }
 }
+
 async function verifyStaffPermissions(user) {
   if (!user || !user.email) {
     currentStaffData = null;
