@@ -1,6 +1,6 @@
 /* ==========================================================
    SaaS Multi-Tenant Engine — js/config.js
-   Version: 4.2.0 (Smart Subdomain & Cache-Sanitized Resolver)
+   Version: 4.3.0 (Smart Subdomain & Cache-Sanitized Resolver)
    ========================================================== */
 
 export const DEFAULT_PHARMACY_ID = "cottanpharmacy";
@@ -18,7 +18,7 @@ export function getActivePharmacyId() {
     return cleanId;
   }
 
-  // تنظيف الذاكرة المؤقتة من أي قيمة خاطئة تم تخزينها سابقاً (مثل دومين الاستضافة)
+  // تنظيف الذاكرة المؤقتة من أي قيمة خاطئة تم تخزينها سابقاً (مثل دومينات الاستضافة)
   const cachedId = sessionStorage.getItem('saas_active_pharmacy_id');
   const isPoisonedCache = cachedId && (
     cachedId.includes('pages.dev') ||
