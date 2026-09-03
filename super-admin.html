@@ -107,7 +107,7 @@
           📥 مراجعة مساهمات الصيدليات (<span id="crowdsourceBadge" class="text-amber-400 font-bold">0</span>)
         </button>
         <button id="tabBtnInfra" onclick="switchSuperTab('infra')" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2 bg-blue-950/40 border border-blue-800/50">
-          🚀 الاشتراكات بخدمات الموقع والترقية
+          🚀 ترقية وتوسيع السيرفرات
         </button>
         <button id="tabBtnPaymentInfo" onclick="switchSuperTab('paymentInfo')" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2">
           💳 بيانات الدفع الإلكتروني
@@ -170,10 +170,10 @@
             <h3 class="text-sm font-black text-white flex items-center gap-2">
               <span>⚡</span> حالة نظام الخوادم والـ Cloudflare Edge
             </h3>
-            <span class="text-xs text-emerald-400 font-mono bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">Active & Encrypted</span>
+            <span class="text-xs text-emerald-400 font-mono bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">Active & Encrypted (Zero-Trust)</span>
           </div>
           <p class="text-xs text-slate-400 leading-relaxed">
-            تعمل المنصة بنظام SaaS معزول لكل صيدلية مع استخراج النطاقات الفرعية (Subdomains) وبنك منتجات موحد عالي السرعة.
+            تعمل المنصة بنظام SaaS معزول لكل صيدلية مع استخراج النطاقات الفرعية (Subdomains) وبنك منتجات موحد عالي السرعة مع عزل أسرار كل صيدلية.
           </p>
         </div>
       </section>
@@ -188,7 +188,7 @@
             </div>
             <div>
               <h2 class="text-lg font-black text-white">إضافة صيدلية جديدة وتعيين القالب والاشتراك والسقف الأقصى</h2>
-              <p class="text-xs text-slate-400">التحكم الكامل ببيانات المستأجر والربط الفوري في قاعدة البيانات.</p>
+              <p class="text-xs text-slate-400">يتم عزل الأسرار تلقائياً في مستند سري لحماية بيانات المتاجر.</p>
             </div>
           </div>
 
@@ -225,9 +225,9 @@
               <div>
                 <label class="block text-xs font-bold text-slate-300 mb-2">قالب وتصميم الواجهة (Template) *</label>
                 <select id="inpTemplateId" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white font-bold focus:outline-none focus:border-emerald-500" required>
-                  <option value="template_a">القالب 1: العصري الناعم (template_a.js)</option>
-                  <option value="template_b">القالب 2: الطبي الحديث (template_b.js)</option>
-                  <option value="template_default">القالب 3: الافتراضي المرجعي (template_default.js)</option>
+                  <option value="template_default">القالب الافتراضي الكلاسيكي (Classic)</option>
+                  <option value="template_a">القالب العصري الناعم (Soft Rose)</option>
+                  <option value="template_b">القالب الطبي الحديث (Clinical Blue)</option>
                 </select>
               </div>
               <div>
@@ -238,17 +238,17 @@
                 </div>
               </div>
               <div>
-                <label class="block text-xs font-bold text-slate-300 mb-2">توكن بوت تلغرام الصيدلية</label>
+                <label class="block text-xs font-bold text-slate-300 mb-2">توكن بوت تلغرام الصيدلية (سري)</label>
                 <input type="text" id="inpTeleBotToken" placeholder="8714017218:AAEOy..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white font-mono placeholder-slate-600 focus:outline-none focus:border-blue-500 transition">
               </div>
               <div>
-                <label class="block text-xs font-bold text-slate-300 mb-2">معرف شات تلغرام الصيدلية</label>
+                <label class="block text-xs font-bold text-slate-300 mb-2">معرف شات تلغرام الصيدلية (سري)</label>
                 <input type="text" id="inpTeleChatId" placeholder="-5458203370" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white font-mono placeholder-slate-600 focus:outline-none focus:border-blue-500 transition">
               </div>
             </div>
 
             <div class="flex items-center justify-between pt-4 border-t border-slate-800">
-              <span class="text-xs text-slate-400">معاينة الرابط: <span class="font-mono text-emerald-400 font-bold" id="slugPreviewText">?pharmacy=...</span></span>
+              <span class="text-xs text-slate-400">المعاينة: <span class="font-mono text-emerald-400 font-bold" id="slugPreviewText">?pharmacy=...</span></span>
               <button type="submit" id="btnCreatePharmacy" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black px-8 py-3.5 rounded-xl shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 transition duration-150 flex items-center gap-2 cursor-pointer text-sm">
                 <span>💾 إنشاء الصيدلية وتفعيل الاشتراك</span>
               </button>
@@ -277,13 +277,12 @@
                   <th class="py-3 px-4">المشرف</th>
                   <th class="py-3 px-4">سعر الاشتراك</th>
                   <th class="py-3 px-4">القالب</th>
-                  <th class="py-3 px-4">تيليجرام</th>
                   <th class="py-3 px-4">الحالة</th>
                   <th class="py-3 px-4 text-center">الإجراءات</th>
                 </tr>
               </thead>
               <tbody id="pharmaciesTableBody" class="divide-y divide-slate-800/60">
-                <tr><td colspan="8" class="text-center py-10 text-slate-500">جاري جلب الصيدليات...</td></tr>
+                <tr><td colspan="7" class="text-center py-10 text-slate-500">جاري جلب الصيدليات...</td></tr>
               </tbody>
             </table>
           </div>
@@ -360,34 +359,32 @@
 
       <!-- ================= TAB 4: MASTER CATALOG & BULK ACTIONS ================= -->
       <section id="secSuperCatalog" class="tab-content hidden space-y-8">
-        
-        <!-- Header Actions & Bulk Uploader -->
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl">
           <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-5 pb-6 border-b border-slate-800 mb-6">
             <div>
               <h2 class="text-xl font-black text-white flex items-center gap-2">
-                <span>💊</span> بنك المنتجات وحليب الأطفال المركزي (Master Catalog)
+                <span>💊</span> بنك المنتجات المركزي (Master Catalog)
               </h2>
               <p class="text-xs text-slate-400 mt-1">
-                قاعدة البيانات الموحدة للأصناف المعتمدة مع إمكانية التحديد والحذف الجماعي الفوري ورفع ملفات JSON.
+                قاعدة البيانات الموحدة للأصناف مع إمكانية التحديد والحذف الجماعي الفوري ورفع ملفات JSON / CSV.
               </p>
             </div>
 
             <div class="flex flex-wrap items-center gap-3">
-              <!-- Bulk Delete Action Button (يظهر عند التحديد) -->
+              <!-- Bulk Delete Action Button -->
               <button id="btnBulkDeleteMaster" onclick="handleBulkDeleteMasterProducts()" class="hidden bg-red-500/15 hover:bg-red-500/25 text-red-400 border border-red-500/40 px-4 py-2.5 rounded-xl font-black text-xs transition flex items-center gap-2 shadow-lg shadow-red-500/10">
                 <span>🗑️ حذف الأصناف المحددة (<span id="selectedMasterCount">0</span>)</span>
               </button>
 
-              <!-- Upload JSON Button -->
+              <!-- Upload JSON / CSV Button -->
               <label class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl transition cursor-pointer flex items-center gap-2 shadow-lg shadow-emerald-500/20">
-                <span>📥 رفع ملف بيانات (JSON Bulk Upload)</span>
+                <span>📥 رفع ملف بيانات (JSON / CSV)</span>
                 <input type="file" id="masterJsonFileInput" accept=".json,.csv" class="hidden" onchange="handleMasterBulkUpload(event)">
               </label>
 
               <!-- Backup / Export JSON -->
               <button onclick="exportMasterCatalogJSON()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs px-4 py-2.5 rounded-xl border border-slate-700 transition flex items-center gap-1.5">
-                💾 تصدير نسخة احتياطية (JSON)
+                💾 تصدير نسخة JSON
               </button>
             </div>
           </div>
@@ -405,22 +402,10 @@
 
           <!-- Search & Filter Controls -->
           <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 mb-6">
-            <div class="sm:col-span-6">
+            <div class="sm:col-span-8">
               <input type="text" id="masterSearchInput" oninput="filterMasterCatalog()" placeholder="ابحث باسم المنتج، البراند، أو الباركود..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
             </div>
-            <div class="sm:col-span-3">
-              <select id="masterCategoryFilter" onchange="filterMasterCatalog()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white font-bold focus:outline-none focus:border-emerald-500">
-                <option value="all">جميع الأقسام والتصنيفات</option>
-                <option value="baby">حليب وأغذية الأطفال 🍼</option>
-                <option value="face">العناية بالوجه 🌸</option>
-                <option value="serum">السيرومات العلاجية ✨</option>
-                <option value="moisturizer">المرطبات 💧</option>
-                <option value="sunscreen">واقيات الشمس ☀️</option>
-                <option value="hair">العناية بالشعر 💇‍♀️</option>
-                <option value="body">العناية بالجسم 🛁</option>
-              </select>
-            </div>
-            <div class="sm:col-span-3 flex items-center justify-end">
+            <div class="sm:col-span-4 flex items-center justify-end">
               <span class="text-xs text-slate-400 font-mono" id="masterFilteredCountText">عرض 0 من 0 صنف</span>
             </div>
           </div>
@@ -435,14 +420,13 @@
                   </th>
                   <th class="py-3.5 px-4">اسم الصنف / المنتج</th>
                   <th class="py-3.5 px-4">الماركة</th>
-                  <th class="py-3.5 px-4">القسم / المرحلة</th>
+                  <th class="py-3.5 px-4">القسم</th>
                   <th class="py-3.5 px-4">السعر المقترح</th>
-                  <th class="py-3.5 px-4">المكونات / الدواعي</th>
                   <th class="py-3.5 px-4 text-center">الإجراء</th>
                 </tr>
               </thead>
               <tbody id="masterCatalogTableBody" class="divide-y divide-slate-800/60">
-                <tr><td colspan="7" class="text-center py-8 text-slate-500">جاري تحميل كتالوج الأصناف المركزي...</td></tr>
+                <tr><td colspan="6" class="text-center py-8 text-slate-500">جاري تحميل كتالوج الأصناف المركزي...</td></tr>
               </tbody>
             </table>
           </div>
@@ -468,9 +452,7 @@
               <h2 class="text-lg font-black text-white flex items-center gap-2">
                 <span>📥</span> مساهمات الصيدليات الجديدة (Crowdsourcing Review Queue)
               </h2>
-              <p class="text-xs text-slate-400 mt-1">
-                الأصناف التي أضافتها الصيدليات يدوياً في مخازنها. يمكنك مراجعتها واعتمادها لتصبح متاحة لجميع الصيدليات بنقرة زر.
-              </p>
+              <p class="text-xs text-slate-400 mt-1">الأصناف المضافة يدوياً من الصيدليات لمراجعتها واعتمادها بالبنك العام.</p>
             </div>
             <button onclick="fetchCrowdsourcedSubmissions()" class="text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-4 py-2 rounded-xl flex items-center gap-1.5 transition">
               🔄 تحديث القائمة
@@ -484,20 +466,19 @@
                   <th class="py-3 px-4">الصيدلية المساهمة</th>
                   <th class="py-3 px-4">اسم المنتج المقترح</th>
                   <th class="py-3 px-4">الماركة</th>
-                  <th class="py-3 px-4">السعر المقترح</th>
-                  <th class="py-3 px-4">تاريخ الإضافة</th>
+                  <th class="py-3 px-4">السعر</th>
                   <th class="py-3 px-4 text-center">القرار</th>
                 </tr>
               </thead>
               <tbody id="crowdsourceTableBody" class="divide-y divide-slate-800/60">
-                <tr><td colspan="6" class="text-center py-8 text-slate-500">جاري فحص مساهمات الصيدليات...</td></tr>
+                <tr><td colspan="5" class="text-center py-8 text-slate-500">جاري فحص مساهمات الصيدليات...</td></tr>
               </tbody>
             </table>
           </div>
         </div>
       </section>
 
-      <!-- ================= TAB 6: INFRASTRUCTURE & SCALING SUBSCRIPTIONS (NEW) ================= -->
+      <!-- ================= TAB 6: INFRASTRUCTURE & SCALING HUB ================= -->
       <section id="secSuperInfra" class="tab-content hidden space-y-8">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl">
           <div class="flex items-center gap-3 pb-6 border-b border-slate-800 mb-6">
@@ -506,125 +487,46 @@
             </div>
             <div>
               <h2 class="text-xl font-black text-white">مركز إدارة وتوسيع الاشتراكات السحابية (Infrastructure & Scaling Hub)</h2>
-              <p class="text-xs text-slate-400 mt-1">
-                عند وصول منصتك إلى عدد كبير من الصيدليات وتجاوز الحدود المجانية، يمكنك ترقية الخطط الرسمية مباشرة من هنا للحصول على سعة غير محدودة وأداء فائق.
-              </p>
+              <p class="text-xs text-slate-400 mt-1">ترقية الخطط الرسمية للحصول على سعة غير محدودة وأداء فائق.</p>
             </div>
           </div>
 
-          <!-- Services Grid -->
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            
-            <!-- Service 1: Firebase Firestore (Blaze Plan) -->
-            <div class="bg-slate-950 border border-slate-800 hover:border-amber-500/40 rounded-2xl p-5 flex flex-col justify-between transition group">
+            <!-- Firebase Blaze -->
+            <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
               <div>
-                <div class="flex items-center justify-between mb-3">
-                  <span class="text-2xl">🔥</span>
-                  <span class="bg-amber-500/10 text-amber-400 border border-amber-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full">قاعدة البيانات السحابية</span>
-                </div>
+                <span class="text-2xl mb-2 block">🔥</span>
                 <h3 class="text-sm font-black text-white mb-1">Google Firebase (Blaze Plan)</h3>
-                <p class="text-xs text-slate-400 mb-4 leading-relaxed">
-                  تخزين ومزامنة بيانات الصيدليات والطلبات وحسابات المستخدمين لحظياً.
-                </p>
-                <div class="bg-slate-900/80 rounded-xl p-3 text-xs space-y-1.5 mb-4 border border-slate-800/80">
-                  <div class="text-slate-300"><b>الحد المجاني (Spark):</b> 50k قراءة / 20k كتابة يومياً.</div>
-                  <div class="text-amber-400"><b>الترقية لـ (Blaze):</b> قراءات وكتابات لا نهائية وتوسيع فوري.</div>
-                  <div class="text-emerald-400 font-mono"><b>السعر:</b> الدفع حسب الاستهلاك (Pay as you go) يبدأ من $0.</div>
-                </div>
+                <p class="text-xs text-slate-400 mb-4">قراءة وكتابة غير محدودة للطلبات والمخزون لحظياً.</p>
               </div>
-              <a href="https://console.firebase.google.com/project/cottanpharmacy/usage" target="_blank" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs py-2.5 rounded-xl text-center transition shadow-lg shadow-amber-500/10 flex items-center justify-center gap-1.5">
-                <span>ترقية خطة Blaze في Firebase ↗️</span>
+              <a href="https://console.firebase.google.com/project/cottanpharmacy/usage" target="_blank" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs py-2.5 rounded-xl text-center transition">
+                ترقية خطة Blaze في Firebase ↗️
               </a>
             </div>
 
-            <!-- Service 2: Cloudflare Workers Paid -->
-            <div class="bg-slate-950 border border-slate-800 hover:border-orange-500/40 rounded-2xl p-5 flex flex-col justify-between transition group">
+            <!-- Cloudflare Workers -->
+            <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
               <div>
-                <div class="flex items-center justify-between mb-3">
-                  <span class="text-2xl">⚡</span>
-                  <span class="bg-orange-500/10 text-orange-400 border border-orange-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full">محرك الـ API والـ Edge</span>
-                </div>
+                <span class="text-2xl mb-2 block">⚡</span>
                 <h3 class="text-sm font-black text-white mb-1">Cloudflare Workers Paid</h3>
-                <p class="text-xs text-slate-400 mb-4 leading-relaxed">
-                  تشغيل الـ API وفصل النطاقات الفرعية (Subdomains) وإرسال إشعارات التيليجرام.
-                </p>
-                <div class="bg-slate-900/80 rounded-xl p-3 text-xs space-y-1.5 mb-4 border border-slate-800/80">
-                  <div class="text-slate-300"><b>الحد المجاني:</b> 100,000 طلب يومياً (100k requests/day).</div>
-                  <div class="text-orange-400"><b>الترقية المدفوعة:</b> 10 ملايين طلب شهرياً مع وقت معالجة مفتوح 30s.</div>
-                  <div class="text-emerald-400 font-mono"><b>السعر:</b> 5$ / شهرياً (يشمل 10M طلب).</div>
-                </div>
+                <p class="text-xs text-slate-400 mb-4">10 ملايين طلب شهرياً ومعالجة الـ API بسرعة فائقة.</p>
               </div>
-              <a href="https://dash.cloudflare.com/" target="_blank" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-black text-xs py-2.5 rounded-xl text-center transition shadow-lg shadow-orange-500/10 flex items-center justify-center gap-1.5">
-                <span>ترقية Workers في Cloudflare ↗️</span>
+              <a href="https://dash.cloudflare.com/" target="_blank" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-black text-xs py-2.5 rounded-xl text-center transition">
+                ترقية Workers في Cloudflare ↗️
               </a>
             </div>
 
-            <!-- Service 3: Cloudflare R2 Storage (صور المنتجات) -->
-            <div class="bg-slate-950 border border-slate-800 hover:border-blue-500/40 rounded-2xl p-5 flex flex-col justify-between transition group">
+            <!-- Cloudflare R2 -->
+            <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
               <div>
-                <div class="flex items-center justify-between mb-3">
-                  <span class="text-2xl">📦</span>
-                  <span class="bg-blue-500/10 text-blue-400 border border-blue-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full">تخزين صور المنتجات</span>
-                </div>
-                <h3 class="text-sm font-black text-white mb-1">Cloudflare R2 Object Storage</h3>
-                <p class="text-xs text-slate-400 mb-4 leading-relaxed">
-                  تخزين سحابي عالي السرعة لصور الكتالوج دون أي تكاليف نقل بيانات (Zero Egress Fees).
-                </p>
-                <div class="bg-slate-900/80 rounded-xl p-3 text-xs space-y-1.5 mb-4 border border-slate-800/80">
-                  <div class="text-slate-300"><b>الحد المجاني:</b> 10 جيجابايت تخزين مجاني + باندويث لا نهائي.</div>
-                  <div class="text-blue-400"><b>الترقية:</b> سعة غير محدودة لملايين صور المنتجات.</div>
-                  <div class="text-emerald-400 font-mono"><b>السعر:</b> $0.015 لكل جيجابايت إضافي شهرياً.</div>
-                </div>
+                <span class="text-2xl mb-2 block">📦</span>
+                <h3 class="text-sm font-black text-white mb-1">Cloudflare R2 Storage</h3>
+                <p class="text-xs text-slate-400 mb-4">تخزين سحابي لصور المنتجات بدون أي رسوم نقل (Zero Egress).</p>
               </div>
-              <a href="https://dash.cloudflare.com/?to=/:account/r2" target="_blank" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black text-xs py-2.5 rounded-xl text-center transition shadow-lg shadow-blue-500/10 flex items-center justify-center gap-1.5">
-                <span>إدارة وتوسيع R2 Storage ↗️</span>
+              <a href="https://dash.cloudflare.com/?to=/:account/r2" target="_blank" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black text-xs py-2.5 rounded-xl text-center transition">
+                إدارة وتوسيع R2 Storage ↗️
               </a>
             </div>
-
-            <!-- Service 4: Cloudflare Pro Plan (حماية الدومين وتسريع الصور) -->
-            <div class="bg-slate-950 border border-slate-800 hover:border-purple-500/40 rounded-2xl p-5 flex flex-col justify-between transition group">
-              <div>
-                <div class="flex items-center justify-between mb-3">
-                  <span class="text-2xl">🛡️</span>
-                  <span class="bg-purple-500/10 text-purple-400 border border-purple-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full">حماية النطاق وتسريع الويب</span>
-                </div>
-                <h3 class="text-sm font-black text-white mb-1">Cloudflare Pro Plan (Domain & WAF)</h3>
-                <p class="text-xs text-slate-400 mb-4 leading-relaxed">
-                  ضغط الصور التلقائي (Polish/WebP)، جدار حماية WAF لمنع هجمات الـ DDoS، وتسريع كاش الشرق الأوسط.
-                </p>
-                <div class="bg-slate-900/80 rounded-xl p-3 text-xs space-y-1.5 mb-4 border border-slate-800/80">
-                  <div class="text-slate-300"><b>الخطة المجانية:</b> DNS وSSL وتوزيع كاش قياسي.</div>
-                  <div class="text-purple-400"><b>خطة Pro:</b> تحويل الصور لـ WebP وتصغير حجم المتجر بنسبة 60%.</div>
-                  <div class="text-emerald-400 font-mono"><b>السعر:</b> 20$ - 25$ / شهرياً لكل نطاق رسمي.</div>
-                </div>
-              </div>
-              <a href="https://dash.cloudflare.com/" target="_blank" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-black text-xs py-2.5 rounded-xl text-center transition shadow-lg shadow-purple-500/10 flex items-center justify-center gap-1.5">
-                <span>ترقية الدومين لخطة Pro ↗️</span>
-              </a>
-            </div>
-
-            <!-- Service 5: Telegram Bot API Management -->
-            <div class="bg-slate-950 border border-slate-800 hover:border-sky-500/40 rounded-2xl p-5 flex flex-col justify-between transition group">
-              <div>
-                <div class="flex items-center justify-between mb-3">
-                  <span class="text-2xl">✈️</span>
-                  <span class="bg-sky-500/10 text-sky-400 border border-sky-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full">خوادم إشعارات التيليجرام</span>
-                </div>
-                <h3 class="text-sm font-black text-white mb-1">Telegram Bot API & Webhooks</h3>
-                <p class="text-xs text-slate-400 mb-4 leading-relaxed">
-                  إرسال فواتير الطلبات اللحظية للصيادلة وتوليد تقارير السوبر أدمن المالية.
-                </p>
-                <div class="bg-slate-900/80 rounded-xl p-3 text-xs space-y-1.5 mb-4 border border-slate-800/80">
-                  <div class="text-slate-300"><b>الحد المجاني:</b> 30 رسالة / ثانية لكل بوت مجاناً 100%.</div>
-                  <div class="text-sky-400"><b>التوسيع:</b> ربط بوتات فرعية منفصلة لكل صيدلية (Multi-Bot).</div>
-                  <div class="text-emerald-400 font-mono"><b>السعر:</b> مجاني 100% (Free Open API).</div>
-                </div>
-              </div>
-              <a href="https://t.me/BotFather" target="_blank" class="w-full bg-sky-500 hover:bg-sky-600 text-slate-950 font-black text-xs py-2.5 rounded-xl text-center transition shadow-lg shadow-sky-500/10 flex items-center justify-center gap-1.5">
-                <span>فتح BotFather لإدارة البوتات ↗️</span>
-              </a>
-            </div>
-
           </div>
         </div>
       </section>
@@ -638,7 +540,7 @@
             </div>
             <div>
               <h2 class="text-lg font-black text-white">إدارة بطاقات ومحافظ الدفع الإلكتروني للسوبر أدمن</h2>
-              <p class="text-xs text-slate-400">هذه البيانات تظهر تلقائياً في لوحة تحكم كل صيدلية لتحويل مبالغ التجديد إليها.</p>
+              <p class="text-xs text-slate-400">تظهر هذه البيانات في لوحة تحكم كل صيدلية لتحويل رسوم التجديد.</p>
             </div>
           </div>
 
@@ -658,38 +560,30 @@
               </div>
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-300 mb-2">رقم حساب بنك FIB (أو الآيبان)</label>
+              <label class="block text-xs font-bold text-slate-300 mb-2">رقم حساب بنك FIB</label>
               <input type="text" id="payFib" placeholder="FIB-12345678" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white font-mono">
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-300 mb-2">ملاحظات وتعليمات التحويل للصيادلة</label>
+              <label class="block text-xs font-bold text-slate-300 mb-2">ملاحظات التحويل</label>
               <textarea id="payNotes" rows="2" placeholder="يرجى إرسال صورة وصل التحويل عبر الواتساب لتجديد الاشتراك فورياً." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white"></textarea>
             </div>
-
-            <div class="pt-4 border-t border-slate-800 flex justify-end">
-              <button type="submit" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black px-8 py-3.5 rounded-xl shadow-lg transition">
-                💾 حفظ وتحديث بيانات الدفع لجميع الصيدليات
-              </button>
-            </div>
+            <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black py-3.5 rounded-xl transition">
+              💾 حفظ وتعميم بيانات الدفع لجميع الصيدليات
+            </button>
           </form>
         </div>
       </section>
 
-      <!-- ================= TAB 8: REPORTS & CONSOLIDATED EXCEL ================= -->
+      <!-- ================= TAB 8: CONSOLIDATED EXCEL REPORTS ================= -->
       <section id="secSuperReports" class="tab-content hidden space-y-8">
-        <!-- Master Consolidated SaaS Report Card -->
         <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/40 border border-emerald-500/30 rounded-3xl p-6 sm:p-8 shadow-xl">
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
-              <span class="inline-block bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs font-black px-3 py-1 rounded-full mb-3">
-                ⭐ التقرير المحاسبي الشامل
-              </span>
               <h2 class="text-xl font-black text-white mb-2">Master Consolidated SaaS Sales Report</h2>
               <p class="text-xs text-slate-300 max-w-2xl leading-relaxed">
-                توليد ملف إكسل شامل يحتوي على إحصائيات المبيعات، أجور التوصيل، مبالغ التحصيل، وقيمة الاشتراكات لكل الصيدليات مجمعة في جدول موحد للمطابقة المحاسبية.
+                توليد ملف إكسل شامل يحتوي على إحصائيات المبيعات، أجور التوصيل، وقيمة الاشتراكات لكل الصيدليات مجمعة.
               </p>
             </div>
-
             <div class="flex flex-col sm:flex-row items-center gap-3 shrink-0">
               <button onclick="exportMasterConsolidatedCSV()" class="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black px-5 py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition">
                 📊 تنزيل Master Report (Excel)
@@ -701,11 +595,11 @@
           </div>
         </div>
 
-        <!-- Individual Stores Report Export Directory -->
+        <!-- Individual Stores Report Directory -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-8 shadow-md">
           <div class="pb-4 border-b border-slate-800 mb-6">
-            <h3 class="text-base font-black text-white">تصدير تقارير المبيعات الفردية لكل صيدلية (English Clean Names)</h3>
-            <p class="text-xs text-slate-400">تسمية الملفات بنظام نظيف: <span class="font-mono text-emerald-400">Sales_Report_[PharmacySlug]_[Date].csv</span></p>
+            <h3 class="text-base font-black text-white">تصدير تقارير المبيعات الفردية لكل صيدلية</h3>
+            <p class="text-xs text-slate-400">تنزيل أو إرسال تقرير كل صيدلية بشكل مستقل.</p>
           </div>
 
           <div class="overflow-x-auto -mx-4 sm:mx-0">
@@ -714,7 +608,7 @@
                 <tr>
                   <th class="py-3 px-4">الصيدلية</th>
                   <th class="py-3 px-4">المعرف (Slug)</th>
-                  <th class="py-3 px-4">اسم ملف التصدير المقترح</th>
+                  <th class="py-3 px-4">اسم الملف</th>
                   <th class="py-3 px-4 text-center">خيارات التصدير السريع</th>
                 </tr>
               </thead>
@@ -771,9 +665,9 @@
           <div>
             <label class="block text-xs font-bold text-slate-300 mb-1">قالب الواجهة (Template ID) *</label>
             <select id="editTemplateId" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white font-bold" required>
-              <option value="template_a">القالب 1: العصري الناعم (template_a.js)</option>
-              <option value="template_b">القالب 2: الطبي الحديث (template_b.js)</option>
-              <option value="template_default">القالب 3: الافتراضي المرجعي (template_default.js)</option>
+              <option value="template_default">القالب الافتراضي الكلاسيكي (Classic)</option>
+              <option value="template_a">القالب العصري الناعم (Soft Rose)</option>
+              <option value="template_b">القالب الطبي الحديث (Clinical Blue)</option>
             </select>
           </div>
           <div>
@@ -781,11 +675,11 @@
             <input type="text" id="editWhatsapp" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white font-mono" required>
           </div>
           <div class="sm:col-span-2">
-            <label class="block text-xs font-bold text-slate-300 mb-1">توكن بوت تلغرام الصيدلية</label>
+            <label class="block text-xs font-bold text-slate-300 mb-1">توكن بوت تلغرام الصيدلية (سري)</label>
             <input type="text" id="editTeleBotToken" placeholder="8714017218:AAEOy..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white font-mono">
           </div>
           <div class="sm:col-span-2">
-            <label class="block text-xs font-bold text-slate-300 mb-1">معرف شات تلغرام الصيدلية</label>
+            <label class="block text-xs font-bold text-slate-300 mb-1">معرف شات تلغرام الصيدلية (سري)</label>
             <input type="text" id="editTeleChatId" placeholder="-5458203370" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white font-mono">
           </div>
         </div>
@@ -857,7 +751,6 @@
       console.error("Firebase init error:", e);
     }
 
-    // ================= LIFECYCLE & TABS =================
     window.addEventListener('DOMContentLoaded', () => {
       const nextYear = new Date();
       nextYear.setFullYear(nextYear.getFullYear() + 1);
@@ -884,35 +777,26 @@
       });
       document.querySelectorAll('.tab-content').forEach(sec => sec.classList.add('hidden'));
 
-      if (tabKey === 'overview') {
-        document.getElementById('tabBtnOverview').className = 'tab-btn active px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20';
-        document.getElementById('secSuperOverview').classList.remove('hidden');
-      } else if (tabKey === 'tenants') {
-        document.getElementById('tabBtnTenants').className = 'tab-btn active px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20';
-        document.getElementById('secSuperTenants').classList.remove('hidden');
-      } else if (tabKey === 'billing') {
-        document.getElementById('tabBtnBilling').className = 'tab-btn active px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20';
-        document.getElementById('secSuperBilling').classList.remove('hidden');
-        calculateLiveConsumptionBilling();
-      } else if (tabKey === 'catalog') {
-        document.getElementById('tabBtnCatalog').className = 'tab-btn active px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20';
-        document.getElementById('secSuperCatalog').classList.remove('hidden');
-        fetchMasterCatalog();
-      } else if (tabKey === 'crowdsource') {
-        document.getElementById('tabBtnCrowdsource').className = 'tab-btn active px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20';
-        document.getElementById('secSuperCrowdsource').classList.remove('hidden');
-        fetchCrowdsourcedSubmissions();
-      } else if (tabKey === 'infra') {
-        document.getElementById('tabBtnInfra').className = 'tab-btn active px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 bg-blue-600 text-white shadow-lg shadow-blue-500/20';
-        document.getElementById('secSuperInfra').classList.remove('hidden');
-      } else if (tabKey === 'paymentInfo') {
-        document.getElementById('tabBtnPaymentInfo').className = 'tab-btn active px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20';
-        document.getElementById('secSuperPaymentInfo').classList.remove('hidden');
-      } else if (tabKey === 'reports') {
-        document.getElementById('tabBtnReports').className = 'tab-btn active px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20';
-        document.getElementById('secSuperReports').classList.remove('hidden');
-        renderIndividualReportsList();
+      const tabMap = {
+        overview: ['tabBtnOverview', 'secSuperOverview'],
+        tenants: ['tabBtnTenants', 'secSuperTenants'],
+        billing: ['tabBtnBilling', 'secSuperBilling'],
+        catalog: ['tabBtnCatalog', 'secSuperCatalog'],
+        crowdsource: ['tabBtnCrowdsource', 'secSuperCrowdsource'],
+        infra: ['tabBtnInfra', 'secSuperInfra'],
+        paymentInfo: ['tabBtnPaymentInfo', 'secSuperPaymentInfo'],
+        reports: ['tabBtnReports', 'secSuperReports']
+      };
+
+      if (tabMap[tabKey]) {
+        document.getElementById(tabMap[tabKey][0]).className = 'tab-btn active px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20';
+        document.getElementById(tabMap[tabKey][1]).classList.remove('hidden');
       }
+
+      if (tabKey === 'billing') calculateLiveConsumptionBilling();
+      if (tabKey === 'catalog') fetchMasterCatalog();
+      if (tabKey === 'crowdsource') fetchCrowdsourcedSubmissions();
+      if (tabKey === 'reports') renderIndividualReportsList();
     }
 
     let toastTimer = null;
@@ -927,16 +811,10 @@
       }, 3500);
     }
 
-    // ================= AUTHENTICATION GATE =================
     function handleSuperAdminSignIn() {
       if (!auth) return;
       const provider = new firebase.auth.GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
-      auth.signInWithPopup(provider).then(res => checkSuperAdminAccess(res.user)).catch(err => {
-        const errBox = document.getElementById('authGateError');
-        errBox.textContent = `خطأ: ${err.message}`;
-        errBox.classList.remove('hidden');
-      });
+      auth.signInWithRedirect(provider);
     }
 
     function checkSuperAdminAccess(user) {
@@ -955,7 +833,7 @@
         if (auth) auth.signOut();
         gate.classList.remove('hidden');
         app.classList.add('hidden');
-        errBox.textContent = `⚠️ غير مصرح: البريد (${user ? user.email : 'المستخدم'}) ليس المشرف العام المعتمد (${SUPER_ADMIN_EMAIL}).`;
+        errBox.textContent = `⚠️ غير مصرح: البريد ليس المشرف العام المعتمد.`;
         errBox.classList.remove('hidden');
       }
     }
@@ -975,11 +853,10 @@
       });
     }
 
-    // ================= FETCH PHARMACIES & OVERVIEW =================
     async function fetchPharmaciesList() {
       if (!db) return;
       const tbody = document.getElementById('pharmaciesTableBody');
-      tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-400">جاري تحديث البيانات...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-400">جاري تحديث البيانات...</td></tr>`;
 
       try {
         const snap = await db.collection('pharmacies').get();
@@ -998,57 +875,38 @@
           const isSuspended = data.isActive === false;
           const expiryDate = data.subscriptionExpiry || '2099-12-31';
           const isExpired = expiryDate < todayStr;
-          const subPrice = Number(data.subscriptionPrice || 0);
+          const subPrice = Number(data.subscriptionPrice || 50000);
 
           totalRevenue += subPrice;
           if (!isSuspended && !isExpired) active++;
 
-          const name = data.name || slug;
-          const adminEmail = data.adminEmail || 'غير محدد';
-          const color = data.primaryColor || '#E85D8A';
-          const template = data.templateId || 'template_default';
-          const hasTelegram = !!(data.telegramConfig && data.telegramConfig.botToken);
-
-          let statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">● نشط</span>`;
-          if (isSuspended) {
-            statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-red-500/10 text-red-400 border border-red-500/30">⛔ محظور</span>`;
-          } else if (isExpired) {
-            statusBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">⏳ منتهي</span>`;
-          }
-
           rows.push(`
-            <tr class="hover:bg-slate-800/40 transition">
+            <tr class="hover:bg-slate-800/40 transition text-xs">
+              <td class="py-3.5 px-4 font-bold text-white">${data.name || slug}</td>
+              <td class="py-3.5 px-4 font-mono text-emerald-400">${slug}</td>
+              <td class="py-3.5 px-4 font-mono text-slate-300">${data.adminEmail || 'غير محدد'}</td>
+              <td class="py-3.5 px-4 font-mono text-amber-400 font-bold">${subPrice.toLocaleString()} د.ع</td>
+              <td class="py-3.5 px-4 font-mono text-slate-300">${data.templateId || 'template_default'}</td>
               <td class="py-3.5 px-4">
-                <div class="flex items-center gap-2.5">
-                  <span class="w-3.5 h-3.5 rounded-full border border-slate-700 shadow-sm shrink-0" style="background-color: ${color};"></span>
-                  <div class="font-bold text-white">${escapeHtml(name)}</div>
-                </div>
+                <span class="px-2.5 py-1 rounded-full font-bold ${isSuspended ? 'bg-red-500/10 text-red-400 border border-red-500/30' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'}">
+                  ${isSuspended ? '⛔ موقوف' : '● نشط'}
+                </span>
               </td>
-              <td class="py-3.5 px-4 font-mono text-emerald-400 text-xs font-semibold">${escapeHtml(slug)}</td>
-              <td class="py-3.5 px-4 font-mono text-slate-300 text-xs">${escapeHtml(adminEmail)}</td>
-              <td class="py-3.5 px-4 font-mono text-amber-400 font-bold text-xs">${subPrice.toLocaleString()} د.ع</td>
-              <td class="py-3.5 px-4 font-mono text-xs text-slate-300">
-                <span class="bg-slate-800 px-2 py-0.5 rounded border border-slate-700 text-[11px] font-bold">${escapeHtml(template)}</span>
-              </td>
-              <td class="py-3.5 px-4">
-                ${hasTelegram ? '<span class="text-blue-400 font-bold text-xs">✈️ متصل</span>' : '<span class="text-slate-500 text-xs">غير مفعل</span>'}
-              </td>
-              <td class="py-3.5 px-4">${statusBadge}</td>
               <td class="py-3.5 px-4 text-center">
-                <div class="flex items-center justify-center gap-1.5 flex-nowrap">
-                  <a href="index.html?pharmacy=${encodeURIComponent(slug)}" target="_blank" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-lg text-xs font-bold transition">
+                <div class="flex items-center justify-center gap-1.5">
+                  <a href="index.html?pharmacy=${encodeURIComponent(slug)}" target="_blank" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-1 rounded-lg font-bold transition">
                     🛍️ المتجر
                   </a>
-                  <a href="admin.html?pharmacy=${encodeURIComponent(slug)}" target="_blank" class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2.5 py-1 rounded-lg text-xs font-bold transition">
+                  <a href="admin.html?pharmacy=${encodeURIComponent(slug)}" target="_blank" class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-1 rounded-lg font-bold transition">
                     ⚙️ الإدارة
                   </a>
-                  <button onclick="openFullEditModal('${escapeHtml(slug)}')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer">
+                  <button onclick="openFullEditModal('${slug}')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2 py-1 rounded-lg font-bold transition">
                     ✏️ تعديل
                   </button>
-                  <button onclick="togglePharmacyStatus('${escapeHtml(slug)}', ${!isSuspended})" class="${isSuspended ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-amber-500/10 text-amber-400 border-amber-500/30'} hover:opacity-80 border px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer">
-                    ${isSuspended ? 'تفعيل' : 'حظر ⛔'}
+                  <button onclick="togglePharmacyStatus('${slug}', ${!isSuspended})" class="${isSuspended ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'} border px-2 py-1 rounded-lg font-bold">
+                    ${isSuspended ? 'تفعيل 🟢' : 'حظر 🔴'}
                   </button>
-                  <button onclick="handleDeletePharmacy('${escapeHtml(slug)}', '${escapeHtml(name)}')" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-1 rounded-lg text-xs font-bold transition cursor-pointer">
+                  <button onclick="handleDeletePharmacy('${slug}', '${data.name || slug}')" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-1 rounded-lg font-bold">
                     🗑️
                   </button>
                 </div>
@@ -1061,26 +919,22 @@
         document.getElementById('statActivePharmacies').textContent = active;
         document.getElementById('statTotalRevenue').textContent = totalRevenue.toLocaleString() + ' د.ع';
 
-        tbody.innerHTML = rows.length ? rows.join('') : `<tr><td colspan="8" class="text-center py-10 text-slate-500">لا توجد صيدليات مضافة بعد.</td></tr>`;
+        tbody.innerHTML = rows.length ? rows.join('') : `<tr><td colspan="7" class="text-center py-10 text-slate-500">لا توجد صيدليات مسجلة.</td></tr>`;
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-red-400">خطأ: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-400">خطأ: ${err.message}</td></tr>`;
       }
     }
 
-    // ================= CREATE PHARMACY =================
+    // 🔒 إنشاء الصيدلية وفصل الأسرار في private_settings/config
     async function handleCreatePharmacy(e) {
       e.preventDefault();
       if (!db) return;
-
-      const btn = document.getElementById('btnCreatePharmacy');
-      btn.disabled = true;
-      btn.innerHTML = `<span>جاري الحفظ والتهيئة...</span>`;
 
       const slug = document.getElementById('inpPharmacySlug').value.trim().toLowerCase();
       const name = document.getElementById('inpPharmacyName').value.trim();
       const adminEmail = document.getElementById('inpAdminEmail').value.trim().toLowerCase();
       const whatsapp = document.getElementById('inpWhatsapp').value.trim().replace(/\+/g, '');
-      const subPrice = Number(document.getElementById('inpSubscriptionPrice').value || 0);
+      const subPrice = Number(document.getElementById('inpSubscriptionPrice').value || 50000);
       const maxCap = Number(document.getElementById('inpMaxPriceCap').value || 150000);
       const expiryDate = document.getElementById('inpExpiryDate').value;
       const templateId = document.getElementById('inpTemplateId').value;
@@ -1089,68 +943,69 @@
       const chatId = document.getElementById('inpTeleChatId').value.trim();
 
       try {
-        const existingDoc = await db.collection('pharmacies').doc(slug).get();
-        if (existingDoc.exists) {
-          showToast('⚠️ هذا المعرف (Slug) مستخدم بالفعل لصيدلية أخرى!', true);
-          btn.disabled = false;
-          btn.innerHTML = `<span>💾 إنشاء الصيدلية وتفعيل الاشتراك</span>`;
-          return;
-        }
-
-        const pharmacyData = {
+        // 1. المستند العام للصيدلية (بدون أسرار)
+        await db.collection('pharmacies').doc(slug).set({
           id: slug,
-          name: name,
-          adminEmail: adminEmail,
+          name,
+          adminEmail,
           socialWhatsapp: whatsapp,
-          subscriptionPrice: subPrice,
-          maxPriceCap: maxCap,
-          subscriptionExpiry: expiryDate,
-          templateId: templateId,
+          templateId,
           primaryColor: color,
           isActive: true,
+          subscriptionExpiry: expiryDate,
           showAnnouncement: true,
-          announcementText: `✨ أهلاً بكم في ${name} — توصيل سريع وخدمة مميزة 🌸`,
+          announcementText: `✨ أهلاً بكم في ${name} 🌸`,
           deliveryFeeStandard: 4000,
           deliveryFeeExpress: 8000,
           heroMainTitle: name,
-          heroSubTitle: "نحن هنا لتحسين صحتكم وجمالكم",
-          heroDescTitle: "منتجات أصلية ومعتمدة 100%",
           bannerImgUrl: "https://imgdb.io/i/EQ4D9ag.png",
-          showPharmacistBanner: true,
-          pharmacistCtaTitle: "استشر الصيدلي مجاناً 🩺",
-          pharmacistCtaDesc: "تحدث مع الصيدلي المختص مباشرة للحصول على تشخيص دقيق لروتينك وروشتتك",
-          telegramConfig: {
-            botToken: botToken,
-            chatId: chatId,
-            enabled: !!(botToken && chatId)
-          },
           createdAt: firebase.firestore.FieldValue.serverTimestamp(),
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-
-        await db.collection('pharmacies').doc(slug).set(pharmacyData);
-
-        const staffDocId = adminEmail.replace(/[^a-z0-9]/g, '_');
-        await db.collection('pharmacies').doc(slug).collection('staff').doc(staffDocId).set({
-          email: adminEmail,
-          name: `مشرف ${name}`,
-          role: 'owner',
-          permissions: ['all'],
-          addedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        showToast(`🎉 تم إنشاء صيدلية "${name}" بنجاح!`);
+        // 2. المستند السري المفصول (Secrets Decoupling)
+        await db.collection('pharmacies').doc(slug).collection('private_settings').doc('config').set({
+          telegramConfig: {
+            botToken,
+            chatId,
+            enabled: !!(botToken && chatId)
+          },
+          subscriptionPrice: subPrice,
+          maxPriceCap: maxCap,
+          rateLimits: { maxOrdersPerHour: 15, maxReqsPerMin: 80 },
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        showToast(`🎉 تم إنشاء صيدلية "${name}" وفصل أسرارها بنجاح!`);
         document.getElementById('addPharmacyForm').reset();
         fetchPharmaciesList();
       } catch (err) {
-        showToast(`فشل إنشاء الصيدلية: ${err.message}`, true);
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = `<span>💾 إنشاء الصيدلية وتفعيل الاشتراك</span>`;
+        showToast(`خطأ: ${err.message}`, true);
       }
     }
 
-    // ================= TAB 3: BILLING & CONSUMPTION =================
+    async function togglePharmacyStatus(slug, suspend) {
+      try {
+        await db.collection('pharmacies').doc(slug).set({ isActive: !suspend }, { merge: true });
+        showToast(suspend ? 'تم إيقاف الصيدلية' : 'تم تفعيل الصيدلية بنجاح');
+        fetchPharmaciesList();
+      } catch (e) {
+        showToast('خطأ: ' + e.message, true);
+      }
+    }
+
+    async function handleDeletePharmacy(slug, name) {
+      if (!confirm(`تحذير نهائي: هل أنت متأكد من حذف صيدلية "${name}" (${slug}) نهائياً؟`)) return;
+      try {
+        await db.collection('pharmacies').doc(slug).delete();
+        showToast(`تم حذف الصيدلية`);
+        fetchPharmaciesList();
+      } catch (err) {
+        showToast(`خطأ: ${err.message}`, true);
+      }
+    }
+
+    // ================= DYNAMIC BILLING =================
     function saveBillingMultiplierSettings() {
       const config = {
         freeOrders: Number(document.getElementById('cfgFreeOrders').value || 100),
@@ -1181,7 +1036,7 @@
         for (const doc of snap.docs) {
           const slug = doc.id;
           const data = doc.data();
-          const basePrice = Number(data.subscriptionPrice || 0);
+          const basePrice = Number(data.subscriptionPrice || 50000);
           const maxCap = Number(data.maxPriceCap || 150000);
 
           const ordersSnap = await db.collection('pharmacies').doc(slug).collection('orders').get();
@@ -1197,8 +1052,8 @@
           const finalCalculatedPrice = Math.min(basePrice + totalUsageFee, maxCap);
 
           rows.push(`
-            <tr class="hover:bg-slate-800/40 transition">
-              <td class="py-3.5 px-4 font-bold text-white">${escapeHtml(data.name || slug)}</td>
+            <tr class="hover:bg-slate-800/40 transition text-xs">
+              <td class="py-3.5 px-4 font-bold text-white">${data.name || slug}</td>
               <td class="py-3.5 px-4 font-mono">${ordersCount} طلب</td>
               <td class="py-3.5 px-4 font-mono">${productsCount} مادة</td>
               <td class="py-3.5 px-4 font-mono text-slate-300">${basePrice.toLocaleString()} د.ع</td>
@@ -1206,8 +1061,8 @@
               <td class="py-3.5 px-4 font-mono text-emerald-400 font-black text-sm">${finalCalculatedPrice.toLocaleString()} د.ع</td>
               <td class="py-3.5 px-4 font-mono text-amber-400 font-bold">${maxCap.toLocaleString()} د.ع</td>
               <td class="py-3.5 px-4 text-center">
-                <button onclick="applyDynamicPriceToPharmacy('${escapeHtml(slug)}', ${finalCalculatedPrice})" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-lg text-xs font-bold transition">
-                  اعتماد السعر 💰
+                <button onclick="applyDynamicPriceToPharmacy('${slug}', ${finalCalculatedPrice})" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-lg font-bold">
+                  اعتماد 💰
                 </button>
               </td>
             </tr>
@@ -1221,7 +1076,6 @@
     }
 
     async function applyDynamicPriceToPharmacy(slug, newPrice) {
-      if (!confirm(`هل تريد تحديث سعر اشتراك صيدلية (${slug}) إلى ${newPrice.toLocaleString()} د.ع؟`)) return;
       try {
         await db.collection('pharmacies').doc(slug).set({ subscriptionPrice: newPrice }, { merge: true });
         showToast('تم تحديث سعر اشتراك الصيدلية بنجاح ✓');
@@ -1231,40 +1085,30 @@
       }
     }
 
-    // ================= TAB 4: MASTER CATALOG PAGINATION, SEARCH & BULK ACTIONS =================
+    // ================= MASTER CATALOG PAGINATION & BULK ACTIONS =================
     async function fetchMasterCatalog() {
       if (!db) return;
-      const tbody = document.getElementById('masterCatalogTableBody');
-      tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-400">جاري تحميل كتالوج الأصناف المركزي...</td></tr>`;
-
       try {
         const snap = await db.collection('system').doc('master_catalog').collection('products').get();
         window.cachedMasterCatalog = [];
-
-        snap.forEach(doc => {
-          window.cachedMasterCatalog.push({ id: doc.id, ...doc.data() });
-        });
+        snap.forEach(d => window.cachedMasterCatalog.push({ id: d.id, ...d.data() }));
 
         document.getElementById('statMasterItemsCount').textContent = window.cachedMasterCatalog.length;
         document.getElementById('catTotalCountBadge').textContent = window.cachedMasterCatalog.length;
-
         filterMasterCatalog();
       } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-red-400">خطأ: ${e.message}</td></tr>`;
+        console.warn(e);
       }
     }
 
     function filterMasterCatalog() {
-      const q = (document.getElementById('masterSearchInput').value || '').trim().toLowerCase();
-      const cat = document.getElementById('masterCategoryFilter').value;
+      const q = (document.getElementById('masterSearchInput')?.value || '').trim().toLowerCase();
 
       window.filteredMasterCatalog = window.cachedMasterCatalog.filter(item => {
-        const matchesCategory = (cat === 'all') || (item.category === cat) || (cat === 'baby' && item.subCategory === 'infant_milk');
-        const nameStr = (item.name || '').toLowerCase();
-        const brandStr = (item.brand || '').toLowerCase();
-        const barcodeStr = (item.barcode || '').toLowerCase();
-        const matchesSearch = !q || nameStr.includes(q) || brandStr.includes(q) || barcodeStr.includes(q);
-        return matchesCategory && matchesSearch;
+        const name = (item.name || '').toLowerCase();
+        const brand = (item.brand || '').toLowerCase();
+        const barcode = (item.barcode || '').toLowerCase();
+        return !q || name.includes(q) || brand.includes(q) || barcode.includes(q);
       });
 
       document.getElementById('masterFilteredCountText').textContent = `عرض ${window.filteredMasterCatalog.length} من أصل ${window.cachedMasterCatalog.length} صنف`;
@@ -1284,35 +1128,24 @@
       const pageItems = window.filteredMasterCatalog.slice(startIndex, startIndex + MASTER_PAGE_SIZE);
 
       if (pageItems.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-500">لا توجد أصناف مطابقة للبحث أو الفلتر.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-500">لا توجد أصناف مطابقة للبحث.</td></tr>`;
       } else {
         tbody.innerHTML = pageItems.map(item => {
-          const isMilk = item.category === 'baby' || item.subCategory === 'infant_milk';
-          const stageBadge = isMilk && item.milkStage ? `<span class="bg-blue-950 text-blue-400 border border-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full mr-1">${escapeHtml(item.milkStage)}</span>` : '';
           const isChecked = window.selectedMasterItemIds.has(item.id);
-
           return `
             <tr class="hover:bg-slate-800/40 transition text-xs">
               <td class="py-3 px-4 text-center">
-                <input type="checkbox" value="${escapeHtml(item.id)}" ${isChecked ? 'checked' : ''} onchange="toggleMasterItemSelection(this, '${escapeHtml(item.id)}')" class="master-row-cb w-4 h-4 rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-0 cursor-pointer">
+                <input type="checkbox" value="${item.id}" ${isChecked ? 'checked' : ''} onchange="toggleMasterItemSelection(this, '${item.id}')" class="master-row-cb w-4 h-4 rounded bg-slate-900 border-slate-700 text-emerald-500 cursor-pointer">
               </td>
               <td class="py-3 px-4">
-                <div class="font-bold text-white">${escapeHtml(item.name || '')}</div>
-                <div class="text-[11px] text-slate-400">${escapeHtml(item.size || '')} ${item.barcode ? `· باركود: <span class="font-mono">${escapeHtml(item.barcode)}</span>` : ''}</div>
+                <div class="font-bold text-white">${item.name || ''}</div>
+                <div class="text-[11px] text-slate-400">${item.size || ''} ${item.barcode ? `· باركود: ${item.barcode}` : ''}</div>
               </td>
-              <td class="py-3 px-4 font-bold text-emerald-400">${escapeHtml(item.brand || '')}</td>
-              <td class="py-3 px-4 text-slate-300">
-                <span class="bg-slate-800 px-2 py-0.5 rounded border border-slate-700 font-bold">${escapeHtml(item.category || 'عام')}</span>
-                ${stageBadge}
-              </td>
+              <td class="py-3 px-4 font-bold text-emerald-400">${item.brand || ''}</td>
+              <td class="py-3 px-4 text-slate-300">${item.category || 'عام'}</td>
               <td class="py-3 px-4 font-mono text-amber-400 font-bold">${Number(item.price || item.suggestedPrice || 0).toLocaleString()} د.ع</td>
-              <td class="py-3 px-4 text-slate-400 max-w-xs truncate" title="${escapeHtml(item.ingredients || item.medicalIndications || '')}">
-                ${escapeHtml(item.ingredients || item.medicalIndications || '—')}
-              </td>
               <td class="py-3 px-4 text-center">
-                <button onclick="deleteFromMasterCatalog('${escapeHtml(item.id)}')" class="text-red-400 hover:text-red-300 font-bold p-1 transition" title="حذف صنف فردي">
-                  🗑️
-                </button>
+                <button onclick="deleteFromMasterCatalog('${item.id}')" class="text-red-400 hover:text-red-300 font-bold p-1">🗑️</button>
               </td>
             </tr>
           `;
@@ -1330,27 +1163,20 @@
       renderMasterCatalogPage();
     }
 
-    // ================= MULTI-SELECT & BULK DELETE =================
     function toggleSelectAllMaster(mainCheckbox) {
       const isChecked = mainCheckbox.checked;
       const checkboxes = document.querySelectorAll('.master-row-cb');
       checkboxes.forEach(cb => {
         cb.checked = isChecked;
-        if (isChecked) {
-          window.selectedMasterItemIds.add(cb.value);
-        } else {
-          window.selectedMasterItemIds.delete(cb.value);
-        }
+        if (isChecked) window.selectedMasterItemIds.add(cb.value);
+        else window.selectedMasterItemIds.delete(cb.value);
       });
       updateSelectedMasterCount();
     }
 
     function toggleMasterItemSelection(cb, id) {
-      if (cb.checked) {
-        window.selectedMasterItemIds.add(id);
-      } else {
-        window.selectedMasterItemIds.delete(id);
-      }
+      if (cb.checked) window.selectedMasterItemIds.add(id);
+      else window.selectedMasterItemIds.delete(id);
       updateSelectedMasterCount();
     }
 
@@ -1358,35 +1184,25 @@
       const count = window.selectedMasterItemIds.size;
       const badge = document.getElementById('selectedMasterCount');
       const bulkDelBtn = document.getElementById('btnBulkDeleteMaster');
-      const selectAllCb = document.getElementById('selectAllMasterCheckbox');
-
       if (badge) badge.textContent = count;
       if (bulkDelBtn) {
         if (count > 0) bulkDelBtn.classList.remove('hidden');
         else bulkDelBtn.classList.add('hidden');
       }
-
-      const pageCheckboxes = document.querySelectorAll('.master-row-cb');
-      if (pageCheckboxes.length > 0) {
-        const allPageChecked = Array.from(pageCheckboxes).every(cb => cb.checked);
-        if (selectAllCb) selectAllCb.checked = allPageChecked;
-      }
     }
 
+    // 🗑️ الحذف الجماعي السريع عبر Batches
     async function handleBulkDeleteMasterProducts() {
-      const idsToDelete = Array.from(window.selectedMasterItemIds);
-      if (idsToDelete.length === 0) return;
+      const ids = Array.from(window.selectedMasterItemIds);
+      if (!confirm(`تحذير: هل أنت متأكد من حذف (${ids.length}) صنف دفعة واحدة من الكتالوج المركزي؟`)) return;
 
-      if (!confirm(`تحذير: هل أنت متأكد من حذف (${idsToDelete.length}) صنف دفعة واحدة من البنك المركزي؟`)) return;
-
-      showToast(`جاري حذف ${idsToDelete.length} صنف من البنك المركزي...`);
-
+      showToast(`جاري حذف ${ids.length} صنف...`);
       const CHUNK_SIZE = 400;
-      const totalBatches = Math.ceil(idsToDelete.length / CHUNK_SIZE);
+      const totalBatches = Math.ceil(ids.length / CHUNK_SIZE);
 
       try {
         for (let i = 0; i < totalBatches; i++) {
-          const chunk = idsToDelete.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+          const chunk = ids.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
           const batch = db.batch();
           chunk.forEach(id => {
             const docRef = db.collection('system').doc('master_catalog').collection('products').doc(id);
@@ -1395,15 +1211,27 @@
           await batch.commit();
         }
 
-        showToast(`🎉 تم حذف ${idsToDelete.length} صنف بنجاح من البنك المركزي!`);
+        showToast(`🎉 تم حذف ${ids.length} صنف بنجاح!`);
         window.selectedMasterItemIds.clear();
         updateSelectedMasterCount();
         fetchMasterCatalog();
       } catch (err) {
-        showToast('خطأ أثناء الحذف الجماعي: ' + err.message, true);
+        showToast('خطأ: ' + err.message, true);
       }
     }
 
+    async function deleteFromMasterCatalog(id) {
+      if (!confirm('حذف هذا الصنف من الكتالوج المركزي؟')) return;
+      try {
+        await db.collection('system').doc('master_catalog').collection('products').doc(id).delete();
+        showToast('تم حذف الصنف');
+        fetchMasterCatalog();
+      } catch (e) {
+        showToast('خطأ: ' + e.message, true);
+      }
+    }
+
+    // 📥 استيراد ملفات JSON / CSV مع شريط تقدم
     async function handleMasterBulkUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -1416,7 +1244,7 @@
       progressBox.classList.remove('hidden');
       progressFill.style.width = '5%';
       percentText.textContent = '5%';
-      statusText.textContent = 'جاري قراءة الملف وتحليله...';
+      statusText.textContent = 'جاري قراءة الملف...';
 
       try {
         const text = await file.text();
@@ -1424,7 +1252,7 @@
 
         if (file.name.endsWith('.json')) {
           items = JSON.parse(text);
-        } else if (file.name.endsWith('.csv')) {
+        } else {
           items = parseCSVToMasterArray(text);
         }
 
@@ -1432,8 +1260,7 @@
           throw new Error('الملف فارغ أو لا يحتوي على مصفوفة بيانات صالحة.');
         }
 
-        statusText.textContent = `تم قراءة ${items.length} صنف. جاري الحفظ والتسجيل السحابي في Firestore...`;
-
+        statusText.textContent = `تم قراءة ${items.length} صنف. جاري الحفظ السحابي...`;
         const CHUNK_SIZE = 400;
         const totalBatches = Math.ceil(items.length / CHUNK_SIZE);
 
@@ -1445,17 +1272,11 @@
             const docId = rawItem.id ? String(rawItem.id).trim() : ('item_' + Math.random().toString(36).substring(2, 9));
             const docRef = db.collection('system').doc('master_catalog').collection('products').doc(docId);
             
-            const payload = {
+            batch.set(docRef, {
               id: docId,
               name: rawItem.name || 'بدون اسم',
               brand: rawItem.brand || 'عام',
               category: rawItem.category || 'face',
-              subCategory: rawItem.subCategory || '',
-              milkStage: rawItem.milkStage || null,
-              ageGroup: rawItem.ageGroup || null,
-              formulaType: rawItem.formulaType || null,
-              specialFormulaTag: rawItem.specialFormulaTag || null,
-              type: rawItem.type || 'bottle',
               size: rawItem.size || 'عبوة قياسية',
               price: Number(rawItem.price || rawItem.suggestedPrice || 0),
               suggestedPrice: Number(rawItem.suggestedPrice || rawItem.price || 0),
@@ -1463,31 +1284,24 @@
               inStock: rawItem.inStock !== false,
               description: rawItem.description || '',
               ingredients: rawItem.ingredients || '',
-              medicalIndications: rawItem.medicalIndications || '',
-              keyNutrients: rawItem.keyNutrients || '',
-              usage: rawItem.usage || '',
               barcode: rawItem.barcode || '',
               imageUrl: rawItem.imageUrl || '',
               updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            };
-
-            batch.set(docRef, payload, { merge: true });
+            }, { merge: true });
           });
 
           await batch.commit();
-
           const pct = Math.round(((i + 1) / totalBatches) * 100);
           progressFill.style.width = pct + '%';
           percentText.textContent = pct + '%';
         }
 
-        showToast(`🎉 تم رفع وحفظ ${items.length} صنف بنجاح في البنك المركزي!`);
-        statusText.textContent = 'اكتمل الرفع بنجاح! ✓';
-        setTimeout(() => progressBox.classList.add('hidden'), 2500);
+        showToast(`🎉 تم رفع وحفظ ${items.length} صنف بنجاح!`);
+        setTimeout(() => progressBox.classList.add('hidden'), 2000);
         fetchMasterCatalog();
       } catch (err) {
         showToast('خطأ بالرفع: ' + err.message, true);
-        statusText.textContent = 'فشل الرفع: ' + err.message;
+        progressBox.classList.add('hidden');
       } finally {
         event.target.value = '';
       }
@@ -1502,95 +1316,62 @@
       for (let i = 1; i < lines.length; i++) {
         const cols = lines[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
         const obj = {};
-        headers.forEach((h, idx) => {
-          obj[h] = cols[idx] || '';
-        });
+        headers.forEach((h, idx) => { obj[h] = cols[idx] || ''; });
         if (obj.name) list.push(obj);
       }
       return list;
     }
 
     async function exportMasterCatalogJSON() {
-      if (!window.cachedMasterCatalog || window.cachedMasterCatalog.length === 0) {
-        showToast('البنك المركزي فارغ لا يوجد بيانات للتصدير', true);
-        return;
-      }
+      if (!window.cachedMasterCatalog.length) return;
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(window.cachedMasterCatalog, null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `Master_Catalog_Backup_${new Date().toISOString().split('T')[0]}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-      showToast('تم تصدير نسخة JSON من البنك المركزي بنجاح 💾');
+      const a = document.createElement('a');
+      a.href = dataStr;
+      a.download = `Master_Catalog_Backup_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      showToast('تم تصدير نسخة JSON بنجاح 💾');
     }
 
-    async function deleteFromMasterCatalog(id) {
-      if (!confirm('هل أنت متأكد من حذف هذا الصنف من بنك الأدوية والمنتجات المركزي؟')) return;
-      try {
-        await db.collection('system').doc('master_catalog').collection('products').doc(id).delete();
-        showToast('تم حذف الصنف من الكتالوج المركزي');
-        fetchMasterCatalog();
-      } catch (e) {
-        showToast('خطأ: ' + e.message, true);
-      }
-    }
-
-    // ================= TAB 5: CROWDSOURCING SUBMISSIONS =================
+    // ================= CROWDSOURCING SUBMISSIONS =================
     async function fetchCrowdsourcedSubmissions() {
       if (!db) return;
       const tbody = document.getElementById('crowdsourceTableBody');
       const badge = document.getElementById('crowdsourceBadge');
-      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400">جاري فحص مساهمات الصيدليات...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-400">جاري فحص المساهمات...</td></tr>`;
 
       try {
         const snap = await db.collection('system').doc('master_catalog_submissions').collection('submissions').where('status', '==', 'pending_review').get();
         badge.textContent = snap.size;
 
         if (snap.empty) {
-          tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-500">لا توجد مساهمات معلقة حالياً من الصيدليات 🌸</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-500">لا توجد مساهمات معلقة حالياً 🌸</td></tr>`;
           return;
         }
 
-        const rows = [];
-        snap.forEach(doc => {
+        tbody.innerHTML = snap.docs.map(doc => {
           const s = doc.data();
           const p = s.productData || {};
-          const subId = doc.id;
-          const dateStr = s.submittedAt ? (s.submittedAt.toDate ? s.submittedAt.toDate().toLocaleDateString('ar-IQ') : String(s.submittedAt).split('T')[0]) : 'حديث';
-
-          rows.push(`
+          return `
             <tr class="hover:bg-slate-800/40 transition text-xs">
-              <td class="py-3 px-4">
-                <div class="font-bold text-white">${escapeHtml(s.sourcePharmacyName || s.sourcePharmacyId || 'صيدلية')}</div>
-                <div class="text-[11px] font-mono text-emerald-400">${escapeHtml(s.sourcePharmacyId || '')}</div>
-              </td>
-              <td class="py-3 px-4 font-bold text-white">${escapeHtml(p.name || 'منتج')}</td>
-              <td class="py-3 px-4 font-bold text-emerald-400">${escapeHtml(p.brand || '')}</td>
+              <td class="py-3 px-4 font-bold text-white">${s.sourcePharmacyName || s.sourcePharmacyId || 'صيدلية'}</td>
+              <td class="py-3 px-4 font-bold text-white">${p.name || 'منتج'}</td>
+              <td class="py-3 px-4 font-bold text-emerald-400">${p.brand || ''}</td>
               <td class="py-3 px-4 font-mono text-amber-400 font-bold">${Number(p.price || p.suggestedPrice || 0).toLocaleString()} د.ع</td>
-              <td class="py-3 px-4 text-slate-400 font-mono">${escapeHtml(dateStr)}</td>
               <td class="py-3 px-4 text-center">
                 <div class="flex items-center justify-center gap-2">
-                  <button onclick="approveCrowdsourcedItem('${escapeHtml(subId)}')" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-lg font-bold transition">
-                    اعتماد ونشر ✅
-                  </button>
-                  <button onclick="rejectCrowdsourcedItem('${escapeHtml(subId)}')" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-3 py-1 rounded-lg font-bold transition">
-                    رفض ❌
-                  </button>
+                  <button onclick="approveCrowdsourcedItem('${doc.id}')" class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-lg font-bold">اعتماد ✅</button>
+                  <button onclick="rejectCrowdsourcedItem('${doc.id}')" class="bg-red-500/10 text-red-400 border border-red-500/30 px-3 py-1 rounded-lg font-bold">رفض ❌</button>
                 </div>
               </td>
             </tr>
-          `);
-        });
-
-        tbody.innerHTML = rows.join('');
+          `;
+        }).join('');
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-red-400">خطأ: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-red-400">خطأ: ${err.message}</td></tr>`;
       }
     }
 
     async function approveCrowdsourcedItem(subId) {
-      if (!confirm('هل تريد اعتماد هذا الصنف وإضافته لبنك المنتجات المركزي العام؟')) return;
       try {
         const subDoc = await db.collection('system').doc('master_catalog_submissions').collection('submissions').doc(subId).get();
         if (!subDoc.exists) return;
@@ -1602,7 +1383,6 @@
           ...p,
           id: docId,
           crowdsourcedBy: subData.sourcePharmacyId || 'pharmacy',
-          isVerified: true,
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
 
@@ -1611,16 +1391,15 @@
           reviewedAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
 
-        showToast('🎉 تم اعتماد الصنف ونشره في الكتالوج المركزي العام!');
+        showToast('🎉 تم اعتماد الصنف في الكتالوج المركزي!');
         fetchCrowdsourcedSubmissions();
         fetchMasterCatalog();
       } catch (err) {
-        showToast('خطأ بالاعتماد: ' + err.message, true);
+        showToast('خطأ: ' + err.message, true);
       }
     }
 
     async function rejectCrowdsourcedItem(subId) {
-      if (!confirm('هل أنت متأكد من رفض واستبعاد هذا الصنف المقترح؟')) return;
       try {
         await db.collection('system').doc('master_catalog_submissions').collection('submissions').doc(subId).set({
           status: 'rejected',
@@ -1633,7 +1412,7 @@
       }
     }
 
-    // ================= TAB 7: SUPER ADMIN PAYMENT INFO =================
+    // ================= PAYMENT INFO =================
     async function loadSuperAdminPaymentInfo() {
       if (!db) return;
       try {
@@ -1647,39 +1426,36 @@
           document.getElementById('payNotes').value = d.notes || '';
         }
       } catch (e) {
-        console.warn("Load payment info error:", e);
+        console.warn(e);
       }
     }
 
     async function handleSaveSuperPaymentInfo(e) {
       e.preventDefault();
       if (!db) return;
-
-      const payload = {
-        cardHolder: document.getElementById('payCardHolder').value.trim(),
-        qiCardNumber: document.getElementById('payQiCard').value.trim(),
-        zainCashNumber: document.getElementById('payZainCash').value.trim(),
-        fibAccount: document.getElementById('payFib').value.trim(),
-        notes: document.getElementById('payNotes').value.trim(),
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      };
-
       try {
-        await db.collection('system').doc('payment_info').set(payload, { merge: true });
-        showToast('تم حفظ وتعميم بيانات الدفع الإلكتروني بنجاح! 💳');
+        await db.collection('system').doc('payment_info').set({
+          cardHolder: document.getElementById('payCardHolder').value.trim(),
+          qiCardNumber: document.getElementById('payQiCard').value.trim(),
+          zainCashNumber: document.getElementById('payZainCash').value.trim(),
+          fibAccount: document.getElementById('payFib').value.trim(),
+          notes: document.getElementById('payNotes').value.trim(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+        showToast('تم حفظ وتعميم بيانات الدفع الإلكتروني! 💳');
       } catch (err) {
         showToast('خطأ: ' + err.message, true);
       }
     }
 
-    // ================= TAB 8: REPORTS HUB & CONSOLIDATED EXCEL =================
+    // ================= CONSOLIDATED & INDIVIDUAL REPORTS =================
     function renderIndividualReportsList() {
       const tbody = document.getElementById('individualReportsTableBody');
       const slugs = Object.keys(window.cachedPharmaciesMap);
       const dateStr = new Date().toISOString().split('T')[0];
 
       if (!slugs.length) {
-        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-500">لا توجد صيدليات مسجلة حالياً.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-500">لا توجد صيدليات مسجلة.</td></tr>`;
         return;
       }
 
@@ -1687,16 +1463,16 @@
         const data = window.cachedPharmaciesMap[slug];
         const fileName = `Sales_Report_${slug}_${dateStr}.csv`;
         return `
-          <tr class="hover:bg-slate-800/40 transition">
-            <td class="py-3.5 px-4 font-bold text-white">${escapeHtml(data.name || slug)}</td>
-            <td class="py-3.5 px-4 font-mono text-emerald-400 text-xs">${escapeHtml(slug)}</td>
-            <td class="py-3.5 px-4 font-mono text-slate-300 text-xs">${escapeHtml(fileName)}</td>
-            <td class="py-3.5 px-4 text-center">
+          <tr class="hover:bg-slate-800/40 transition text-xs">
+            <td class="py-3 px-4 font-bold text-white">${data.name || slug}</td>
+            <td class="py-3 px-4 font-mono text-emerald-400">${slug}</td>
+            <td class="py-3 px-4 font-mono text-slate-300">${fileName}</td>
+            <td class="py-3 px-4 text-center">
               <div class="flex items-center justify-center gap-2">
-                <button onclick="exportSinglePharmacyCSV('${escapeHtml(slug)}')" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-lg text-xs font-bold transition">
+                <button onclick="exportSinglePharmacyCSV('${slug}')" class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-lg font-bold">
                   📊 تنزيل Excel
                 </button>
-                <button onclick="sendSinglePharmacyReportTelegram('${escapeHtml(slug)}')" class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 px-3 py-1.5 rounded-lg text-xs font-bold transition">
+                <button onclick="sendSinglePharmacyReportTelegram('${slug}')" class="bg-blue-500/10 text-blue-400 border border-blue-500/30 px-3 py-1 rounded-lg font-bold">
                   ✈️ إرسال لتلغرامي
                 </button>
               </div>
@@ -1708,18 +1484,15 @@
 
     async function generateSinglePharmacyCSVData(slug) {
       const ordersSnap = await db.collection('pharmacies').doc(slug).collection('orders').orderBy('createdAt', 'desc').get();
-      let csv = "Order ID,Date & Time,Customer Name,Phone Number,Full Address,Delivery Method,Order Status,Items Ordered,Total Amount (IQD),Delivery Fee (IQD)\n";
+      let csv = "Order ID,Date,Customer Name,Phone,Address,Method,Status,Items,Total (IQD)\n";
       let totalAmount = 0;
 
       ordersSnap.forEach(d => {
         const o = d.data();
-        const oTotal = Number(o.total || 0);
-        totalAmount += oTotal;
+        totalAmount += Number(o.total || 0);
         const itemsText = (o.items || []).map(it => `${it.name} (x${it.quantity})`).join(" + ");
-        csv += `"${o.id || d.id}","${o.date || ''}","${o.name || ''}","${o.phone || ''}","${(o.address || '').replace(/"/g, '""')}","${o.deliveryMethod || 'standard'}","${o.status || ''}","${itemsText.replace(/"/g, '""')}","${oTotal}","${o.deliveryFee || 0}"\n`;
+        csv += `"${o.id || d.id}","${o.date || ''}","${o.name || ''}","${o.phone || ''}","${(o.address || '').replace(/"/g, '""')}","${o.deliveryMethod || 'standard'}","${o.status || ''}","${itemsText.replace(/"/g, '""')}","${o.total || 0}"\n`;
       });
-
-      csv += `\n"TOTAL","${ordersSnap.size} Orders","","","","","","","${totalAmount} IQD",""\n`;
       return { csv, totalAmount, count: ordersSnap.size };
     }
 
@@ -1727,18 +1500,12 @@
       showToast(`جاري إنشاء تقرير إكسل لصيدلية (${slug})...`);
       try {
         const { csv } = await generateSinglePharmacyCSVData(slug);
-        const dateStr = new Date().toISOString().split('T')[0];
-        const fileName = `Sales_Report_${slug}_${dateStr}.csv`;
-
         const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", fileName);
-        document.body.appendChild(link);
+        link.href = URL.createObjectURL(blob);
+        link.download = `Sales_Report_${slug}_${new Date().toISOString().split('T')[0]}.csv`;
         link.click();
-        document.body.removeChild(link);
-        showToast(`تم تنزيل ${fileName} بنجاح! 📊`);
+        showToast('تم تنزيل التقرير بنجاح! 📊');
       } catch (err) {
         showToast('خطأ: ' + err.message, true);
       }
@@ -1754,85 +1521,45 @@
         return;
       }
 
-      showToast(`جاري إرسال تقرير (${slug}) إلى تلغرام السوبر أدمن...`);
+      showToast(`جاري إرسال تقرير (${slug}) للتليجرام...`);
       try {
         const data = window.cachedPharmaciesMap[slug] || {};
         const { totalAmount, count } = await generateSinglePharmacyCSVData(slug);
-        const dateStr = new Date().toLocaleDateString('ar-IQ');
 
         const message = 
           `📊 *Sales Report: ${data.name || slug}*\n` +
           `🏢 *Tenant ID:* \`${slug}\`\n` +
-          `👤 *Admin Email:* \`${data.adminEmail || 'N/A'}\`\n` +
-          `💰 *Subscription Price:* *${(data.subscriptionPrice || 0).toLocaleString()} IQD*\n` +
-          `⏳ *Subscription Expiry:* \`${data.subscriptionExpiry || 'Lifetime'}\`\n` +
-          `━━━━━━━━━━━━━━━━━━━\n` +
           `📦 *Total Orders:* ${count}\n` +
           `💵 *Total Sales Revenue:* *${totalAmount.toLocaleString()} IQD*\n` +
-          `📅 *Generated Date:* ${dateStr}\n` +
-          `━━━━━━━━━━━━━━━━━━━\n` +
-          `👑 *Super Admin Executive Platform*`;
+          `👑 *Super Admin Platform*`;
 
-        const teleUrl = `https://api.telegram.org/bot${superBotToken.trim()}/sendMessage`;
-        await fetch(teleUrl, {
+        await fetch(`https://api.telegram.org/bot${superBotToken.trim()}/sendMessage`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ chat_id: superChatId.trim(), text: message, parse_mode: "Markdown" })
         });
-        showToast('🚀 تم إرسال الكشف المالي لتلغرامك بنجاح!');
+        showToast('🚀 تم إرسال التقرير لتلغرامك بنجاح!');
       } catch (err) {
         showToast('خطأ: ' + err.message, true);
       }
     }
 
-    // ================= MASTER CONSOLIDATED REPORT =================
-    async function generateMasterConsolidatedData() {
-      const snap = await db.collection('pharmacies').get();
-      let csv = "Pharmacy Name,Tenant Slug,Admin Email,Status,Subscription Expiry,Base Subscription (IQD),Max Price Cap (IQD),Total Orders Count,Total Sales GMV (IQD)\n";
-      
-      let grandTotalOrders = 0;
-      let grandTotalSales = 0;
-      let grandTotalSubscriptions = 0;
-
-      for (const doc of snap.docs) {
-        const slug = doc.id;
-        const data = doc.data();
-        const subPrice = Number(data.subscriptionPrice || 0);
-        const maxCap = Number(data.maxPriceCap || 150000);
-        grandTotalSubscriptions += subPrice;
-
-        const ordersSnap = await db.collection('pharmacies').doc(slug).collection('orders').get();
-        const ordersCount = ordersSnap.size;
-        grandTotalOrders += ordersCount;
-
-        let storeSales = 0;
-        ordersSnap.forEach(od => { storeSales += Number(od.data().total || 0); });
-        grandTotalSales += storeSales;
-
-        const status = data.isActive === false ? 'Suspended' : 'Active';
-        csv += `"${(data.name || slug).replace(/"/g, '""')}","${slug}","${data.adminEmail || ''}","${status}","${data.subscriptionExpiry || ''}","${subPrice}","${maxCap}","${ordersCount}","${storeSales}"\n`;
-      }
-
-      csv += `\n"GRAND TOTALS","${snap.size} Stores","","","","${grandTotalSubscriptions} IQD","","${grandTotalOrders} Orders","${grandTotalSales} IQD"\n`;
-      return { csv, totalStores: snap.size, grandTotalSubscriptions, grandTotalOrders, grandTotalSales };
-    }
-
     async function exportMasterConsolidatedCSV() {
-      showToast('جاري إنشاء التقرير المحاسبي الشامل لجميع الصيدليات...');
+      showToast('جاري إنشاء التقرير المحاسبي الشامل...');
       try {
-        const { csv } = await generateMasterConsolidatedData();
-        const dateStr = new Date().toISOString().split('T')[0];
-        const fileName = `SaaS_Master_Consolidated_Report_${dateStr}.csv`;
+        const snap = await db.collection('pharmacies').get();
+        let csv = "Pharmacy Name,Slug,Admin Email,Status,Subscription Expiry,Base Price (IQD)\n";
+        snap.forEach(d => {
+          const data = d.data();
+          csv += `"${data.name || d.id}","${d.id}","${data.adminEmail || ''}","${data.isActive !== false ? 'Active' : 'Suspended'}","${data.subscriptionExpiry || ''}","${data.subscriptionPrice || 0}"\n`;
+        });
 
         const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", fileName);
-        document.body.appendChild(link);
+        link.href = URL.createObjectURL(blob);
+        link.download = `SaaS_Master_Consolidated_Report_${new Date().toISOString().split('T')[0]}.csv`;
         link.click();
-        document.body.removeChild(link);
-        showToast('تم تنزيل التقرير الموحد Master Report بنجاح! 📊');
+        showToast('تم تنزيل التقرير الموحد بنجاح 📊');
       } catch (err) {
         showToast('خطأ: ' + err.message, true);
       }
@@ -1848,42 +1575,38 @@
         return;
       }
 
-      showToast('جاري تجميع التقرير الشامل وإرساله لتلغرام...');
+      showToast('جاري إرسال التقرير الشامل لتلغرام...');
       try {
-        const { totalStores, grandTotalSubscriptions, grandTotalOrders, grandTotalSales } = await generateMasterConsolidatedData();
-        const dateStr = new Date().toLocaleDateString('ar-IQ');
+        const snap = await db.collection('pharmacies').get();
+        let totalRevenue = 0;
+        snap.forEach(d => { totalRevenue += Number(d.data().subscriptionPrice || 0); });
 
         const message = 
           `📊 *SaaS Master Consolidated Report*\n` +
-          `━━━━━━━━━━━━━━━━━━━\n` +
-          `🏥 *Total Registered Stores:* ${totalStores}\n` +
-          `💰 *Total Subscription Revenue:* *${grandTotalSubscriptions.toLocaleString()} IQD*\n` +
-          `📦 *Platform Total Orders:* ${grandTotalOrders.toLocaleString()} Orders\n` +
-          `💵 *Platform Total GMV Sales:* *${grandTotalSales.toLocaleString()} IQD*\n` +
-          `📅 *Report Date:* ${dateStr}\n` +
-          `━━━━━━━━━━━━━━━━━━━\n` +
-          `👑 *Generated by Super Admin System*`;
+          `🏥 *Total Registered Stores:* ${snap.size}\n` +
+          `💰 *Total Subscription Revenue:* *${totalRevenue.toLocaleString()} IQD*\n` +
+          `📅 *Date:* ${new Date().toLocaleDateString('ar-IQ')}\n` +
+          `👑 *Super Admin Executive Platform*`;
 
-        const teleUrl = `https://api.telegram.org/bot${superBotToken.trim()}/sendMessage`;
-        await fetch(teleUrl, {
+        await fetch(`https://api.telegram.org/bot${superBotToken.trim()}/sendMessage`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ chat_id: superChatId.trim(), text: message, parse_mode: "Markdown" })
         });
-        showToast('🚀 تم إرسال التقرير الموحد بنجاح لتلغرامك الشخصي!');
+        showToast('🚀 تم إرسال التقرير الموحد لتلغرامك!');
       } catch (err) {
         showToast('خطأ: ' + err.message, true);
       }
     }
 
-    // ================= FULL EDIT MODAL =================
+    // ================= FULL EDIT MODAL (WITH SECRETS DECOUPLING) =================
     function openFullEditModal(slug) {
       const data = window.cachedPharmaciesMap[slug] || {};
       document.getElementById('editOldSlugId').value = slug;
       document.getElementById('editSlugInp').value = slug;
       document.getElementById('editName').value = data.name || '';
       document.getElementById('editAdminEmail').value = data.adminEmail || '';
-      document.getElementById('editSubPrice').value = data.subscriptionPrice || 0;
+      document.getElementById('editSubPrice').value = data.subscriptionPrice || 50000;
       document.getElementById('editMaxPriceCap').value = data.maxPriceCap || 150000;
       document.getElementById('editSubExpiry').value = data.subscriptionExpiry || '';
       document.getElementById('editTemplateId').value = data.templateId || 'template_default';
@@ -1911,75 +1634,44 @@
       const botToken = document.getElementById('editTeleBotToken').value.trim();
       const chatId = document.getElementById('editTeleChatId').value.trim();
 
-      if (!newSlug) {
-        showToast('يرجى كتابة معرّف صحيح للصيدلية', true);
-        return;
-      }
-
       try {
-        const payload = {
+        const publicPayload = {
           id: newSlug,
-          name: name,
-          adminEmail: adminEmail,
-          subscriptionPrice: price,
-          maxPriceCap: maxCap,
-          subscriptionExpiry: expiry,
-          templateId: templateId,
+          name,
+          adminEmail,
+          templateId,
           socialWhatsapp: whatsapp,
+          subscriptionExpiry: expiry,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        const privatePayload = {
           telegramConfig: {
-            botToken: botToken,
-            chatId: chatId,
+            botToken,
+            chatId,
             enabled: !!(botToken && chatId)
           },
+          subscriptionPrice: price,
+          maxPriceCap: maxCap,
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
         if (newSlug !== oldSlug) {
-          const checkNew = await db.collection('pharmacies').doc(newSlug).get();
-          if (checkNew.exists) {
-            showToast(`⚠️ المعرف الجديد (${newSlug}) مستخدم لصيدلية أخرى بالفعل!`, true);
-            return;
-          }
-
           const oldData = window.cachedPharmaciesMap[oldSlug] || {};
-          await db.collection('pharmacies').doc(newSlug).set({
-            ...oldData,
-            ...payload
-          });
-
+          await db.collection('pharmacies').doc(newSlug).set({ ...oldData, ...publicPayload });
+          await db.collection('pharmacies').doc(newSlug).collection('private_settings').doc('config').set(privatePayload);
           await db.collection('pharmacies').doc(oldSlug).delete();
-          showToast(`تم تغيير معرّف الصيدلية من (${oldSlug}) إلى (${newSlug}) بنجاح! 🚀`);
+          showToast(`تم تغيير معرّف الصيدلية إلى (${newSlug}) بنجاح! 🚀`);
         } else {
-          await db.collection('pharmacies').doc(oldSlug).set(payload, { merge: true });
-          showToast('تم تحديث إعدادات وقالب الصيدلية بنجاح ✓');
+          await db.collection('pharmacies').doc(oldSlug).set(publicPayload, { merge: true });
+          await db.collection('pharmacies').doc(oldSlug).collection('private_settings').doc('config').set(privatePayload, { merge: true });
+          showToast('تم حفظ التعديلات وعزل الأسرار بنجاح ✓');
         }
 
         closeFullEditModal();
         fetchPharmaciesList();
       } catch (err) {
         showToast('خطأ: ' + err.message, true);
-      }
-    }
-
-    async function togglePharmacyStatus(slug, suspend) {
-      if (!confirm(suspend ? `هل تريد حظر وتجميد صيدلية (${slug})؟` : `هل تريد تفعيل صيدلية (${slug})؟`)) return;
-      try {
-        await db.collection('pharmacies').doc(slug).set({ isActive: !suspend }, { merge: true });
-        showToast(suspend ? 'تم حظر الصيدلية وتجميد المتجر' : 'تم تفعيل الصيدلية بنجاح');
-        fetchPharmaciesList();
-      } catch (e) {
-        showToast('خطأ: ' + e.message, true);
-      }
-    }
-
-    async function handleDeletePharmacy(slug, name) {
-      if (!confirm(`تحذير: هل أنت متأكد من حذف صيدلية "${name}" (${slug}) نهائياً؟`)) return;
-      try {
-        await db.collection('pharmacies').doc(slug).delete();
-        showToast(`تم حذف الصيدلية بنجاح`);
-        fetchPharmaciesList();
-      } catch (err) {
-        showToast(`خطأ: ${err.message}`, true);
       }
     }
 
@@ -2003,116 +1695,6 @@
       showToast('تم حفظ إعدادات بوت السوبر أدمن بنجاح 🚀');
       closeSuperTeleSettingsModal();
     }
-
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
   </script>
-<!-- 🟢 نافذة ترحيل الأسرار المحسنة للآيباد مع شاشة تتبع حية -->
-<div id="migrationBox" style="position:fixed; bottom:20px; right:20px; z-index:99999; background:#0f172a; border:2px solid #10b981; border-radius:16px; padding:16px; max-width:320px; width:90%; box-shadow:0 10px 30px rgba(0,0,0,0.7); font-family:sans-serif; text-align:right; color:#fff;">
-  <div style="font-weight:900; font-size:14px; margin-bottom:8px; color:#34d399; display:flex; justify-content:space-between; align-items:center;">
-    <span>⚡ أداة ترحيل الأسرار</span>
-    <span id="migStatusDot" style="width:10px; height:10px; border-radius:50%; background:#94a3b8;"></span>
-  </div>
-  
-  <div id="migLogs" style="background:#020617; border:1px solid #1e293b; border-radius:8px; padding:8px; font-size:11px; font-family:monospace; height:110px; overflow-y:auto; color:#cbd5e1; line-height:1.5; margin-bottom:10px;">
-    اضغط على الزر للبدء...
-  </div>
-
-  <button type="button" id="btnStartMig" onclick="startSafeMigration()" style="width:100%; background:#10b981; color:#022c22; font-weight:900; font-size:12px; padding:10px; border-radius:10px; border:none; cursor:pointer;">
-    بدء الترحيل الآمن الآن 🚀
-  </button>
-</div>
-
-<script>
-function logMig(msg, color = '#cbd5e1') {
-  const box = document.getElementById('migLogs');
-  if (box) {
-    box.innerHTML += `<div style="color:${color};">• ${msg}</div>`;
-    box.scrollTop = box.scrollHeight;
-  }
-}
-
-async function startSafeMigration() {
-  const btn = document.getElementById('btnStartMig');
-  const dot = document.getElementById('migStatusDot');
-  btn.disabled = true;
-  btn.style.opacity = '0.5';
-  dot.style.background = '#f59e0b';
-  document.getElementById('migLogs').innerHTML = '';
-
-  logMig('جاري التحقق من تسجيل الدخول...');
-
-  // 1. التحقق من المستخدم
-  const user = auth ? auth.currentUser : null;
-  if (!user) {
-    logMig('❌ يجب تسجيل الدخول بحساب السوبر أدمن أولاً!', '#ef4444');
-    btn.disabled = false;
-    btn.style.opacity = '1';
-    dot.style.background = '#ef4444';
-    return;
-  }
-
-  logMig(`تم التحقق: ${user.email}`, '#34d399');
-  logMig('جاري جلب الصيدليات من Firestore...');
-
-  try {
-    const snap = await db.collection('pharmacies').get();
-    logMig(`تم العثور على (${snap.size}) صيدلية.`, '#38bdf8');
-
-    if (snap.empty) {
-      logMig('لا توجد صيدليات لترحيلها.', '#f59e0b');
-      dot.style.background = '#10b981';
-      return;
-    }
-
-    let count = 0;
-    for (const doc of snap.docs) {
-      const data = doc.data();
-      const tenantId = doc.id;
-
-      logMig(`فحص الصيدلية: ${tenantId}...`);
-
-      // التحقق مما إذا كانت تحتاج ترحيل
-      const hasOldSecrets = data.telegramConfig || data.subscriptionPrice !== undefined;
-      
-      // حفظ المستند السري
-      await db.collection('pharmacies').doc(tenantId)
-        .collection('private_settings').doc('config')
-        .set({
-          telegramConfig: data.telegramConfig || { botToken: '', chatId: '', enabled: false },
-          subscriptionPrice: Number(data.subscriptionPrice) || 50000,
-          maxPriceCap: Number(data.maxPriceCap) || 150000,
-          rateLimits: data.rateLimits || { maxOrdersPerHour: 15, maxReqsPerMin: 80 },
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
-
-      // تنظيف المستند العام
-      if (hasOldSecrets) {
-        const cleanUpdate = {};
-        if (data.telegramConfig) cleanUpdate.telegramConfig = firebase.firestore.FieldValue.delete();
-        if (data.rateLimits) cleanUpdate.rateLimits = firebase.firestore.FieldValue.delete();
-        
-        if (Object.keys(cleanUpdate).length > 0) {
-          await db.collection('pharmacies').doc(tenantId).update(cleanUpdate);
-        }
-      }
-
-      count++;
-      logMig(`✅ تم ترحيل: ${tenantId}`, '#34d399');
-    }
-
-    logMig(`🎉 اكتمل الترحيل بنجاح لـ (${count}) صيدلية!`, '#4ade80');
-    dot.style.background = '#10b981';
-    btn.textContent = '✅ اكتمل الترحيل بنجاح';
-  } catch (err) {
-    logMig(`❌ خطأ: ${err.message}`, '#ef4444');
-    dot.style.background = '#ef4444';
-    btn.disabled = false;
-    btn.style.opacity = '1';
-  }
-}
-</script>
 </body>
 </html>
