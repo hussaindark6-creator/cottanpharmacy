@@ -1,6 +1,6 @@
 /* ==========================================================
    SaaS Multi-Tenant Engine — js/state.js
-   Version: 4.0.0 (Tenant-Isolated State & Design Tokens)
+   Version: 4.2.0 (Tenant-Isolated State & Pure Management)
    ========================================================== */
 
 import { currentPharmacyId } from './config.js';
