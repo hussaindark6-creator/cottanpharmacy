@@ -1,5 +1,6 @@
 /* ==========================================================
    SaaS Multi-Tenant Pharmacy — COMPLETE MASTER STYLESHEET
+   Version: 3.2.0 (Master Enterprise Edition)
    ========================================================== */
 
 :root, html[data-theme="light"] {
@@ -32,7 +33,7 @@
    ========================================================== */
 
 /* Template 2: Clinical Blue & Medical Pro (القالب الطبي الحديث) */
-html[data-template="template-two"] {
+html[data-template="template-two"], html[data-template="template_b"] {
   --surface: #F0F9FF;
   --surface-hover: #E0F2FE;
   --line: #BAE6FD;
@@ -47,13 +48,18 @@ html[data-template="template-two"] {
 }
 html[data-template="template-two"] .product-card,
 html[data-template="template-two"] .bundle-card,
-html[data-template="template-two"] .modern-cat-card {
+html[data-template="template-two"] .modern-cat-card,
+html[data-template="template_b"] .product-card,
+html[data-template="template_b"] .bundle-card,
+html[data-template="template_b"] .modern-cat-card {
   border-width: 1px;
   border-color: #E0F2FE;
   border-radius: var(--radius-md);
 }
 html[data-template="template-two"] .add-cart-btn,
-html[data-template="template-two"] .checkout-btn {
+html[data-template="template-two"] .checkout-btn,
+html[data-template="template_b"] .add-cart-btn,
+html[data-template="template_b"] .checkout-btn {
   border-radius: 8px;
   font-weight: 700;
   letter-spacing: 0.2px;
@@ -159,8 +165,7 @@ svg {
   justify-content: space-between;
   font-size: 12px;
   font-weight: 800;
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: 60;
   border-bottom: 1px solid #374151;
 }
@@ -208,7 +213,7 @@ svg {
 }
 
 /* ==========================================================
-   ANNOUNCEMENT BAR & HEADER
+   ANNOUNCEMENT BAR & HEADER (تم إلغاء التثبيت المزعج للسكرول)
    ========================================================== */
 .announcement-bar {
   background: var(--surface);
@@ -225,8 +230,7 @@ svg {
 }
 
 header { 
-  position: sticky; 
-  top: 0; 
+  position: relative; 
   z-index: 40; 
   background: #fff; 
   border-bottom: 1px solid var(--line); 
@@ -272,14 +276,23 @@ header {
 }
 
 .logo-mark { 
-  width: 34px; 
-  height: 34px; 
+  width: 36px; 
+  height: 36px; 
   border-radius: 50%; 
   background: var(--surface); 
   display: flex; 
   align-items: center; 
   justify-content: center; 
   border: 1px solid var(--line); 
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.logo-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 .header-actions { 
@@ -849,7 +862,7 @@ header {
 }
 
 /* ==========================================================
-   PRODUCT BUNDLES (حزم وبكجات التوفير)
+   PRODUCT BUNDLES
    ========================================================== */
 .bundle-grid {
   display: grid;
@@ -1203,7 +1216,7 @@ header {
 }
 
 /* ==========================================================
-   MODERN FULL-COVER CATEGORIES GRID
+   MODERN CATEGORIES GRID
    ========================================================== */
 .cat-grid-modern { 
   display: grid; 
@@ -1294,7 +1307,7 @@ header {
 }
 
 /* ==========================================================
-   PROMO BANNERS & COUPONS INPUT
+   PROMO BANNERS & COUPONS
    ========================================================== */
 .promo-banner { 
   position: relative; 
@@ -2076,7 +2089,7 @@ header {
 }
 
 /* ==========================================================
-   MODALS: STRICT DISPLAY NONE FOR TOTAL PROTECTION
+   MODALS & OVERLAYS
    ========================================================== */
 .welcome-modal-overlay, .admin-quick-modal-overlay, .notif-modal-overlay, 
 .success-modal-overlay, .iab-modal, .consult-modal-overlay, .receipt-modal-overlay {
@@ -2144,7 +2157,7 @@ header {
 .consult-badge-pill { display: inline-block; background: var(--surface); color: var(--accent); font-size: 10.5px; font-weight: 800; padding: 2px 8px; border-radius: 999px; margin-bottom: 4px; }
 .consult-body { padding: 18px 20px; overflow-y: auto; flex: 1; text-align: right; }
 .consult-toggle-group { display: flex; gap: 8px; }
-.consult-toggle-btn { flex: 1; padding: 9px 6px; border: 1.5px solid var(--line); border-radius: 12px; background: #fff; font-size: 12.5px; font-weight: 700; color: var(--ink); cursor: pointer; text-align: center; }
+.consult-toggle-btn { flex: 1; padding: 9px 6px; border: 1.5px solid var(--line); border-radius: 12px; background: #fff; font-size: 12.5px; font-weight: 700; color: var(--ink); cursor: pointer; text-align: center; transition: all .15s; }
 .consult-toggle-btn.active { border-color: var(--accent); background: var(--surface); color: var(--rose-deep); font-weight: 800; }
 .consult-submit-btn { width: 100%; background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); color: #fff; font-weight: 900; font-size: 14.5px; padding: 13px; border-radius: 999px; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 14px; }
 
