@@ -1,10 +1,10 @@
 /* ==========================================================
    SaaS Multi-Tenant Engine — js/theme-engine.js
-   Version: 4.1.0 (Unified Token-Driven Component Renderer)
+   Version: 4.3.0 (Unified Token-Driven Component Renderer)
    ========================================================== */
 
 import { THEME_PRESETS } from './theme-presets.js';
-import { pharmacyProfile, wishlist, fmtPrice, starIcon, getBrandColor, icons, catIcons, findProduct } from './state.js';
+import { pharmacyProfile, currentStaffData, wishlist, fmtPrice, starIcon, getBrandColor, icons, catIcons, findProduct } from './state.js';
 import { sanitizeText, sanitizeUrl, isCurrentUserAdmin } from './security.js';
 
 let currentThemeConfig = THEME_PRESETS.template_default;
@@ -38,7 +38,7 @@ export function applyTheme(templateId, hexColor) {
   }
 }
 
-// تغيير السعر عند اختيار تركيز أو حجم مختلف
+// تغيير السعر وتحديث الواجهة عند اختيار تركيز أو حجم مختلف
 export function selectProductVariantCard(buttonEl, productId) {
   const p = findProduct(productId);
   if (!p) return;
@@ -81,7 +81,7 @@ export function renderProductCard(p) {
   const inStock = (p.inStock !== false && (p.stockQuantity === undefined || p.stockQuantity > 0));
   const stockQty = Number(p.stockQuantity !== undefined ? p.stockQuantity : 10);
   const cleanImg = sanitizeUrl(p.imageUrl);
-  const isAdmin = isCurrentUserAdmin();
+  const isAdmin = isCurrentUserAdmin(pharmacyProfile, currentStaffData);
 
   const reviewCount = Number(p.reviews || 0);
   const avgRating = reviewCount > 0 ? Number(p.rating || 5.0).toFixed(1) : null;
