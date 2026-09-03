@@ -180,7 +180,6 @@
 
       <!-- ================= TAB 2: TENANTS & SUBSCRIPTIONS ================= -->
       <section id="secSuperTenants" class="tab-content hidden space-y-8">
-        <!-- Add New Pharmacy Card -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-md">
           <div class="flex items-center gap-3 pb-6 border-b border-slate-800 mb-6">
             <div class="w-10 h-10 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-center text-xl text-emerald-400">
@@ -232,10 +231,7 @@
               </div>
               <div>
                 <label class="block text-xs font-bold text-slate-300 mb-2">اللون الأساسي</label>
-                <div class="flex items-center gap-2">
-                  <input type="color" id="inpPrimaryColor" value="#E85D8A" class="w-14 h-11 bg-slate-950 border border-slate-700 rounded-xl p-1 cursor-pointer" onchange="document.getElementById('inpColorHex').value = this.value">
-                  <input type="text" id="inpColorHex" value="#E85D8A" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-3 text-xs text-white font-mono uppercase focus:outline-none focus:border-emerald-500" oninput="document.getElementById('inpPrimaryColor').value = this.value">
-                </div>
+                <input type="color" id="inpPrimaryColor" value="#E85D8A" class="w-full h-11 bg-slate-950 border border-slate-700 rounded-xl p-1 cursor-pointer">
               </div>
               <div>
                 <label class="block text-xs font-bold text-slate-300 mb-2">توكن بوت تلغرام الصيدلية (سري)</label>
@@ -247,10 +243,9 @@
               </div>
             </div>
 
-            <div class="flex items-center justify-between pt-4 border-t border-slate-800">
-              <span class="text-xs text-slate-400">المعاينة: <span class="font-mono text-emerald-400 font-bold" id="slugPreviewText">?pharmacy=...</span></span>
-              <button type="submit" id="btnCreatePharmacy" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black px-8 py-3.5 rounded-xl shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 transition duration-150 flex items-center gap-2 cursor-pointer text-sm">
-                <span>💾 إنشاء الصيدلية وتفعيل الاشتراك</span>
+            <div class="flex items-center justify-end pt-4 border-t border-slate-800">
+              <button type="submit" id="btnCreatePharmacy" class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black px-8 py-3.5 rounded-xl shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 transition duration-150 cursor-pointer text-sm">
+                💾 إنشاء الصيدلية وتفعيل الاشتراك
               </button>
             </div>
           </form>
@@ -478,7 +473,7 @@
         </div>
       </section>
 
-      <!-- ================= TAB 6: INFRASTRUCTURE & SCALING HUB ================= -->
+      <!-- ================= TAB 6: INFRASTRUCTURE & SCALING HUB (5 SERVICES DETAILED) ================= -->
       <section id="secSuperInfra" class="tab-content hidden space-y-8">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl">
           <div class="flex items-center gap-3 pb-6 border-b border-slate-800 mb-6">
@@ -487,51 +482,127 @@
             </div>
             <div>
               <h2 class="text-xl font-black text-white">مركز إدارة وتوسيع الاشتراكات السحابية (Infrastructure & Scaling Hub)</h2>
-              <p class="text-xs text-slate-400 mt-1">ترقية الخطط الرسمية للحصول على سعة غير محدودة وأداء فائق.</p>
+              <p class="text-xs text-slate-400 mt-1">ترقية الخطط الرسمية للحصول على سعة غير محدودة وأداء فائق ومطابقة أسعار الباقات الرسمية.</p>
             </div>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            <!-- Firebase Blaze -->
-            <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+            
+            <!-- Service 1: Google Firebase Blaze Plan -->
+            <div class="bg-slate-950 border border-slate-800 hover:border-amber-500/40 rounded-2xl p-5 flex flex-col justify-between transition group">
               <div>
-                <span class="text-2xl mb-2 block">🔥</span>
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-2xl">🔥</span>
+                  <span class="bg-amber-500/10 text-amber-400 border border-amber-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full">قاعدة البيانات السحابية</span>
+                </div>
                 <h3 class="text-sm font-black text-white mb-1">Google Firebase (Blaze Plan)</h3>
-                <p class="text-xs text-slate-400 mb-4">قراءة وكتابة غير محدودة للطلبات والمخزون لحظياً.</p>
+                <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+                  تخزين ومزامنة بيانات الصيدليات والمخزون والطلبات وحسابات الزبائن لحظياً.
+                </p>
+                <div class="bg-slate-900/80 rounded-xl p-3 text-xs space-y-1.5 mb-4 border border-slate-800/80">
+                  <div class="text-slate-300"><b>الباقة الحالية (Spark):</b> 50k قراءة و20k كتابة يومياً (مجاناً 100%).</div>
+                  <div class="text-amber-400"><b>باقة الترقية (Blaze):</b> قراءة وكتابة وتوسيع غير محدود.</div>
+                  <div class="text-emerald-400 font-mono"><b>السعر:</b> الدفع حسب الاستهلاك (Pay as you go) يبدأ من 0.06$ لكل 100k قراءة إضافية.</div>
+                </div>
               </div>
-              <a href="https://console.firebase.google.com/project/cottanpharmacy/usage" target="_blank" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs py-2.5 rounded-xl text-center transition">
-                ترقية خطة Blaze في Firebase ↗️
+              <a href="https://console.firebase.google.com/project/cottanpharmacy/usage" target="_blank" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs py-2.5 rounded-xl text-center transition shadow-lg shadow-amber-500/10 flex items-center justify-center gap-1.5">
+                <span>ترقية خطة Blaze في Firebase ↗️</span>
               </a>
             </div>
 
-            <!-- Cloudflare Workers -->
-            <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+            <!-- Service 2: Cloudflare Workers Paid -->
+            <div class="bg-slate-950 border border-slate-800 hover:border-orange-500/40 rounded-2xl p-5 flex flex-col justify-between transition group">
               <div>
-                <span class="text-2xl mb-2 block">⚡</span>
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-2xl">⚡</span>
+                  <span class="bg-orange-500/10 text-orange-400 border border-orange-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full">محرك الـ API والـ Edge</span>
+                </div>
                 <h3 class="text-sm font-black text-white mb-1">Cloudflare Workers Paid</h3>
-                <p class="text-xs text-slate-400 mb-4">10 ملايين طلب شهرياً ومعالجة الـ API بسرعة فائقة.</p>
+                <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+                  تشغيل الـ API، عزل ومعالجة النطاقات الفرعية (Subdomains)، وإعادة احتساب الأسعار ومراقبة الأمان.
+                </p>
+                <div class="bg-slate-900/80 rounded-xl p-3 text-xs space-y-1.5 mb-4 border border-slate-800/80">
+                  <div class="text-slate-300"><b>الباقة الحالية (Free):</b> 100,000 طلب يومياً (100k req/day مجاناً).</div>
+                  <div class="text-orange-400"><b>باقة الترقية (Paid):</b> 10 ملايين طلب شهرياً مع وقت معالجة 30s.</div>
+                  <div class="text-emerald-400 font-mono"><b>السعر:</b> 5$ شهرياً (يشمل 10,000,000 طلب API).</div>
+                </div>
               </div>
-              <a href="https://dash.cloudflare.com/" target="_blank" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-black text-xs py-2.5 rounded-xl text-center transition">
-                ترقية Workers في Cloudflare ↗️
+              <a href="https://dash.cloudflare.com/" target="_blank" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-black text-xs py-2.5 rounded-xl text-center transition shadow-lg shadow-orange-500/10 flex items-center justify-center gap-1.5">
+                <span>ترقية Workers في Cloudflare ↗️</span>
               </a>
             </div>
 
-            <!-- Cloudflare R2 -->
-            <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+            <!-- Service 3: Cloudflare R2 Storage -->
+            <div class="bg-slate-950 border border-slate-800 hover:border-blue-500/40 rounded-2xl p-5 flex flex-col justify-between transition group">
               <div>
-                <span class="text-2xl mb-2 block">📦</span>
-                <h3 class="text-sm font-black text-white mb-1">Cloudflare R2 Storage</h3>
-                <p class="text-xs text-slate-400 mb-4">تخزين سحابي لصور المنتجات بدون أي رسوم نقل (Zero Egress).</p>
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-2xl">📦</span>
+                  <span class="bg-blue-500/10 text-blue-400 border border-blue-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full">تخزين صور المنتجات</span>
+                </div>
+                <h3 class="text-sm font-black text-white mb-1">Cloudflare R2 Object Storage</h3>
+                <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+                  استضافة صور الكتالوج والبانرات بسرعة فائقة وبدون أي رسوم لنقل البيانات (Zero Egress Fees).
+                </p>
+                <div class="bg-slate-900/80 rounded-xl p-3 text-xs space-y-1.5 mb-4 border border-slate-800/80">
+                  <div class="text-slate-300"><b>الباقة الحالية (Free):</b> 10 جيجابايت تخزين مجاني + باندويث مفتوح.</div>
+                  <div class="text-blue-400"><b>باقة الترقية:</b> سعة غير محدودة لملايين صور المنتجات.</div>
+                  <div class="text-emerald-400 font-mono"><b>السعر:</b> 0.015$ لكل 1 جيجابايت إضافي شهرياً.</div>
+                </div>
               </div>
-              <a href="https://dash.cloudflare.com/?to=/:account/r2" target="_blank" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black text-xs py-2.5 rounded-xl text-center transition">
-                إدارة وتوسيع R2 Storage ↗️
+              <a href="https://dash.cloudflare.com/?to=/:account/r2" target="_blank" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black text-xs py-2.5 rounded-xl text-center transition shadow-lg shadow-blue-500/10 flex items-center justify-center gap-1.5">
+                <span>إدارة وتوسيع R2 Storage ↗️</span>
               </a>
             </div>
+
+            <!-- Service 4: Cloudflare Pro Plan -->
+            <div class="bg-slate-950 border border-slate-800 hover:border-purple-500/40 rounded-2xl p-5 flex flex-col justify-between transition group">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-2xl">🛡️</span>
+                  <span class="bg-purple-500/10 text-purple-400 border border-purple-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full">تسريع الكاش وحماية النطاق</span>
+                </div>
+                <h3 class="text-sm font-black text-white mb-1">Cloudflare Pro Plan (Domain & WAF)</h3>
+                <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+                  تسريع كاش العراق والشرق الأوسط، ضغط الصور التلقائي لـ WebP، وحماية WAF ضد هجمات الـ DDoS.
+                </p>
+                <div class="bg-slate-900/80 rounded-xl p-3 text-xs space-y-1.5 mb-4 border border-slate-800/80">
+                  <div class="text-slate-300"><b>الباقة الحالية (Free):</b> DNS وإدارة شهادات SSL وتوزيع قياسي.</div>
+                  <div class="text-purple-400"><b>باقة الترقية (Pro):</b> تحويل الصور تلقائياً لـ WebP وتسريع التصفح 60%.</div>
+                  <div class="text-emerald-400 font-mono"><b>السعر:</b> 20$ - 25$ شهرياً للنطاق الرسمي.</div>
+                </div>
+              </div>
+              <a href="https://dash.cloudflare.com/" target="_blank" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-black text-xs py-2.5 rounded-xl text-center transition shadow-lg shadow-purple-500/10 flex items-center justify-center gap-1.5">
+                <span>ترقية الدومين لخطة Pro ↗️</span>
+              </a>
+            </div>
+
+            <!-- Service 5: Telegram Bot API -->
+            <div class="bg-slate-950 border border-slate-800 hover:border-sky-500/40 rounded-2xl p-5 flex flex-col justify-between transition group">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-2xl">✈️</span>
+                  <span class="bg-sky-500/10 text-sky-400 border border-sky-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full">إشعارات وفواتير التلغرام</span>
+                </div>
+                <h3 class="text-sm font-black text-white mb-1">Telegram Bot API & Webhooks</h3>
+                <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+                  إرسال فواتير الطلبات اللحظية للصيادلة وتوليد تقارير السوبر أدمن المالية السريعة.
+                </p>
+                <div class="bg-slate-900/80 rounded-xl p-3 text-xs space-y-1.5 mb-4 border border-slate-800/80">
+                  <div class="text-slate-300"><b>الباقة الحالية:</b> 30 رسالة في الثانية لكل بوت (مفتوح).</div>
+                  <div class="text-sky-400"><b>التوسيع:</b> ربط بوتات فرعية منفصلة لكل صيدلية (Multi-Bot).</div>
+                  <div class="text-emerald-400 font-mono"><b>السعر:</b> مجاني 100% مدى الحياة (Free Open API).</div>
+                </div>
+              </div>
+              <a href="https://t.me/BotFather" target="_blank" class="w-full bg-sky-500 hover:bg-sky-600 text-slate-950 font-black text-xs py-2.5 rounded-xl text-center transition shadow-lg shadow-sky-500/10 flex items-center justify-center gap-1.5">
+                <span>فتح BotFather لإدارة البوتات ↗️</span>
+              </a>
+            </div>
+
           </div>
         </div>
       </section>
 
-      <!-- ================= TAB 7: SUPER ADMIN PAYMENT INFO ================= -->
+      <!-- ================= TAB 7: SUPER ADMIN PAYMENT INFO (QI CARD & ZAINCASH ONLY) ================= -->
       <section id="secSuperPaymentInfo" class="tab-content hidden space-y-8">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl max-w-3xl mx-auto">
           <div class="flex items-center gap-3 pb-6 border-b border-slate-800 mb-6">
@@ -540,7 +611,7 @@
             </div>
             <div>
               <h2 class="text-lg font-black text-white">إدارة بطاقات ومحافظ الدفع الإلكتروني للسوبر أدمن</h2>
-              <p class="text-xs text-slate-400">تظهر هذه البيانات في لوحة تحكم كل صيدلية لتحويل رسوم التجديد.</p>
+              <p class="text-xs text-slate-400">تظهر هذه البيانات في لوحة تحكم كل صيدلية لتحويل رسوم التجديد عبر كي كارد وزين كاش.</p>
             </div>
           </div>
 
@@ -560,11 +631,7 @@
               </div>
             </div>
             <div>
-              <label class="block text-xs font-bold text-slate-300 mb-2">رقم حساب بنك FIB</label>
-              <input type="text" id="payFib" placeholder="FIB-12345678" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white font-mono">
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-300 mb-2">ملاحظات التحويل</label>
+              <label class="block text-xs font-bold text-slate-300 mb-2">ملاحظات وتعليمات التحويل للصيادلة</label>
               <textarea id="payNotes" rows="2" placeholder="يرجى إرسال صورة وصل التحويل عبر الواتساب لتجديد الاشتراك فورياً." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white"></textarea>
             </div>
             <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black py-3.5 rounded-xl transition">
@@ -574,7 +641,7 @@
         </div>
       </section>
 
-      <!-- ================= TAB 8: CONSOLIDATED EXCEL REPORTS ================= -->
+      <!-- ================= TAB 8: CONSOLIDATED & INDIVIDUAL REPORTS ================= -->
       <section id="secSuperReports" class="tab-content hidden space-y-8">
         <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/40 border border-emerald-500/30 rounded-3xl p-6 sm:p-8 shadow-xl">
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -1296,7 +1363,7 @@
           percentText.textContent = pct + '%';
         }
 
-        showToast(`🎉 تم رفع وحفظ ${items.length} صنف بنجاح!`);
+        showToast(`🎉 تم استيراد (${items.length}) صنف بنجاح!`);
         setTimeout(() => progressBox.classList.add('hidden'), 2000);
         fetchMasterCatalog();
       } catch (err) {
@@ -1412,18 +1479,17 @@
       }
     }
 
-    // ================= PAYMENT INFO =================
+    // ================= PAYMENT INFO (QI CARD & ZAINCASH ONLY) =================
     async function loadSuperAdminPaymentInfo() {
       if (!db) return;
       try {
         const snap = await db.collection('system').doc('payment_info').get();
         if (snap.exists) {
           const d = snap.data();
-          document.getElementById('payCardHolder').value = d.cardHolder || '';
-          document.getElementById('payQiCard').value = d.qiCardNumber || '';
-          document.getElementById('payZainCash').value = d.zainCashNumber || '';
-          document.getElementById('payFib').value = d.fibAccount || '';
-          document.getElementById('payNotes').value = d.notes || '';
+          if (document.getElementById('payCardHolder')) document.getElementById('payCardHolder').value = d.cardHolder || '';
+          if (document.getElementById('payQiCard')) document.getElementById('payQiCard').value = d.qiCardNumber || '';
+          if (document.getElementById('payZainCash')) document.getElementById('payZainCash').value = d.zainCashNumber || '';
+          if (document.getElementById('payNotes')) document.getElementById('payNotes').value = d.notes || '';
         }
       } catch (e) {
         console.warn(e);
@@ -1438,11 +1504,10 @@
           cardHolder: document.getElementById('payCardHolder').value.trim(),
           qiCardNumber: document.getElementById('payQiCard').value.trim(),
           zainCashNumber: document.getElementById('payZainCash').value.trim(),
-          fibAccount: document.getElementById('payFib').value.trim(),
           notes: document.getElementById('payNotes').value.trim(),
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
-        showToast('تم حفظ وتعميم بيانات الدفع الإلكتروني! 💳');
+        showToast('تم حفظ وتعميم بيانات الدفع الإلكتروني (كي كارد وزين كاش)! 💳');
       } catch (err) {
         showToast('خطأ: ' + err.message, true);
       }
@@ -1551,7 +1616,7 @@
         let csv = "Pharmacy Name,Slug,Admin Email,Status,Subscription Expiry,Base Price (IQD)\n";
         snap.forEach(d => {
           const data = d.data();
-          csv += `"${data.name || d.id}","${d.id}","${data.adminEmail || ''}","${data.isActive !== false ? 'Active' : 'Suspended'}","${data.subscriptionExpiry || ''}","${data.subscriptionPrice || 0}"\n`;
+          csv += `"${data.name || d.id}","${d.id}","${data.adminEmail || ''}","${data.isActive !== false ? 'Active' : 'Suspended'}","${data.subscriptionExpiry || ''}"\n`;
         });
 
         const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
