@@ -1,11 +1,11 @@
 /* ==========================================================
    SaaS Multi-Tenant Engine — js/app.js
-   Version: 4.0.0 (Master Application Coordinator)
+   Version: 4.1.0 (Master Application Coordinator)
    ========================================================== */
 
 import { 
   db, auth, isFirebaseConfigured, dbPaths, currentPharmacyId, 
-  patchTenantLinks, getTenantUrl, DEFAULT_PHARMACY_ID 
+  patchTenantLinks, getTenantUrl, DEFAULT_PHARMACY_ID, SUPER_ADMIN_EMAIL 
 } from './config.js';
 
 import { 
@@ -14,24 +14,22 @@ import {
   setNotifications, archivedProducts, setArchivedProducts, cart, 
   wishlist, myOrders, brandsData, currentView, currentProductId, 
   pdQty, pdActiveTab, deliveryMethod, appliedPromo, isLowStockFilterActive, 
-  totalOrdersCount, todayVisitsCount, todayRevenue, monthlyRevenue, 
-  weeklyVisitsData, currentUser, setCurrentUser, currentStaffData, 
-  setCurrentStaffData, fmtPrice, starIcon, getBrandColor, icons, 
-  catIcons, findProduct, findBundle, saveLocalState, getStorageKey,
-  setAppliedPromo, setDeliveryMethod, setCurrentProductId, setPdQty,
-  setListingState, setPreviousView, previousViewBeforeProduct,
-  previousScrollBeforeProduct
+  currentUser, setCurrentUser, currentStaffData, setCurrentStaffData, 
+  fmtPrice, starIcon, getBrandColor, icons, catIcons, findProduct, 
+  findBundle, saveLocalState, getStorageKey, setAppliedPromo, 
+  setDeliveryMethod, setCurrentProductId, setPdQty, setListingState, 
+  setPreviousView, previousViewBeforeProduct, previousScrollBeforeProduct
 } from './state.js';
 
 import { 
   sanitizeText, sanitizeUrl, normalizeArabic, isCurrentUserAdmin, 
-  assertAdmin, lockAction, isInAppBrowser, apiFetch 
+  assertAdmin, lockAction, isInAppBrowser, apiFetch, isSuperAdmin 
 } from './security.js';
 
 import { executeFuzzyProductSearch } from './search.js';
 import { uploadDirectImageFile } from './upload.js';
-import { executeAtomicOrderCheckout, captureCustomerGeolocation, openReceiptModal, closeReceiptModal } from './orders.js';
-import { applyTheme, renderProductCard, renderBundleCard, renderCategoryCard } from './theme-engine.js';
+import { executeAtomicOrderCheckout, openReceiptModal, closeReceiptModal } from './orders.js';
+import { applyTheme, renderProductCard, renderBundleCard, renderCategoryCard, selectProductVariantCard } from './theme-engine.js';
 
 // ================= 1. STOREFRONT SUBSCRIPTION LOCK =================
 export function checkStorefrontSubscriptionLock() {
@@ -62,6 +60,15 @@ export function addToCart(id, silent = false, quantity = 1) {
   saveLocalState();
   syncCartToCloud();
   if (!silent) showToast('تمت الإضافة للسلة ✓');
+}
+
+export function addBundleToCart(bundleId) {
+  const cartKey = 'bundle_' + bundleId;
+  cart[cartKey] = (cart[cartKey] || 0) + 1;
+  updateCartBadge();
+  saveLocalState();
+  syncCartToCloud();
+  showToast('تمت إضافة البكج كاملاً للسلة بتخفيض التوفير! 🎁');
 }
 
 export function changeCartQty(id, delta) {
@@ -134,7 +141,7 @@ export async function mergeCloudCartOnLogin(user) {
   }
 }
 
-// ================= 3. VIEWS CONTROLLER =================
+// ================= 3. VIEWS & NAVIGATION =================
 export function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   const target = document.getElementById('view-' + name);
@@ -149,6 +156,7 @@ export function showView(name) {
   });
 
   if (name === 'checkout') checkAndAutofillCustomer();
+  if (name === 'account') renderAccountView();
   renderCurrentActiveView();
 }
 
@@ -163,6 +171,7 @@ export function renderCurrentActiveView() {
   else if (v === 'wishlist') renderWishlist();
   else if (v === 'cart') renderCart();
   else if (v === 'checkout') renderCheckoutSummary();
+  else if (v === 'account') renderAccountView();
   else if (v === 'product' && currentProductId) {
     const p = findProduct(currentProductId);
     if (p) renderProductDetailDOM(p);
@@ -502,6 +511,13 @@ export function renderProductDetailDOM(p) {
   document.getElementById('pdTabIng').textContent = p.ingredients || p.medicalIndications || 'تركيبة غنية ومفحوصة جلدياً وطبياً.';
   document.getElementById('pdTabUse').textContent = p.usage || 'يُوضع على بشرة نظيفة وفق الإرشادات الصيدلانية.';
 
+  const rated = localStorage.getItem(getStorageKey('rated_' + p.id));
+  document.querySelectorAll('.star-btn').forEach((btn, idx) => {
+    btn.classList.toggle('active', rated && idx < Number(rated));
+  });
+  const msgEl = document.getElementById('instantRatingMsg');
+  if (msgEl) msgEl.textContent = rated ? `تقييمكِ المسجل: ${rated} نجوم ⭐` : '';
+
   renderCrossSelling(p);
   switchPdTab('desc');
   document.getElementById('pdQtyVal').textContent = pdQty;
@@ -510,6 +526,41 @@ export function renderProductDetailDOM(p) {
     if (inStock) addToCart(p.id, false, pdQty);
     else showToast('عذراً، المنتج غير متوفر حالياً');
   };
+}
+
+export function rateProductInstant(stars) {
+  if (!currentProductId) return;
+  const p = findProduct(currentProductId);
+  if (!p) return;
+
+  const ratedKey = getStorageKey('rated_' + currentProductId);
+  if (localStorage.getItem(ratedKey)) {
+    showToast('لقد قمتِ بتقييم هذا المنتج مسبقاً ⭐');
+    return;
+  }
+  localStorage.setItem(ratedKey, String(stars));
+
+  const currentReviews = Number(p.reviews || 0);
+  const currentRating = Number(p.rating || 5.0);
+
+  const newReviews = currentReviews + 1;
+  const newRating = Number((((currentRating * currentReviews) + stars) / newReviews).toFixed(1));
+
+  p.rating = newRating;
+  p.reviews = newReviews;
+
+  if (db) {
+    dbPaths.productsCol().doc(String(currentProductId)).set({ rating: newRating, reviews: newReviews }, { merge: true }).catch(console.warn);
+  }
+
+  document.querySelectorAll('.star-btn').forEach((btn, idx) => {
+    btn.classList.toggle('active', idx < stars);
+  });
+  const msgEl = document.getElementById('instantRatingMsg');
+  if (msgEl) msgEl.textContent = `تم تسجيل تقييمك (${stars} نجوم) بنجاح! شكراً لكِ 🌸`;
+  showToast(`تم تقييم المنتج بـ ${stars} نجوم ⭐`);
+  saveLocalState();
+  renderProductDetailDOM(p);
 }
 
 export function openProduct(id, isUserClick = false) {
@@ -767,6 +818,92 @@ export async function cancelMyOrder(orderId) {
   }
 }
 
+// ================= 4. AUTH & USER PROFILE =================
+export function updateUserHeaderProfile() {
+  const chipAvatar = document.getElementById('userChipAvatar');
+  const chipName = document.getElementById('userChipName');
+  const bnAccountLbl = document.getElementById('bnAccountLbl');
+
+  const user = auth ? auth.currentUser : null;
+  if (user) {
+    const rawName = user.displayName || user.email || 'حسابي';
+    const firstName = sanitizeText(rawName.split(' ')[0].split('@')[0]);
+    if (chipName) chipName.textContent = firstName;
+    if (bnAccountLbl) bnAccountLbl.textContent = firstName;
+    const cleanPhoto = sanitizeUrl(user.photoURL);
+    if (chipAvatar) {
+      chipAvatar.innerHTML = cleanPhoto 
+        ? `<img src="${cleanPhoto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` 
+        : `<span style="font-size:12px; font-weight:900; color:var(--accent, #E85D8A);">${firstName.charAt(0).toUpperCase()}</span>`;
+    }
+  } else {
+    if (chipName) chipName.textContent = 'دخول';
+    if (bnAccountLbl) bnAccountLbl.textContent = 'حسابي';
+    if (chipAvatar) {
+      chipAvatar.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;display:block;"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>`;
+    }
+  }
+}
+
+export function renderAccountView() {
+  const container = document.getElementById('accountAuthContainer');
+  if (!container) return;
+
+  const user = auth ? auth.currentUser : null;
+  if (user) {
+    const isAdmin = isCurrentUserAdmin();
+    const cleanPhoto = sanitizeUrl(user.photoURL);
+    container.innerHTML = `
+      <div class="account-card">
+        <div class="user-profile-header">
+          <div class="user-avatar"><img src="${cleanPhoto || 'https://imgdb.io/i/EQ4D9ag.png'}"></div>
+          <div class="user-info">
+            <h3>${sanitizeText(user.displayName || user.email)} ${isAdmin ? '⭐ (مشرف الصيدلية)' : ''}</h3>
+            <p>${sanitizeText(user.email || '')}</p>
+            <div class="sync-indicator"><span class="sync-dot"></span><span>البيانات متزامنة مع ${sanitizeText(pharmacyProfile.name || 'الصيدلية')}</span></div>
+          </div>
+        </div>
+        ${isAdmin ? `<a class="auth-btn-google" style="margin-bottom:10px; background:#FEF3C7; color:#92400E; font-weight:800; display:flex;" href="${getTenantUrl('admin.html')}">⚙️ لوحة تحكم وإدارة الصيدلية</a>` : ''}
+        <button class="auth-btn-google" style="margin-bottom:10px;" onclick="window.App.showView('orders')">📦 عرض طلباتي وتتبع الشحن</button>
+        <button class="auth-btn-logout" onclick="window.App.handleSignOut()">تسجيل الخروج</button>
+      </div>`;
+  } else {
+    container.innerHTML = `
+      <div class="account-card">
+        <div style="font-size:38px; margin-bottom:8px;">🌸</div>
+        <h3 style="font-size:17px; font-weight:900; margin:0 0 6px;">مرحباً بك في ${sanitizeText(pharmacyProfile.name || 'الصيدلية')}</h3>
+        <p style="font-size:12.5px; color:var(--text-soft); margin:0 0 20px;">سجلي الدخول بنقرة واحدة لحفظ منتجاتك المفضلة ومتابعة طلباتكِ:</p>
+        <button class="auth-btn-google" onclick="window.App.signInWithGoogle()">
+          <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+          تسجيل الدخول المباشر عبر Google
+        </button>
+      </div>`;
+  }
+}
+
+export function signInWithGoogle() {
+  if (!auth) {
+    showToast('خدمة تسجيل الدخول غير مهيأة');
+    return;
+  }
+  if (isInAppBrowser()) {
+    document.getElementById('iabModal')?.classList.add('open');
+    return;
+  }
+  showToast('جاري التحويل إلى Google...');
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithRedirect(provider);
+}
+
+export async function handleSignOut() {
+  if (auth) await auth.signOut();
+  setCurrentUser(null);
+  setCurrentStaffData(null);
+  updateUserHeaderProfile();
+  renderAccountView();
+  showToast('تم تسجيل الخروج بنجاح');
+}
+
 export function applyStoreSettings() {
   applyTheme(pharmacyProfile.templateId || 'template_default', pharmacyProfile.primaryColor);
 
@@ -879,10 +1016,11 @@ export function showToast(msg) {
   toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
 }
 
-// تصدير الواجهة العامة لربط الـ HTML بالأحداث المباشرة (Global Bridge)
+// ================= 5. GLOBAL BRIDGE (نافذة الربط المباشرة مع HTML) =================
 window.App = {
   showView,
   addToCart,
+  addBundleToCart,
   changeCartQty,
   removeCartItem,
   selectDelivery,
@@ -893,6 +1031,7 @@ window.App = {
   goBackFromProduct,
   switchPdTab,
   changePdQty,
+  rateProductInstant,
   openCategory,
   openBestSellers,
   selectHomeBrand,
@@ -900,12 +1039,40 @@ window.App = {
   openMenu,
   closeMenu,
   openWhatsapp,
-  captureCustomerGeolocation: () => captureCustomerGeolocation(showToast),
   executeAtomicOrderCheckout: () => executeAtomicOrderCheckout(showToast),
   openReceiptModal,
   closeReceiptModal,
   cancelMyOrder,
-  clearSavedCustomerData
+  clearSavedCustomerData,
+  selectProductVariantCard,
+  signInWithGoogle,
+  handleSignOut,
+  quickToggleStock: async (id) => {
+    const p = findProduct(id);
+    if (!p || !db) return;
+    const newStock = !p.inStock;
+    await dbPaths.productsCol().doc(String(id)).set({ inStock: newStock }, { merge: true });
+    showToast(newStock ? 'متوفر 🟢' : 'نافذ 🔴');
+  },
+  quickEditPrice: async (id, curPrice) => {
+    const val = prompt('تعديل السعر (د.ع):', curPrice);
+    if (!val) return;
+    const newP = Number(val.trim());
+    if (newP > 0 && db) {
+      await dbPaths.productsCol().doc(String(id)).set({ price: newP }, { merge: true });
+      showToast('تم تحديث السعر ✓');
+    }
+  },
+  openAdminQuickEditModal: (id) => {
+    window.location.href = getTenantUrl('admin.html');
+  },
+  archiveProductConfirm: async (id, name) => {
+    if (!confirm(`نقل "${name}" إلى سلة المحذوفات؟`)) return;
+    if (db) {
+      await dbPaths.productsCol().doc(String(id)).set({ isDeleted: true }, { merge: true });
+      showToast('تم نقل المنتج للمحذوفات 🗑️');
+    }
+  }
 };
 
 // تهيئة التطبيق فور تحميل الصفحة
@@ -915,11 +1082,14 @@ window.addEventListener('DOMContentLoaded', () => {
   renderHome();
   renderModernCategories();
   updateCartBadge();
+  updateUserHeaderProfile();
   initFirestoreRealtimeSync();
 
   if (auth) {
     auth.onAuthStateChanged(user => {
       setCurrentUser(user);
+      updateUserHeaderProfile();
+      renderAccountView();
       if (user) mergeCloudCartOnLogin(user);
     });
   }
