@@ -1,10 +1,11 @@
 /* ==========================================================
    SaaS Multi-Tenant Engine — js/security.js
-   Version: 4.2.0 (Zero-Trust Sanitization & Independent Security)
+   Version: 4.3.0 (Zero-Trust Independent Security Module)
    ========================================================== */
 
 import { auth, SUPER_ADMIN_EMAIL, WORKER_API_BASE, currentPharmacyId } from './config.js';
 
+// تعقيم النصوص وحمايتها من ثغرات XSS
 export function sanitizeText(str) {
   if (typeof str !== 'string') return str == null ? '' : String(str);
   return str
@@ -19,6 +20,7 @@ export function escapeHtml(str) {
   return sanitizeText(str);
 }
 
+// فحص وتعقيم الروابط
 export function sanitizeUrl(url) {
   if (!url || typeof url !== 'string') return '';
   const clean = url.trim();
@@ -28,6 +30,7 @@ export function sanitizeUrl(url) {
   return '';
 }
 
+// معالجة وتوحيد النصوص العربية
 export function normalizeArabic(text) {
   if (!text) return '';
   return String(text)
@@ -40,23 +43,33 @@ export function normalizeArabic(text) {
     .replace(/[\s\-_]+/g, ' ');
 }
 
+// التحقق من حساب السوبر أدمن
 export function isSuperAdmin() {
   const user = auth ? auth.currentUser : null;
   return !!(user && user.email && user.email.toLowerCase().trim() === SUPER_ADMIN_EMAIL.toLowerCase().trim());
 }
 
-export function isCurrentUserAdmin(pharmacyProfile = null, currentStaffData = null) {
+// التحقق من صلاحيات المشرف بشكل مرن وبدون اعتمادية دائرية
+export function isCurrentUserAdmin(profile = null, staffData = null) {
   if (isSuperAdmin()) return true;
   const user = auth ? auth.currentUser : null;
-  if (user && pharmacyProfile && pharmacyProfile.adminEmail && user.email.toLowerCase().trim() === pharmacyProfile.adminEmail.toLowerCase().trim()) {
+  if (!user) return false;
+
+  // فحص إيميل مالك الصيدلية
+  if (profile && profile.adminEmail && user.email && user.email.toLowerCase().trim() === profile.adminEmail.toLowerCase().trim()) {
     return true;
   }
-  if (!user || !currentStaffData) return false;
-  return currentStaffData.role === 'owner' || currentStaffData.role === 'manager' || currentStaffData.role === 'admin';
+
+  // فحص صلاحيات الموظف
+  if (staffData) {
+    return staffData.role === 'owner' || staffData.role === 'manager' || staffData.role === 'admin';
+  }
+
+  return false;
 }
 
-export function assertAdmin(pharmacyProfile = null, currentStaffData = null, showToastFn = null) {
-  if (!isCurrentUserAdmin(pharmacyProfile, currentStaffData)) {
+export function assertAdmin(profile = null, staffData = null, showToastFn = null) {
+  if (!isCurrentUserAdmin(profile, staffData)) {
     if (typeof showToastFn === 'function') {
       showToastFn('⚠️ غير مصرح: هذه العملية مخصصة لمشرف الصيدلية فقط.');
     }
@@ -65,6 +78,7 @@ export function assertAdmin(pharmacyProfile = null, currentStaffData = null, sho
   return true;
 }
 
+// قفل العمليات المتزامنة لمنع النقر المزدوج (Debounce Lock)
 const actionLocks = new Map();
 export function lockAction(actionKey, cooldownMs = 1500, showToastFn = null) {
   const now = Date.now();
@@ -79,6 +93,7 @@ export function lockAction(actionKey, cooldownMs = 1500, showToastFn = null) {
   return true;
 }
 
+// كشف المتصفحات المدمجة داخل التطبيقات (مثل إنستغرام وتيليجرام)
 export function isInAppBrowser() {
   const ua = navigator.userAgent || navigator.vendor || window.opera || '';
   const isIAB = /Telegram|Instagram|FBAN|FBAV|TikTok|Snapchat|Line|Twitter|MicroMessenger|WhatsApp|musical_ly/i.test(ua);
@@ -92,6 +107,7 @@ export function isInAppBrowser() {
   return isIAB || storageBlocked;
 }
 
+// الاتصال الموثوق مع خادم Cloudflare Worker مع إرفاق التوكن
 export async function apiFetch(endpoint, options = {}) {
   const headers = {
     "Content-Type": "application/json",
