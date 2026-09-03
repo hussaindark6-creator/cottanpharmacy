@@ -1,9 +1,9 @@
 /* ==========================================================
    SaaS Multi-Tenant Engine — js/orders.js
-   Version: 4.0.0 (Atomic Concurrency Protection & 80mm Receipts)
+   Version: 4.1.0 (Atomic Concurrency Protection & 80mm Receipts)
    ========================================================== */
 
-import { db, dbPaths, currentPharmacyId } from './config.js';
+import { db, dbPaths, currentPharmacyId, WORKER_API_BASE } from './config.js';
 import { 
   cart, findProduct, findBundle, pharmacyProfile, 
   appliedPromo, deliveryMethod, myOrders, fmtPrice, 
@@ -15,13 +15,16 @@ import { lockAction, sanitizeText } from './security.js';
 export async function executeAtomicOrderCheckout(showToastFn) {
   if (!lockAction('confirmOrder', 2500, showToastFn)) return;
 
-  const name = document.getElementById('custName').value.trim();
-  const phone = document.getElementById('custPhone').value.trim();
-  const address = document.getElementById('custAddress').value.trim();
-  const locationUrl = document.getElementById('custLocationUrl') ? document.getElementById('custLocationUrl').value.trim() : '';
+  const nameEl = document.getElementById('custName');
+  const phoneEl = document.getElementById('custPhone');
+  const addressEl = document.getElementById('custAddress');
+
+  const name = nameEl ? nameEl.value.trim() : '';
+  const phone = phoneEl ? phoneEl.value.trim() : '';
+  const address = addressEl ? addressEl.value.trim() : '';
   
   if (!name || !phone || !address) {
-    showToastFn('يرجى تعبئة الاسم والهاتف والعنوان أولاً');
+    showToastFn('يرجى تعبئة الاسم والهاتف والعنوان بالتفصيل أولاً');
     return;
   }
   if (phone.length < 8) {
@@ -79,7 +82,6 @@ export async function executeAtomicOrderCheckout(showToastFn) {
     name,
     phone,
     address,
-    locationUrl: locationUrl || null,
     deliveryMethod,
     items: itemsPayload,
     subtotal: calculatedSubtotal,
@@ -94,7 +96,7 @@ export async function executeAtomicOrderCheckout(showToastFn) {
   if (db) {
     try {
       await db.runTransaction(async (transaction) => {
-        // 1. قراءة المخزون الحالي لكل المنتجات والتأكد من توفرها
+        // 1. قراءة المخزون الحالي والتأكد من توفره
         const productReads = [];
         for (const it of itemsPayload) {
           if (!it.isBundle) {
@@ -117,7 +119,7 @@ export async function executeAtomicOrderCheckout(showToastFn) {
           }
         }
 
-        // 2. خصم المخزون وكتابة الطلب داخل نفس المعاملة
+        // 2. كتابة الطلب وخصم المخزون داخل نفس الحركة الذرية
         const orderRef = dbPaths.ordersCol().doc(orderId);
         transaction.set(orderRef, {
           ...newOrderObj,
@@ -155,11 +157,10 @@ export async function executeAtomicOrderCheckout(showToastFn) {
   // إرسال الفاتورة لتليجرام الصيدلية
   dispatchOrderToTelegram(newOrderObj);
 
-  // إعداد رسالة الواتساب
+  // إعداد رسالة الواتساب الرسمية بدون روابط GPS
   const lines = itemsPayload.map(item => `• ${item.isBundle ? '🎁 [بكج توفير] ' : ''}${item.name} (${fmtPrice(item.unitPrice)} × ${item.quantity} قطع) = ${fmtPrice(item.lineTotal)}`);
   const deliveryLabel = deliveryMethod === 'express' ? `سريع (${fmtPrice(deliveryFee)})` : `عادي (${fmtPrice(deliveryFee)})`;
   const promoInfo = appliedPromo ? `🎟️ *كود الخصم:* ${appliedPromo.code} (-${fmtPrice(discountAmount)})\n` : '';
-  const locationInfo = locationUrl ? `📍 *رابط الموقع الجغرافي:* ${locationUrl}\n` : '';
 
   const whatsappInvoiceMsg = 
     `🌸 *طلب جديد - ${pharmacyProfile.name || 'الصيدلية'}*\n` +
@@ -168,8 +169,7 @@ export async function executeAtomicOrderCheckout(showToastFn) {
     `📅 *التاريخ:* ${newOrderObj.date}\n\n` +
     `👤 *اسم الزبون:* ${name}\n` +
     `📞 *رقم الهاتف:* ${phone}\n` +
-    `📍 *العنوان:* ${address}\n` +
-    `${locationInfo}` +
+    `📍 *العنوان بالتفصيل:* ${address}\n` +
     `🚚 *نوع التوصيل:* ${deliveryLabel}\n\n` +
     `📦 *المنتجات المطلوبة:*\n${lines.join('\n')}\n\n` +
     `━━━━━━━━━━━━━━━━━━━\n` +
@@ -180,7 +180,7 @@ export async function executeAtomicOrderCheckout(showToastFn) {
     `━━━━━━━━━━━━━━━━━━━\n` +
     `✨ يرجى تأكيد الطلب من قبل الصيدلي 🌸`;
 
-  // تفريغ السلة
+  // تفريغ السلة وتحديث الواجهة
   for (const k in cart) delete cart[k];
   saveLocalState();
 
@@ -202,41 +202,10 @@ export async function executeAtomicOrderCheckout(showToastFn) {
   }
 }
 
-// التقاط الموقع الجغرافي بنقرة واحدة GPS
-export function captureCustomerGeolocation(showToastFn) {
-  if (!navigator.geolocation) {
-    showToastFn('متصفحك لا يدعم تحديد الموقع الجغرافي');
-    return;
-  }
-
-  showToastFn('جاري تحديد موقعك الجغرافي بدقة... 📍');
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
-      const mapsUrl = `https://maps.google.com/?q=${lat},${lng}`;
-      
-      const locInp = document.getElementById('custLocationUrl');
-      const locBtn = document.getElementById('btnGetLocation');
-      if (locInp) locInp.value = mapsUrl;
-      if (locBtn) {
-        locBtn.style.background = '#DCFCE7';
-        locBtn.style.color = '#15803D';
-        locBtn.innerHTML = `✅ تم تثبيت موقعك الجغرافي بنجاح`;
-      }
-      showToastFn('تم تحديد موقعك بدقة وإرفاقه مع الطلب! 📍');
-    },
-    (err) => {
-      showToastFn('تعذر التقاط الموقع، يرجى تفعيل الـ GPS في جهازك');
-    },
-    { enableHighAccuracy: true, timeout: 10000 }
-  );
-}
-
-// إرسال الطلب لتيليجرام الصيدلية
+// إرسال الطلب لتيليجرام الصيدلية عبر الووركر
 async function dispatchOrderToTelegram(orderObj) {
   try {
-    const res = await fetch(`${WORKER_API_BASE}/api/orders`, {
+    await fetch(`${WORKER_API_BASE}/api/orders`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -246,7 +215,6 @@ async function dispatchOrderToTelegram(orderObj) {
         customerName: orderObj.name,
         customerPhone: orderObj.phone,
         customerAddress: orderObj.address,
-        locationUrl: orderObj.locationUrl,
         deliveryMethod: orderObj.deliveryMethod,
         items: orderObj.items,
         promoCode: orderObj.promoCode,
@@ -289,25 +257,25 @@ export function openReceiptModal(orderId) {
   const discountVal = Number(ord.discountAmount || 0);
   const exactGrandTotal = Number(ord.total) || Math.max(0, itemsSubtotal - discountVal) + delFee;
 
-  document.getElementById('recOrderId').textContent = '#' + ord.id;
-  document.getElementById('recOrderDate').textContent = ord.date || '';
-  document.getElementById('recCustName').textContent = ord.name || '';
-  document.getElementById('recCustPhone').textContent = ord.phone || '';
-  document.getElementById('recCustAddress').textContent = ord.address || '';
-  document.getElementById('recDeliveryType').textContent = (ord.deliveryMethod === 'express') ? 'توصيل سريع 🛵' : 'توصيل عادي 🚚';
-  document.getElementById('recStorePhone').textContent = pharmacyProfile.socialPhone || '07813703288';
+  if (document.getElementById('recOrderId')) document.getElementById('recOrderId').textContent = '#' + ord.id;
+  if (document.getElementById('recOrderDate')) document.getElementById('recOrderDate').textContent = ord.date || '';
+  if (document.getElementById('recCustName')) document.getElementById('recCustName').textContent = ord.name || '';
+  if (document.getElementById('recCustPhone')) document.getElementById('recCustPhone').textContent = ord.phone || '';
+  if (document.getElementById('recCustAddress')) document.getElementById('recCustAddress').textContent = ord.address || '';
+  if (document.getElementById('recDeliveryType')) document.getElementById('recDeliveryType').textContent = (ord.deliveryMethod === 'express') ? 'توصيل سريع 🛵' : 'توصيل عادي 🚚';
+  if (document.getElementById('recStorePhone')) document.getElementById('recStorePhone').textContent = pharmacyProfile.socialPhone || '07813703288';
 
-  const recStoreTitle = document.querySelector('.receipt-header h3');
+  const recStoreTitle = document.getElementById('recStoreHeaderTitle') || document.querySelector('.receipt-header h3');
   if (recStoreTitle) recStoreTitle.textContent = `${pharmacyProfile.name || 'الصيدلية'} 🌸`;
 
-  document.getElementById('recDeliveryFee').textContent = fmtPrice(delFee);
-  document.getElementById('recGrandTotal').textContent = fmtPrice(exactGrandTotal);
+  if (document.getElementById('recDeliveryFee')) document.getElementById('recDeliveryFee').textContent = fmtPrice(delFee);
+  if (document.getElementById('recGrandTotal')) document.getElementById('recGrandTotal').textContent = fmtPrice(exactGrandTotal);
 
   const discRow = document.getElementById('recDiscountRow');
   if (discRow) {
     if (discountVal > 0) {
       discRow.style.display = 'flex';
-      document.getElementById('recDiscountVal').textContent = '-' + fmtPrice(discountVal);
+      if (document.getElementById('recDiscountVal')) document.getElementById('recDiscountVal').textContent = '-' + fmtPrice(discountVal);
     } else {
       discRow.style.display = 'none';
     }
