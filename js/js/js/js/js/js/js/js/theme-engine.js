@@ -1,6 +1,6 @@
 /* ==========================================================
    SaaS Multi-Tenant Engine — js/theme-engine.js
-   Version: 4.0.0 (Unified Token-Driven Component Renderer)
+   Version: 4.1.0 (Unified Token-Driven Component Renderer)
    ========================================================== */
 
 import { THEME_PRESETS } from './theme-presets.js';
@@ -15,7 +15,7 @@ export function applyTheme(templateId, hexColor) {
   
   root.setAttribute('data-template', currentThemeConfig.id);
 
-  // تطبيق توكنات القالب
+  // تطبيق توكنات القالب البصرية
   for (const [prop, val] of Object.entries(currentThemeConfig.tokens)) {
     root.style.setProperty(prop, val);
   }
@@ -38,6 +38,41 @@ export function applyTheme(templateId, hexColor) {
   }
 }
 
+// تغيير السعر عند اختيار تركيز أو حجم مختلف
+export function selectProductVariantCard(buttonEl, productId) {
+  const p = findProduct(productId);
+  if (!p) return;
+
+  const card = document.getElementById(`prod-card-${productId}`);
+  if (!card) return;
+
+  card.querySelectorAll('.p-variant-chip').forEach(btn => {
+    btn.style.background = '#fff';
+    btn.style.color = 'var(--ink)';
+    btn.classList.remove('active');
+  });
+
+  buttonEl.style.background = 'var(--surface)';
+  buttonEl.style.color = 'var(--rose-deep)';
+  buttonEl.classList.add('active');
+
+  const newPrice = Number(buttonEl.getAttribute('data-price') || p.price);
+  const newOldPrice = buttonEl.getAttribute('data-oldprice');
+
+  const priceValEl = document.getElementById(`price-val-${productId}`);
+  const oldPriceValEl = document.getElementById(`oldprice-val-${productId}`);
+
+  if (priceValEl) priceValEl.textContent = fmtPrice(newPrice);
+  if (oldPriceValEl) {
+    if (newOldPrice) {
+      oldPriceValEl.textContent = fmtPrice(Number(newOldPrice));
+      oldPriceValEl.style.display = 'inline';
+    } else {
+      oldPriceValEl.style.display = 'none';
+    }
+  }
+}
+
 // رسم كرت المنتج الموحد بأسلوب التوكنات
 export function renderProductCard(p) {
   const color = getBrandColor(p.brand);
@@ -54,7 +89,7 @@ export function renderProductCard(p) {
     ? `${starIcon()} <span class="mono" style="font-weight:800;">${avgRating}</span> <span style="font-size:10px; color:var(--text-soft);">(${reviewCount})</span>`
     : `<span style="font-size:10.5px; color:var(--text-soft); font-weight:700;">⭐ جديد (0 تقييم)</span>`;
 
-  // دعم تراكيز المنتج
+  // دعم تراكيز وأحجام المنتج (Variants)
   let variantsHtml = '';
   if (p.variants && Array.isArray(p.variants) && p.variants.length > 0) {
     variantsHtml = `
@@ -63,7 +98,7 @@ export function renderProductCard(p) {
           <button type="button" class="p-variant-chip ${i === 0 ? 'active' : ''}" 
             data-price="${v.price}" 
             data-oldprice="${v.oldPrice || ''}"
-            onclick="selectProductVariantCard(this, '${sanitizeText(p.id)}')"
+            onclick="window.App.selectProductVariantCard(this, '${sanitizeText(p.id)}')"
             style="font-size:10px; font-weight:800; padding:2px 7px; border-radius:6px; border:1px solid var(--line); background:${i === 0 ? 'var(--surface)' : '#fff'}; color:${i === 0 ? 'var(--rose-deep)' : 'var(--ink)'}; cursor:pointer;">
             ${sanitizeText(v.name || v.size)}
           </button>
@@ -73,8 +108,8 @@ export function renderProductCard(p) {
   }
 
   return `
-    <div class="product-card" id="prod-card-${sanitizeText(p.id)}" onclick="openProduct('${sanitizeText(p.id)}', true)">
-      <button class="wish-btn ${isWished ? 'active' : ''}" onclick="event.stopPropagation(); toggleWishlist('${sanitizeText(p.id)}')">
+    <div class="product-card" id="prod-card-${sanitizeText(p.id)}" onclick="window.App.openProduct('${sanitizeText(p.id)}', true)">
+      <button class="wish-btn ${isWished ? 'active' : ''}" onclick="event.stopPropagation(); window.App.toggleWishlist('${sanitizeText(p.id)}')">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="${isWished ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.5-4.9-10-9.5C.5 7.8 2.7 4 6.5 4 9 4 11 5.5 12 7c1-1.5 3-3 5.5-3 3.8 0 6 3.8 4.5 7.5C19.5 16.1 12 21 12 21Z"/></svg>
       </button>
       ${discountPct ? `<span class="discount-badge">خصم ${discountPct}%</span>` : ''}
@@ -98,16 +133,16 @@ export function renderProductCard(p) {
         <span class="p-price mono" id="price-val-${sanitizeText(p.id)}">${fmtPrice(p.price)}</span>
         ${p.oldPrice ? `<span class="p-oldprice mono" id="oldprice-val-${sanitizeText(p.id)}">${fmtPrice(p.oldPrice)}</span>` : ''}
       </div>
-      <button class="add-cart-btn" style="${!inStock ? 'opacity:0.6; pointer-events:none;' : ''}" onclick="event.stopPropagation(); addToCart('${sanitizeText(p.id)}')">
+      <button class="add-cart-btn" style="${!inStock ? 'opacity:0.6; pointer-events:none;' : ''}" onclick="event.stopPropagation(); window.App.addToCart('${sanitizeText(p.id)}')">
         ${inStock ? 'أضف إلى السلة' : 'غير متوفر'}
       </button>
 
       ${isAdmin ? `
         <div class="admin-card-actions" onclick="event.stopPropagation()">
-          <button type="button" class="btn-admin-stock ${inStock ? 'is-in' : 'is-out'}" onclick="quickToggleStock('${sanitizeText(p.id)}')">${inStock ? 'متوفر 🟢' : 'نافذ 🔴'}</button>
-          <button type="button" class="btn-admin-price" onclick="quickEditPrice('${sanitizeText(p.id)}', ${p.price})">السعر 💰</button>
-          <button type="button" class="btn-admin-edit" onclick="openAdminQuickEditModal('${sanitizeText(p.id)}')">تعديل ✏️</button>
-          <button type="button" class="btn-admin-del" onclick="archiveProductConfirm('${sanitizeText(p.id)}', '${sanitizeText(p.name)}')">🗑️</button>
+          <button type="button" class="btn-admin-stock ${inStock ? 'is-in' : 'is-out'}" onclick="window.App.quickToggleStock('${sanitizeText(p.id)}')">${inStock ? 'متوفر 🟢' : 'نافذ 🔴'}</button>
+          <button type="button" class="btn-admin-price" onclick="window.App.quickEditPrice('${sanitizeText(p.id)}', ${p.price})">السعر 💰</button>
+          <button type="button" class="btn-admin-edit" onclick="window.App.openAdminQuickEditModal('${sanitizeText(p.id)}')">تعديل ✏️</button>
+          <button type="button" class="btn-admin-del" onclick="window.App.archiveProductConfirm('${sanitizeText(p.id)}', '${sanitizeText(p.name)}')">🗑️</button>
         </div>` : ''}
     </div>`;
 }
@@ -142,7 +177,7 @@ export function renderBundleCard(b) {
           ${b.oldPrice ? `<span class="p-oldprice mono" style="margin-inline-start:6px;">${fmtPrice(b.oldPrice)}</span>` : ''}
         </div>
       </div>
-      <button class="add-cart-btn" onclick="addBundleToCart('${sanitizeText(b.id)}')">
+      <button class="add-cart-btn" onclick="window.App.addBundleToCart('${sanitizeText(b.id)}')">
         🎁 أضف البكج كاملاً للسلة
       </button>
     </div>
@@ -153,7 +188,7 @@ export function renderBundleCard(b) {
 export function renderCategoryCard(c, count) {
   const cleanImg = sanitizeUrl(c.imageUrl);
   return `
-    <div class="modern-cat-card" onclick="openCategory('${sanitizeText(c.id)}')">
+    <div class="modern-cat-card" onclick="window.App.openCategory('${sanitizeText(c.id)}')">
       <div class="modern-cat-img-wrap">
         ${cleanImg ? `<img src="${cleanImg}" alt="${sanitizeText(c.label)}">` : (catIcons[c.icon] || catIcons.jar)('var(--accent, #E85D8A)')}
       </div>
