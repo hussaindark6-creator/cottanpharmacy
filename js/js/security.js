@@ -1,10 +1,9 @@
 /* ==========================================================
    SaaS Multi-Tenant Engine — js/security.js
-   Version: 4.0.0 (Zero-Trust Sanitization & RBAC)
+   Version: 4.2.0 (Zero-Trust Sanitization & Independent Security)
    ========================================================== */
 
 import { auth, SUPER_ADMIN_EMAIL, WORKER_API_BASE, currentPharmacyId } from './config.js';
-import { pharmacyProfile, currentStaffData } from './state.js';
 
 export function sanitizeText(str) {
   if (typeof str !== 'string') return str == null ? '' : String(str);
@@ -46,18 +45,18 @@ export function isSuperAdmin() {
   return !!(user && user.email && user.email.toLowerCase().trim() === SUPER_ADMIN_EMAIL.toLowerCase().trim());
 }
 
-export function isCurrentUserAdmin() {
+export function isCurrentUserAdmin(pharmacyProfile = null, currentStaffData = null) {
   if (isSuperAdmin()) return true;
   const user = auth ? auth.currentUser : null;
-  if (user && pharmacyProfile.adminEmail && user.email.toLowerCase().trim() === pharmacyProfile.adminEmail.toLowerCase().trim()) {
+  if (user && pharmacyProfile && pharmacyProfile.adminEmail && user.email.toLowerCase().trim() === pharmacyProfile.adminEmail.toLowerCase().trim()) {
     return true;
   }
   if (!user || !currentStaffData) return false;
   return currentStaffData.role === 'owner' || currentStaffData.role === 'manager' || currentStaffData.role === 'admin';
 }
 
-export function assertAdmin(showToastFn) {
-  if (!isCurrentUserAdmin()) {
+export function assertAdmin(pharmacyProfile = null, currentStaffData = null, showToastFn = null) {
+  if (!isCurrentUserAdmin(pharmacyProfile, currentStaffData)) {
     if (typeof showToastFn === 'function') {
       showToastFn('⚠️ غير مصرح: هذه العملية مخصصة لمشرف الصيدلية فقط.');
     }
