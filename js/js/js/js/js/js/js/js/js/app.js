@@ -1,9 +1,8 @@
 /* ==========================================================
    SaaS Multi-Tenant Engine — js/app.js
-   Version: 4.3.0 (Master Zero-Crash Application Coordinator)
+   Version: 4.4.0 (Master Zero-Crash Application Coordinator)
    ========================================================== */
 
-// 🌟 تهيئة كائن window.App في السطر الأول لضمان توفره لجميع عناصر HTML
 window.App = window.App || {};
 
 import { 
@@ -34,12 +33,11 @@ import { uploadDirectImageFile } from './upload.js';
 import { executeAtomicOrderCheckout, openReceiptModal, closeReceiptModal } from './orders.js';
 import { applyTheme, renderProductCard, renderBundleCard, renderCategoryCard, selectProductVariantCard } from './theme-engine.js';
 
-// ================= 1. STOREFRONT LOCK & KILL SWITCH =================
+// 1. قفل المتجر التلقائي
 export function checkStorefrontSubscriptionLock() {
   const isSuspended = pharmacyProfile.isActive === false;
   const todayStr = new Date().toISOString().split('T')[0];
   const isExpired = pharmacyProfile.subscriptionExpiry && pharmacyProfile.subscriptionExpiry < todayStr;
-
   const freezeModal = document.getElementById('storefrontFreezeModal');
   if (freezeModal) {
     if (isSuspended || isExpired) {
@@ -47,8 +45,8 @@ export function checkStorefrontSubscriptionLock() {
       const freezeDesc = document.getElementById('storefrontFreezeDesc');
       if (freezeDesc) {
         freezeDesc.textContent = isSuspended 
-          ? 'عذراً، هذا المتجر متوقف مؤقتاً لأعمال الصيانة والتجديد. يرجى مراجعة إدارة الصيدلية.' 
-          : 'عذراً، انتهت صلاحية اشتراك هذا المتجر مؤقتاً. يرجى مراجعة الإدارة.';
+          ? 'عذراً، هذا المتجر متوقف مؤقتاً لأعمال الصيانة والتجديد.' 
+          : 'عذراً، انتهت صلاحية اشتراك هذا المتجر مؤقتاً.';
       }
     } else {
       freezeModal.classList.remove('open');
@@ -56,7 +54,7 @@ export function checkStorefrontSubscriptionLock() {
   }
 }
 
-// ================= 2. CART & CLOUD SYNC =================
+// 2. إدارة السلة والمزامنة
 export function addToCart(id, silent = false, quantity = 1) {
   cart[id] = (cart[id] || 0) + quantity;
   updateCartBadge();
@@ -71,7 +69,7 @@ export function addBundleToCart(bundleId) {
   updateCartBadge();
   saveLocalState();
   syncCartToCloud();
-  showToast('تمت إضافة البكج كاملاً للسلة بتخفيض التوفير! 🎁');
+  showToast('تمت إضافة البكج كاملاً للسلة! 🎁');
 }
 
 export function changeCartQty(id, delta) {
@@ -103,8 +101,7 @@ export function updateCartBadge() {
 export function getCartSubtotal() {
   return Object.keys(cart).reduce((sum, id) => {
     if (id.startsWith('bundle_')) {
-      const bId = id.replace('bundle_', '');
-      const b = findBundle(bId);
+      const b = findBundle(id.replace('bundle_', ''));
       return sum + (b ? Number(b.price || 0) * cart[id] : 0);
     } else {
       const p = findProduct(id);
@@ -139,7 +136,7 @@ export async function mergeCloudCartOnLogin(user) {
   } catch (e) {}
 }
 
-// ================= 3. VIEWS CONTROLLER =================
+// 3. التنقل وعرض الواجهات
 export function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   const target = document.getElementById('view-' + name);
@@ -815,7 +812,7 @@ export async function cancelMyOrder(orderId) {
   }
 }
 
-// ================= 4. AUTH & USER PROFILE =================
+// 4. الحسابات وتسجيل الدخول
 export function updateUserHeaderProfile() {
   const chipAvatar = document.getElementById('userChipAvatar');
   const chipName = document.getElementById('userChipName');
@@ -927,21 +924,19 @@ export function applyStoreSettings() {
   const drawerPharmBtn = document.getElementById('drawerConsultBtn');
 
   if (annEl) {
-    const isVisible = (pharmacyProfile.showAnnouncement !== false);
-    annEl.style.display = isVisible ? 'flex' : 'none';
+    annEl.style.display = (pharmacyProfile.showAnnouncement !== false) ? 'flex' : 'none';
   }
   if (annTextEl && pharmacyProfile.announcementText) {
     annTextEl.textContent = pharmacyProfile.announcementText;
   }
-  if (heroImgEl && pharmacyProfile.bannerImgUrl) heroImgEl.src = sanitizeUrl(pharmacyProfile.bannerImgUrl);
-
+  if (heroImgEl && pharmacyProfile.bannerImgUrl) {
+    heroImgEl.src = sanitizeUrl(pharmacyProfile.bannerImgUrl);
+  }
   if (pharmWrap) {
-    const isPharmVisible = (pharmacyProfile.showPharmacistBanner !== false);
-    pharmWrap.style.display = isPharmVisible ? 'block' : 'none';
+    pharmWrap.style.display = (pharmacyProfile.showPharmacistBanner !== false) ? 'block' : 'none';
   }
   if (drawerPharmBtn) {
-    const isPharmVisible = (pharmacyProfile.showPharmacistBanner !== false);
-    drawerPharmBtn.style.display = isPharmVisible ? 'flex' : 'none';
+    drawerPharmBtn.style.display = (pharmacyProfile.showPharmacistBanner !== false) ? 'flex' : 'none';
   }
 
   const wLink = document.getElementById('drawerSocialWhatsapp');
@@ -956,7 +951,7 @@ export function applyStoreSettings() {
   if (pLink) pLink.href = `tel:${pharmacyProfile.socialPhone || ''}`;
 }
 
-// ================= 5. FIRESTORE REALTIME SYNC =================
+// 5. المزامنة اللحظية
 export function initFirestoreRealtimeSync() {
   if (!isFirebaseConfigured || !db) return;
 
@@ -1009,66 +1004,18 @@ export function showToast(msg) {
   toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
 }
 
-// ================= 6. GLOBAL BRIDGE & EVENT HANDLERS =================
+// 6. الربط الشامل بنطاق الصفحة (Window)
 Object.assign(window.App, {
-  showView,
-  addToCart,
-  addBundleToCart,
-  changeCartQty,
-  removeCartItem,
-  selectDelivery,
-  applyPromoCode,
-  removePromoCode,
-  toggleWishlist,
-  openProduct,
-  goBackFromProduct,
-  switchPdTab,
-  changePdQty,
-  rateProductInstant,
-  openCategory,
-  openBestSellers,
-  selectHomeBrand,
-  onSearch,
-  openMenu,
-  closeMenu,
-  openWhatsapp,
-  executeAtomicOrderCheckout: () => executeAtomicOrderCheckout(showToast),
-  openReceiptModal,
-  closeReceiptModal,
-  cancelMyOrder,
-  clearSavedCustomerData,
-  selectProductVariantCard,
-  signInWithGoogle,
-  handleSignOut,
-  quickToggleStock: async (id) => {
-    const p = findProduct(id);
-    if (!p || !db) return;
-    const newStock = !p.inStock;
-    await dbPaths.productsCol().doc(String(id)).set({ inStock: newStock }, { merge: true });
-    showToast(newStock ? 'متوفر 🟢' : 'نافذ 🔴');
-  },
-  quickEditPrice: async (id, curPrice) => {
-    const val = prompt('تعديل السعر (د.ع):', curPrice);
-    if (!val) return;
-    const newP = Number(val.trim());
-    if (newP > 0 && db) {
-      await dbPaths.productsCol().doc(String(id)).set({ price: newP }, { merge: true });
-      showToast('تم تحديث السعر ✓');
-    }
-  },
-  openAdminQuickEditModal: () => {
-    window.location.href = getTenantUrl('admin.html');
-  },
-  archiveProductConfirm: async (id, name) => {
-    if (!confirm(`نقل "${name}" إلى سلة المحذوفات؟`)) return;
-    if (db) {
-      await dbPaths.productsCol().doc(String(id)).set({ isDeleted: true }, { merge: true });
-      showToast('تم نقل المنتج للمحذوفات 🗑️');
-    }
-  }
+  showView, addToCart, addBundleToCart, changeCartQty, removeCartItem,
+  selectDelivery, applyPromoCode, removePromoCode, toggleWishlist,
+  openProduct, goBackFromProduct, switchPdTab, changePdQty, rateProductInstant,
+  openCategory, openBestSellers, selectHomeBrand, onSearch, openMenu, closeMenu,
+  openWhatsapp, executeAtomicOrderCheckout: () => executeAtomicOrderCheckout(showToast),
+  openReceiptModal, closeReceiptModal, cancelMyOrder, clearSavedCustomerData,
+  selectProductVariantCard, signInWithGoogle, handleSignOut
 });
 
-// دوال مباشرة للنطاق العام لضمان التوافق المطلق مع أزرار HTML
+// دوال مباشرة لضمان عمل أي استدعاء في الـ HTML
 window.showView = showView;
 window.openProduct = openProduct;
 window.addToCart = addToCart;
@@ -1077,7 +1024,7 @@ window.openMenu = openMenu;
 window.closeMenu = closeMenu;
 window.openWhatsapp = openWhatsapp;
 
-// ================= 7. SAFE BOOTSTRAP HOOK =================
+// 7. تشغيل فوري بدون انتظار
 function bootstrapApp() {
   patchTenantLinks();
   applyStoreSettings();
@@ -1097,7 +1044,6 @@ function bootstrapApp() {
   }
 }
 
-// تشغيل فوري حتى لو انتهى حدث التحميل قبل قراءة الملف
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', bootstrapApp);
 } else {
