@@ -90,7 +90,7 @@
 </head>
 <body>
 
-  <!-- STOREFRONT FREEZE OVERLAY (قفل المتجر عند انتهاء الاشتراك أو الحظر) -->
+  <!-- STOREFRONT FREEZE OVERLAY -->
   <div class="storefront-freeze-overlay" id="storefrontFreezeModal">
     <div class="welcome-card" style="border: 1.5px solid #EF4444; max-width: 420px; background: #fff; text-align: center;">
       <div style="font-size: 52px; margin-bottom: 12px;">🔒</div>
@@ -393,10 +393,27 @@
         <button class="pd-tab active" onclick="window.App.switchPdTab('desc')">الوصف الطبي</button>
         <button class="pd-tab" onclick="window.App.switchPdTab('ing')">المكونات الفعالة</button>
         <button class="pd-tab" onclick="window.App.switchPdTab('use')">طريقة الاستخدام</button>
+        <button class="pd-tab" onclick="window.App.switchPdTab('reviews')">التقييمات ⭐</button>
       </div>
       <div class="pd-tab-content active" id="pdTabDesc"></div>
       <div class="pd-tab-content" id="pdTabIng"></div>
       <div class="pd-tab-content" id="pdTabUse"></div>
+
+      <!-- Star Quick Rating Tab -->
+      <div class="pd-tab-content" id="pdTabReviews">
+        <div class="star-rating-box">
+          <h4>تقييم المنتج الفعلي ⭐</h4>
+          <p style="font-size:12px; color:var(--text-soft); margin:0 0 8px;">اضغطي على النجمة لتقييم المنتج بنقرة واحدة:</p>
+          <div class="star-rating-row" id="starRatingRow">
+            <span class="star-btn" data-star="1" onclick="window.App.rateProductInstant(1)">★</span>
+            <span class="star-btn" data-star="2" onclick="window.App.rateProductInstant(2)">★</span>
+            <span class="star-btn" data-star="3" onclick="window.App.rateProductInstant(3)">★</span>
+            <span class="star-btn" data-star="4" onclick="window.App.rateProductInstant(4)">★</span>
+            <span class="star-btn" data-star="5" onclick="window.App.rateProductInstant(5)">★</span>
+          </div>
+          <div id="instantRatingMsg" style="font-size:11.5px; font-weight:800; color:var(--accent); margin-top:8px;"></div>
+        </div>
+      </div>
 
       <div class="pd-qty-row">
         <div class="pd-qty-stepper">
@@ -504,7 +521,62 @@
   </div>
 
   <!-- ============ MODALS & POPUPS ============ -->
-  <!-- 1. Order Success Modal -->
+  <!-- 1. Smart Welcome Discount Popup -->
+  <div class="welcome-modal-overlay" id="welcomeOfferModal">
+    <div class="welcome-card">
+      <button class="welcome-close-btn" onclick="document.getElementById('welcomeOfferModal').classList.remove('open')">✕</button>
+      <div style="font-size:44px; margin-bottom:6px;">🌸</div>
+      <h3>أهلاً بكِ معنا!</h3>
+      <p>يسعدنا انضمامكِ إلينا. احصلي على خصم فوري على طلبكِ الأول باستخدام الكود أدناه:</p>
+      <div class="welcome-code-box">
+        <span class="mono" id="welcomeCodeText">QUTN10</span>
+        <button type="button" onclick="navigator.clipboard.writeText('QUTN10');">نسخ الكود 📋</button>
+      </div>
+      <button class="welcome-action-btn" onclick="document.getElementById('welcomeOfferModal').classList.remove('open'); window.App.showView('home');">تسوقي الآن واستفيدي من الخصم ✨</button>
+    </div>
+  </div>
+
+  <!-- 2. In-App Browser Guidance Modal -->
+  <div class="iab-modal" id="iabModal">
+    <div class="iab-content">
+      <div class="iab-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+      </div>
+      <h3 class="iab-title">فتح في متصفح خارجي</h3>
+      <div class="iab-desc">
+        تطبيقات مثل (تلغرام، إنستغرام، تيك توك) تمنع تسجيل الدخول عبر Google بداخلها لأسباب أمنية. للاستمرار بسهولة:
+        <div style="margin-top:12px;">
+          <div class="iab-step">
+            <div class="iab-step-num">1</div>
+            <div>اضغطي على القائمة أو الثلاث نقاط <strong>(•••)</strong> أعلى الشاشة</div>
+          </div>
+          <div class="iab-step">
+            <div class="iab-step-num">2</div>
+            <div>اختاري <strong>فتح في المتصفح / Open in Chrome أو Safari</strong></div>
+          </div>
+        </div>
+      </div>
+      <button class="iab-close-btn" onclick="document.getElementById('iabModal').classList.remove('open')">حسناً، فهمت</button>
+    </div>
+  </div>
+
+  <!-- 3. Notifications Modal -->
+  <div class="notif-modal-overlay" id="notifModal">
+    <div class="notif-modal-card">
+      <div class="consult-header">
+        <h3 style="display:flex; align-items:center; gap:8px;">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          الإشعارات والتنبيهات
+        </h3>
+        <button class="icon-btn" onclick="document.getElementById('notifModal').classList.remove('open')" aria-label="إغلاق">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="notif-list" id="notifList"></div>
+    </div>
+  </div>
+
+  <!-- 4. Order Success Modal -->
   <div class="success-modal-overlay" id="orderSuccessModal">
     <div class="success-card">
       <div class="success-icon-badge">🌸</div>
@@ -517,7 +589,7 @@
     </div>
   </div>
 
-  <!-- 2. Pharmacist Direct Consultation Modal -->
+  <!-- 5. Pharmacist Direct Consultation Modal -->
   <div class="consult-modal-overlay" id="consultModal">
     <div class="consult-modal-card">
       <div class="consult-header">
