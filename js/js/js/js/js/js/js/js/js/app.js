@@ -1,871 +1,63 @@
 /* ==========================================================
-   SaaS Multi-Tenant Pharmacy Engine — script.js
-   Version: 4.2.0 (Master Enterprise Unified Engine - Zero Crash)
+   SaaS Multi-Tenant Engine — js/app.js
+   Version: 4.3.0 (Master Zero-Crash Application Coordinator)
    ========================================================== */
 
-// ================= 1. CONFIGURATION & DOMAIN RESOLVER =================
-const DEFAULT_PHARMACY_ID = "cottanpharmacy";
-const SUPER_ADMIN_EMAIL = "hussaindark6@gmail.com";
-const WORKER_API_BASE = "https://cottanbackend.hussaindark6.workers.dev";
+// 🌟 تهيئة كائن window.App في السطر الأول لضمان توفره لجميع عناصر HTML
+window.App = window.App || {};
 
-function getActivePharmacyId() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const paramId = urlParams.get('pharmacy') || urlParams.get('p_id') || urlParams.get('p') || urlParams.get('id');
-  if (paramId && paramId.trim()) {
-    const cleanId = paramId.trim().toLowerCase();
-    sessionStorage.setItem('saas_active_pharmacy_id', cleanId);
-    return cleanId;
-  }
+import { 
+  db, auth, isFirebaseConfigured, dbPaths, currentPharmacyId, 
+  patchTenantLinks, getTenantUrl, DEFAULT_PHARMACY_ID, SUPER_ADMIN_EMAIL 
+} from './config.js';
 
-  // تنظيف الذاكرة من كاش الاستضافة القديم
-  const cachedId = sessionStorage.getItem('saas_active_pharmacy_id');
-  const isPoisonedCache = cachedId && (
-    cachedId.includes('pages.dev') ||
-    cachedId.includes('pharmacies-') ||
-    cachedId.includes('workers.dev') ||
-    cachedId.includes('web.app') ||
-    cachedId.includes('firebaseapp') ||
-    cachedId.includes('localhost')
-  );
+import { 
+  pharmacyProfile, setPharmacyProfile, products, setProducts, 
+  categories, setCategories, bundles, setBundles, notifications, 
+  setNotifications, archivedProducts, setArchivedProducts, cart, 
+  wishlist, myOrders, brandsData, currentView, currentProductId, 
+  pdQty, pdActiveTab, deliveryMethod, appliedPromo, isLowStockFilterActive, 
+  currentUser, setCurrentUser, currentStaffData, setCurrentStaffData, 
+  fmtPrice, starIcon, getBrandColor, icons, catIcons, findProduct, 
+  findBundle, saveLocalState, getStorageKey, setAppliedPromo, 
+  setDeliveryMethod, setCurrentProductId, setPdQty, setListingState, 
+  setPreviousView, previousViewBeforeProduct, previousScrollBeforeProduct
+} from './state.js';
 
-  if (isPoisonedCache) {
-    sessionStorage.removeItem('saas_active_pharmacy_id');
-  } else if (cachedId && cachedId.trim()) {
-    return cachedId.trim().toLowerCase();
-  }
+import { 
+  sanitizeText, sanitizeUrl, normalizeArabic, isCurrentUserAdmin, 
+  assertAdmin, lockAction, isInAppBrowser, apiFetch, isSuperAdmin 
+} from './security.js';
 
-  const hostname = window.location.hostname.toLowerCase();
-  const ignoredHostingDomains = [
-    'pages.dev', 'workers.dev', 'web.app', 'firebaseapp.com',
-    'github.io', 'vercel.app', 'netlify.app', 'localhost', '127.0.0.1'
-  ];
+import { executeFuzzyProductSearch } from './search.js';
+import { uploadDirectImageFile } from './upload.js';
+import { executeAtomicOrderCheckout, openReceiptModal, closeReceiptModal } from './orders.js';
+import { applyTheme, renderProductCard, renderBundleCard, renderCategoryCard, selectProductVariantCard } from './theme-engine.js';
 
-  const isPlatformHost = ignoredHostingDomains.some(d => hostname === d || hostname.endsWith('.' + d));
+// ================= 1. STOREFRONT LOCK & KILL SWITCH =================
+export function checkStorefrontSubscriptionLock() {
+  const isSuspended = pharmacyProfile.isActive === false;
+  const todayStr = new Date().toISOString().split('T')[0];
+  const isExpired = pharmacyProfile.subscriptionExpiry && pharmacyProfile.subscriptionExpiry < todayStr;
 
-  if (!isPlatformHost) {
-    const parts = hostname.split('.');
-    if (parts.length >= 3 && parts[0] !== 'www') {
-      const sub = parts[0].toLowerCase().trim();
-      sessionStorage.setItem('saas_active_pharmacy_id', sub);
-      return sub;
-    }
-  }
-
-  return DEFAULT_PHARMACY_ID;
-}
-
-const currentPharmacyId = getActivePharmacyId();
-
-function getTenantUrl(pagePath) {
-  const cleanPath = pagePath.split('?')[0];
-  return `${cleanPath}?pharmacy=${encodeURIComponent(currentPharmacyId)}`;
-}
-
-function patchTenantLinks() {
-  document.querySelectorAll('a[href]').forEach(a => {
-    const href = a.getAttribute('href');
-    if (href && (href.startsWith('index.html') || href.startsWith('admin.html') || href === './' || href === '/')) {
-      const page = href.split('?')[0];
-      a.setAttribute('href', getTenantUrl(page));
-    }
-  });
-}
-
-// ================= 2. FIREBASE CONFIGURATION =================
-const firebaseConfig = {
-  apiKey: "AIzaSyDXAp6CTcq3OlN2egGOj5Yg8jK5wUsR6Uc",
-  authDomain: "cottanpharmacy.firebaseapp.com",
-  projectId: "cottanpharmacy",
-  storageBucket: "cottanpharmacy.firebasestorage.app",
-  messagingSenderId: "163407198551",
-  appId: "1:163407198551:web:1c397d23733101456a6612",
-  measurementId: "G-QC29GK2MDW"
-};
-
-let auth = null, db = null, currentUser = null, isFirebaseConfigured = false;
-let currentStaffData = null;
-
-try {
-  if (typeof firebase !== 'undefined' && firebaseConfig.apiKey) {
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
-    auth = firebase.auth();
-    db = firebase.firestore();
-    isFirebaseConfigured = true;
-
-    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(err => {
-      console.warn("Persistence fallback:", err);
-    });
-  }
-} catch (err) {
-  console.warn("Firebase init error:", err);
-}
-
-const dbPaths = {
-  pharmacyDoc: (pId = currentPharmacyId) => db.collection('pharmacies').doc(pId),
-  privateSettingsDoc: (pId = currentPharmacyId) => db.collection('pharmacies').doc(pId).collection('private_settings').doc('config'),
-  productsCol: (pId = currentPharmacyId) => db.collection('pharmacies').doc(pId).collection('products'),
-  ordersCol: (pId = currentPharmacyId) => db.collection('pharmacies').doc(pId).collection('orders'),
-  staffCol: (pId = currentPharmacyId) => db.collection('pharmacies').doc(pId).collection('staff'),
-  categoriesCol: (pId = currentPharmacyId) => db.collection('pharmacies').doc(pId).collection('categories'),
-  bundlesCol: (pId = currentPharmacyId) => db.collection('pharmacies').doc(pId).collection('bundles'),
-  couponsCol: (pId = currentPharmacyId) => db.collection('pharmacies').doc(pId).collection('coupons'),
-  notificationsCol: (pId = currentPharmacyId) => db.collection('pharmacies').doc(pId).collection('notifications'),
-  analyticsDailyCol: (pId = currentPharmacyId) => db.collection('pharmacies').doc(pId).collection('analytics_daily'),
-  userCartDoc: (uid, pId = currentPharmacyId) => db.collection('users').doc(uid).collection('pharmacies').doc(pId)
-};
-
-// ================= 3. SECURITY & SANITIZATION =================
-function sanitizeText(str) {
-  if (typeof str !== 'string') return str == null ? '' : String(str);
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
-function escapeHtml(str) { return sanitizeText(str); }
-
-function sanitizeUrl(url) {
-  if (!url || typeof url !== 'string') return '';
-  const clean = url.trim();
-  if (/^https?:\/\//i.test(clean) || clean.startsWith('/') || clean.startsWith('./') || clean.startsWith('data:image/')) {
-    return encodeURI(clean).replace(/"/g, '%22').replace(/'/g, '%27').replace(/</g, '%3C').replace(/>/g, '%3E');
-  }
-  return '';
-}
-
-function normalizeArabic(text) {
-  if (!text) return '';
-  return String(text)
-    .toLowerCase()
-    .trim()
-    .replace(/[أإآ]/g, 'ا')
-    .replace(/ة/g, 'ه')
-    .replace(/ى/g, 'ي')
-    .replace(/[ًٌٍَُِّْ]/g, '')
-    .replace(/[\s\-_]+/g, ' ');
-}
-
-function isSuperAdmin() {
-  const user = auth ? auth.currentUser : currentUser;
-  return !!(user && user.email && user.email.toLowerCase().trim() === SUPER_ADMIN_EMAIL.toLowerCase().trim());
-}
-
-function isCurrentUserAdmin() {
-  if (isSuperAdmin()) return true;
-  if (currentUser && pharmacyProfile.adminEmail && currentUser.email.toLowerCase().trim() === pharmacyProfile.adminEmail.toLowerCase().trim()) {
-    return true;
-  }
-  if (!currentUser || !currentStaffData) return false;
-  return currentStaffData.role === 'owner' || currentStaffData.role === 'manager' || currentStaffData.role === 'admin';
-}
-
-function assertAdmin() {
-  if (!isCurrentUserAdmin()) {
-    showToast('⚠️ غير مصرح: هذه العملية مخصصة لمشرف الصيدلية فقط.');
-    return false;
-  }
-  return true;
-}
-
-const actionLocks = new Map();
-function lockAction(actionKey, cooldownMs = 1500) {
-  const now = Date.now();
-  const last = actionLocks.get(actionKey) || 0;
-  if (now - last < cooldownMs) {
-    showToast('⏳ يرجى الانتظار لحظة قبل المحاولة مجدداً...');
-    return false;
-  }
-  actionLocks.set(actionKey, now);
-  return true;
-}
-
-function isInAppBrowser() {
-  const ua = navigator.userAgent || navigator.vendor || window.opera || '';
-  const isIAB = /Telegram|Instagram|FBAN|FBAV|TikTok|Snapchat|Line|Twitter|MicroMessenger|WhatsApp|musical_ly/i.test(ua);
-  let storageBlocked = false;
-  try {
-    sessionStorage.setItem('__test_storage', '1');
-    sessionStorage.removeItem('__test_storage');
-  } catch (e) {
-    storageBlocked = true;
-  }
-  return isIAB || storageBlocked;
-}
-
-// ================= 4. SMART FUZZY SEARCH (LEVENSHTEIN + PHONETICS) =================
-const PHONETIC_MAP = {
-  'لاروش': 'la roche posay', 'سيرافي': 'cerave', 'سيرفي': 'cerave', 'سيمبل': 'simple',
-  'ريفولي': 'revuele', 'كوزمو': 'cosmo', 'فيتشي': 'vichy', 'بانادول': 'panadol',
-  'بندول': 'panadol', 'نياسيناميد': 'niacinamide', 'هيالورونيك': 'hyaluronic',
-  'ريتينول': 'retinol', 'ساليسيليك': 'salicylic', 'ابتاميل': 'aptamil', 'بيبيلاك': 'bebelac'
-};
-
-function levenshteinDistance(a, b) {
-  if (!a.length) return b.length;
-  if (!b.length) return a.length;
-  const matrix = [];
-  for (let i = 0; i <= b.length; i++) matrix[i] = [i];
-  for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
-
-  for (let i = 1; i <= b.length; i++) {
-    for (let j = 1; j <= a.length; j++) {
-      if (b.charAt(i - 1) === a.charAt(j - 1)) {
-        matrix[i][j] = matrix[i - 1][j - 1];
-      } else {
-        matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1);
+  const freezeModal = document.getElementById('storefrontFreezeModal');
+  if (freezeModal) {
+    if (isSuspended || isExpired) {
+      freezeModal.classList.add('open');
+      const freezeDesc = document.getElementById('storefrontFreezeDesc');
+      if (freezeDesc) {
+        freezeDesc.textContent = isSuspended 
+          ? 'عذراً، هذا المتجر متوقف مؤقتاً لأعمال الصيانة والتجديد. يرجى مراجعة إدارة الصيدلية.' 
+          : 'عذراً، انتهت صلاحية اشتراك هذا المتجر مؤقتاً. يرجى مراجعة الإدارة.';
       }
-    }
-  }
-  return matrix[b.length][a.length];
-}
-
-function isFuzzyMatch(qWord, tWord) {
-  if (!qWord || !tWord) return false;
-  const q = normalizeArabic(qWord);
-  const t = normalizeArabic(tWord);
-  if (t.includes(q)) return true;
-
-  for (const [ar, en] of Object.entries(PHONETIC_MAP)) {
-    if (q.includes(ar) && t.includes(en)) return true;
-  }
-
-  if (q.length >= 4 && q.length <= 5) return levenshteinDistance(q, t) <= 1;
-  if (q.length > 5) return levenshteinDistance(q, t) <= 2;
-  return false;
-}
-
-function executeFuzzyProductSearch(query, productsList) {
-  if (!query || !query.trim()) return productsList;
-  const cleanQ = normalizeArabic(query.trim());
-  const qTokens = cleanQ.split(' ').filter(Boolean);
-
-  return productsList.filter(p => {
-    if (p.isDeleted === true) return false;
-    const nameNorm = normalizeArabic(p.name || '');
-    const brandNorm = normalizeArabic(p.brand || '');
-    const descNorm = normalizeArabic(p.description || '');
-    const ingNorm = normalizeArabic(p.ingredients || p.medicalIndications || '');
-    const barcodeNorm = (p.barcode || '').trim().toLowerCase();
-
-    if (barcodeNorm && barcodeNorm.includes(cleanQ)) return true;
-
-    return qTokens.every(token => {
-      if (nameNorm.includes(token) || brandNorm.includes(token) || descNorm.includes(token) || ingNorm.includes(token)) return true;
-      const targetTokens = `${nameNorm} ${brandNorm}`.split(' ');
-      return targetTokens.some(tWord => isFuzzyMatch(token, tWord));
-    });
-  });
-}
-
-// ================= 5. CLIENT-SIDE WebP COMPRESSION & CLOUD R2 =================
-async function compressImageToWebP(file, maxDimension = 1200, quality = 0.82) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = reject;
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onerror = reject;
-      img.onload = () => {
-        let width = img.width, height = img.height;
-        if (width > height) {
-          if (width > maxDimension) { height = Math.round((height * maxDimension) / width); width = maxDimension; }
-        } else {
-          if (height > maxDimension) { width = Math.round((width * maxDimension) / height); height = maxDimension; }
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = width; canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-
-        canvas.toBlob(blob => {
-          if (blob) resolve(blob);
-          else canvas.toBlob(fallback => resolve(fallback), 'image/jpeg', quality);
-        }, 'image/webp', quality);
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-async function uploadDirectImageFile(fileInput, targetHiddenUrlId, previewImgId, previewBoxId) {
-  const file = fileInput.files[0];
-  if (!file) return;
-
-  showToast('جاري ضغط ومعالجة الصورة سحابياً... ⏳');
-
-  try {
-    const compressedBlob = await compressImageToWebP(file, 1200, 0.82);
-    const formData = new FormData();
-    formData.append('file', compressedBlob, `img_${Date.now()}.webp`);
-
-    const res = await fetch(`${WORKER_API_BASE}/api/upload`, {
-      method: 'POST',
-      headers: { 'X-Pharmacy-Id': currentPharmacyId },
-      body: formData
-    });
-
-    const data = await res.json();
-    if (data && data.success && data.imageUrl) {
-      const hiddenInp = document.getElementById(targetHiddenUrlId);
-      if (hiddenInp) hiddenInp.value = data.imageUrl;
-      if (previewImgId) document.getElementById(previewImgId).src = data.imageUrl;
-      if (previewBoxId) document.getElementById(previewBoxId).style.display = 'flex';
-      showToast('تم رفع وحفظ الصورة بنجاح! 📸');
     } else {
-      throw new Error(data.message || 'فشل الرفع');
-    }
-  } catch (err) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const base64 = e.target.result;
-      const hiddenInp = document.getElementById(targetHiddenUrlId);
-      if (hiddenInp) hiddenInp.value = base64;
-      if (previewImgId) document.getElementById(previewImgId).src = base64;
-      if (previewBoxId) document.getElementById(previewBoxId).style.display = 'flex';
-      showToast('تم حفظ الصورة محلياً ✓');
-    };
-    reader.readAsDataURL(file);
-  }
-}
-
-// ================= 6. ISOLATED STATE & PROFILE =================
-const getStorageKey = (key) => `saas_${currentPharmacyId}_${key}`;
-
-let brandsData = {
-  'Cerave': { name: 'Cerave', color: '#5FAE6E', logoUrl: '' },
-  'Simple': { name: 'Simple', color: '#C97F79', logoUrl: '' },
-  'REVUELE': { name: 'REVUELE', color: '#D9A441', logoUrl: '' },
-  'COSMO': { name: 'COSMO', color: '#B7A233', logoUrl: '' }
-};
-
-let categories = [];
-let products = [];
-let bundles = [];
-let notifications = [];
-
-let cart = JSON.parse(localStorage.getItem(getStorageKey('cart')) || '{}');
-let wishlist = new Set(JSON.parse(localStorage.getItem(getStorageKey('wishlist')) || '[]'));
-let myOrders = JSON.parse(localStorage.getItem(getStorageKey('my_orders')) || '[]');
-
-let currentView = 'home';
-let listingMode = null, listingValue = null, listingCatActive = 'all';
-let currentProductId = null, pdQty = 1, pdActiveTab = 'desc', deliveryMethod = 'standard';
-let appliedPromo = null;
-let isLowStockFilterActive = false;
-
-let previousViewBeforeProduct = 'home';
-let previousScrollBeforeProduct = 0;
-
-let pharmacyProfile = {
-  id: currentPharmacyId,
-  name: 'صيدلية القطن',
-  templateId: 'template_default',
-  primaryColor: '#E85D8A',
-  logoUrl: '',
-  bannerImgUrl: 'https://imgdb.io/i/EQ4D9ag.png',
-  announcementText: '✨ أهلاً بكم في متجرنا الإلكتروني 🌸',
-  showAnnouncement: true,
-  showPharmacistBanner: true,
-  pharmacistCtaTitle: 'استشر الصيدلي مجاناً 🩺',
-  pharmacistCtaDesc: 'تحدث مع الصيدلي المختص مباشرة للحصول على تشخيص دقيق لروتينك وروشتتك',
-  socialWhatsapp: '9647813703288',
-  socialTelegram: '',
-  socialInstagram: '',
-  socialPhone: '07813703288',
-  deliveryFeeStandard: 4000,
-  deliveryFeeExpress: 8000,
-  heroMainTitle: 'متجر الصيدلية',
-  heroSubTitle: 'نحن هنا لتحسين صحتكم وجمالكم',
-  heroDescTitle: 'منتجات أصلية ومعتمدة 100%',
-  isActive: true,
-  subscriptionExpiry: '2099-12-31',
-  promoCards: []
-};
-
-function fmtPrice(n) { return (Number(n) || 0).toLocaleString('en-US') + ' د.ع'; }
-function findProduct(id) { return products.find(p => String(p.id) === String(id)); }
-function findBundle(id) { return bundles.find(b => String(b.id) === String(id)); }
-function starIcon() { return `<svg viewBox="0 0 24 24" width="12" height="12" style="width:12px;height:12px;" fill="currentColor"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1z"/></svg>`; }
-
-function hashColor(name) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return `hsl(${Math.abs(hash) % 360}, 50%, 62%)`;
-}
-
-function getBrandColor(brandName) {
-  if (brandsData[brandName] && brandsData[brandName].color) return sanitizeText(brandsData[brandName].color);
-  return hashColor(brandName || 'Pharmacy');
-}
-
-function saveLocalState() {
-  localStorage.setItem(getStorageKey('cart'), JSON.stringify(cart));
-  localStorage.setItem(getStorageKey('wishlist'), JSON.stringify([...wishlist]));
-  localStorage.setItem(getStorageKey('my_orders'), JSON.stringify(myOrders));
-  localStorage.setItem(getStorageKey('store_settings'), JSON.stringify(pharmacyProfile));
-  localStorage.setItem(getStorageKey('products_cache'), JSON.stringify(products));
-}
-
-const icons = {
-  bottle: c => `<svg viewBox="0 0 24 24" width="48" height="48" style="width:48px;height:48px;" fill="none"><path d="M10 2h4v3.2l1.4 1.6c.4.45.6 1 .6 1.6V20a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V8.4c0-.6.2-1.15.6-1.6L9 5.2V2Z" fill="${c}" fill-opacity=".14" stroke="${c}" stroke-width="1.5"/><rect x="9" y="11" width="6" height="8.4" rx="0.8" fill="${c}" fill-opacity=".26"/></svg>`,
-  jar: c => `<svg viewBox="0 0 24 24" width="48" height="48" style="width:48px;height:48px;" fill="none"><rect x="5" y="9" width="14" height="12" rx="2.6" fill="${c}" fill-opacity=".14" stroke="${c}" stroke-width="1.5"/><rect x="6.4" y="11" width="11.2" height="8.4" rx="1.4" fill="${c}" fill-opacity=".26"/><rect x="4.4" y="6" width="15.2" height="3.4" rx="1.4" fill="${c}" fill-opacity=".3" stroke="${c}" stroke-width="1.3"/></svg>`,
-  tube: c => `<svg viewBox="0 0 24 24" width="48" height="48" style="width:48px;height:48px;" fill="none"><path d="M8 3h8l1 4.5c.3 1.3.5 2.6.5 4V19a2 2 0 0 1-2 2H8.5a2 2 0 0 1-2-2v-7.5c0-1.4.2-2.7.5-4L8 3Z" fill="${c}" fill-opacity=".14" stroke="${c}" stroke-width="1.5"/><rect x="7.6" y="13" width="8.8" height="6.4" rx="1.2" fill="${c}" fill-opacity=".26"/></svg>`,
-  spray: c => `<svg viewBox="0 0 24 24" width="48" height="48" style="width:48px;height:48px;" fill="none"><rect x="8" y="10" width="9" height="11.4" rx="2" fill="${c}" fill-opacity=".14" stroke="${c}" stroke-width="1.5"/><rect x="9.2" y="12" width="6.6" height="7.6" rx="1" fill="${c}" fill-opacity=".26"/><path d="M11 10V7.4a1.6 1.6 0 0 1 1.6-1.6h1.4M11.5 3.6h4" stroke="${c}" stroke-width="1.5" stroke-linecap="round"/></svg>`
-};
-
-const catIcons = {
-  hair: c => `<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="${c}" stroke-width="1.8"><path d="M6 20c1-4-1-7-1-10a7 7 0 0 1 14 0c0 3-2 6-1 10"/><path d="M9 20v-3M15 20v-3"/></svg>`,
-  baby: c => `<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="${c}" stroke-width="1.8"><circle cx="12" cy="13" r="7.5"/><path d="M9.5 12h.01M14.5 12h.01"/><path d="M10 15.5c.7.7 1.3 1 2 1s1.3-.3 2-1"/></svg>`,
-  intimate: c => `<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="${c}" stroke-width="1.8"><path d="M12 3c1.5 3 4 5 7 6-1 5-4 9-7 12-3-3-6-7-7-12 3-1 5.5-3 7-6Z"/><circle cx="12" cy="13" r="2.5"/></svg>`,
-  jar: c => `<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="${c}" stroke-width="1.8"><rect x="5" y="9" width="14" height="12" rx="2.6"/><rect x="4.4" y="6" width="15.2" height="3.4" rx="1.4"/></svg>`,
-  bottle: c => `<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="${c}" stroke-width="1.8"><path d="M10 2h4v3.2l1.4 1.6c.4.45.6 1 .6 1.6V20a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V8.4c0-.6.2-1.15.6-1.6L9 5.2V2Z"/></svg>`,
-  sunscreen: c => `<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="${c}" stroke-width="1.8"><rect x="8" y="6" width="8" height="15" rx="2"/><path d="M10 6V4.4a2 2 0 0 1 4 0V6"/></svg>`,
-  body: c => `<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="${c}" stroke-width="1.8"><circle cx="12" cy="5" r="2.3"/><path d="M7 21l1.5-8L6 9.5 8 8l4 2 4-2 2 1.5-2.5 3.5L17 21"/></svg>`,
-  face: c => `<svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="${c}" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M9 10h.01M15 10h.01M9 15c1 1 5 1 6 0"/></svg>`
-};
-
-// ================= 7. DESIGN-TOKEN THEME ENGINE =================
-const THEME_PRESETS = {
-  template_default: {
-    id: 'template_default',
-    tokens: { '--radius-lg': '20px', '--radius-md': '16px', '--radius-sm': '12px', '--shadow-soft': '0 4px 20px rgba(0,0,0,0.05)' }
-  },
-  template_a: {
-    id: 'template_a',
-    tokens: { '--radius-lg': '24px', '--radius-md': '18px', '--radius-sm': '12px', '--shadow-soft': '0 8px 25px rgba(232,93,138,0.08)' }
-  },
-  template_b: {
-    id: 'template_b',
-    tokens: { '--radius-lg': '12px', '--radius-md': '8px', '--radius-sm': '6px', '--surface': '#F0F9FF', '--line': '#BAE6FD', '--shadow-soft': '0 2px 10px rgba(2,132,199,0.08)' }
-  }
-};
-
-function applyTheme(templateId, hexColor) {
-  const currentThemeConfig = THEME_PRESETS[templateId] || THEME_PRESETS.template_default;
-  const root = document.documentElement;
-  root.setAttribute('data-template', currentThemeConfig.id);
-
-  for (const [prop, val] of Object.entries(currentThemeConfig.tokens)) {
-    root.style.setProperty(prop, val);
-  }
-
-  const targetColor = hexColor || pharmacyProfile.primaryColor || '#E85D8A';
-  if (/^#[0-9A-F]{6}$/i.test(targetColor)) {
-    root.style.setProperty('--accent', targetColor);
-    root.style.setProperty('--rose-deep', targetColor);
-    const r = parseInt(targetColor.slice(1,3), 16), g = parseInt(targetColor.slice(3,5), 16), b = parseInt(targetColor.slice(5,7), 16);
-    if (!currentThemeConfig.tokens['--surface']) {
-      root.style.setProperty('--surface', `rgba(${r}, ${g}, ${b}, 0.08)`);
-      root.style.setProperty('--surface-hover', `rgba(${r}, ${g}, ${b}, 0.14)`);
-      root.style.setProperty('--line', `rgba(${r}, ${g}, ${b}, 0.18)`);
+      freezeModal.classList.remove('open');
     }
   }
 }
 
-function selectProductVariantCard(buttonEl, productId) {
-  const p = findProduct(productId);
-  if (!p) return;
-  const card = document.getElementById(`prod-card-${productId}`);
-  if (!card) return;
-
-  card.querySelectorAll('.p-variant-chip').forEach(btn => {
-    btn.style.background = '#fff';
-    btn.style.color = 'var(--ink)';
-    btn.classList.remove('active');
-  });
-
-  buttonEl.style.background = 'var(--surface)';
-  buttonEl.style.color = 'var(--rose-deep)';
-  buttonEl.classList.add('active');
-
-  const newPrice = Number(buttonEl.getAttribute('data-price') || p.price);
-  const newOldPrice = buttonEl.getAttribute('data-oldprice');
-
-  const priceValEl = document.getElementById(`price-val-${productId}`);
-  const oldPriceValEl = document.getElementById(`oldprice-val-${productId}`);
-
-  if (priceValEl) priceValEl.textContent = fmtPrice(newPrice);
-  if (oldPriceValEl) {
-    if (newOldPrice) {
-      oldPriceValEl.textContent = fmtPrice(Number(newOldPrice));
-      oldPriceValEl.style.display = 'inline';
-    } else {
-      oldPriceValEl.style.display = 'none';
-    }
-  }
-}
-
-function renderProductCard(p) {
-  const color = getBrandColor(p.brand);
-  const discountPct = p.oldPrice ? Math.round((1 - p.price/p.oldPrice) * 100) : null;
-  const isWished = wishlist.has(p.id);
-  const inStock = (p.inStock !== false && (p.stockQuantity === undefined || p.stockQuantity > 0));
-  const stockQty = Number(p.stockQuantity !== undefined ? p.stockQuantity : 10);
-  const cleanImg = sanitizeUrl(p.imageUrl);
-  const isAdmin = isCurrentUserAdmin();
-
-  const reviewCount = Number(p.reviews || 0);
-  const avgRating = reviewCount > 0 ? Number(p.rating || 5.0).toFixed(1) : null;
-  const ratingHtml = reviewCount > 0
-    ? `${starIcon()} <span class="mono" style="font-weight:800;">${avgRating}</span> <span style="font-size:10px; color:var(--text-soft);">(${reviewCount})</span>`
-    : `<span style="font-size:10.5px; color:var(--text-soft); font-weight:700;">⭐ جديد</span>`;
-
-  let variantsHtml = '';
-  if (p.variants && Array.isArray(p.variants) && p.variants.length > 0) {
-    variantsHtml = `
-      <div class="p-variants-row" style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:6px;" onclick="event.stopPropagation()">
-        ${p.variants.map((v, i) => `
-          <button type="button" class="p-variant-chip ${i === 0 ? 'active' : ''}" 
-            data-price="${v.price}" data-oldprice="${v.oldPrice || ''}"
-            onclick="selectProductVariantCard(this, '${sanitizeText(p.id)}')"
-            style="font-size:10px; font-weight:800; padding:2px 7px; border-radius:6px; border:1px solid var(--line); background:${i === 0 ? 'var(--surface)' : '#fff'}; color:${i === 0 ? 'var(--rose-deep)' : 'var(--ink)'}; cursor:pointer;">
-            ${sanitizeText(v.name || v.size)}
-          </button>
-        `).join('')}
-      </div>
-    `;
-  }
-
-  return `
-    <div class="product-card" id="prod-card-${sanitizeText(p.id)}" onclick="openProduct('${sanitizeText(p.id)}', true)">
-      <button class="wish-btn ${isWished ? 'active' : ''}" onclick="event.stopPropagation(); toggleWishlist('${sanitizeText(p.id)}')">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="${isWished ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.5-4.9-10-9.5C.5 7.8 2.7 4 6.5 4 9 4 11 5.5 12 7c1-1.5 3-3 5.5-3 3.8 0 6 3.8 4.5 7.5C19.5 16.1 12 21 12 21Z"/></svg>
-      </button>
-      ${discountPct ? `<span class="discount-badge">خصم ${discountPct}%</span>` : ''}
-      ${!inStock ? `<span class="badge-out-stock">نفذت الكمية</span>` : ''}
-      
-      <div class="product-thumb" style="background:${color}18;">
-        ${cleanImg ? `<img src="${cleanImg}" alt="${sanitizeText(p.name)}" loading="lazy">` : (icons[p.type] || icons.bottle)(color)}
-      </div>
-      <div class="p-rating" style="display:flex; align-items:center; gap:4px; margin-bottom:4px;">
-        ${ratingHtml}
-      </div>
-      <div class="p-name">${sanitizeText(p.name)}</div>
-      <div class="p-size" style="display:flex; justify-content:space-between; align-items:center;">
-        <span>${sanitizeText(p.size || '')}</span>
-        ${inStock && stockQty <= 5 && stockQty > 0 ? `<span style="color:#DC2626; font-size:10px; font-weight:800;">باقي ${stockQty} فقط!</span>` : ''}
-      </div>
-
-      ${variantsHtml}
-
-      <div class="p-price-row">
-        <span class="p-price mono" id="price-val-${sanitizeText(p.id)}">${fmtPrice(p.price)}</span>
-        ${p.oldPrice ? `<span class="p-oldprice mono" id="oldprice-val-${sanitizeText(p.id)}">${fmtPrice(p.oldPrice)}</span>` : ''}
-      </div>
-      <button class="add-cart-btn" style="${!inStock ? 'opacity:0.6; pointer-events:none;' : ''}" onclick="event.stopPropagation(); addToCart('${sanitizeText(p.id)}')">
-        ${inStock ? 'أضف إلى السلة' : 'غير متوفر'}
-      </button>
-    </div>`;
-}
-
-function renderBundleCard(b) {
-  const includedProds = (b.productIds || []).map(pid => findProduct(pid)).filter(Boolean);
-  const cleanImg = sanitizeUrl(b.imageUrl);
-
-  return `
-    <div class="bundle-card">
-      <span class="bundle-savings-badge">${sanitizeText(b.savingsBadge || 'توفير فوري 💸')}</span>
-      <div class="bundle-thumb-row">
-        ${cleanImg ? `<img src="${cleanImg}" style="max-height:100px; object-fit:contain;">` : 
-          includedProds.map((p, idx) => `
-            <div class="bundle-thumb-item">
-              ${p.imageUrl ? `<img src="${sanitizeUrl(p.imageUrl)}">` : (icons[p.type || 'bottle'] || icons.bottle)(getBrandColor(p.brand))}
-            </div>
-            ${idx < includedProds.length - 1 ? '<span class="bundle-plus-icon">+</span>' : ''}
-          `).join('')
-        }
-      </div>
-      <h3 class="bundle-title">${sanitizeText(b.title)}</h3>
-      <p class="bundle-desc">${sanitizeText(b.description)}</p>
-      <div class="bundle-items-list">
-        <b>مكونات البكج:</b>
-        ${includedProds.map(p => `<span>• ${sanitizeText(p.name)} (${sanitizeText(p.brand)})</span>`).join('')}
-      </div>
-      <div class="bundle-price-box">
-        <div>
-          <span class="p-price mono" style="font-size:17px; color:var(--rose-deep);">${fmtPrice(b.price)}</span>
-          ${b.oldPrice ? `<span class="p-oldprice mono" style="margin-inline-start:6px;">${fmtPrice(b.oldPrice)}</span>` : ''}
-        </div>
-      </div>
-      <button class="add-cart-btn" onclick="addBundleToCart('${sanitizeText(b.id)}')">
-        🎁 أضف البكج كاملاً للسلة
-      </button>
-    </div>
-  `;
-}
-
-function renderCategoryCard(c, count) {
-  const cleanImg = sanitizeUrl(c.imageUrl);
-  return `
-    <div class="modern-cat-card" onclick="openCategory('${sanitizeText(c.id)}')">
-      <div class="modern-cat-img-wrap">
-        ${cleanImg ? `<img src="${cleanImg}" alt="${sanitizeText(c.label)}">` : (catIcons[c.icon] || catIcons.jar)('var(--accent, #E85D8A)')}
-      </div>
-      <div class="modern-cat-info">
-        <h3 class="modern-cat-title">${sanitizeText(c.label)}</h3>
-        <span class="modern-cat-count mono">${count} منتج</span>
-      </div>
-    </div>
-  `;
-}
-
-// ================= 8. ORDERS & ATOMIC CONCURRENCY CHECKOUT =================
-async function executeAtomicOrderCheckout() {
-  if (!lockAction('confirmOrder', 2500)) return;
-
-  const nameEl = document.getElementById('custName');
-  const phoneEl = document.getElementById('custPhone');
-  const addressEl = document.getElementById('custAddress');
-
-  const name = nameEl ? nameEl.value.trim() : '';
-  const phone = phoneEl ? phoneEl.value.trim() : '';
-  const address = addressEl ? addressEl.value.trim() : '';
-  
-  if (!name || !phone || !address) {
-    showToast('يرجى تعبئة الاسم والهاتف والعنوان بالتفصيل أولاً');
-    return;
-  }
-  if (phone.length < 8) {
-    showToast('يرجى كتابة رقم هاتف صحيح');
-    return;
-  }
-
-  const ids = Object.keys(cart);
-  if (ids.length === 0) {
-    showToast('سلتك فارغة!');
-    return;
-  }
-
-  const confirmBtn = document.getElementById('confirmOrderBtn');
-  if (confirmBtn) {
-    confirmBtn.disabled = true;
-    confirmBtn.textContent = 'جاري التحقق من المخزون وتأكيد الطلب... ⏳';
-  }
-
-  localStorage.setItem('saas_customer_saved_profile', JSON.stringify({ name, phone, address }));
-
-  let calculatedSubtotal = 0;
-  const itemsPayload = ids.map(id => {
-    const isBundle = id.startsWith('bundle_');
-    const item = isBundle ? findBundle(id.replace('bundle_', '')) : findProduct(id);
-    const unitPrice = item ? Number(item.price || 0) : 0;
-    const qty = Number(cart[id] || 1);
-    const lineTotal = unitPrice * qty;
-    calculatedSubtotal += lineTotal;
-
-    return {
-      id: id,
-      name: item ? (item.name || item.title) : 'منتج',
-      unitPrice: unitPrice,
-      price: unitPrice,
-      quantity: qty,
-      lineTotal: lineTotal,
-      isBundle: isBundle
-    };
-  });
-
-  const deliveryFee = (deliveryMethod === 'express') 
-    ? (Number(pharmacyProfile.deliveryFeeExpress) || 8000) 
-    : (Number(pharmacyProfile.deliveryFeeStandard) || 4000);
-
-  const discountAmount = appliedPromo ? Number(appliedPromo.discountAmount || 0) : 0;
-  const grandTotal = Math.max(0, calculatedSubtotal - discountAmount) + deliveryFee;
-  const orderPrefix = (pharmacyProfile.name || 'ORD').substring(0, 4).toUpperCase();
-  const orderId = `${orderPrefix}-${Math.floor(100000 + Math.random() * 900000)}`;
-
-  const newOrderObj = {
-    id: orderId,
-    pharmacyId: currentPharmacyId,
-    date: new Date().toLocaleDateString('ar-IQ', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
-    name,
-    phone,
-    address,
-    deliveryMethod,
-    items: itemsPayload,
-    subtotal: calculatedSubtotal,
-    deliveryFee: deliveryFee,
-    discountAmount: discountAmount,
-    promoCode: appliedPromo ? appliedPromo.code : null,
-    total: grandTotal,
-    status: 'قيد المعالجة والتجهيز 🚚'
-  };
-
-  if (db) {
-    try {
-      await db.runTransaction(async (transaction) => {
-        const productReads = [];
-        for (const it of itemsPayload) {
-          if (!it.isBundle) {
-            const pRef = dbPaths.productsCol().doc(String(it.id));
-            productReads.push({ ref: pRef, item: it });
-          }
-        }
-
-        const readSnapshots = await Promise.all(productReads.map(p => transaction.get(p.ref)));
-
-        for (let i = 0; i < readSnapshots.length; i++) {
-          const snap = readSnapshots[i];
-          const it = productReads[i].item;
-          if (snap.exists) {
-            const pData = snap.data();
-            const currentStock = pData.stockQuantity !== undefined ? Number(pData.stockQuantity) : 999;
-            if (currentStock < it.quantity) {
-              throw new Error(`عذراً، نفدت كمية المنتج (${pData.name})، المتوفر بالمخزن (${currentStock}) قطعة فقط.`);
-            }
-          }
-        }
-
-        const orderRef = dbPaths.ordersCol().doc(orderId);
-        transaction.set(orderRef, {
-          ...newOrderObj,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        for (let i = 0; i < readSnapshots.length; i++) {
-          const snap = readSnapshots[i];
-          const it = productReads[i].item;
-          if (snap.exists) {
-            const pData = snap.data();
-            const currentStock = pData.stockQuantity !== undefined ? Number(pData.stockQuantity) : 999;
-            const newStock = Math.max(0, currentStock - it.quantity);
-            transaction.update(productReads[i].ref, {
-              stockQuantity: newStock,
-              inStock: newStock > 0,
-              orderCount: firebase.firestore.FieldValue.increment(it.quantity)
-            });
-          }
-        }
-      });
-    } catch (err) {
-      if (confirmBtn) {
-        confirmBtn.disabled = false;
-        confirmBtn.textContent = 'تأكيد الطلب';
-      }
-      showToast(`⚠️ ${err.message}`);
-      return;
-    }
-  }
-
-  myOrders.unshift(newOrderObj);
-  saveLocalState();
-
-  // إرسال الفاتورة لتليجرام الصيدلية
-  try {
-    fetch(`${WORKER_API_BASE}/api/orders`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Pharmacy-Id': currentPharmacyId },
-      body: JSON.stringify({
-        customerName: name, customerPhone: phone, customerAddress: address,
-        deliveryMethod, items: itemsPayload, promoCode: appliedPromo ? appliedPromo.code : null,
-        discountAmount
-      })
-    }).catch(console.warn);
-  } catch (e) {}
-
-  const lines = itemsPayload.map(item => `• ${item.isBundle ? '🎁 [بكج توفير] ' : ''}${item.name} (${fmtPrice(item.unitPrice)} × ${item.quantity} قطع) = ${fmtPrice(item.lineTotal)}`);
-  const deliveryLabel = deliveryMethod === 'express' ? `سريع (${fmtPrice(deliveryFee)})` : `عادي (${fmtPrice(deliveryFee)})`;
-  const promoInfo = appliedPromo ? `🎟️ *كود الخصم:* ${appliedPromo.code} (-${fmtPrice(discountAmount)})\n` : '';
-
-  const whatsappInvoiceMsg = 
-    `🌸 *طلب جديد - ${pharmacyProfile.name || 'الصيدلية'}*\n` +
-    `━━━━━━━━━━━━━━━━━━━\n` +
-    `📋 *رقم الفاتورة:* #${orderId}\n` +
-    `📅 *التاريخ:* ${newOrderObj.date}\n\n` +
-    `👤 *اسم الزبون:* ${name}\n` +
-    `📞 *رقم الهاتف:* ${phone}\n` +
-    `📍 *العنوان بالتفصيل:* ${address}\n` +
-    `🚚 *نوع التوصيل:* ${deliveryLabel}\n\n` +
-    `📦 *المنتجات المطلوبة:*\n${lines.join('\n')}\n\n` +
-    `━━━━━━━━━━━━━━━━━━━\n` +
-    `💵 *المجموع الفرعي:* ${fmtPrice(calculatedSubtotal)}\n` +
-    `${promoInfo}` +
-    `🚚 *أجرة التوصيل:* ${fmtPrice(deliveryFee)}\n` +
-    `💰 *المجموع الإجمالي للدفع:* *${fmtPrice(grandTotal)}*\n` +
-    `━━━━━━━━━━━━━━━━━━━\n` +
-    `✨ يرجى تأكيد الطلب من قبل الصيدلي 🌸`;
-
-  for (const k in cart) delete cart[k];
-  saveLocalState();
-
-  const targetPhone = (pharmacyProfile.socialWhatsapp || "9647813703288").replace(/\+/g, '').trim();
-  const whatsappUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(whatsappInvoiceMsg)}`;
-
-  const modalMsg = document.getElementById('successModalMsg');
-  if (modalMsg) {
-    modalMsg.textContent = `تم تسجيل طلبكِ رقم (#${orderId}) بنجاح بقيمة ${fmtPrice(grandTotal)}. جاري التوجيه للواتساب لتأكيد الشحن فوراً.`;
-  }
-  const successModal = document.getElementById('orderSuccessModal');
-  if (successModal) successModal.classList.add('open');
-
-  window.location.href = whatsappUrl;
-
-  if (confirmBtn) {
-    confirmBtn.disabled = false;
-    confirmBtn.textContent = 'تأكيد الطلب';
-  }
-}
-
-function openReceiptModal(orderId) {
-  const ord = myOrders.find(o => String(o.id) === String(orderId));
-  if (!ord) return;
-
-  let itemsSubtotal = 0;
-  const tbody = document.getElementById('recItemsTbody');
-  if (tbody) {
-    tbody.innerHTML = (ord.items || []).map(it => {
-      const unitPrice = Number(it.price || it.unitPrice || 0);
-      const qty = Number(it.quantity || 1);
-      const itemTotal = Number(it.lineTotal) || (unitPrice * qty);
-      itemsSubtotal += itemTotal;
-
-      return `
-        <tr>
-          <td>${sanitizeText(it.name)} ${it.isBundle ? '🎁' : ''} (${fmtPrice(unitPrice)})</td>
-          <td style="text-align:center;">${qty}</td>
-          <td class="mono" style="text-align:left;">${fmtPrice(itemTotal)}</td>
-        </tr>
-      `;
-    }).join('');
-  }
-
-  const delFee = (ord.deliveryFee !== undefined) 
-    ? Number(ord.deliveryFee) 
-    : ((ord.deliveryMethod === 'express') ? (pharmacyProfile.deliveryFeeExpress || 8000) : (pharmacyProfile.deliveryFeeStandard || 4000));
-
-  const discountVal = Number(ord.discountAmount || 0);
-  const exactGrandTotal = Number(ord.total) || Math.max(0, itemsSubtotal - discountVal) + delFee;
-
-  if (document.getElementById('recOrderId')) document.getElementById('recOrderId').textContent = '#' + ord.id;
-  if (document.getElementById('recOrderDate')) document.getElementById('recOrderDate').textContent = ord.date || '';
-  if (document.getElementById('recCustName')) document.getElementById('recCustName').textContent = ord.name || '';
-  if (document.getElementById('recCustPhone')) document.getElementById('recCustPhone').textContent = ord.phone || '';
-  if (document.getElementById('recCustAddress')) document.getElementById('recCustAddress').textContent = ord.address || '';
-  if (document.getElementById('recDeliveryType')) document.getElementById('recDeliveryType').textContent = (ord.deliveryMethod === 'express') ? 'توصيل سريع 🛵' : 'توصيل عادي 🚚';
-  if (document.getElementById('recStorePhone')) document.getElementById('recStorePhone').textContent = pharmacyProfile.socialPhone || '07813703288';
-
-  const recStoreTitle = document.getElementById('recStoreHeaderTitle') || document.querySelector('.receipt-header h3');
-  if (recStoreTitle) recStoreTitle.textContent = `${pharmacyProfile.name || 'الصيدلية'} 🌸`;
-
-  if (document.getElementById('recDeliveryFee')) document.getElementById('recDeliveryFee').textContent = fmtPrice(delFee);
-  if (document.getElementById('recGrandTotal')) document.getElementById('recGrandTotal').textContent = fmtPrice(exactGrandTotal);
-
-  const modal = document.getElementById('thermalReceiptModal');
-  if (modal) modal.classList.add('open');
-}
-
-function closeReceiptModal() {
-  const modal = document.getElementById('thermalReceiptModal');
-  if (modal) modal.classList.remove('open');
-}
-
-// ================= 9. CART, WISHLIST & CLOUD SYNC =================
-function addToCart(id, silent = false, quantity = 1) {
+// ================= 2. CART & CLOUD SYNC =================
+export function addToCart(id, silent = false, quantity = 1) {
   cart[id] = (cart[id] || 0) + quantity;
   updateCartBadge();
   saveLocalState();
@@ -873,7 +65,7 @@ function addToCart(id, silent = false, quantity = 1) {
   if (!silent) showToast('تمت الإضافة للسلة ✓');
 }
 
-function addBundleToCart(bundleId) {
+export function addBundleToCart(bundleId) {
   const cartKey = 'bundle_' + bundleId;
   cart[cartKey] = (cart[cartKey] || 0) + 1;
   updateCartBadge();
@@ -882,7 +74,7 @@ function addBundleToCart(bundleId) {
   showToast('تمت إضافة البكج كاملاً للسلة بتخفيض التوفير! 🎁');
 }
 
-function changeCartQty(id, delta) {
+export function changeCartQty(id, delta) {
   if (!cart[id]) return;
   cart[id] += delta;
   if (cart[id] <= 0) delete cart[id];
@@ -892,7 +84,7 @@ function changeCartQty(id, delta) {
   renderCart();
 }
 
-function removeCartItem(id) {
+export function removeCartItem(id) {
   delete cart[id];
   updateCartBadge();
   saveLocalState();
@@ -900,7 +92,7 @@ function removeCartItem(id) {
   renderCart();
 }
 
-function updateCartBadge() {
+export function updateCartBadge() {
   const count = Object.values(cart).reduce((s, q) => s + q, 0);
   const b1 = document.getElementById('cartBadge');
   const b2 = document.getElementById('bnCartBadge');
@@ -908,10 +100,11 @@ function updateCartBadge() {
   if (b2) { b2.style.display = count > 0 ? 'flex' : 'none'; b2.textContent = count; }
 }
 
-function getCartSubtotal() {
+export function getCartSubtotal() {
   return Object.keys(cart).reduce((sum, id) => {
     if (id.startsWith('bundle_')) {
-      const b = findBundle(id.replace('bundle_', ''));
+      const bId = id.replace('bundle_', '');
+      const b = findBundle(bId);
       return sum + (b ? Number(b.price || 0) * cart[id] : 0);
     } else {
       const p = findProduct(id);
@@ -920,7 +113,7 @@ function getCartSubtotal() {
   }, 0);
 }
 
-async function syncCartToCloud() {
+export async function syncCartToCloud() {
   if (!auth || !auth.currentUser || !db) return;
   try {
     await dbPaths.userCartDoc(auth.currentUser.uid).set({
@@ -930,7 +123,7 @@ async function syncCartToCloud() {
   } catch (e) {}
 }
 
-async function mergeCloudCartOnLogin(user) {
+export async function mergeCloudCartOnLogin(user) {
   if (!user || !db) return;
   try {
     const snap = await dbPaths.userCartDoc(user.uid).get();
@@ -946,12 +139,12 @@ async function mergeCloudCartOnLogin(user) {
   } catch (e) {}
 }
 
-// ================= 10. SPA VIEWS CONTROLLER =================
-function showView(name) {
+// ================= 3. VIEWS CONTROLLER =================
+export function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   const target = document.getElementById('view-' + name);
   if (target) target.classList.add('active');
-  currentView = name;
+  window.currentViewName = name;
   closeMenu();
   window.scrollTo({top: 0, behavior: 'instant'});
 
@@ -965,24 +158,25 @@ function showView(name) {
   renderCurrentActiveView();
 }
 
-function renderCurrentActiveView() {
-  if (currentView === 'home') renderHome();
-  else if (currentView === 'listing') renderListing();
-  else if (currentView === 'categories') renderModernCategories();
-  else if (currentView === 'bundles') renderAllBundles();
-  else if (currentView === 'orders') renderMyOrders();
-  else if (currentView === 'offers') renderOffers();
-  else if (currentView === 'wishlist') renderWishlist();
-  else if (currentView === 'cart') renderCart();
-  else if (currentView === 'checkout') renderCheckoutSummary();
-  else if (currentView === 'account') renderAccountView();
-  else if (currentView === 'product' && currentProductId) {
+export function renderCurrentActiveView() {
+  const v = window.currentViewName || 'home';
+  if (v === 'home') renderHome();
+  else if (v === 'listing') renderListing();
+  else if (v === 'categories') renderModernCategories();
+  else if (v === 'bundles') renderAllBundles();
+  else if (v === 'orders') renderMyOrders();
+  else if (v === 'offers') renderOffers();
+  else if (v === 'wishlist') renderWishlist();
+  else if (v === 'cart') renderCart();
+  else if (v === 'checkout') renderCheckoutSummary();
+  else if (v === 'account') renderAccountView();
+  else if (v === 'product' && currentProductId) {
     const p = findProduct(currentProductId);
     if (p) renderProductDetailDOM(p);
   }
 }
 
-function renderHome() {
+export function renderHome() {
   renderBrandStrip();
   renderHomeProductGrid();
   renderHomeBundles();
@@ -990,7 +184,7 @@ function renderHome() {
 }
 
 let homeActiveBrand = 'all';
-function renderHomeProductGrid() {
+export function renderHomeProductGrid() {
   const title = document.getElementById('homeGridTitle');
   if (!title) return;
   
@@ -1006,19 +200,19 @@ function renderHomeProductGrid() {
   renderProductGrid('bestSellersGrid', list);
 }
 
-function selectHomeBrand(brand) {
+export function selectHomeBrand(brand) {
   homeActiveBrand = brand;
   renderBrandStrip();
   renderHomeProductGrid();
 }
 
-function renderBrandStrip() {
+export function renderBrandStrip() {
   const strip = document.getElementById('brandStrip');
   if (!strip) return;
   const brandKeys = Object.keys(brandsData);
 
   const allChip = `
-    <div class="brand-chip ${homeActiveBrand === 'all' ? 'active' : ''}" onclick="selectHomeBrand('all')">
+    <div class="brand-chip ${homeActiveBrand === 'all' ? 'active' : ''}" onclick="window.App.selectHomeBrand('all')">
       <div class="brand-chip-all-box">
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
       </div>
@@ -1031,7 +225,7 @@ function renderBrandStrip() {
     const cleanLogo = sanitizeUrl(b.logoUrl);
 
     return `
-      <div class="brand-chip ${isActive ? 'active' : ''}" onclick="selectHomeBrand('${sanitizeText(k)}')">
+      <div class="brand-chip ${isActive ? 'active' : ''}" onclick="window.App.selectHomeBrand('${sanitizeText(k)}')">
         <div class="brand-chip-img-box">
           ${cleanLogo ? `<img class="brand-chip-img" src="${cleanLogo}" alt="${sanitizeText(b.name || k)}">` : `<div class="brand-chip-placeholder" style="background:${sanitizeText(b.color)};">${(b.name || k).charAt(0).toUpperCase()}</div>`}
         </div>
@@ -1040,7 +234,7 @@ function renderBrandStrip() {
   }).join('');
 }
 
-function renderProductGrid(targetId, list, emptyMsg) {
+export function renderProductGrid(targetId, list, emptyMsg) {
   const el = document.getElementById(targetId);
   if (!el) return;
 
@@ -1057,7 +251,7 @@ function renderProductGrid(targetId, list, emptyMsg) {
   el.innerHTML = displayList.map(p => renderProductCard(p)).join('');
 }
 
-function renderModernCategories() {
+export function renderModernCategories() {
   const container = document.getElementById('catRowFull');
   const totalCountEl = document.getElementById('categoriesTotalCount');
   if (totalCountEl) totalCountEl.textContent = `${categories.length} أقسام معتمدة`;
@@ -1070,7 +264,7 @@ function renderModernCategories() {
   }
 }
 
-function renderHomeBundles() {
+export function renderHomeBundles() {
   const sec = document.getElementById('homeBundlesSection');
   const grid = document.getElementById('homeBundlesGrid');
   if (!sec || !grid) return;
@@ -1084,7 +278,7 @@ function renderHomeBundles() {
   grid.innerHTML = bundles.map(b => renderBundleCard(b)).join('');
 }
 
-function renderAllBundles() {
+export function renderAllBundles() {
   const grid = document.getElementById('allBundlesGrid');
   const countEl = document.getElementById('allBundlesCount');
   if (countEl) countEl.textContent = bundles.length + ' بكجات توفير';
@@ -1098,19 +292,19 @@ function renderAllBundles() {
   grid.innerHTML = bundles.map(b => renderBundleCard(b)).join('');
 }
 
-function renderOffers() {
+export function renderOffers() {
   const discounted = products.filter(p => (p.oldPrice || p.isSpecialOffer) && p.isDeleted !== true);
   const countEl = document.getElementById('offersCount');
   if (countEl) countEl.textContent = discounted.length + ' عرض';
   renderProductGrid('offersGrid', discounted);
 }
 
-function renderWishlist() {
+export function renderWishlist() {
   const list = products.filter(p => wishlist.has(p.id) && p.isDeleted !== true);
   renderProductGrid('wishlistGrid', list, 'قائمتك المفضلة فارغة حالياً 🌸');
 }
 
-function renderCart() {
+export function renderCart() {
   const ids = Object.keys(cart);
   const listEl = document.getElementById('cartItemsList');
   const summaryEl = document.getElementById('cartSummaryBlock');
@@ -1141,10 +335,10 @@ function renderCart() {
           <div class="name">${isBundle ? '🎁 [بكج] ' : ''}${sanitizeText(item.name || item.title)}</div>
           <div class="brand">${sanitizeText(item.brand || item.savingsBadge || '')}</div>
           <div class="cart-qty-row">
-            <button class="cart-qty-btn" onclick="changeCartQty('${sanitizeText(id)}', -1)">−</button>
+            <button class="cart-qty-btn" onclick="window.App.changeCartQty('${sanitizeText(id)}', -1)">−</button>
             <span class="cart-qty-val mono">${qty}</span>
-            <button class="cart-qty-btn" onclick="changeCartQty('${sanitizeText(id)}', 1)">+</button>
-            <span class="cart-remove" onclick="removeCartItem('${sanitizeText(id)}')">حذف</span>
+            <button class="cart-qty-btn" onclick="window.App.changeCartQty('${sanitizeText(id)}', 1)">+</button>
+            <span class="cart-remove" onclick="window.App.removeCartItem('${sanitizeText(id)}')">حذف</span>
           </div>
         </div>
         <span class="p-price mono">${fmtPrice(item.price * qty)}</span>
@@ -1159,7 +353,7 @@ function renderCart() {
   if (appliedPromo && promoBadge) {
     promoBadge.style.display = 'flex';
     promoBadge.className = 'applied-promo-tag';
-    promoBadge.innerHTML = `<span>🎟️ تم تفعيل كود الخصم: <b>${appliedPromo.code}</b> (-${fmtPrice(discount)})</span><button type="button" onclick="removePromoCode()" style="color:#DC2626; font-weight:900; background:none; cursor:pointer;">✕</button>`;
+    promoBadge.innerHTML = `<span>🎟️ تم تفعيل كود الخصم: <b>${appliedPromo.code}</b> (-${fmtPrice(discount)})</span><button type="button" onclick="window.App.removePromoCode()" style="color:#DC2626; font-weight:900; background:none; cursor:pointer;">✕</button>`;
   } else if (promoBadge) {
     promoBadge.style.display = 'none';
   }
@@ -1169,10 +363,10 @@ function renderCart() {
     ${discount > 0 ? `<div class="summary-row discount-row"><span>خصم الكوبون (${appliedPromo.code})</span><span class="mono">-${fmtPrice(discount)}</span></div>` : ''}
     <div class="summary-row"><span>أجرة التوصيل</span><span class="mono">+${fmtPrice(fee)}</span></div>
     <div class="summary-row total"><span>المجموع الإجمالي المطلوب</span><span class="mono">${fmtPrice(finalTotal)}</span></div>
-    <button class="checkout-btn" onclick="showView('checkout')">متابعة الطلب</button>`;
+    <button class="checkout-btn" onclick="window.App.showView('checkout')">متابعة الطلب</button>`;
 }
 
-function renderCheckoutSummary() {
+export function renderCheckoutSummary() {
   const summaryEl = document.getElementById('checkoutSummaryBlock');
   if (!summaryEl) return;
   const subtotal = getCartSubtotal();
@@ -1187,7 +381,7 @@ function renderCheckoutSummary() {
     <div class="summary-row total"><span>المجموع الإجمالي المطلوب</span><span class="mono">${fmtPrice(finalTotal)}</span></div>`;
 }
 
-function renderPromoBanners() {
+export function renderPromoBanners() {
   const el = document.getElementById('promoBanners');
   if (!el) return;
   const cards = pharmacyProfile.promoCards || [];
@@ -1208,20 +402,20 @@ function renderPromoBanners() {
             <h3>${sanitizeText(c.title)}</h3>
             <p>${sanitizeText(c.desc)}</p>
             <div class="promo-discount">${sanitizeText(c.discount)}</div>
-            <button class="promo-cta" onclick="showView('offers')">تسوقي الآن</button>
+            <button class="promo-cta" onclick="window.App.showView('offers')">تسوقي الآن</button>
           </div>
         </div>`;
     }).join('')}`;
 }
 
-function renderMyOrders() {
+export function renderMyOrders() {
   const container = document.getElementById('myOrdersContainer');
   const countEl = document.getElementById('myOrdersCount');
   if (countEl) countEl.textContent = myOrders.length + ' طلب';
   if (!container) return;
 
   if (myOrders.length === 0) {
-    container.innerHTML = `<div class="no-results" style="padding:40px 16px;">لا توجد لديكِ طلبات مسجلة حتى الآن 🌸<br><button onclick="showView('home')" style="margin-top:14px; background:var(--accent); color:#fff; font-weight:800; font-size:12.5px; padding:8px 20px; border-radius:999px;">تصفح المنتجات</button></div>`;
+    container.innerHTML = `<div class="no-results" style="padding:40px 16px;">لا توجد لديكِ طلبات مسجلة حتى الآن 🌸<br><button onclick="window.App.showView('home')" style="margin-top:14px; background:var(--accent); color:#fff; font-weight:800; font-size:12.5px; padding:8px 20px; border-radius:999px;">تصفح المنتجات</button></div>`;
     return;
   }
 
@@ -1274,7 +468,7 @@ function renderMyOrders() {
         </div>
         <div class="order-card-footer">
           <div>
-            ${isProcessing ? `<button type="button" class="btn-cancel-order" onclick="cancelMyOrder('${sanitizeText(ord.id)}')">❌ إلغاء الطلب</button>` : ''}
+            ${isProcessing ? `<button type="button" class="btn-cancel-order" onclick="window.App.cancelMyOrder('${sanitizeText(ord.id)}')">❌ إلغاء الطلب</button>` : ''}
           </div>
           <div>
             <span style="font-size:12px; color:var(--text-soft);">المجموع الكلي: </span>
@@ -1286,7 +480,7 @@ function renderMyOrders() {
   }).join('');
 }
 
-function renderProductDetailDOM(p) {
+export function renderProductDetailDOM(p) {
   const color = getBrandColor(p.brand);
   const pdImgEl = document.getElementById('pdImage');
   if (!pdImgEl) return;
@@ -1332,7 +526,7 @@ function renderProductDetailDOM(p) {
   };
 }
 
-function rateProductInstant(stars) {
+export function rateProductInstant(stars) {
   if (!currentProductId) return;
   const p = findProduct(currentProductId);
   if (!p) return;
@@ -1367,14 +561,13 @@ function rateProductInstant(stars) {
   renderProductDetailDOM(p);
 }
 
-function openProduct(id, isUserClick = false) {
+export function openProduct(id, isUserClick = false) {
   if (isUserClick) {
-    previousViewBeforeProduct = (currentView !== 'product') ? currentView : 'home';
-    previousScrollBeforeProduct = window.scrollY || 0;
+    setPreviousView((window.currentViewName !== 'product') ? window.currentViewName : 'home', window.scrollY || 0);
   }
 
-  currentProductId = id;
-  pdQty = 1;
+  setCurrentProductId(id);
+  setPdQty(1);
   const p = findProduct(id);
   if (!p) return;
 
@@ -1391,19 +584,19 @@ function openProduct(id, isUserClick = false) {
   const pView = document.getElementById('view-product');
   if (pView) {
     pView.classList.add('active');
-    currentView = 'product';
+    window.currentViewName = 'product';
     window.scrollTo(0, 0);
   }
 }
 
-function goBackFromProduct() {
+export function goBackFromProduct() {
   const targetView = previousViewBeforeProduct || 'home';
   const targetScroll = previousScrollBeforeProduct || 0;
   showView(targetView);
   window.scrollTo(0, targetScroll);
 }
 
-function switchPdTab(tab) {
+export function switchPdTab(tab) {
   document.querySelectorAll('.pd-tab').forEach((el,i) => el.classList.toggle('active', ['desc','ing','use','reviews'][i] === tab));
   const dTab = document.getElementById('pdTabDesc');
   const iTab = document.getElementById('pdTabIng');
@@ -1415,13 +608,13 @@ function switchPdTab(tab) {
   if (rTab) rTab.classList.toggle('active', tab === 'reviews');
 }
 
-function changePdQty(delta) {
-  pdQty = Math.max(1, pdQty + delta);
+export function changePdQty(delta) {
+  setPdQty(Math.max(1, pdQty + delta));
   const qtyEl = document.getElementById('pdQtyVal');
   if (qtyEl) qtyEl.textContent = pdQty;
 }
 
-function renderCrossSelling(currentP) {
+export function renderCrossSelling(currentP) {
   const grid = document.getElementById('pdSuggestedGrid');
   if (!grid || !currentP) return;
 
@@ -1432,56 +625,50 @@ function renderCrossSelling(currentP) {
   renderProductGrid('pdSuggestedGrid', suggestions);
 }
 
-function onSearch(val) {
+export function onSearch(val) {
   const term = val.trim();
   if (!term) return;
-  listingMode = 'search';
-  listingValue = term;
-  listingCatActive = 'all';
+  setListingState('search', term, 'all');
   renderListing();
   showListingView();
 }
 
-function openCategory(catId) {
-  listingMode = 'category';
-  listingValue = catId;
-  listingCatActive = catId;
+export function openCategory(catId) {
+  setListingState('category', catId, catId);
   renderListing();
   showListingView();
 }
 
-function openBestSellers() {
-  listingMode = 'bestsellers';
-  listingValue = null;
-  listingCatActive = 'all';
+export function openBestSellers() {
+  setListingState('bestsellers', null, 'all');
   renderListing();
   showListingView();
 }
 
-function showListingView() {
+export function showListingView() {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   const lView = document.getElementById('view-listing');
   if (lView) lView.classList.add('active');
-  currentView = 'listing';
+  window.currentViewName = 'listing';
   window.scrollTo({top: 0, behavior: 'instant'});
 }
 
-function renderListing() {
+export function renderListing() {
   const titleEl = document.getElementById('listingTitle');
   if (!titleEl) return;
   const titles = {
-    category: (categories.find(c => c.id === listingValue) || {}).label,
-    search: `نتائج البحث عن: "${listingValue}"`,
+    category: (categories.find(c => c.id === window.listingValue) || {}).label,
+    search: `نتائج البحث عن: "${window.listingValue}"`,
     bestsellers: 'الأكثر مبيعاً 🔥'
   };
-  titleEl.textContent = titles[listingMode] || 'المنتجات';
+  titleEl.textContent = titles[window.listingMode] || 'المنتجات';
 
   let list = products.filter(p => p.isDeleted !== true);
-  if (listingMode === 'category') {
-    list = list.filter(p => p.category === listingValue);
-  } else if (listingMode === 'search') {
-    list = executeFuzzyProductSearch(listingValue, products);
-  } else if (listingMode === 'bestsellers') {
+  if (window.listingMode === 'category') {
+    list = list.filter(p => p.category === window.listingValue);
+  } else if (window.listingMode === 'search') {
+    list = executeFuzzyProductSearch(window.listingValue, products);
+  } else if (window.listingMode === 'bestsellers') {
     list = list.sort((a, b) => (Number(b.orderCount) || 0) - (Number(a.orderCount) || 0));
   }
 
@@ -1490,8 +677,8 @@ function renderListing() {
   renderProductGrid('listingGrid', list);
 }
 
-function selectDelivery(method) {
-  deliveryMethod = method;
+export function selectDelivery(method) {
+  setDeliveryMethod(method);
   const std = document.getElementById('delStandard');
   const exp = document.getElementById('delExpress');
   if (std) std.classList.toggle('selected', method === 'standard');
@@ -1499,7 +686,7 @@ function selectDelivery(method) {
   renderCheckoutSummary();
 }
 
-async function applyPromoCode(code) {
+export async function applyPromoCode(code) {
   if (!code || !code.trim()) {
     showToast('يرجى كتابة كود الخصم أولاً');
     return;
@@ -1535,7 +722,7 @@ async function applyPromoCode(code) {
         ? Math.round(subtotal * (Number(c.value) / 100))
         : Number(c.value);
 
-      appliedPromo = { code: cleanCode, discountAmount };
+      setAppliedPromo({ code: cleanCode, discountAmount });
       showToast('تم تطبيق الخصم بنجاح! 🎉');
       renderCart();
       renderCheckoutSummary();
@@ -1545,42 +732,42 @@ async function applyPromoCode(code) {
     console.warn(err);
   }
 
-  appliedPromo = null;
+  setAppliedPromo(null);
   showToast('كود الخصم غير صالح أو منتهي الصلاحية ❌');
   renderCart();
   renderCheckoutSummary();
 }
 
-function removePromoCode() {
-  appliedPromo = null;
+export function removePromoCode() {
+  setAppliedPromo(null);
   showToast('تم إلغاء كود الخصم');
   renderCart();
   renderCheckoutSummary();
 }
 
-function toggleWishlist(id) {
+export function toggleWishlist(id) {
   if (wishlist.has(id)) wishlist.delete(id);
   else wishlist.add(id);
   saveLocalState();
   renderCurrentActiveView();
 }
 
-function openMenu() {
+export function openMenu() {
   document.getElementById('menuDrawer')?.classList.add('open');
   document.getElementById('menuOverlay')?.classList.add('open');
 }
 
-function closeMenu() {
+export function closeMenu() {
   document.getElementById('menuDrawer')?.classList.remove('open');
   document.getElementById('menuOverlay')?.classList.remove('open');
 }
 
-function openWhatsapp() {
+export function openWhatsapp() {
   const targetNumber = (pharmacyProfile.socialWhatsapp || "9647813703288").replace(/\+/g, '').trim();
   window.open(`https://wa.me/${targetNumber}`, '_blank');
 }
 
-function checkAndAutofillCustomer() {
+export function checkAndAutofillCustomer() {
   const saved = JSON.parse(localStorage.getItem('saas_customer_saved_profile') || 'null');
   const noticeBox = document.getElementById('autofillNoticeBox');
   if (saved) {
@@ -1594,7 +781,7 @@ function checkAndAutofillCustomer() {
   }
 }
 
-function clearSavedCustomerData() {
+export function clearSavedCustomerData() {
   localStorage.removeItem('saas_customer_saved_profile');
   const nameEl = document.getElementById('custName');
   const phoneEl = document.getElementById('custPhone');
@@ -1606,7 +793,7 @@ function clearSavedCustomerData() {
   showToast('تم مسح البيانات المحفوظة');
 }
 
-async function cancelMyOrder(orderId) {
+export async function cancelMyOrder(orderId) {
   if (!confirm('هل أنتِ متأكدة من رغبتكِ في إلغاء هذا الطلب؟')) return;
   const ord = myOrders.find(o => String(o.id) === String(orderId));
   if (!ord) return;
@@ -1628,18 +815,19 @@ async function cancelMyOrder(orderId) {
   }
 }
 
-// ================= 11. AUTH & USER PROFILE =================
-function updateUserHeaderProfile() {
+// ================= 4. AUTH & USER PROFILE =================
+export function updateUserHeaderProfile() {
   const chipAvatar = document.getElementById('userChipAvatar');
   const chipName = document.getElementById('userChipName');
   const bnAccountLbl = document.getElementById('bnAccountLbl');
 
-  if (currentUser) {
-    const rawName = currentUser.displayName || currentUser.email || 'حسابي';
+  const user = auth ? auth.currentUser : null;
+  if (user) {
+    const rawName = user.displayName || user.email || 'حسابي';
     const firstName = sanitizeText(rawName.split(' ')[0].split('@')[0]);
     if (chipName) chipName.textContent = firstName;
     if (bnAccountLbl) bnAccountLbl.textContent = firstName;
-    const cleanPhoto = sanitizeUrl(currentUser.photoURL);
+    const cleanPhoto = sanitizeUrl(user.photoURL);
     if (chipAvatar) {
       chipAvatar.innerHTML = cleanPhoto 
         ? `<img src="${cleanPhoto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` 
@@ -1654,26 +842,27 @@ function updateUserHeaderProfile() {
   }
 }
 
-function renderAccountView() {
+export function renderAccountView() {
   const container = document.getElementById('accountAuthContainer');
   if (!container) return;
 
-  if (currentUser) {
-    const isAdmin = isCurrentUserAdmin();
-    const cleanPhoto = sanitizeUrl(currentUser.photoURL);
+  const user = auth ? auth.currentUser : null;
+  if (user) {
+    const isAdmin = isCurrentUserAdmin(pharmacyProfile, currentStaffData);
+    const cleanPhoto = sanitizeUrl(user.photoURL);
     container.innerHTML = `
       <div class="account-card">
         <div class="user-profile-header">
           <div class="user-avatar"><img src="${cleanPhoto || 'https://imgdb.io/i/EQ4D9ag.png'}"></div>
           <div class="user-info">
-            <h3>${sanitizeText(currentUser.displayName || currentUser.email)} ${isAdmin ? '⭐ (مشرف الصيدلية)' : ''}</h3>
-            <p>${sanitizeText(currentUser.email || '')}</p>
+            <h3>${sanitizeText(user.displayName || user.email)} ${isAdmin ? '⭐ (مشرف الصيدلية)' : ''}</h3>
+            <p>${sanitizeText(user.email || '')}</p>
             <div class="sync-indicator"><span class="sync-dot"></span><span>البيانات متزامنة مع ${sanitizeText(pharmacyProfile.name || 'الصيدلية')}</span></div>
           </div>
         </div>
         ${isAdmin ? `<a class="auth-btn-google" style="margin-bottom:10px; background:#FEF3C7; color:#92400E; font-weight:800; display:flex;" href="${getTenantUrl('admin.html')}">⚙️ لوحة تحكم وإدارة الصيدلية</a>` : ''}
-        <button class="auth-btn-google" style="margin-bottom:10px;" onclick="showView('orders')">📦 عرض طلباتي وتتبع الشحن</button>
-        <button class="auth-btn-logout" onclick="handleSignOut()">تسجيل الخروج</button>
+        <button class="auth-btn-google" style="margin-bottom:10px;" onclick="window.App.showView('orders')">📦 عرض طلباتي وتتبع الشحن</button>
+        <button class="auth-btn-logout" onclick="window.App.handleSignOut()">تسجيل الخروج</button>
       </div>`;
   } else {
     container.innerHTML = `
@@ -1681,7 +870,7 @@ function renderAccountView() {
         <div style="font-size:38px; margin-bottom:8px;">🌸</div>
         <h3 style="font-size:17px; font-weight:900; margin:0 0 6px;">مرحباً بك في ${sanitizeText(pharmacyProfile.name || 'الصيدلية')}</h3>
         <p style="font-size:12.5px; color:var(--text-soft); margin:0 0 20px;">سجلي الدخول بنقرة واحدة لحفظ منتجاتك المفضلة ومتابعة طلباتكِ:</p>
-        <button class="auth-btn-google" onclick="signInWithGoogle()">
+        <button class="auth-btn-google" onclick="window.App.signInWithGoogle()">
           <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
           تسجيل الدخول المباشر عبر Google
         </button>
@@ -1689,7 +878,7 @@ function renderAccountView() {
   }
 }
 
-function signInWithGoogle() {
+export function signInWithGoogle() {
   if (!auth) {
     showToast('خدمة تسجيل الدخول غير مهيأة');
     return;
@@ -1703,16 +892,16 @@ function signInWithGoogle() {
   auth.signInWithRedirect(provider);
 }
 
-async function handleSignOut() {
+export async function handleSignOut() {
   if (auth) await auth.signOut();
-  currentUser = null;
-  currentStaffData = null;
+  setCurrentUser(null);
+  setCurrentStaffData(null);
   updateUserHeaderProfile();
   renderAccountView();
   showToast('تم تسجيل الخروج بنجاح');
 }
 
-function applyStoreSettings() {
+export function applyStoreSettings() {
   applyTheme(pharmacyProfile.templateId || 'template_default', pharmacyProfile.primaryColor);
 
   document.title = `${pharmacyProfile.name || 'الصيدلية'} | المتجر الإلكتروني`;
@@ -1767,13 +956,13 @@ function applyStoreSettings() {
   if (pLink) pLink.href = `tel:${pharmacyProfile.socialPhone || ''}`;
 }
 
-// ================= 12. REALTIME FIRESTORE SYNC =================
-function initFirestoreRealtimeSync() {
+// ================= 5. FIRESTORE REALTIME SYNC =================
+export function initFirestoreRealtimeSync() {
   if (!isFirebaseConfigured || !db) return;
 
   dbPaths.pharmacyDoc().onSnapshot(doc => {
     if (doc.exists) {
-      pharmacyProfile = { ...pharmacyProfile, ...doc.data() };
+      setPharmacyProfile(doc.data());
       applyStoreSettings();
       renderHome();
       checkStorefrontSubscriptionLock();
@@ -1784,7 +973,7 @@ function initFirestoreRealtimeSync() {
     if (!snap.empty) {
       const loaded = [];
       snap.forEach(d => loaded.push({ id: d.id, ...d.data() }));
-      categories = loaded;
+      setCategories(loaded);
       renderModernCategories();
     }
   }, err => console.warn(err));
@@ -1793,7 +982,7 @@ function initFirestoreRealtimeSync() {
     if (!snap.empty) {
       const loaded = [];
       snap.forEach(d => loaded.push({ id: d.id, ...d.data() }));
-      bundles = loaded;
+      setBundles(loaded);
       renderHomeBundles();
       renderAllBundles();
     }
@@ -1803,7 +992,7 @@ function initFirestoreRealtimeSync() {
     if (!snap.empty) {
       const loaded = [];
       snap.forEach(doc => loaded.push({ id: doc.id, ...doc.data() }));
-      products = loaded;
+      setProducts(loaded);
       saveLocalState();
       renderCurrentActiveView();
     }
@@ -1811,7 +1000,7 @@ function initFirestoreRealtimeSync() {
 }
 
 let toastTimer;
-function showToast(msg) {
+export function showToast(msg) {
   const el = document.getElementById('toast');
   if (!el) return;
   el.textContent = msg;
@@ -1820,46 +1009,75 @@ function showToast(msg) {
   toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
 }
 
-// ================= 13. GLOBAL WINDOW EXPOSURE =================
-window.App = {
-  showView, addToCart, addBundleToCart, changeCartQty, removeCartItem,
-  selectDelivery, applyPromoCode, removePromoCode, toggleWishlist,
-  openProduct, goBackFromProduct, switchPdTab, changePdQty, rateProductInstant,
-  openCategory, openBestSellers, selectHomeBrand, onSearch, openMenu, closeMenu,
-  openWhatsapp, executeAtomicOrderCheckout, openReceiptModal, closeReceiptModal,
-  cancelMyOrder, clearSavedCustomerData, selectProductVariantCard,
-  signInWithGoogle, handleSignOut
-};
+// ================= 6. GLOBAL BRIDGE & EVENT HANDLERS =================
+Object.assign(window.App, {
+  showView,
+  addToCart,
+  addBundleToCart,
+  changeCartQty,
+  removeCartItem,
+  selectDelivery,
+  applyPromoCode,
+  removePromoCode,
+  toggleWishlist,
+  openProduct,
+  goBackFromProduct,
+  switchPdTab,
+  changePdQty,
+  rateProductInstant,
+  openCategory,
+  openBestSellers,
+  selectHomeBrand,
+  onSearch,
+  openMenu,
+  closeMenu,
+  openWhatsapp,
+  executeAtomicOrderCheckout: () => executeAtomicOrderCheckout(showToast),
+  openReceiptModal,
+  closeReceiptModal,
+  cancelMyOrder,
+  clearSavedCustomerData,
+  selectProductVariantCard,
+  signInWithGoogle,
+  handleSignOut,
+  quickToggleStock: async (id) => {
+    const p = findProduct(id);
+    if (!p || !db) return;
+    const newStock = !p.inStock;
+    await dbPaths.productsCol().doc(String(id)).set({ inStock: newStock }, { merge: true });
+    showToast(newStock ? 'متوفر 🟢' : 'نافذ 🔴');
+  },
+  quickEditPrice: async (id, curPrice) => {
+    const val = prompt('تعديل السعر (د.ع):', curPrice);
+    if (!val) return;
+    const newP = Number(val.trim());
+    if (newP > 0 && db) {
+      await dbPaths.productsCol().doc(String(id)).set({ price: newP }, { merge: true });
+      showToast('تم تحديث السعر ✓');
+    }
+  },
+  openAdminQuickEditModal: () => {
+    window.location.href = getTenantUrl('admin.html');
+  },
+  archiveProductConfirm: async (id, name) => {
+    if (!confirm(`نقل "${name}" إلى سلة المحذوفات؟`)) return;
+    if (db) {
+      await dbPaths.productsCol().doc(String(id)).set({ isDeleted: true }, { merge: true });
+      showToast('تم نقل المنتج للمحذوفات 🗑️');
+    }
+  }
+});
 
-// دوال مباشرة للنطاق العام
+// دوال مباشرة للنطاق العام لضمان التوافق المطلق مع أزرار HTML
 window.showView = showView;
-window.addToCart = addToCart;
-window.addBundleToCart = addBundleToCart;
-window.changeCartQty = changeCartQty;
-window.removeCartItem = removeCartItem;
-window.selectDelivery = selectDelivery;
-window.applyPromoCode = applyPromoCode;
-window.removePromoCode = removePromoCode;
-window.toggleWishlist = toggleWishlist;
 window.openProduct = openProduct;
-window.goBackFromProduct = goBackFromProduct;
-window.switchPdTab = switchPdTab;
-window.changePdQty = changePdQty;
-window.rateProductInstant = rateProductInstant;
+window.addToCart = addToCart;
 window.openCategory = openCategory;
-window.openBestSellers = openBestSellers;
-window.selectHomeBrand = selectHomeBrand;
-window.onSearch = onSearch;
 window.openMenu = openMenu;
 window.closeMenu = closeMenu;
 window.openWhatsapp = openWhatsapp;
-window.executeAtomicOrderCheckout = executeAtomicOrderCheckout;
-window.cancelMyOrder = cancelMyOrder;
-window.clearSavedCustomerData = clearSavedCustomerData;
-window.signInWithGoogle = signInWithGoogle;
-window.handleSignOut = handleSignOut;
 
-// ================= 14. SAFE BOOTSTRAP =================
+// ================= 7. SAFE BOOTSTRAP HOOK =================
 function bootstrapApp() {
   patchTenantLinks();
   applyStoreSettings();
@@ -1871,7 +1089,7 @@ function bootstrapApp() {
 
   if (auth) {
     auth.onAuthStateChanged(user => {
-      currentUser = user;
+      setCurrentUser(user);
       updateUserHeaderProfile();
       renderAccountView();
       if (user) mergeCloudCartOnLogin(user);
@@ -1879,7 +1097,7 @@ function bootstrapApp() {
   }
 }
 
-// تشغيل فوري بدون انتظار إذا كانت الصفحة محملة مسبقاً
+// تشغيل فوري حتى لو انتهى حدث التحميل قبل قراءة الملف
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', bootstrapApp);
 } else {
