@@ -25,7 +25,7 @@ import {
   pdQty, setPdQty, setPdActiveTab,
   deliveryMethod, setDeliveryMethod,
   currentView, setCurrentView,
-  fmtPrice, findProduct, findBundle, getBrandColor, icons, saveLocalState
+  fmtPrice, findProduct, findBundle, getBrandColor, icons, starIcon, saveLocalState
 } from './state.js';
 
 import { applyTheme, renderProductCard, renderBundleCard, renderCategoryCard, selectProductVariantCard } from './theme-engine.js';
@@ -386,6 +386,16 @@ function renderProductDetailDOM(p) {
   document.getElementById('pdName').textContent = p.name + (p.size ? ' — ' + p.size : '');
   document.getElementById('pdPriceRow').innerHTML = `<span class="pd-price mono">${fmtPrice(p.price)}</span>`;
 
+  // ⭐ عرض تقييم النجوم للزبون (يظهر بس، بدون إمكانية تقييم من الواجهة)
+  const pdRatingEl = document.getElementById('pdRating');
+  if (pdRatingEl) {
+    const reviewCount = Number(p.reviews || 0);
+    const avgRating = reviewCount > 0 ? Number(p.rating || 5.0).toFixed(1) : null;
+    pdRatingEl.innerHTML = reviewCount > 0
+      ? `${starIcon()} <span class="mono" style="font-weight:800;">${avgRating}</span> <span style="font-size:12px; color:var(--text-soft);">(${reviewCount} تقييم)</span>`
+      : `<span style="font-size:12px; color:var(--text-soft); font-weight:700;">⭐ منتج جديد (0 تقييم)</span>`;
+  }
+
   document.getElementById('pdTabDesc').textContent = p.description || 'منتج أصلي معتمد من الصيدلية.';
   document.getElementById('pdTabIng').textContent = p.ingredients || 'تركيبة غنية ومفحوصة جلدياً.';
   document.getElementById('pdTabUse').textContent = p.usage || 'يُوضع وفق الإرشادات الصيدلانية.';
@@ -434,6 +444,38 @@ function openProduct(id) {
 
 function goBackFromProduct() {
   showView('home');
+}
+
+// 🔗 نسخ/مشاركة رابط المنتج المباشر
+function shareCurrentProduct() {
+  if (!currentProductId) return;
+  const p = findProduct(currentProductId);
+  const shareUrl = `${window.location.origin}${window.location.pathname}?pharmacy=${encodeURIComponent(currentPharmacyId)}#p=${currentProductId}`;
+
+  if (navigator.share) {
+    navigator.share({
+      title: p ? p.name : pharmacyProfile.name,
+      text: `شاهد ${p ? p.name : 'هذا المنتج'} في ${pharmacyProfile.name}:`,
+      url: shareUrl
+    }).catch(() => {});
+  } else if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      showToast('📋 تم نسخ رابط المنتج المباشر بنجاح!');
+    }).catch(() => {
+      showToast('⚠️ تعذر نسخ الرابط، جربي يدوياً من شريط العنوان.');
+    });
+  } else {
+    showToast('⚠️ متصفحك لا يدعم النسخ التلقائي.');
+  }
+}
+
+// 🔗 فتح المنتج مباشرة لو الرابط يحتوي #p=ID (قادم من رابط مشاركة)
+function checkUrlHashForProduct() {
+  const hash = window.location.hash || '';
+  const match = hash.match(/#p=([a-zA-Z0-9_\-]+)/);
+  if (match && match[1]) {
+    openProduct(match[1]);
+  }
 }
 
 // ---------------------------------------------------------
@@ -731,6 +773,7 @@ function initFirestoreRealtimeSync() {
     }
   }, console.warn);
 
+  let didCheckSharedLink = false;
   dbPaths.productsCol().onSnapshot(snap => {
     if (!snap.empty) {
       const list = [];
@@ -738,6 +781,10 @@ function initFirestoreRealtimeSync() {
       setProducts(list);
       saveLocalState();
       renderCurrentActiveView();
+      if (!didCheckSharedLink) {
+        didCheckSharedLink = true;
+        checkUrlHashForProduct();
+      }
     }
   }, console.warn);
 }
@@ -754,6 +801,7 @@ function bootstrapApp() {
   updateUserHeaderProfile();
   updateAdminInterfaceState();
   initFirestoreRealtimeSync();
+  checkUrlHashForProduct();
 
   if (auth) {
     captureAuthRedirectResult();
@@ -782,7 +830,8 @@ window.App = {
   openReceiptModal, closeReceiptModal,
   clearSavedCustomerData, signInWithGoogle, handleSignOut,
   changePdQty, switchPdTab, selectProductVariantCard,
-  quickEditPrice, quickToggleStock, archiveProductConfirm, openAdminQuickEditModal
+  quickEditPrice, quickToggleStock, archiveProductConfirm, openAdminQuickEditModal,
+  shareCurrentProduct
 };
 
 // دوال مباشرة لضمان عمل أزرار onclick الثابتة بـ Index.html
