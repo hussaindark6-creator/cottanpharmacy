@@ -13,7 +13,7 @@ import {
 } from './config.js';
 
 import {
-  sanitizeText, sanitizeUrl, apiFetch
+  sanitizeText, sanitizeUrl, apiFetch, isInAppBrowser
 } from './security.js';
 
 import {
@@ -582,6 +582,10 @@ function explainAuthError(err) {
       return '⚠️ تم حظر نافذة تسجيل الدخول من المتصفح. يرجى السماح بالنوافذ المنبثقة والمحاولة مجدداً.';
     case 'auth/network-request-failed':
       return '⚠️ تعذر الاتصال بالإنترنت، يرجى التحقق من الشبكة والمحاولة مجدداً.';
+    case 'auth/operation-not-allowed':
+      return '⚠️ خاصية "تسجيل الدخول عبر Google" غير مفعّلة بمشروع Firebase. فعّليها من: Authentication → Sign-in method → Google.';
+    case 'auth/internal-error':
+      return '⚠️ خطأ داخلي من Firebase أثناء تسجيل الدخول. جربي مرة ثانية بعد دقيقة.';
     default:
       return `⚠️ تعذر تسجيل الدخول: ${err && err.message ? err.message : 'خطأ غير معروف'}`;
   }
@@ -590,6 +594,12 @@ function explainAuthError(err) {
 function signInWithGoogle() {
   if (!auth) {
     showToast('⚠️ تعذر الاتصال بخدمة تسجيل الدخول (Firebase غير مهيأ).');
+    return;
+  }
+  // 🛡️ گوگل يحظر تسجيل الدخول داخل متصفحات التطبيقات المدمجة (تيليجرام/انستغرام/واتساب...)
+  // بدون رمي أي خطأ قابل للالتقاط بالجافاسكربت — يعني بدونها يبدو وكأن الزر "ما يشتغل" بصمت
+  if (isInAppBrowser()) {
+    showToast('⚠️ تسجيل الدخول عبر Google لا يعمل داخل متصفح التطبيق هذا (تيليجرام/انستغرام..). افتحي الرابط بمتصفح خارجي مثل Chrome أو Safari من القائمة (⋮ أو مشاركة ← فتح في المتصفح).');
     return;
   }
   const provider = new firebase.auth.GoogleAuthProvider();
@@ -724,4 +734,3 @@ window.goBackFromProduct = goBackFromProduct;
 window.openBestSellers = openBestSellers;
 window.selectDelivery = selectDelivery;
 window.onSearch = onSearch;
-
