@@ -9,15 +9,15 @@
 
 import {
   auth, db, dbPaths, isFirebaseConfigured, currentPharmacyId,
-  patchTenantLinks
+  patchTenantLinks, getTenantUrl
 } from './config.js';
 
 import {
-  sanitizeText, sanitizeUrl, apiFetch, isInAppBrowser
+  sanitizeText, sanitizeUrl, apiFetch, isInAppBrowser, isCurrentUserAdmin
 } from './security.js';
 
 import {
-  currentUser, setCurrentUser,
+  currentUser, setCurrentUser, currentStaffData,
   cart, wishlist, myOrders, categories, products, bundles, brandsData,
   pharmacyProfile, setPharmacyProfile, setProducts, setCategories, setBundles,
   listingMode, listingValue, setListingState,
@@ -491,6 +491,51 @@ function toggleWishlist(id) {
 }
 
 // ---------------------------------------------------------
+// 🛠️ أزرار التعديل السريع للأدمن على كروت المنتجات (الصفحة الرئيسية)
+// ---------------------------------------------------------
+async function quickEditPrice(id, currentPrice) {
+  if (!isCurrentUserAdmin(pharmacyProfile, currentStaffData)) return;
+  const newPriceStr = prompt('تعديل السعر المباشر (د.ع):', currentPrice);
+  if (newPriceStr === null) return;
+  const newPrice = Number(newPriceStr.trim());
+  if (isNaN(newPrice) || newPrice <= 0) {
+    showToast('يرجى إدخال سعر صحيح أكبر من صفر');
+    return;
+  }
+  if (db) await dbPaths.productsCol().doc(String(id)).set({ price: newPrice }, { merge: true });
+  showToast('تم تحديث السعر فورياً ✓');
+}
+
+async function quickToggleStock(id) {
+  if (!isCurrentUserAdmin(pharmacyProfile, currentStaffData)) return;
+  const p = findProduct(id);
+  if (!p) return;
+  const newStock = (p.inStock === false) ? true : false;
+  if (db) await dbPaths.productsCol().doc(String(id)).set({ inStock: newStock }, { merge: true });
+  showToast(newStock ? 'تم التعيين: متوفر 🟢' : 'تم التعيين: نفذت الكمية 🔴');
+}
+
+async function archiveProductConfirm(id, name) {
+  if (!isCurrentUserAdmin(pharmacyProfile, currentStaffData)) return;
+  if (confirm(`هل أنتِ متأكدة من نقل المنتج "${name}" إلى سلة المحذوفات؟ (يمكنك استرجاعه بأي وقت من لوحة التحكم)`)) {
+    if (db) {
+      await dbPaths.productsCol().doc(String(id)).set({
+        isDeleted: true,
+        deletedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      showToast(`تم نقل "${name}" إلى سلة المحذوفات 🗑️`);
+    }
+  }
+}
+
+// التعديل الكامل (كل الحقول) يحتاج نافذة موجودة فقط بلوحة التحكم — نوجّه لها مباشرة
+function openAdminQuickEditModal(id) {
+  if (!isCurrentUserAdmin(pharmacyProfile, currentStaffData)) return;
+  showToast('جاري التوجيه للوحة التحكم الكاملة لتعديل كل تفاصيل المنتج... ⏳');
+  window.location.href = getTenantUrl('admin.html');
+}
+
+// ---------------------------------------------------------
 // 📂 القائمة الجانبية والواتساب
 // ---------------------------------------------------------
 function openMenu() {
@@ -547,6 +592,15 @@ function clearSavedCustomerData() {
 function updateUserHeaderProfile() {
   const chipName = document.getElementById('userChipName');
   if (chipName) chipName.textContent = currentUser ? (currentUser.displayName || 'حسابي').split(' ')[0] : 'دخول';
+}
+
+// 🛠️ إظهار/إخفاء الشريط اللاصق وزر القائمة الخاصين بلوحة تحكم الأدمن حسب حالة تسجيل الدخول
+function updateAdminInterfaceState() {
+  const isAdmin = isCurrentUserAdmin(pharmacyProfile, currentStaffData);
+  const topBar = document.getElementById('adminTopBar');
+  const menuLink = document.getElementById('adminMenuLink');
+  if (topBar) topBar.style.display = isAdmin ? 'flex' : 'none';
+  if (menuLink) menuLink.style.display = isAdmin ? 'flex' : 'none';
 }
 
 function renderAccountView() {
@@ -698,6 +752,7 @@ function bootstrapApp() {
   renderModernCategories();
   updateCartBadge();
   updateUserHeaderProfile();
+  updateAdminInterfaceState();
   initFirestoreRealtimeSync();
 
   if (auth) {
@@ -705,6 +760,7 @@ function bootstrapApp() {
     auth.onAuthStateChanged(user => {
       setCurrentUser(user);
       updateUserHeaderProfile();
+      updateAdminInterfaceState();
       renderAccountView();
       // 🛠️ كروت المنتجات المرسومة سابقاً (قبل تسجيل الدخول) ما تتحدّث لوحدها؛
       // لازم إعادة رسم الصفحة الحالية عشان تظهر/تختفي أزرار الأدمن حسب حالة الدخول الجديدة
@@ -725,7 +781,8 @@ window.App = {
   openWhatsapp, executeAtomicOrderCheckout: () => executeAtomicOrderCheckout(showToast),
   openReceiptModal, closeReceiptModal,
   clearSavedCustomerData, signInWithGoogle, handleSignOut,
-  changePdQty, switchPdTab, selectProductVariantCard
+  changePdQty, switchPdTab, selectProductVariantCard,
+  quickEditPrice, quickToggleStock, archiveProductConfirm, openAdminQuickEditModal
 };
 
 // دوال مباشرة لضمان عمل أزرار onclick الثابتة بـ Index.html
