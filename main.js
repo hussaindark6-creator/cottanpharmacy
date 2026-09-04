@@ -603,8 +603,16 @@ function signInWithGoogle() {
     return;
   }
   const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithRedirect(provider).catch(err => {
-    console.error('Google Sign-In redirect error:', err);
+  // ⚠️ signInWithPopup بدل signInWithRedirect: الطريقة الثانية تفشل بصمت على Safari/iOS
+  // (تعلق على صفحة "Continue to the app" وترجع بدون تسجيل دخول) بسبب منع Safari
+  // لتخزين/كوكيز الطرف الثالث بين دومين cottanpharmacy.firebaseapp.com وموقعك الفعلي.
+  auth.signInWithPopup(provider).then(result => {
+    if (result && result.user) {
+      showToast(`مرحباً ${result.user.displayName || ''} 🌸`);
+    }
+  }).catch(err => {
+    console.error('Google Sign-In popup error:', err);
+    if (err && (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request')) return;
     showToast(explainAuthError(err));
   });
 }
