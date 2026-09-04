@@ -603,6 +603,7 @@ function signInWithGoogle() {
     return;
   }
   const provider = new firebase.auth.GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
   // ⚠️ signInWithPopup بدل signInWithRedirect: الطريقة الثانية تفشل بصمت على Safari/iOS
   // (تعلق على صفحة "Continue to the app" وترجع بدون تسجيل دخول) بسبب منع Safari
   // لتخزين/كوكيز الطرف الثالث بين دومين cottanpharmacy.firebaseapp.com وموقعك الفعلي.
@@ -705,6 +706,9 @@ function bootstrapApp() {
       setCurrentUser(user);
       updateUserHeaderProfile();
       renderAccountView();
+      // 🛠️ كروت المنتجات المرسومة سابقاً (قبل تسجيل الدخول) ما تتحدّث لوحدها؛
+      // لازم إعادة رسم الصفحة الحالية عشان تظهر/تختفي أزرار الأدمن حسب حالة الدخول الجديدة
+      renderCurrentActiveView();
     });
   }
 }
