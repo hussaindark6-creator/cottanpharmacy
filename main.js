@@ -26,6 +26,7 @@ import {
   deliveryMethod, setDeliveryMethod,
   appliedPromo, setAppliedPromo,
   currentView, setCurrentView,
+  previousViewBeforeProduct, previousScrollBeforeProduct, setPreviousView,
   fmtPrice, findProduct, findBundle, getBrandColor, icons, starIcon, saveLocalState
 } from './state.js';
 
@@ -105,13 +106,13 @@ function getCartSubtotal() {
 // ---------------------------------------------------------
 // 🧭 التنقل بين الصفحات (Views)
 // ---------------------------------------------------------
-function showView(name) {
+function showView(name, skipScrollTop = false) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   const target = document.getElementById('view-' + name);
   if (target) target.classList.add('active');
   setCurrentView(name);
   closeMenu();
-  window.scrollTo({ top: 0, behavior: 'instant' });
+  if (!skipScrollTop) window.scrollTo({ top: 0, behavior: 'instant' });
 
   ['home', 'wishlist', 'categories', 'bundles', 'orders', 'cart', 'account'].forEach(k => {
     const el = document.getElementById('bn-' + k);
@@ -436,6 +437,7 @@ function switchPdTab(tab) {
 }
 
 function openProduct(id) {
+  setPreviousView(currentView, window.scrollY);
   setCurrentProductId(id);
   const p = findProduct(id);
   if (!p) return;
@@ -446,7 +448,10 @@ function openProduct(id) {
 }
 
 function goBackFromProduct() {
-  showView('home');
+  showView(previousViewBeforeProduct || 'home', true);
+  requestAnimationFrame(() => {
+    window.scrollTo({ top: previousScrollBeforeProduct || 0, behavior: 'instant' });
+  });
 }
 
 // 🔗 نسخ/مشاركة رابط المنتج المباشر
