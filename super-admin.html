@@ -881,7 +881,15 @@
     function handleSuperAdminSignIn() {
       if (!auth) return;
       const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithRedirect(provider);
+      provider.setCustomParameters({ prompt: 'select_account' });
+      auth.signInWithPopup(provider).catch(err => {
+        console.error('Super Admin Sign-In error:', err);
+        const errBox = document.getElementById('authGateError');
+        if (errBox) {
+          errBox.textContent = `⚠️ تعذر تسجيل الدخول: ${err && err.message ? err.message : 'خطأ غير معروف'}`;
+          errBox.classList.remove('hidden');
+        }
+      });
     }
 
     function checkSuperAdminAccess(user) {
