@@ -29,7 +29,7 @@ import {
   fmtPrice, findProduct, findBundle, getBrandColor, icons, starIcon, saveLocalState
 } from './state.js';
 
-import { applyTheme, renderProductCard, renderBundleCard, renderCategoryCard, selectProductVariantCard } from './theme-engine.js';
+import { applyTheme, renderHeroBanner, renderProductCard, renderBundleCard, renderCategoryCard, selectProductVariantCard } from './theme-engine.js';
 import { executeFuzzyProductSearch } from './search.js';
 import { executeAtomicOrderCheckout, openReceiptModal, closeReceiptModal } from './orders.js';
 import { uploadDirectImageFile } from './upload.js';
@@ -750,25 +750,135 @@ function updateAdminInterfaceState() {
   if (bnAdmin) bnAdmin.style.display = isAdmin ? 'flex' : 'none';
 }
 
+let accountAuthTab = 'google'; // google | phone-login | phone-register
+
+function setAccountAuthTab(tab) {
+  accountAuthTab = tab;
+  renderAccountView();
+}
+
 function renderAccountView() {
   const container = document.getElementById('accountAuthContainer');
   if (!container) return;
 
   if (currentUser) {
+    const isPhoneUser = (currentUser.uid || '').startsWith('phone_');
+    const subLine = isPhoneUser
+      ? sanitizeText(currentUser.phoneNumber || currentUser.reloadUserInfo?.phoneNumber || '')
+      : sanitizeText(currentUser.email || '');
     container.innerHTML = `
       <div class="account-card">
-        <h3>${sanitizeText(currentUser.displayName || currentUser.email)}</h3>
-        <p>${sanitizeText(currentUser.email || '')}</p>
+        <h3>${sanitizeText(currentUser.displayName || 'حسابي')}</h3>
+        <p>${subLine}</p>
         <button class="auth-btn-google" style="margin-top:14px;" onclick="window.App.showView('orders')">📦 عرض طلباتي وتتبع الشحن</button>
         <button class="auth-btn-logout" onclick="window.App.handleSignOut()">تسجيل الخروج</button>
       </div>`;
-  } else {
+    return;
+  }
+
+  const tabsHtml = `
+    <div style="display:flex; gap:6px; margin-bottom:16px; background:var(--surface); padding:4px; border-radius:12px;">
+      <button type="button" onclick="window.App.setAccountAuthTab('google')" style="flex:1; padding:8px; border-radius:9px; font-weight:800; font-size:12.5px; background:${accountAuthTab === 'google' ? '#fff' : 'transparent'}; box-shadow:${accountAuthTab === 'google' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none'};">Google</button>
+      <button type="button" onclick="window.App.setAccountAuthTab('phone-login')" style="flex:1; padding:8px; border-radius:9px; font-weight:800; font-size:12.5px; background:${accountAuthTab !== 'google' ? '#fff' : 'transparent'}; box-shadow:${accountAuthTab !== 'google' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none'};">الاسم ورقم الهاتف</button>
+    </div>`;
+
+  if (accountAuthTab === 'google') {
     container.innerHTML = `
       <div class="account-card">
+        ${tabsHtml}
         <h3>تسجيل الدخول المباشر</h3>
         <p style="font-size:12.5px; color:var(--text-soft); margin:8px 0 16px;">سجلي الدخول بنقرة واحدة لحفظ منتجاتك ومتابعة طلباتكِ:</p>
         <button class="auth-btn-google" onclick="window.App.signInWithGoogle()">دخول سريع عبر Google</button>
       </div>`;
+    return;
+  }
+
+  const isRegister = accountAuthTab === 'phone-register';
+  container.innerHTML = `
+    <div class="account-card">
+      ${tabsHtml}
+      <h3>${isRegister ? 'إنشاء حساب جديد' : 'تسجيل الدخول'}</h3>
+      <div id="phoneAuthStatus" style="margin:8px 0; font-size:12px; font-weight:800;"></div>
+      ${isRegister ? `
+        <div class="form-field">
+          <label>الاسم</label>
+          <input type="text" id="phoneAuthName" placeholder="مثال: سارة أحمد">
+        </div>` : ''}
+      <div class="form-field">
+        <label>رقم الهاتف</label>
+        <input type="tel" id="phoneAuthPhone" placeholder="07xxxxxxxxx">
+      </div>
+      <div class="form-field">
+        <label>الرمز السري (4 إلى 6 أرقام)</label>
+        <input type="password" id="phoneAuthPin" inputmode="numeric" maxlength="6" placeholder="••••">
+      </div>
+      <button class="auth-btn-google" onclick="window.App.${isRegister ? 'registerWithPhone' : 'loginWithPhone'}()">${isRegister ? 'إنشاء الحساب' : 'دخول'}</button>
+      <p style="text-align:center; font-size:12px; margin-top:12px; color:var(--text-soft);">
+        ${isRegister ? 'عندك حساب؟' : 'ما عندك حساب؟'}
+        <span style="color:var(--accent); font-weight:800; cursor:pointer;" onclick="window.App.setAccountAuthTab('${isRegister ? 'phone-login' : 'phone-register'}')">${isRegister ? 'دخول' : 'إنشاء حساب جديد'}</span>
+      </p>
+    </div>`;
+}
+
+async function registerWithPhone() {
+  const name = document.getElementById('phoneAuthName')?.value.trim();
+  const phone = document.getElementById('phoneAuthPhone')?.value.trim();
+  const pin = document.getElementById('phoneAuthPin')?.value.trim();
+  const statusEl = document.getElementById('phoneAuthStatus');
+
+  if (!name || !phone || !pin) {
+    if (statusEl) { statusEl.textContent = 'يرجى تعبئة كل الحقول'; statusEl.style.color = '#DC2626'; }
+    return;
+  }
+  if (statusEl) { statusEl.textContent = 'جاري إنشاء الحساب... ⏳'; statusEl.style.color = 'var(--text-soft)'; }
+
+  const res = await apiFetch('/api/auth/phone-register', {
+    method: 'POST',
+    body: JSON.stringify({ name, phone, pin })
+  });
+
+  if (res && res.success && res.token) {
+    await completePhoneSignIn(res.token, res.name);
+  } else {
+    if (statusEl) { statusEl.textContent = (res && res.message) || 'تعذر إنشاء الحساب'; statusEl.style.color = '#DC2626'; }
+  }
+}
+
+async function loginWithPhone() {
+  const phone = document.getElementById('phoneAuthPhone')?.value.trim();
+  const pin = document.getElementById('phoneAuthPin')?.value.trim();
+  const statusEl = document.getElementById('phoneAuthStatus');
+
+  if (!phone || !pin) {
+    if (statusEl) { statusEl.textContent = 'يرجى تعبئة رقم الهاتف والرمز السري'; statusEl.style.color = '#DC2626'; }
+    return;
+  }
+  if (statusEl) { statusEl.textContent = 'جاري تسجيل الدخول... ⏳'; statusEl.style.color = 'var(--text-soft)'; }
+
+  const res = await apiFetch('/api/auth/phone-login', {
+    method: 'POST',
+    body: JSON.stringify({ phone, pin })
+  });
+
+  if (res && res.success && res.token) {
+    await completePhoneSignIn(res.token, res.name);
+  } else {
+    if (statusEl) { statusEl.textContent = (res && res.message) || 'تعذر تسجيل الدخول'; statusEl.style.color = '#DC2626'; }
+  }
+}
+
+async function completePhoneSignIn(token, name) {
+  if (!auth) return;
+  try {
+    const cred = await auth.signInWithCustomToken(token);
+    if (cred && cred.user && name) {
+      await cred.user.updateProfile({ displayName: name });
+      setCurrentUser(auth.currentUser);
+    }
+    showToast(`مرحباً ${name || ''} 🌸`);
+  } catch (err) {
+    console.error('Phone sign-in error:', err);
+    showToast('⚠️ تعذر تسجيل الدخول، حاولي مجدداً');
   }
 }
 
@@ -846,6 +956,8 @@ function applyStoreSettings() {
   applyTheme(pharmacyProfile.templateId || 'template_default', pharmacyProfile.primaryColor);
   if (document.getElementById('headerLogoText')) document.getElementById('headerLogoText').textContent = pharmacyProfile.name || 'الصيدلية';
   if (document.getElementById('drawerLogoTitle')) document.getElementById('drawerLogoTitle').textContent = pharmacyProfile.name || 'الصيدلية';
+  const heroContainer = document.getElementById('heroBannerContainer');
+  if (heroContainer) heroContainer.innerHTML = renderHeroBanner(pharmacyProfile);
 }
 
 function initFirestoreRealtimeSync() {
@@ -937,7 +1049,8 @@ window.App = {
   changePdQty, switchPdTab, selectProductVariantCard,
   quickEditPrice, quickToggleStock, archiveProductConfirm, openAdminQuickEditModal,
   closeSfQuickEditModal, saveSfQuickEdit,
-  shareCurrentProduct, applyPromoCode, removePromoCode
+  shareCurrentProduct, applyPromoCode, removePromoCode,
+  setAccountAuthTab, registerWithPhone, loginWithPhone
 };
 
 // دوال مباشرة لضمان عمل أزرار onclick الثابتة بـ Index.html
