@@ -38,7 +38,69 @@ export function applyTheme(templateId, hexColor) {
   }
 }
 
-// تغيير السعر وتحديث الواجهة عند اختيار تركيز أو حجم مختلف
+// 🖼️ رسم بانر الصفحة الرئيسية — شكل وترتيب مختلف فعلياً حسب نوع القالب (مو بس ألوان)
+export function renderHeroBanner(profile) {
+  const title = sanitizeText(profile.heroMainTitle || profile.name || 'متجر الصيدلية');
+  const subtitle = sanitizeText(profile.heroSubTitle || 'نحن هنا لتحسين صحتكم وجمالكم');
+  const desc = sanitizeText(profile.heroDescTitle || 'منتجات أصلية ومعتمدة 100%');
+  const imgUrl = sanitizeUrl(profile.bannerImgUrl || 'https://imgdb.io/i/EQ4D9ag.png');
+  const variant = currentThemeConfig.heroVariant || 'hybrid-model';
+
+  // 🌸 نمط "badge-pill" — القالب العصري الناعم: شارة موسمية أعلى العنوان + انحناءات ناعمة
+  if (variant === 'badge-pill') {
+    return `
+      <div class="qutn-hybrid-banner" style="border-radius: var(--radius-lg); box-shadow: var(--shadow-soft);" onclick="window.App.showView('categories')">
+        <div class="banner-text-col">
+          <span style="display:inline-block; font-size:11px; font-weight:900; background:#fff; color:var(--rose-deep, var(--accent)); padding:3px 10px; border-radius:999px; width:fit-content; border:1px solid var(--line); box-shadow:0 2px 6px rgba(0,0,0,0.04); margin-bottom:6px;">✨ تشكيلة الموسم الحصرية</span>
+          <h1 class="main-title">${title}</h1>
+          <p class="sub-title">${subtitle}</p>
+          <p class="desc-title"><span>${desc}</span> <span>🌸</span></p>
+        </div>
+        <div class="banner-model-col"><img src="${imgUrl}" alt="${title}" loading="lazy"></div>
+      </div>`;
+  }
+
+  // 🩺 نمط "banner-clean" — القالب الطبي: شارة ترخيص + زوايا حادة وطابع سريري
+  if (variant === 'banner-clean') {
+    return `
+      <div class="qutn-hybrid-banner" style="border-radius: var(--radius-lg); border: 1.5px solid var(--line); box-shadow: var(--shadow-soft);" onclick="window.App.showView('categories')">
+        <div class="banner-text-col">
+          <span style="display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:900; background:var(--surface-hover, #E0F2FE); color:var(--rose-deep, var(--accent)); padding:3px 10px; border-radius:6px; width:fit-content; border:1px solid var(--line); margin-bottom:6px;">🩺 صيدلية مرخصة ومنتجات أصلية</span>
+          <h1 class="main-title" style="letter-spacing:-0.5px;">${title}</h1>
+          <p class="sub-title">${subtitle}</p>
+          <p class="desc-title"><span>${desc}</span> <span>💊</span></p>
+        </div>
+        <div class="banner-model-col"><img src="${imgUrl}" alt="${title}" loading="lazy"></div>
+      </div>`;
+  }
+
+  // 🏠 نمط "hybrid-model" — القالب الافتراضي الكلاسيكي: بسيط بدون شارة
+  return `
+    <div class="qutn-hybrid-banner" onclick="window.App.showView('categories')">
+      <div class="banner-text-col">
+        <h1 class="main-title">${title}</h1>
+        <p class="sub-title">${subtitle}</p>
+        <p class="desc-title"><span>${desc}</span> <span>🌸</span></p>
+      </div>
+      <div class="banner-model-col"><img src="${imgUrl}" alt="${title}" loading="lazy"></div>
+    </div>`;
+}
+
+
+// 🏷️ شكل شارة الخصم/نفاد الكمية حسب نمط القالب (badgeStyle)
+function badgeStyleCss(isOutOfStock = false) {
+  const style = currentThemeConfig.badgeStyle || 'gradient-pill';
+  const base = isOutOfStock ? '#EF4444' : 'var(--accent)';
+
+  if (style === 'soft-pill') {
+    return `background:linear-gradient(135deg, ${base} 0%, var(--accent-dark, ${base}) 100%); border-radius:999px; box-shadow:0 3px 10px rgba(0,0,0,0.15); font-weight:900;`;
+  }
+  if (style === 'clinical-box') {
+    return `background:${base}; border-radius:4px; font-weight:800;`;
+  }
+  return `background:${base}; border-radius:999px; font-weight:800;`;
+}
+
 export function selectProductVariantCard(buttonEl, productId) {
   const p = findProduct(productId);
   if (!p) return;
@@ -112,8 +174,8 @@ export function renderProductCard(p) {
       <button class="wish-btn ${isWished ? 'active' : ''}" onclick="event.stopPropagation(); window.App.toggleWishlist('${sanitizeText(p.id)}')">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="${isWished ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.5-4.9-10-9.5C.5 7.8 2.7 4 6.5 4 9 4 11 5.5 12 7c1-1.5 3-3 5.5-3 3.8 0 6 3.8 4.5 7.5C19.5 16.1 12 21 12 21Z"/></svg>
       </button>
-      ${discountPct ? `<span class="discount-badge">خصم ${discountPct}%</span>` : ''}
-      ${!inStock ? `<span class="badge-out-stock">نفذت الكمية</span>` : ''}
+      ${discountPct ? `<span class="discount-badge" style="${badgeStyleCss()}">خصم ${discountPct}%</span>` : ''}
+      ${!inStock ? `<span class="badge-out-stock" style="${badgeStyleCss(true)}">نفذت الكمية</span>` : ''}
       
       <div class="product-thumb" style="background:${color}18;">
         ${cleanImg ? `<img src="${cleanImg}" alt="${sanitizeText(p.name)}" loading="lazy">` : (icons[p.type] || icons.bottle)(color)}
