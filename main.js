@@ -9,7 +9,7 @@
 
 import {
   auth, db, dbPaths, isFirebaseConfigured, currentPharmacyId,
-  patchTenantLinks, getTenantUrl
+  patchTenantLinks
 } from './config.js';
 
 import {
@@ -24,6 +24,7 @@ import {
   currentProductId, setCurrentProductId,
   pdQty, setPdQty, setPdActiveTab,
   deliveryMethod, setDeliveryMethod,
+  appliedPromo, setAppliedPromo,
   currentView, setCurrentView,
   fmtPrice, findProduct, findBundle, getBrandColor, icons, starIcon, saveLocalState
 } from './state.js';
@@ -314,10 +315,12 @@ function renderCheckoutSummary() {
   if (!summaryEl) return;
   const subtotal = getCartSubtotal();
   const fee = (deliveryMethod === 'express') ? (Number(pharmacyProfile.deliveryFeeExpress) || 8000) : (Number(pharmacyProfile.deliveryFeeStandard) || 4000);
-  const finalTotal = subtotal + fee;
+  const discountAmount = appliedPromo ? Number(appliedPromo.discountAmount || 0) : 0;
+  const finalTotal = Math.max(0, subtotal - discountAmount) + fee;
 
   summaryEl.innerHTML = `
     <div class="summary-row"><span>المجموع الفرعي للمنتجات</span><span class="mono">${fmtPrice(subtotal)}</span></div>
+    ${discountAmount > 0 ? `<div class="summary-row" style="color:#10B981;"><span>خصم الكوبون (${sanitizeText(appliedPromo.code)})</span><span class="mono">-${fmtPrice(discountAmount)}</span></div>` : ''}
     <div class="summary-row"><span>أجرة التوصيل</span><span class="mono">+${fmtPrice(fee)}</span></div>
     <div class="summary-row total"><span>المجموع الإجمالي المطلوب</span><span class="mono">${fmtPrice(finalTotal)}</span></div>`;
 }
@@ -525,6 +528,50 @@ function selectDelivery(method) {
   renderCheckoutSummary();
 }
 
+// 🎟️ تفعيل كود الخصم عند الدفع
+async function applyPromoCode() {
+  const input = document.getElementById('promoCodeInput');
+  const statusEl = document.getElementById('promoCodeStatus');
+  const code = input ? input.value.trim() : '';
+
+  if (!code) {
+    if (statusEl) { statusEl.textContent = 'يرجى كتابة كود الخصم أولاً'; statusEl.style.color = '#DC2626'; }
+    return;
+  }
+
+  const subtotal = getCartSubtotal();
+  if (statusEl) { statusEl.textContent = 'جاري التحقق من الكود... ⏳'; statusEl.style.color = 'var(--text-soft)'; }
+
+  const res = await apiFetch('/api/coupons/validate', {
+    method: 'POST',
+    body: JSON.stringify({ code, subtotal })
+  });
+
+  if (res && res.success) {
+    setAppliedPromo({ code: res.code, discountAmount: res.discountAmount, type: res.type });
+    if (statusEl) { statusEl.textContent = res.message || 'تم تفعيل الكود بنجاح ✓'; statusEl.style.color = '#10B981'; }
+    if (input) input.disabled = true;
+    const btn = document.getElementById('applyPromoBtn');
+    if (btn) { btn.textContent = 'إلغاء'; btn.setAttribute('onclick', 'window.App.removePromoCode()'); }
+    renderCheckoutSummary();
+  } else {
+    setAppliedPromo(null);
+    if (statusEl) { statusEl.textContent = (res && res.message) || 'كود الخصم غير صحيح'; statusEl.style.color = '#DC2626'; }
+    renderCheckoutSummary();
+  }
+}
+
+function removePromoCode() {
+  setAppliedPromo(null);
+  const input = document.getElementById('promoCodeInput');
+  const statusEl = document.getElementById('promoCodeStatus');
+  const btn = document.getElementById('applyPromoBtn');
+  if (input) { input.disabled = false; input.value = ''; }
+  if (statusEl) statusEl.textContent = '';
+  if (btn) { btn.textContent = 'تفعيل'; btn.setAttribute('onclick', 'window.App.applyPromoCode()'); }
+  renderCheckoutSummary();
+}
+
 function toggleWishlist(id) {
   if (wishlist.has(id)) wishlist.delete(id);
   else wishlist.add(id);
@@ -573,8 +620,64 @@ async function archiveProductConfirm(id, name) {
 // التعديل الكامل (كل الحقول) يحتاج نافذة موجودة فقط بلوحة التحكم — نوجّه لها مباشرة
 function openAdminQuickEditModal(id) {
   if (!isCurrentUserAdmin(pharmacyProfile, currentStaffData)) return;
-  showToast('جاري التوجيه للوحة التحكم الكاملة لتعديل كل تفاصيل المنتج... ⏳');
-  window.location.href = getTenantUrl('admin.html');
+  const p = findProduct(id);
+  if (!p) return;
+
+  document.getElementById('sfQuickEditProdId').value = id;
+  document.getElementById('sfQuickEditProdName').value = p.name || '';
+  document.getElementById('sfQuickEditProdStockQty').value = (p.stockQuantity !== undefined) ? p.stockQuantity : 10;
+  document.getElementById('sfQuickEditProdDesc').value = p.description || '';
+  document.getElementById('sfQuickEditProdIng').value = p.ingredients || '';
+  document.getElementById('sfQuickEditProdUsage').value = p.usage || '';
+
+  const imgInput = document.getElementById('sfQuickEditProdImg');
+  const imgPreview = document.getElementById('sfQuickEditProdImgPreviewEl');
+  const imgBox = document.getElementById('sfQuickEditProdImgPreviewBox');
+  if (p.imageUrl) {
+    imgInput.value = p.imageUrl;
+    imgPreview.src = p.imageUrl;
+    imgBox.style.display = 'flex';
+  } else {
+    imgInput.value = '';
+    imgBox.style.display = 'none';
+  }
+
+  document.getElementById('sfQuickEditModal')?.classList.add('open');
+}
+
+function closeSfQuickEditModal() {
+  document.getElementById('sfQuickEditModal')?.classList.remove('open');
+}
+
+async function saveSfQuickEdit() {
+  if (!isCurrentUserAdmin(pharmacyProfile, currentStaffData)) return;
+  const id = document.getElementById('sfQuickEditProdId').value;
+  const name = document.getElementById('sfQuickEditProdName').value.trim();
+  const stockQty = Number(document.getElementById('sfQuickEditProdStockQty').value || 0);
+  const imgUrl = sanitizeUrl(document.getElementById('sfQuickEditProdImg').value.trim());
+  const desc = document.getElementById('sfQuickEditProdDesc').value.trim();
+  const ing = document.getElementById('sfQuickEditProdIng').value.trim();
+  const usage = document.getElementById('sfQuickEditProdUsage').value.trim();
+
+  if (!name) {
+    showToast('يرجى إدخال اسم المنتج');
+    return;
+  }
+
+  if (db) {
+    await dbPaths.productsCol().doc(String(id)).set({
+      name: sanitizeText(name),
+      stockQuantity: stockQty,
+      inStock: stockQty > 0,
+      imageUrl: imgUrl,
+      description: sanitizeText(desc),
+      ingredients: sanitizeText(ing),
+      usage: sanitizeText(usage)
+    }, { merge: true });
+  }
+
+  showToast('تم حفظ تعديلات المنتج بنجاح ✓');
+  closeSfQuickEditModal();
 }
 
 // ---------------------------------------------------------
@@ -641,8 +744,10 @@ function updateAdminInterfaceState() {
   const isAdmin = isCurrentUserAdmin(pharmacyProfile, currentStaffData);
   const topBar = document.getElementById('adminTopBar');
   const menuLink = document.getElementById('adminMenuLink');
+  const bnAdmin = document.getElementById('bn-admin');
   if (topBar) topBar.style.display = isAdmin ? 'flex' : 'none';
   if (menuLink) menuLink.style.display = isAdmin ? 'flex' : 'none';
+  if (bnAdmin) bnAdmin.style.display = isAdmin ? 'flex' : 'none';
 }
 
 function renderAccountView() {
@@ -831,7 +936,8 @@ window.App = {
   clearSavedCustomerData, signInWithGoogle, handleSignOut,
   changePdQty, switchPdTab, selectProductVariantCard,
   quickEditPrice, quickToggleStock, archiveProductConfirm, openAdminQuickEditModal,
-  shareCurrentProduct
+  closeSfQuickEditModal, saveSfQuickEdit,
+  shareCurrentProduct, applyPromoCode, removePromoCode
 };
 
 // دوال مباشرة لضمان عمل أزرار onclick الثابتة بـ Index.html
@@ -852,3 +958,4 @@ window.goBackFromProduct = goBackFromProduct;
 window.openBestSellers = openBestSellers;
 window.selectDelivery = selectDelivery;
 window.onSearch = onSearch;
+window.uploadDirectImageFile = uploadDirectImageFile;
