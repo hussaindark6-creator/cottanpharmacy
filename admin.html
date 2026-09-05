@@ -707,16 +707,61 @@
           </div>
         </fieldset>
 
-        <!-- 🔒 PRIVATE CREDENTIALS (SAVED TO private_settings/config) -->
-        <fieldset class="admin-fieldset" style="border-color:#3B82F6; background:#EFF6FF;">
-          <legend style="color:#1D4ED8;">🔒 إعدادات التيليجرام والأسرار (Private Secrets)</legend>
+        <!-- 🖼️ بانر الواجهة الرئيسية (الصورة والنصوص) -->
+        <fieldset class="admin-fieldset">
+          <legend>🖼️ بانر الصفحة الرئيسية (الصورة والنصوص)</legend>
+
           <div class="form-field">
-            <label>توكن بوت تلغرام الصيدلية (Telegram Bot Token)</label>
-            <input type="text" id="adminTeleBotToken" placeholder="8714017218:AAEO..." style="font-family:monospace; background:#fff;">
+            <label>صورة البانر الرئيسي - اختيار مباشر من المعرض / الكاميرا</label>
+            <input type="file" accept="image/*" onchange="uploadDirectImageFile(this, 'adminBannerImgInput', 'adminBannerImgPreviewEl', 'adminBannerImgPreviewBox')" style="width:100%; padding:8px; border:1.5px dashed var(--line); border-radius:12px; background:#fff; font-size:12px;">
+            <input type="hidden" id="adminBannerImgInput" value="">
+            <div id="adminBannerImgPreviewBox" style="margin-top:8px; display:none; align-items:center; gap:10px;">
+              <img id="adminBannerImgPreviewEl" src="" style="height:60px; width:100px; object-fit:cover; border-radius:8px; border:1.5px solid var(--line);" alt="Banner Preview">
+              <span style="font-size:11px; color:#16A34A; font-weight:800;">✅ تم حفظ صورة البانر</span>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label>العنوان الرئيسي بالبانر</label>
+            <input type="text" id="adminHeroMainTitle" placeholder="متجر الصيدلية">
           </div>
           <div class="form-field">
-            <label>معرف شات تلغرام الصيدلية (Chat ID)</label>
-            <input type="text" id="adminTeleChatId" placeholder="-5458203370" style="font-family:monospace; background:#fff;">
+            <label>العنوان الفرعي بالبانر</label>
+            <input type="text" id="adminHeroSubTitle" placeholder="نحن هنا لتحسين صحتكم وجمالكم">
+          </div>
+          <div class="form-field">
+            <label>الوصف الصغير أسفل البانر</label>
+            <input type="text" id="adminHeroDescTitle" placeholder="منتجات أصلية ومعتمدة 100%">
+          </div>
+
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:14px; background:#F9FAFB; padding:12px 14px; border-radius:12px; margin-top:8px;">
+            <div>
+              <div style="font-weight:800; font-size:13.5px; color:var(--ink);">إظهار شريط الترحيب الوردي</div>
+            </div>
+            <input type="checkbox" id="adminShowAnnouncement" checked style="width:20px; height:20px;">
+          </div>
+          <div class="form-field">
+            <label>نص شريط الترحيب</label>
+            <input type="text" id="adminAnnouncementText" placeholder="✨ أهلاً بكم في متجرنا الإلكتروني 🌸">
+          </div>
+        </fieldset>
+
+        <!-- 🩺 بانر استشارة الصيدلي -->
+        <fieldset class="admin-fieldset">
+          <legend>🩺 بانر استشارة الصيدلي</legend>
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:14px; background:#F9FAFB; padding:12px 14px; border-radius:12px;">
+            <div>
+              <div style="font-weight:800; font-size:13.5px; color:var(--ink);">إظهار بانر الاستشارة</div>
+            </div>
+            <input type="checkbox" id="adminShowPharmacistBanner" checked style="width:20px; height:20px;">
+          </div>
+          <div class="form-field">
+            <label>عنوان بانر الاستشارة</label>
+            <input type="text" id="adminPharmacistTitleInput" placeholder="استشر الصيدلي مجاناً 🩺">
+          </div>
+          <div class="form-field">
+            <label>وصف بانر الاستشارة</label>
+            <input type="text" id="adminPharmacistDescInput" placeholder="تحدث مع الصيدلي المختص مباشرة...">
           </div>
         </fieldset>
 
@@ -1268,7 +1313,7 @@
       }
     }
 
-    // 🔒 قراءة وحفظ إعدادات الهوية وعزل الأسرار (Secret Decoupling)
+    // 🔒 قراءة وحفظ إعدادات الهوية (البانر، النصوص، بيانات التواصل)
     async function loadPharmacyDesignAndSecrets() {
       if (!db) return;
       try {
@@ -1282,20 +1327,24 @@
           if (document.getElementById('adminSocialPhoneInput')) document.getElementById('adminSocialPhoneInput').value = p.socialPhone || '';
           if (document.getElementById('adminDeliveryStandard')) document.getElementById('adminDeliveryStandard').value = p.deliveryFeeStandard || 4000;
           if (document.getElementById('adminDeliveryExpress')) document.getElementById('adminDeliveryExpress').value = p.deliveryFeeExpress || 8000;
+          if (document.getElementById('adminHeroMainTitle')) document.getElementById('adminHeroMainTitle').value = p.heroMainTitle || '';
+          if (document.getElementById('adminHeroSubTitle')) document.getElementById('adminHeroSubTitle').value = p.heroSubTitle || '';
+          if (document.getElementById('adminHeroDescTitle')) document.getElementById('adminHeroDescTitle').value = p.heroDescTitle || '';
+          if (document.getElementById('adminShowAnnouncement')) document.getElementById('adminShowAnnouncement').checked = (p.showAnnouncement !== false);
+          if (document.getElementById('adminAnnouncementText')) document.getElementById('adminAnnouncementText').value = p.announcementText || '';
+          if (document.getElementById('adminShowPharmacistBanner')) document.getElementById('adminShowPharmacistBanner').checked = (p.showPharmacistBanner !== false);
+          if (document.getElementById('adminPharmacistTitleInput')) document.getElementById('adminPharmacistTitleInput').value = p.pharmacistCtaTitle || '';
+          if (document.getElementById('adminPharmacistDescInput')) document.getElementById('adminPharmacistDescInput').value = p.pharmacistCtaDesc || '';
           if (p.logoUrl) {
             document.getElementById('adminPharmacyLogoInput').value = p.logoUrl;
             document.getElementById('adminPharmacyLogoPreviewEl').src = p.logoUrl;
             document.getElementById('adminPharmacyLogoPreviewBox').style.display = 'flex';
           }
-        }
-
-        // 2. قراءة المستند السري المفصول
-        const privSnap = await dbPaths.privateSettingsDoc().get();
-        if (privSnap.exists) {
-          const priv = privSnap.data();
-          const tele = priv.telegramConfig || {};
-          if (document.getElementById('adminTeleBotToken')) document.getElementById('adminTeleBotToken').value = tele.botToken || '';
-          if (document.getElementById('adminTeleChatId')) document.getElementById('adminTeleChatId').value = tele.chatId || '';
+          if (p.bannerImgUrl) {
+            document.getElementById('adminBannerImgInput').value = p.bannerImgUrl;
+            document.getElementById('adminBannerImgPreviewEl').src = p.bannerImgUrl;
+            document.getElementById('adminBannerImgPreviewBox').style.display = 'flex';
+          }
         }
       } catch (e) {
         console.warn(e);
@@ -1314,8 +1363,15 @@
       const deliveryFeeStandard = Number(document.getElementById('adminDeliveryStandard').value || 4000);
       const deliveryFeeExpress = Number(document.getElementById('adminDeliveryExpress').value || 8000);
 
-      const botToken = document.getElementById('adminTeleBotToken').value.trim();
-      const chatId = document.getElementById('adminTeleChatId').value.trim();
+      const bannerImgUrl = sanitizeUrl(document.getElementById('adminBannerImgInput').value.trim());
+      const heroMainTitle = document.getElementById('adminHeroMainTitle').value.trim();
+      const heroSubTitle = document.getElementById('adminHeroSubTitle').value.trim();
+      const heroDescTitle = document.getElementById('adminHeroDescTitle').value.trim();
+      const showAnnouncement = document.getElementById('adminShowAnnouncement').checked;
+      const announcementText = document.getElementById('adminAnnouncementText').value.trim();
+      const showPharmacistBanner = document.getElementById('adminShowPharmacistBanner').checked;
+      const pharmacistCtaTitle = document.getElementById('adminPharmacistTitleInput').value.trim();
+      const pharmacistCtaDesc = document.getElementById('adminPharmacistDescInput').value.trim();
 
       try {
         // تحديث المستند العام
@@ -1327,20 +1383,19 @@
           socialPhone: sanitizeText(socialPhone),
           deliveryFeeStandard,
           deliveryFeeExpress,
+          bannerImgUrl,
+          heroMainTitle: sanitizeText(heroMainTitle),
+          heroSubTitle: sanitizeText(heroSubTitle),
+          heroDescTitle: sanitizeText(heroDescTitle),
+          showAnnouncement,
+          announcementText: sanitizeText(announcementText),
+          showPharmacistBanner,
+          pharmacistCtaTitle: sanitizeText(pharmacistCtaTitle),
+          pharmacistCtaDesc: sanitizeText(pharmacistCtaDesc),
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
 
-        // تحديث المستند السري (Secrets Decoupled)
-        await dbPaths.privateSettingsDoc().set({
-          telegramConfig: {
-            botToken,
-            chatId,
-            enabled: !!(botToken && chatId)
-          },
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
-
-        showToast('تم حفظ وتطبيق الهوية والأسرار سحابياً! ✨');
+        showToast('تم حفظ وتطبيق الهوية والبانر سحابياً! ✨');
       } catch (err) {
         showToast(`خطأ: ${err.message}`);
       }
