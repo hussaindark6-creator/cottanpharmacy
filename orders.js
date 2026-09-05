@@ -7,7 +7,7 @@ import { db, dbPaths, currentPharmacyId, WORKER_API_BASE } from './config.js';
 import { 
   cart, findProduct, findBundle, pharmacyProfile, 
   appliedPromo, deliveryMethod, myOrders, fmtPrice, 
-  saveLocalState 
+  saveLocalState, currentUser
 } from './state.js';
 import { lockAction, sanitizeText } from './security.js';
 
@@ -78,6 +78,7 @@ export async function executeAtomicOrderCheckout(showToastFn) {
   const newOrderObj = {
     id: orderId,
     pharmacyId: currentPharmacyId,
+    userId: currentUser ? currentUser.uid : null,
     date: new Date().toLocaleDateString('ar-IQ', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
     name,
     phone,
