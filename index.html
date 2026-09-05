@@ -463,6 +463,14 @@
           <div class="delivery-opt" id="delExpress" onclick="selectDelivery('express')">توصيل سريع<br><span style="font-weight:400;">خلال يوم</span></div>
         </div>
       </div>
+      <div class="form-field">
+        <label>كود الخصم (اختياري)</label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="promoCodeInput" placeholder="ادخلي كود الخصم إن وجد" style="flex:1;">
+          <button type="button" id="applyPromoBtn" onclick="window.App.applyPromoCode()" style="background:var(--accent); color:#fff; font-weight:800; font-size:12.5px; padding:0 18px; border-radius:10px; white-space:nowrap;">تفعيل</button>
+        </div>
+        <div id="promoCodeStatus" style="margin-top:6px; font-size:12px; font-weight:800;"></div>
+      </div>
       <div id="checkoutSummaryBlock"></div>
       <button class="checkout-btn" id="confirmOrderBtn" onclick="executeAtomicOrderCheckout()">
         تأكيد الطلب
@@ -618,11 +626,15 @@
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
       <span class="lbl">الأقسام</span>
     </button>
-    <button class="bn-item" onclick="showView('cart')" id="bn-cart">
+    <button class="bn-item" onclick="window.App.showView('cart')" id="bn-cart" style="display:none">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h2l2.4 12.4a2 2 0 0 0 2 1.6h8.4a2 2 0 0 0 2-1.6L22 8H6"/><circle cx="9" cy="21" r="1.4" fill="currentColor" stroke="none"/><circle cx="18" cy="21" r="1.4" fill="currentColor" stroke="none"/></svg>
       <span class="lbl">السلة</span>
       <span class="badge-count" id="bnCartBadge" style="display:none;">0</span>
     </button>
+    <a class="bn-item" href="admin.html" id="bn-admin" style="display:none; color:#F59E0B;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span class="lbl">إعدادات الأدمن</span>
+    </a>
   </nav>
 
   <!-- WhatsApp Floating FAB -->
@@ -632,6 +644,56 @@
 
   <!-- Toast Notification Box -->
   <div class="toast" id="toast"></div>
+
+  <!-- Storefront Inline Product Quick-Edit Modal (Admin) -->
+  <div class="admin-quick-modal-overlay" id="sfQuickEditModal">
+    <div class="admin-quick-card" style="max-width: 560px; max-height: 90vh; overflow-y: auto;">
+      <div class="consult-header">
+        <h3 style="color:#111827; font-weight:900;">✏️ تعديل سريع لتفاصيل المنتج</h3>
+        <button class="icon-btn" onclick="window.App.closeSfQuickEditModal()">✕</button>
+      </div>
+      <div style="padding:18px; text-align:right;">
+        <input type="hidden" id="sfQuickEditProdId">
+
+        <div class="form-field">
+          <label>اسم المنتج *</label>
+          <input type="text" id="sfQuickEditProdName" required>
+        </div>
+
+        <div class="form-field">
+          <label>الكمية بالمخزن *</label>
+          <input type="number" id="sfQuickEditProdStockQty" min="0" required>
+        </div>
+
+        <div class="form-field">
+          <label>صورة المنتج (اختيار مباشر من المعرض / الكاميرا)</label>
+          <input type="file" accept="image/*" onchange="uploadDirectImageFile(this, 'sfQuickEditProdImg', 'sfQuickEditProdImgPreviewEl', 'sfQuickEditProdImgPreviewBox')" style="width:100%; padding:8px; border:1.5px dashed var(--line); border-radius:12px; background:#fff; font-size:12px;">
+          <input type="hidden" id="sfQuickEditProdImg" value="">
+          <div id="sfQuickEditProdImgPreviewBox" style="margin-top:8px; display:none; align-items:center; gap:10px;">
+            <img id="sfQuickEditProdImgPreviewEl" src="" style="height:70px; width:70px; object-fit:cover; border-radius:10px; border:1px solid var(--line);" alt="Preview">
+            <span style="font-size:11px; color:#16A34A; font-weight:800;">✅ تم تحديث الصورة</span>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label>الوصف المفصل والفوائد</label>
+          <textarea id="sfQuickEditProdDesc" rows="3" placeholder="تفاصيل المنتج والفوائد..."></textarea>
+        </div>
+
+        <div class="form-field">
+          <label>المكونات الفعالة والتركيبة (Ingredients)</label>
+          <input type="text" id="sfQuickEditProdIng" placeholder="Hyaluronic Acid, Ceramides...">
+        </div>
+
+        <div class="form-field">
+          <label>طريقة الاستخدام والإرشادات (Usage)</label>
+          <input type="text" id="sfQuickEditProdUsage" placeholder="يوضع صباحاً ومساءً...">
+        </div>
+
+        <button type="button" class="admin-btn-save" onclick="window.App.saveSfQuickEdit()">💾 حفظ التعديلات</button>
+      </div>
+    </div>
+  </div>
 
   <!-- 🌟 تشغيل المحرك الرئيسي المستقل والمباشر -->
   <script type="module" src="main.js"></script>
