@@ -147,7 +147,23 @@ export async function executeAtomicOrderCheckout(showToastFn) {
         confirmBtn.disabled = false;
         confirmBtn.textContent = 'تأكيد الطلب';
       }
-      showToastFn(`⚠️ ${err.message}`);
+      console.error('Checkout transaction failed. Code:', err.code, '| Message:', err.message, '| Full error:', err);
+
+      // 🔎 خطوة تشخيصية مباشرة: نحاول كتابة الطلب بمفرده (بدون Transaction وبدون تحديث مخزون)
+      // لنعرف بالضبط هل المشكلة بكتابة الطلب نفسه أو بتحديث المخزون
+      try {
+        await dbPaths.ordersCol().doc(`DIAG-${orderId}`).set({
+          ...newOrderObj,
+          id: `DIAG-${orderId}`,
+          isDiagnosticTest: true,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        console.error('🔎 تشخيص: كتابة الطلب بمفردها نجحت! المشكلة إذن بتحديث مخزون المنتج تحديداً.');
+        showToastFn(`⚠️ فشل تحديث المخزون تحديداً (${err.code || 'permission-denied'}) — الطلب نفسه ينكتب زين. راجع قاعدة تحديث "products".`);
+      } catch (diagErr) {
+        console.error('🔎 تشخيص: حتى كتابة الطلب بمفرده فشلت. Code:', diagErr.code, diagErr.message);
+        showToastFn(`⚠️ فشلت كتابة الطلب نفسه (${diagErr.code || 'permission-denied'}) — المشكلة بقاعدة "orders" وليس بالمخزون.`);
+      }
       return;
     }
   }
