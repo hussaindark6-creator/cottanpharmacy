@@ -535,6 +535,33 @@ function checkStorefrontSubscriptionLock() {
   }
 }
 
+// ================= 8b. ADMIN PANEL SUBSCRIPTION LOCK GATE =================
+// 🛡️ نفس منطق قفل المتجر، بس للوحة التحكم نفسها — كانت هذي البوابة موجودة
+// بالـ HTML (subscriptionLockGate) بدون أي كود يفعّلها، يعني الأدمن يقدر يشتغل
+// عادي حتى لو صيدليته موقوفة أو منتهي اشتراكها.
+function checkAdminSubscriptionLock() {
+  const isSuspended = pharmacyProfile.isActive === false;
+  const todayStr = new Date().toISOString().split('T')[0];
+  const isExpired = pharmacyProfile.subscriptionExpiry && pharmacyProfile.subscriptionExpiry < todayStr;
+
+  const gate = document.getElementById('subscriptionLockGate');
+  if (!gate) return;
+
+  if ((isSuspended || isExpired) && !isSuperAdmin()) {
+    gate.style.display = 'flex';
+    const titleEl = document.getElementById('lockGateTitle');
+    const descEl = document.getElementById('lockGateDesc');
+    if (titleEl) titleEl.textContent = isSuspended ? 'المتجر موقوف مؤقتاً' : 'انتهت مدة الاشتراك';
+    if (descEl) {
+      descEl.textContent = isSuspended
+        ? 'تم إيقاف صيدليتك مؤقتاً من قبل إدارة المنصة. يرجى التواصل معهم لمعرفة السبب وإعادة التفعيل.'
+        : 'انتهت فترة اشتراك صيدليتك بالمنصة. يرجى تجديد الاشتراك لاستعادة الوصول الكامل للوحة التحكم.';
+    }
+  } else {
+    gate.style.display = 'none';
+  }
+}
+
 // ================= 9. SMART LOW-STOCK DETECTOR =================
 function checkLowStockAlerts() {
   const outOfStock = products.filter(p => (p.inStock === false || (p.stockQuantity !== undefined && p.stockQuantity <= 0)) && p.isDeleted !== true);
@@ -834,16 +861,46 @@ function renderAdminCouponsList(coupons) {
         </div>
       </div>
       <div style="display:flex; gap:6px;">
+        <button onclick="editAdminCoupon('${sanitizeText(c.id)}', ${JSON.stringify(c).replace(/"/g, '&quot;')})" style="background:#DBEAFE; color:#1D4ED8; padding:6px 10px; border-radius:8px; font-weight:800; font-size:11px;">تعديل ✏️</button>
         <button onclick="deleteAdminCoupon('${sanitizeText(c.id)}')" style="background:#FEE2E2; color:var(--red); padding:6px 10px; border-radius:8px; font-weight:800; font-size:11px;">حذف 🗑️</button>
       </div>
     </div>
   `).join('');
 }
 
+// ✏️ تعبئة فورم الكوبون بالبيانات الحالية للتعديل بدل الإنشاء
+function editAdminCoupon(id, coupon) {
+  document.getElementById('couponDocId').value = id;
+  document.getElementById('couponCodeInput').value = coupon.code || id;
+  document.getElementById('couponTypeSelect').value = coupon.type || 'percentage';
+  document.getElementById('couponValueInput').value = coupon.value || '';
+  document.getElementById('couponMinSpendInput').value = coupon.minSpend || 0;
+  document.getElementById('couponMaxUsesInput').value = coupon.maxUses || 100;
+  document.getElementById('couponExpiryInput').value = coupon.expiry || '';
+  document.getElementById('couponActiveCheck').checked = coupon.active !== false;
+
+  const titleEl = document.getElementById('adminCouponFormTitle');
+  if (titleEl) titleEl.textContent = '✏️ تعديل كود الخصم';
+  const saveBtn = document.getElementById('btnSaveCoupon');
+  if (saveBtn) saveBtn.textContent = '💾 حفظ التعديلات';
+
+  document.getElementById('adminCouponForm')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function resetAdminCouponForm() {
+  document.getElementById('adminCouponForm')?.reset();
+  document.getElementById('couponDocId').value = '';
+  const titleEl = document.getElementById('adminCouponFormTitle');
+  if (titleEl) titleEl.textContent = '🎟️ إضافة كود خصم جديد';
+  const saveBtn = document.getElementById('btnSaveCoupon');
+  if (saveBtn) saveBtn.textContent = '💾 حفظ وتفعيل كود الخصم سحابياً';
+}
+
 async function handleAdminCouponSave(e) {
   e.preventDefault();
   if (!assertAdmin() || !lockAction('saveCoupon', 1500)) return;
 
+  const editingId = document.getElementById('couponDocId').value.trim();
   const payload = {
     code: document.getElementById('couponCodeInput').value.trim().toUpperCase(),
     type: document.getElementById('couponTypeSelect').value,
@@ -857,9 +914,12 @@ async function handleAdminCouponSave(e) {
 
   if (db) {
     await dbPaths.couponsCol().doc(payload.code).set(payload, { merge: true });
-    showToast('تم حفظ كود الخصم وتفعيله سحابياً بنجاح! 🎉');
-    document.getElementById('couponCodeInput').value = '';
-    document.getElementById('couponValueInput').value = '';
+    // لو كنا نعدّل كوبون وتغيّر الكود، نحذف المستند القديم حتى ما يصير تكرار
+    if (editingId && editingId !== payload.code) {
+      await dbPaths.couponsCol().doc(editingId).delete().catch(() => {});
+    }
+    showToast(editingId ? 'تم حفظ تعديلات كود الخصم بنجاح! ✓' : 'تم حفظ كود الخصم وتفعيله سحابياً بنجاح! 🎉');
+    resetAdminCouponForm();
     fetchAdminCoupons();
   }
 }
@@ -3278,6 +3338,9 @@ function initFirestoreSync() {
       renderPromoCardsListAdmin();
       renderBrandStrip();
       checkStorefrontSubscriptionLock();
+      checkAdminSubscriptionLock();
+      const navTitleEl = document.getElementById('adminNavTitle');
+      if (navTitleEl) navTitleEl.textContent = `لوحة تحكم ${pharmacyProfile.name || 'الصيدلية'}`;
     }
   }, err => console.warn(err));
 
