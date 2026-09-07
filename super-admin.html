@@ -109,6 +109,9 @@
         <button id="tabBtnInfra" onclick="switchSuperTab('infra')" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2 bg-blue-950/40 border border-blue-800/50">
           🚀 ترقية وتوسيع السيرفرات
         </button>
+        <button id="tabBtnPackages" onclick="switchSuperTab('packages')" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2 bg-amber-950/30 border border-amber-800/40">
+          💎 باقات الاشتراك
+        </button>
         <button id="tabBtnPaymentInfo" onclick="switchSuperTab('paymentInfo')" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2">
           💳 بيانات الدفع الإلكتروني
         </button>
@@ -208,6 +211,12 @@
               <div>
                 <label class="block text-xs font-bold text-slate-300 mb-2">رقم الواتساب الرسمي *</label>
                 <input type="text" id="inpWhatsapp" placeholder="9647813703288" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white font-mono placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition" required>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-amber-400 mb-2">💎 باقة الاشتراك</label>
+                <select id="newPharmacyPackageId" onchange="applyPackageToCreateForm()" class="w-full bg-slate-950 border border-amber-500/40 rounded-xl px-4 py-3 text-sm text-white font-bold focus:outline-none focus:border-amber-500">
+                  <option value="">— بدون باقة (تسعير يدوي) —</option>
+                </select>
               </div>
               <div>
                 <label class="block text-xs font-bold text-slate-300 mb-2">سعر الاشتراك الأساسي (د.ع) *</label>
@@ -641,6 +650,62 @@
         </div>
       </section>
 
+      <!-- ================= TAB: SUBSCRIPTION PACKAGES ================= -->
+      <section id="secSuperPackages" class="tab-content hidden space-y-8">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl">
+          <div class="flex items-center gap-3 pb-6 border-b border-slate-800 mb-6">
+            <div class="w-10 h-10 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-center justify-center text-xl">
+              💎
+            </div>
+            <div>
+              <h2 class="text-lg font-black text-white">باقات الاشتراك</h2>
+              <p class="text-xs text-slate-400">حددي أسعار وميزات كل باقة — تظهر هذي الباقات عند إنشاء أو تعديل أي صيدلية.</p>
+            </div>
+          </div>
+
+          <!-- Existing packages list -->
+          <div id="packagesListGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8"></div>
+
+          <!-- Add / Edit package form -->
+          <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-5">
+            <h3 class="text-sm font-black text-amber-400 mb-4" id="packageFormTitle">➕ إضافة باقة جديدة</h3>
+            <form onsubmit="handleSavePackage(event)" class="space-y-4">
+              <input type="hidden" id="pkgDocId">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-bold text-slate-300 mb-1">اسم الباقة *</label>
+                  <input type="text" id="pkgName" placeholder="مثال: الباقة المميزة" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white" required>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-300 mb-1">السعر الشهري (د.ع) *</label>
+                  <input type="number" id="pkgPrice" placeholder="75000" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-amber-400 font-mono font-bold" required>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-300 mb-1">السقف الأقصى لسعر المنتج (Max Price Cap)</label>
+                  <input type="number" id="pkgMaxPriceCap" placeholder="150000" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-emerald-400 font-mono">
+                </div>
+                <div class="flex items-center gap-3 bg-slate-900 rounded-xl px-4 py-2.5 border border-slate-700">
+                  <input type="checkbox" id="pkgCustomDomainAllowed" class="w-5 h-5">
+                  <label for="pkgCustomDomainAllowed" class="text-xs font-bold text-slate-300">🌐 يسمح بربط دومين مخصص</label>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-300 mb-1">الميزات (سطر واحد لكل ميزة)</label>
+                <textarea id="pkgFeatures" rows="4" placeholder="منتجات غير محدودة&#10;دعم فني أولوية&#10;تقارير مبيعات متقدمة" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white"></textarea>
+              </div>
+              <div class="flex gap-3">
+                <button type="submit" class="flex-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black py-3 rounded-xl transition">
+                  💾 حفظ الباقة
+                </button>
+                <button type="button" onclick="resetPackageForm()" class="px-5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl transition text-xs">
+                  إلغاء
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
       <!-- ================= TAB 8: CONSOLIDATED & INDIVIDUAL REPORTS ================= -->
       <section id="secSuperReports" class="tab-content hidden space-y-8">
         <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/40 border border-emerald-500/30 rounded-3xl p-6 sm:p-8 shadow-xl">
@@ -702,6 +767,7 @@
 
       <form onsubmit="handleSaveFullEdit(event)" class="space-y-4">
         <input type="hidden" id="editOldSlugId">
+        <input type="hidden" id="editOldCustomDomain">
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -716,6 +782,12 @@
           <div>
             <label class="block text-xs font-bold text-slate-300 mb-1">إيميل المشرف الرئيسي</label>
             <input type="email" id="editAdminEmail" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white font-mono" required>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-bold text-amber-400 mb-1">💎 باقة الاشتراك</label>
+            <select id="editPackageId" onchange="applyPackageToEditForm()" class="w-full bg-slate-950 border border-amber-500/40 rounded-xl px-4 py-2.5 text-sm text-white font-bold">
+              <option value="">— بدون باقة (تسعير يدوي) —</option>
+            </select>
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-300 mb-1">سعر الاشتراك الأساسي (د.ع)</label>
@@ -748,6 +820,11 @@
           <div class="sm:col-span-2">
             <label class="block text-xs font-bold text-slate-300 mb-1">معرف شات تلغرام الصيدلية (سري)</label>
             <input type="text" id="editTeleChatId" placeholder="-5458203370" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white font-mono">
+          </div>
+          <div class="sm:col-span-2 border-t border-slate-800 pt-4">
+            <label class="block text-xs font-bold text-amber-400 mb-1">🌐 دومين مخصص للصيدلية (اختياري)</label>
+            <input type="text" id="editCustomDomain" placeholder="www.pharmacyname.com" class="w-full bg-slate-950 border border-amber-500/40 rounded-xl px-4 py-2.5 text-sm text-white font-mono" oninput="this.value = this.value.toLowerCase().trim()">
+            <p class="text-[10px] text-slate-500 mt-1">اكتبي الدومين بدون https:// — بعد الحفظ وجّهي DNS مالت هذا الدومين لاستضافة الموقع (Cloudflare Pages Custom Domain)</p>
           </div>
         </div>
 
@@ -852,6 +929,7 @@
         crowdsource: ['tabBtnCrowdsource', 'secSuperCrowdsource'],
         infra: ['tabBtnInfra', 'secSuperInfra'],
         paymentInfo: ['tabBtnPaymentInfo', 'secSuperPaymentInfo'],
+        packages: ['tabBtnPackages', 'secSuperPackages'],
         reports: ['tabBtnReports', 'secSuperReports']
       };
 
@@ -864,6 +942,7 @@
       if (tabKey === 'catalog') fetchMasterCatalog();
       if (tabKey === 'crowdsource') fetchCrowdsourcedSubmissions();
       if (tabKey === 'reports') renderIndividualReportsList();
+      if (tabKey === 'packages') fetchSubscriptionPackages();
     }
 
     let toastTimer = null;
@@ -904,6 +983,7 @@
         fetchPharmaciesList();
         fetchMasterCatalog();
         fetchCrowdsourcedSubmissions();
+        fetchSubscriptionPackages();
       } else {
         if (auth) auth.signOut();
         gate.classList.remove('hidden');
@@ -1009,6 +1089,7 @@
       const name = document.getElementById('inpPharmacyName').value.trim();
       const adminEmail = document.getElementById('inpAdminEmail').value.trim().toLowerCase();
       const whatsapp = document.getElementById('inpWhatsapp').value.trim().replace(/\+/g, '');
+      const packageId = document.getElementById('newPharmacyPackageId').value;
       const subPrice = Number(document.getElementById('inpSubscriptionPrice').value || 50000);
       const maxCap = Number(document.getElementById('inpMaxPriceCap').value || 150000);
       const expiryDate = document.getElementById('inpExpiryDate').value;
@@ -1025,6 +1106,7 @@
           adminEmail,
           socialWhatsapp: whatsapp,
           templateId,
+          packageId,
           primaryColor: color,
           isActive: true,
           subscriptionExpiry: expiryDate,
@@ -1521,6 +1603,131 @@
       }
     }
 
+    // ================= SUBSCRIPTION PACKAGES =================
+    async function fetchSubscriptionPackages() {
+      if (!db) return;
+      try {
+        const snap = await db.collection('system').doc('subscription_packages').collection('packages').orderBy('price', 'asc').get();
+        const packages = [];
+        snap.forEach(d => packages.push({ id: d.id, ...d.data() }));
+        window.cachedPackagesList = packages;
+        renderPackagesList(packages);
+        populatePackageDropdowns(packages);
+      } catch (e) { console.warn(e); }
+    }
+
+    function renderPackagesList(packages) {
+      const grid = document.getElementById('packagesListGrid');
+      if (!grid) return;
+      if (packages.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center text-slate-500 text-xs py-6">لا توجد باقات مسجّلة بعد — أضيفي أول باقة بالأسفل.</div>`;
+        return;
+      }
+      grid.innerHTML = packages.map(p => `
+        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5 flex flex-col gap-3">
+          <div class="flex items-center justify-between">
+            <h4 class="font-black text-white text-sm">${p.name || p.id}</h4>
+            ${p.customDomainAllowed ? '<span class="text-[10px] bg-blue-950/60 text-blue-400 border border-blue-800/50 px-2 py-0.5 rounded-full font-bold">🌐 دومين مخصص</span>' : ''}
+          </div>
+          <div class="text-2xl font-black text-amber-400 font-mono">${Number(p.price || 0).toLocaleString()} <span class="text-xs text-slate-500 font-bold">د.ع / شهرياً</span></div>
+          <ul class="text-xs text-slate-400 space-y-1 flex-1">
+            ${(p.features || []).map(f => `<li>✓ ${f}</li>`).join('') || '<li class="text-slate-600">لا توجد ميزات مضافة</li>'}
+          </ul>
+          <div class="flex gap-2 pt-2 border-t border-slate-800">
+            <button onclick='editPackage(${JSON.stringify(p).replace(/'/g, "&#39;")})' class="flex-1 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold py-2 rounded-lg transition">تعديل ✏️</button>
+            <button onclick="deletePackage('${p.id}')" class="flex-1 bg-red-950/50 hover:bg-red-900/50 text-red-400 text-xs font-bold py-2 rounded-lg transition">حذف 🗑️</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function editPackage(pkg) {
+      document.getElementById('pkgDocId').value = pkg.id;
+      document.getElementById('pkgName').value = pkg.name || '';
+      document.getElementById('pkgPrice').value = pkg.price || '';
+      document.getElementById('pkgMaxPriceCap').value = pkg.maxPriceCap || '';
+      document.getElementById('pkgCustomDomainAllowed').checked = !!pkg.customDomainAllowed;
+      document.getElementById('pkgFeatures').value = (pkg.features || []).join('\n');
+      document.getElementById('packageFormTitle').textContent = '✏️ تعديل الباقة: ' + (pkg.name || pkg.id);
+      document.getElementById('packageFormTitle').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function resetPackageForm() {
+      document.getElementById('pkgDocId').value = '';
+      document.getElementById('pkgName').value = '';
+      document.getElementById('pkgPrice').value = '';
+      document.getElementById('pkgMaxPriceCap').value = '';
+      document.getElementById('pkgCustomDomainAllowed').checked = false;
+      document.getElementById('pkgFeatures').value = '';
+      document.getElementById('packageFormTitle').textContent = '➕ إضافة باقة جديدة';
+    }
+
+    async function handleSavePackage(e) {
+      e.preventDefault();
+      if (!db) return;
+      const existingId = document.getElementById('pkgDocId').value.trim();
+      const name = document.getElementById('pkgName').value.trim();
+      const price = Number(document.getElementById('pkgPrice').value || 0);
+      const maxPriceCap = Number(document.getElementById('pkgMaxPriceCap').value || 0) || null;
+      const customDomainAllowed = document.getElementById('pkgCustomDomainAllowed').checked;
+      const features = document.getElementById('pkgFeatures').value.split('\n').map(f => f.trim()).filter(Boolean);
+
+      const docId = existingId || name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || ('pkg_' + Date.now());
+
+      try {
+        await db.collection('system').doc('subscription_packages').collection('packages').doc(docId).set({
+          name, price, maxPriceCap, customDomainAllowed, features,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+        showToast(existingId ? 'تم تحديث الباقة بنجاح ✓' : 'تمت إضافة الباقة الجديدة! 💎');
+        resetPackageForm();
+        fetchSubscriptionPackages();
+      } catch (err) {
+        showToast('خطأ: ' + err.message, true);
+      }
+    }
+
+    async function deletePackage(id) {
+      if (!confirm('هل أنتِ متأكدة من حذف هذي الباقة؟ الصيدليات المشتركة فيها حالياً تبقى ببياناتها الحالية بدون تأثر.')) return;
+      try {
+        await db.collection('system').doc('subscription_packages').collection('packages').doc(id).delete();
+        showToast('تم حذف الباقة');
+        fetchSubscriptionPackages();
+      } catch (err) {
+        showToast('خطأ: ' + err.message, true);
+      }
+    }
+
+    // تعبئة قوائم اختيار الباقة بنماذج إنشاء/تعديل الصيدلية
+    function populatePackageDropdowns(packages) {
+      const options = '<option value="">— بدون باقة (تسعير يدوي) —</option>' +
+        packages.map(p => `<option value="${p.id}">${p.name} — ${Number(p.price || 0).toLocaleString()} د.ع</option>`).join('');
+      ['newPharmacyPackageId', 'editPackageId'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = options;
+      });
+    }
+
+    // عند اختيار باقة بنموذج التعديل، نعبّي السعر والسقف تلقائياً (تبقى قابلة للتعديل اليدوي)
+    function applyPackageToEditForm() {
+      const pkgId = document.getElementById('editPackageId').value;
+      const pkg = (window.cachedPackagesList || []).find(p => p.id === pkgId);
+      if (pkg) {
+        document.getElementById('editSubPrice').value = pkg.price || '';
+        document.getElementById('editMaxPriceCap').value = pkg.maxPriceCap || 150000;
+      }
+    }
+
+    // نفس الفكرة لنموذج إنشاء صيدلية جديدة
+    function applyPackageToCreateForm() {
+      const pkgId = document.getElementById('newPharmacyPackageId').value;
+      const pkg = (window.cachedPackagesList || []).find(p => p.id === pkgId);
+      if (pkg) {
+        document.getElementById('inpSubscriptionPrice').value = pkg.price || '';
+        document.getElementById('inpMaxPriceCap').value = pkg.maxPriceCap || 150000;
+      }
+    }
+
     // ================= CONSOLIDATED & INDIVIDUAL REPORTS =================
     function renderIndividualReportsList() {
       const tbody = document.getElementById('individualReportsTableBody');
@@ -1673,7 +1880,7 @@
     }
 
     // ================= FULL EDIT MODAL (WITH SECRETS DECOUPLING) =================
-    function openFullEditModal(slug) {
+    async function openFullEditModal(slug) {
       const data = window.cachedPharmaciesMap[slug] || {};
       document.getElementById('editOldSlugId').value = slug;
       document.getElementById('editSlugInp').value = slug;
@@ -1683,9 +1890,23 @@
       document.getElementById('editMaxPriceCap').value = data.maxPriceCap || 150000;
       document.getElementById('editSubExpiry').value = data.subscriptionExpiry || '';
       document.getElementById('editTemplateId').value = data.templateId || 'template_default';
+      document.getElementById('editPackageId').value = data.packageId || '';
       document.getElementById('editWhatsapp').value = data.socialWhatsapp || '';
       document.getElementById('editTeleBotToken').value = (data.telegramConfig && data.telegramConfig.botToken) || '';
       document.getElementById('editTeleChatId').value = (data.telegramConfig && data.telegramConfig.chatId) || '';
+
+      // 🌐 نبحث هل فيه دومين مخصص مربوط بهذي الصيدلية حالياً
+      document.getElementById('editCustomDomain').value = '';
+      document.getElementById('editOldCustomDomain').value = '';
+      try {
+        const domainSnap = await db.collection('system').doc('custom_domains').collection('domains').where('tenantId', '==', slug).limit(1).get();
+        if (!domainSnap.empty) {
+          const domainDoc = domainSnap.docs[0];
+          document.getElementById('editCustomDomain').value = domainDoc.id;
+          document.getElementById('editOldCustomDomain').value = domainDoc.id;
+        }
+      } catch (e) { console.warn('Custom domain lookup:', e); }
+
       document.getElementById('fullEditModal').classList.remove('hidden');
     }
 
@@ -1703,9 +1924,12 @@
       const maxCap = Number(document.getElementById('editMaxPriceCap').value || 150000);
       const expiry = document.getElementById('editSubExpiry').value;
       const templateId = document.getElementById('editTemplateId').value;
+      const packageId = document.getElementById('editPackageId').value;
       const whatsapp = document.getElementById('editWhatsapp').value.trim();
       const botToken = document.getElementById('editTeleBotToken').value.trim();
       const chatId = document.getElementById('editTeleChatId').value.trim();
+      const customDomain = document.getElementById('editCustomDomain').value.trim().toLowerCase();
+      const oldCustomDomain = document.getElementById('editOldCustomDomain').value.trim().toLowerCase();
 
       try {
         const publicPayload = {
@@ -1713,6 +1937,7 @@
           name,
           adminEmail,
           templateId,
+          packageId,
           socialWhatsapp: whatsapp,
           subscriptionExpiry: expiry,
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -1745,6 +1970,22 @@
         fetchPharmaciesList();
       } catch (err) {
         showToast('خطأ: ' + err.message, true);
+      }
+
+      // 🌐 تحديث ربط الدومين المخصص (منفصل عن try/catch الأساسية حتى لا يفشل حفظ باقي البيانات لو صار خطأ هنا)
+      try {
+        const domainsRef = db.collection('system').doc('custom_domains').collection('domains');
+        if (oldCustomDomain && oldCustomDomain !== customDomain) {
+          await domainsRef.doc(oldCustomDomain).delete().catch(() => {});
+        }
+        if (customDomain) {
+          await domainsRef.doc(customDomain).set({
+            tenantId: newSlug,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        }
+      } catch (domErr) {
+        showToast('⚠️ تعذر ربط الدومين المخصص: ' + domErr.message, true);
       }
     }
 
