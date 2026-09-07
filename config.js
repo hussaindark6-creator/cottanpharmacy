@@ -60,12 +60,47 @@ export function getActivePharmacyId() {
       sessionStorage.setItem('saas_active_pharmacy_id', sub);
       return sub;
     }
+    // 🌐 دومين مستقل بالكامل (مثل pharmacyname.com أو www.pharmacyname.com) —
+    // ما نقدر نعرف الصيدلية منه مباشرة، لازم نسأل السيرفر (يصير بـ resolveCustomDomainTenant
+    // بشكل غير متزامن بعد التحميل الأولي، بدون ما يبطئ الحالات العادية).
   }
 
   return DEFAULT_PHARMACY_ID;
 }
 
-export const currentPharmacyId = getActivePharmacyId();
+export let currentPharmacyId = getActivePharmacyId();
+
+// 🌐 يفحص هل الدومين الحالي "مستقل" (مو رابط فرعي متعارف عليه ولا باراميتر)
+// ويحاول يجيب معرّف الصيدلية الحقيقي من الووركر. يستدعى مرة وحدة عند بداية التطبيق.
+export async function resolveCustomDomainTenant() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const hasParam = urlParams.get('pharmacy') || urlParams.get('p_id') || urlParams.get('p') || urlParams.get('id');
+  if (hasParam) return; // الباراميتر له أولوية، ما نحتاج نسأل السيرفر
+
+  const hostname = window.location.hostname.toLowerCase();
+  const ignoredHostingDomains = [
+    'pages.dev', 'workers.dev', 'web.app', 'firebaseapp.com',
+    'github.io', 'vercel.app', 'netlify.app', 'localhost', '127.0.0.1'
+  ];
+  const isPlatformHost = ignoredHostingDomains.some(d => hostname === d || hostname.endsWith('.' + d));
+  if (isPlatformHost) return; // نطاقات الاستضافة العامة، ما إلها علاقة بدومين مخصص
+
+  const parts = hostname.split('.');
+  const looksLikeKnownSubdomain = parts.length >= 3 && parts[0] !== 'www';
+  if (looksLikeKnownSubdomain) return; // صار حلّها فعلاً بالدالة أعلاه
+
+  // هذا دومين مستقل بالكامل — نسأل الووركر عنه
+  try {
+    const res = await fetch(`${WORKER_API_BASE}/api/tenant/lookup-by-domain?hostname=${encodeURIComponent(hostname)}`);
+    const data = await res.json();
+    if (data && data.success && data.tenantId) {
+      currentPharmacyId = data.tenantId;
+      sessionStorage.setItem('saas_active_pharmacy_id', data.tenantId);
+    }
+  } catch (e) {
+    console.warn('Custom domain lookup failed, staying on default tenant:', e);
+  }
+}
 
 export function getTenantUrl(pagePath) {
   const cleanPath = pagePath.split('?')[0];
