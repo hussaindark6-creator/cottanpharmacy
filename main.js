@@ -9,7 +9,7 @@
 
 import {
   auth, db, dbPaths, isFirebaseConfigured, currentPharmacyId,
-  patchTenantLinks
+  patchTenantLinks, resolveCustomDomainTenant
 } from './config.js';
 
 import {
@@ -1014,7 +1014,11 @@ function initFirestoreRealtimeSync() {
 // ---------------------------------------------------------
 // 🚀 نقطة الانطلاق
 // ---------------------------------------------------------
-function bootstrapApp() {
+async function bootstrapApp() {
+  // 🌐 لو الموقع مفتوح من دومين مخصص مستقل (مو رابط فرعي معروف)، نتأكد أولاً
+  // من هوية الصيدلية الصحيحة قبل أي رسم أو اتصال بقاعدة البيانات
+  await resolveCustomDomainTenant();
+
   patchTenantLinks();
   applyStoreSettings();
   renderHome();
