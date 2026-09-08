@@ -1856,6 +1856,8 @@ function openAdminQuickEditModal(id) {
   if (document.getElementById('quickEditProdOldPrice')) document.getElementById('quickEditProdOldPrice').value = p.oldPrice || '';
   if (document.getElementById('quickEditProdSize')) document.getElementById('quickEditProdSize').value = p.size || '';
   if (document.getElementById('quickEditProdStockQty')) document.getElementById('quickEditProdStockQty').value = (p.stockQuantity !== undefined ? p.stockQuantity : 10);
+  if (document.getElementById('quickEditProdRating')) document.getElementById('quickEditProdRating').value = p.rating || '';
+  if (document.getElementById('quickEditProdReviews')) document.getElementById('quickEditProdReviews').value = p.reviews || 0;
   document.getElementById('quickEditProdCat').value = p.category || (categories[0] ? categories[0].id : 'face');
   document.getElementById('quickEditProdType').value = p.type || 'bottle';
   
@@ -1905,6 +1907,8 @@ async function saveAdminQuickEdit() {
   const usage = document.getElementById('quickEditProdUsage') ? sanitizeText(document.getElementById('quickEditProdUsage').value.trim()) : '';
   const inStock = document.getElementById('quickEditProdInStock') ? document.getElementById('quickEditProdInStock').checked : true;
   const isSpecialOffer = document.getElementById('quickEditProdIsOffer') ? document.getElementById('quickEditProdIsOffer').checked : false;
+  const rating = document.getElementById('quickEditProdRating') ? Number(document.getElementById('quickEditProdRating').value || 0) || 0 : 0;
+  const reviews = document.getElementById('quickEditProdReviews') ? Number(document.getElementById('quickEditProdReviews').value || 0) || 0 : 0;
 
   if (!name || !brand || isNaN(price) || price <= 0) {
     showToast('يرجى التأكد من كتابة الاسم والماركة والسعر');
@@ -1926,6 +1930,8 @@ async function saveAdminQuickEdit() {
     usage,
     inStock: inStock && stockQty > 0,
     isSpecialOffer,
+    rating,
+    reviews,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
 
@@ -2004,8 +2010,8 @@ async function handleAdminProductSave(e) {
     inStock: document.getElementById('adminProdInStock').checked && stockQty > 0,
     isSpecialOffer: document.getElementById('adminProdIsOffer').checked,
     isDeleted: false,
-    rating: 0,
-    reviews: 0,
+    rating: Number(document.getElementById('adminProdRating')?.value || 0) || 0,
+    reviews: Number(document.getElementById('adminProdReviews')?.value || 0) || 0,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
 
