@@ -58,71 +58,95 @@
   </div>
 
   <!-- MAIN APP CONTAINER -->
-  <div id="superApp" class="hidden min-h-screen flex flex-col">
-    
-    <!-- Top Header -->
-    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-40">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-center text-xl">
-            ⚡
-          </div>
-          <div>
-            <h1 class="text-base font-black text-white leading-tight">Super Admin SaaS Executive Portal</h1>
-            <p class="text-xs text-slate-400">إدارة الاشتراكات، بنك المنتجات الموحد، والتقارير المحاسبية</p>
-          </div>
-        </div>
+  <div id="superApp" class="hidden min-h-screen flex">
 
-        <div class="flex items-center gap-3">
-          <button onclick="openSuperTeleSettingsModal()" class="text-xs font-bold bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition">
-            ✈️ بوت تقارير السوبر أدمن
-          </button>
-          <div class="hidden md:flex items-center gap-2 bg-slate-800/60 border border-slate-700/60 px-3 py-1.5 rounded-full text-xs text-slate-300">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span class="font-mono">hussaindark6@gmail.com</span>
-          </div>
-          <button onclick="handleSuperAdminSignOut()" class="text-xs font-bold text-slate-400 hover:text-red-400 bg-slate-800 hover:bg-slate-700/80 px-3.5 py-2 rounded-lg border border-slate-700 transition">
-            خروج
-          </button>
+    <!-- Mobile sidebar overlay -->
+    <div id="sidebarOverlay" onclick="toggleSuperSidebar()" class="hidden fixed inset-0 bg-black/60 z-30 lg:hidden"></div>
+
+    <!-- Sidebar -->
+    <aside id="superSidebar" class="w-72 shrink-0 bg-slate-900 border-l border-slate-800 flex flex-col fixed inset-y-0 right-0 z-40 translate-x-full lg:translate-x-0 transition-transform duration-200">
+      <!-- Brand -->
+      <div class="h-16 flex items-center gap-3 px-5 border-b border-slate-800 shrink-0">
+        <div class="w-9 h-9 bg-emerald-500/10 border border-emerald-500/30 rounded-lg flex items-center justify-center text-lg">⚡</div>
+        <div class="min-w-0">
+          <h1 class="text-sm font-black text-white leading-tight truncate">SaaS Executive Portal</h1>
+          <p class="text-[10px] text-slate-500 truncate">لوحة السوبر أدمن</p>
         </div>
+        <button onclick="toggleSuperSidebar()" class="mr-auto lg:hidden text-slate-400 hover:text-white text-lg px-1">✕</button>
       </div>
-    </header>
 
-    <!-- Navigation Tabs -->
-    <nav class="bg-slate-900/60 border-b border-slate-800 sticky top-16 z-30 backdrop-blur-md">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex gap-2 overflow-x-auto py-2.5 scrollbar-none">
-        <button id="tabBtnOverview" onclick="switchSuperTab('overview')" class="tab-btn active px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20">
+      <!-- Nav groups -->
+      <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-5">
+        <button id="tabBtnOverview" onclick="switchSuperTab('overview')" class="tab-btn active w-full text-right px-3 py-2.5 rounded-xl text-xs font-black transition flex items-center gap-2.5 bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20">
           📊 نظرة عامة والماليات
         </button>
-        <button id="tabBtnTenants" onclick="switchSuperTab('tenants')" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2">
-          🏥 إدارة الصيدليات والمشتركين
+
+        <div>
+          <div class="px-3 text-[10px] font-black text-slate-500 tracking-wider mb-2">الأعمال والاشتراكات</div>
+          <div class="space-y-1">
+            <button id="tabBtnTenants" onclick="switchSuperTab('tenants')" class="tab-btn w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2.5">
+              🏥 إدارة الصيدليات والمشتركين
+            </button>
+            <button id="tabBtnPackages" onclick="switchSuperTab('packages')" class="tab-btn w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2.5">
+              💎 باقات الاشتراك
+            </button>
+            <button id="tabBtnPaymentInfo" onclick="switchSuperTab('paymentInfo')" class="tab-btn w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2.5">
+              💳 بيانات الدفع الإلكتروني
+            </button>
+            <button id="tabBtnBilling" onclick="switchSuperTab('billing')" class="tab-btn w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2.5">
+              📈 استهلاك البيانات والفوترة
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <div class="px-3 text-[10px] font-black text-slate-500 tracking-wider mb-2">المحتوى المشترك</div>
+          <div class="space-y-1">
+            <button id="tabBtnCatalog" onclick="switchSuperTab('catalog')" class="tab-btn w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2.5">
+              💊 بنك المنتجات المركزي <span class="mr-auto bg-slate-800 text-slate-300 text-[10px] font-mono px-1.5 py-0.5 rounded-md" id="catTotalCountBadge">0</span>
+            </button>
+            <button id="tabBtnCrowdsource" onclick="switchSuperTab('crowdsource')" class="tab-btn w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2.5">
+              📥 مراجعة مساهمات الصيدليات <span class="mr-auto bg-amber-500/20 text-amber-400 text-[10px] font-mono px-1.5 py-0.5 rounded-md" id="crowdsourceBadge">0</span>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <div class="px-3 text-[10px] font-black text-slate-500 tracking-wider mb-2">النظام والتقارير</div>
+          <div class="space-y-1">
+            <button id="tabBtnInfra" onclick="switchSuperTab('infra')" class="tab-btn w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2.5 bg-blue-950/30 border border-blue-800/40">
+              🚀 ترقية وتوسيع السيرفرات
+            </button>
+            <button id="tabBtnReports" onclick="switchSuperTab('reports')" class="tab-btn w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2.5">
+              📑 مركز التقارير والإكسل الموحد
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Bottom: account + actions -->
+      <div class="border-t border-slate-800 p-3 space-y-2 shrink-0">
+        <button onclick="openSuperTeleSettingsModal()" class="w-full text-xs font-bold bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 px-3 py-2 rounded-lg flex items-center justify-center gap-1.5 transition">
+          ✈️ بوت تقارير السوبر أدمن
         </button>
-        <button id="tabBtnBilling" onclick="switchSuperTab('billing')" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2">
-          📈 استهلاك البيانات والفوترة
-        </button>
-        <button id="tabBtnCatalog" onclick="switchSuperTab('catalog')" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2">
-          💊 بنك المنتجات المركزي (<span id="catTotalCountBadge">0</span>)
-        </button>
-        <button id="tabBtnCrowdsource" onclick="switchSuperTab('crowdsource')" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2">
-          📥 مراجعة مساهمات الصيدليات (<span id="crowdsourceBadge" class="text-amber-400 font-bold">0</span>)
-        </button>
-        <button id="tabBtnInfra" onclick="switchSuperTab('infra')" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2 bg-blue-950/40 border border-blue-800/50">
-          🚀 ترقية وتوسيع السيرفرات
-        </button>
-        <button id="tabBtnPackages" onclick="switchSuperTab('packages')" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2 bg-amber-950/30 border border-amber-800/40">
-          💎 باقات الاشتراك
-        </button>
-        <button id="tabBtnPaymentInfo" onclick="switchSuperTab('paymentInfo')" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2">
-          💳 بيانات الدفع الإلكتروني
-        </button>
-        <button id="tabBtnReports" onclick="switchSuperTab('reports')" class="tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2">
-          📑 مركز التقارير والإكسل الموحد
+        <div class="flex items-center gap-2 bg-slate-800/60 border border-slate-700/60 px-3 py-2 rounded-lg text-[10px] text-slate-300">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+          <span class="font-mono truncate">hussaindark6@gmail.com</span>
+        </div>
+        <button onclick="handleSuperAdminSignOut()" class="w-full text-xs font-bold text-slate-400 hover:text-red-400 bg-slate-800 hover:bg-slate-700/80 px-3.5 py-2 rounded-lg border border-slate-700 transition">
+          خروج
         </button>
       </div>
-    </nav>
+    </aside>
+
+    <!-- Mobile top bar with menu toggle -->
+    <header class="lg:hidden bg-slate-900 border-b border-slate-800 sticky top-0 z-20 h-14 flex items-center px-4 gap-3 w-full">
+      <button onclick="toggleSuperSidebar()" class="text-white text-xl">☰</button>
+      <h1 class="text-sm font-black text-white">SaaS Executive Portal</h1>
+    </header>
 
     <!-- Main Content Container -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <main class="flex-1 min-w-0 lg:mr-72 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       
       <!-- ================= TAB 1: OVERVIEW & FINANCIALS ================= -->
       <section id="secSuperOverview" class="tab-content space-y-8">
@@ -915,9 +939,20 @@
       loadSuperAdminPaymentInfo();
     });
 
+    // 📱 فتح/إغلاق القائمة الجانبية بالجوال
+    function toggleSuperSidebar(forceOpen) {
+      const sidebar = document.getElementById('superSidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      if (!sidebar) return;
+      const shouldOpen = forceOpen !== undefined ? forceOpen : sidebar.classList.contains('translate-x-full');
+      sidebar.classList.toggle('translate-x-full', !shouldOpen);
+      sidebar.classList.toggle('translate-x-0', shouldOpen);
+      if (overlay) overlay.classList.toggle('hidden', !shouldOpen);
+    }
+
     function switchSuperTab(tabKey) {
       document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.className = 'tab-btn px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2';
+        btn.className = 'tab-btn w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2.5';
       });
       document.querySelectorAll('.tab-content').forEach(sec => sec.classList.add('hidden'));
 
@@ -934,9 +969,13 @@
       };
 
       if (tabMap[tabKey]) {
-        document.getElementById(tabMap[tabKey][0]).className = 'tab-btn active px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20';
+        document.getElementById(tabMap[tabKey][0]).className = 'tab-btn active w-full text-right px-3 py-2.5 rounded-xl text-xs font-black transition flex items-center gap-2.5 bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20';
         document.getElementById(tabMap[tabKey][1]).classList.remove('hidden');
       }
+
+      // بالجوال، نسكر القائمة الجانبية تلقائياً بعد اختيار أي تبويب
+      const sidebar = document.getElementById('superSidebar');
+      if (sidebar && window.innerWidth < 1024) toggleSuperSidebar(false);
 
       if (tabKey === 'billing') calculateLiveConsumptionBilling();
       if (tabKey === 'catalog') fetchMasterCatalog();
