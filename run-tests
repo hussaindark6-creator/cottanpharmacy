@@ -1,0 +1,254 @@
+#!/usr/bin/env node
+/* ==========================================================
+   فحص آلي شامل لمشروع الصيدلية — يشتغل قبل كل رفع للموقع
+   الاستخدام: حطي هذا الملف بنفس مجلد كل ملفات المشروع
+   (جنب Index.html و Admin.html و main.js...) وشغّلي:
+
+       node run-tests.js
+
+   يحتاج Node.js مثبت على جهازك (nodejs.org) — أي نسخة حديثة تكفي.
+   ========================================================== */
+
+const fs = require('fs');
+const path = require('path');
+const { execSync } = require('child_process');
+const os = require('os');
+
+const ROOT = __dirname;
+let passCount = 0;
+let failCount = 0;
+let warnCount = 0;
+const failures = [];
+
+function pass(msg) { passCount++; console.log(`  ✅ ${msg}`); }
+function fail(msg) { failCount++; failures.push(msg); console.log(`  ❌ ${msg}`); }
+function warn(msg) { warnCount++; console.log(`  ⚠️  ${msg}`); }
+function section(title) { console.log(`\n=== ${title} ===`); }
+
+function readFile(name) {
+  const p = path.join(ROOT, name);
+  if (!fs.existsSync(p)) return null;
+  return fs.readFileSync(p, 'utf8');
+}
+
+// ===================================================================
+// 1. فحص صحة أكواد الجافاسكربت (Syntax)
+// ===================================================================
+section('1. فحص صحة الأكواد (Syntax)');
+
+const jsModuleFiles = ['config.js', 'state.js', 'security.js', 'search.js', 'theme-presets.js', 'theme-engine.js', 'orders.js', 'upload.js', 'main.js', 'Worker.js'];
+const jsClassicFiles = ['script.js'];
+const tmpDir = os.tmpdir();
+
+// ⚠️ ملاحظة مهمة: node --check file.js لا يتحقق بشكل صحيح من صيغة ES Module
+// (import/export) لملف بامتداد .js عادي — لازم نستخدم --input-type=module
+// عبر stdin، وإلا ملفات فيها أخطاء صياغة تمر "بنجاح" بدون أي تحذير!
+for (const f of jsModuleFiles) {
+  const content = readFile(f);
+  if (content === null) { warn(`${f}: الملف غير موجود بهذا المجلد (تجاهلته)`); continue; }
+  try {
+    execSync('node --input-type=module --check', { input: content, stdio: ['pipe', 'pipe', 'pipe'] });
+    pass(`${f}: صيغة صحيحة (ES Module)`);
+  } catch (e) {
+    fail(`${f}: خطأ صيغة — ${(e.stderr || e.stdout).toString().split('\n')[0]}`);
+  }
+}
+
+for (const f of jsClassicFiles) {
+  const content = readFile(f);
+  if (content === null) { warn(`${f}: الملف غير موجود بهذا المجلد (تجاهلته)`); continue; }
+  const tmpPath = path.join(tmpDir, `__test_${Date.now()}.js`);
+  fs.writeFileSync(tmpPath, content);
+  try {
+    execSync(`node --check "${tmpPath}"`, { stdio: 'pipe' });
+    pass(`${f}: صيغة صحيحة`);
+  } catch (e) {
+    fail(`${f}: خطأ صيغة — ${(e.stderr || e.stdout).toString().split('\n')[0]}`);
+  } finally {
+    fs.unlinkSync(tmpPath);
+  }
+}
+
+// فحص السكربتات المدمجة داخل ملفات HTML (Admin.html, super-admin1.html)
+const htmlWithInlineScripts = ['Admin.html', 'super-admin1.html'];
+for (const f of htmlWithInlineScripts) {
+  const content = readFile(f);
+  if (content === null) { warn(`${f}: الملف غير موجود بهذا المجلد (تجاهلته)`); continue; }
+  const scripts = [...content.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
+  if (scripts.length === 0) { warn(`${f}: ما لقيت أي <script> بدون src بداخله`); continue; }
+  const mainScript = scripts.sort((a, b) => b.length - a.length)[0]; // أكبر سكربت غالباً هو المنطق الرئيسي
+  const tmpPath = path.join(tmpDir, `__test_${Date.now()}.js`);
+  fs.writeFileSync(tmpPath, mainScript);
+  try {
+    execSync(`node --check "${tmpPath}"`, { stdio: 'pipe' });
+    pass(`${f}: السكربت الداخلي الرئيسي صيغته صحيحة`);
+  } catch (e) {
+    fail(`${f}: خطأ صيغة بالسكربت الداخلي — ${(e.stderr || e.stdout).toString().split('\n')[0]}`);
+  } finally {
+    fs.unlinkSync(tmpPath);
+  }
+}
+
+// ===================================================================
+// 2. فحص مسارات الاستيراد بين وحدات main.js (ES Modules)
+// ===================================================================
+section('2. فحص مسارات الاستيراد (import) بين الملفات');
+
+for (const f of jsModuleFiles) {
+  const content = readFile(f);
+  if (content === null) continue;
+  const imports = [...content.matchAll(/from\s+['"]\.\/([a-zA-Z0-9_-]+\.js)['"]/g)].map(m => m[1]);
+  for (const imp of imports) {
+    if (readFile(imp) === null) {
+      fail(`${f}: يستورد من './${imp}' لكن هذا الملف غير موجود بالمجلد!`);
+    } else {
+      pass(`${f} → ./${imp}: موجود`);
+    }
+  }
+}
+
+// ===================================================================
+// 3. فحص تطابق أزرار onclick مع الدوال الفعلية (أهم فحص — نفس الأخطاء
+//    اللي واجهناها فعلياً بالمشروع: أزرار تستدعي دوال غير موجودة)
+// ===================================================================
+section('3. فحص أزرار onclick مقابل الدوال المعرّفة فعلياً');
+
+function extractOnclickCalls(html) {
+  const bare = [...html.matchAll(/on(?:click|submit|change|input)="[^"]*?([a-zA-Z_][a-zA-Z0-9_]*)\(/g)].map(m => m[1]);
+  const appCalls = [...html.matchAll(/window\.App\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/g)].map(m => m[1]);
+  return { bare: [...new Set(bare)], appCalls: [...new Set(appCalls)] };
+}
+
+function extractDefinedFunctions(js) {
+  const fnDecls = [...js.matchAll(/(?:^|\n)\s*(?:export\s+)?(?:async\s+)?function\s+([a-zA-Z_][a-zA-Z0-9_]*)/g)].map(m => m[1]);
+  const windowAssigns = [...js.matchAll(/window\.([a-zA-Z_][a-zA-Z0-9_]*)\s*=/g)].map(m => m[1]);
+
+  // أسماء مستوردة من ملفات ثانية (import { a, b } from './x.js') تُحسب كمعرّفة بردو
+  const importBlocks = [...js.matchAll(/import\s*\{([^}]+)\}\s*from/g)].map(m => m[1]);
+  const importedNames = importBlocks
+    .flatMap(block => block.split(','))
+    .map(s => s.trim().split(/\s+as\s+/).pop().trim())
+    .filter(s => /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(s));
+
+  const fnDeclsSet = new Set([...fnDecls, ...importedNames]);
+
+  const appObjectMatch = js.match(/window\.App\s*=\s*\{([\s\S]*?)\n\};/);
+  const appKeys = new Set();
+  const brokenAppShorthandRefs = [];
+
+  if (appObjectMatch) {
+    // نقسم على الفواصل بمستوى السطح (تبسيط كافي لصيغة الكود بهذا المشروع)
+    const body = appObjectMatch[1];
+    const entries = body.split(',').map(s => s.trim()).filter(Boolean);
+    for (const entry of entries) {
+      const colonIdx = entry.indexOf(':');
+      if (colonIdx === -1) {
+        // اختصار {fnName} يعني {fnName: fnName} — لازم fnName يكون دالة معرّفة فعلاً
+        const name = entry.trim();
+        if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
+          appKeys.add(name);
+          if (!fnDeclsSet.has(name)) {
+            brokenAppShorthandRefs.push(name);
+          }
+        }
+      } else {
+        const key = entry.slice(0, colonIdx).trim();
+        if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key)) appKeys.add(key);
+      }
+    }
+  }
+
+  return { fnDecls: fnDeclsSet, windowAssigns: new Set(windowAssigns), appKeys, brokenAppShorthandRefs };
+}
+
+function checkPagePair(htmlFile, jsFile, alsoCheckInlineScripts = false) {
+  const html = readFile(htmlFile);
+  const externalJs = readFile(jsFile);
+  if (html === null || externalJs === null) {
+    warn(`${htmlFile} / ${jsFile}: أحد الملفين غير موجود، تخطيت هذا الفحص`);
+    return;
+  }
+
+  let combinedJs = externalJs;
+  if (alsoCheckInlineScripts) {
+    const inlineScripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
+    combinedJs += '\n' + inlineScripts.join('\n');
+  }
+
+  const { bare, appCalls } = extractOnclickCalls(html);
+  const { fnDecls, windowAssigns, appKeys, brokenAppShorthandRefs } = extractDefinedFunctions(combinedJs);
+
+  for (const name of brokenAppShorthandRefs) {
+    fail(`${jsFile}: window.App يشير لـ "${name}" لكن ما فيه أي "function ${name}" معرّفة فعلاً — الزر راح يفشل صامتاً!`);
+  }
+
+  // دوال/طرق جافاسكربت وDOM مدمجة بالمتصفح — مو دوال المشروع، نتجاهلها بالفحص
+  const builtIns = new Set([
+    'event', 'this', 'window', 'console', 'getElementById', 'querySelector',
+    'querySelectorAll', 'preventDefault', 'stopPropagation', 'print', 'alert',
+    'confirm', 'prompt', 'reset', 'submit', 'focus', 'blur', 'click', 'close',
+    'open', 'setTimeout', 'setInterval', 'parseInt', 'parseFloat', 'toString',
+    'JSON', 'Object', 'Array', 'Number', 'String', 'Boolean', 'Math'
+  ]);
+
+  for (const fn of bare) {
+    if (builtIns.has(fn)) continue;
+    if (fnDecls.has(fn) || windowAssigns.has(fn)) {
+      pass(`${htmlFile}: زر يستدعي "${fn}()" ← موجودة`);
+    } else {
+      fail(`${htmlFile}: زر يستدعي "${fn}()" لكنها غير معرّفة أبداً بملفات الجافاسكربت المرتبطة!`);
+    }
+  }
+  for (const fn of appCalls) {
+    if (builtIns.has(fn)) continue;
+    if (appKeys.has(fn) || fnDecls.has(fn)) {
+      pass(`${htmlFile}: زر يستدعي "window.App.${fn}()" ← موجودة`);
+    } else {
+      fail(`${htmlFile}: زر يستدعي "window.App.${fn}()" لكنها غير مُصدَّرة بـ window.App!`);
+    }
+  }
+}
+
+checkPagePair('Index.html', 'main.js');
+checkPagePair('Admin.html', 'script.js', true);
+
+// ===================================================================
+// 4. فحص عام لقواعد Firestore (توازن الأقواس)
+// ===================================================================
+section('4. فحص أساسي لقواعد Firestore');
+
+const rules = readFile('firestore.rules');
+if (rules === null) {
+  warn('firestore.rules: الملف غير موجود بهذا المجلد (تجاهلته)');
+} else {
+  const opens = (rules.match(/\{/g) || []).length;
+  const closes = (rules.match(/\}/g) || []).length;
+  if (opens === closes) {
+    pass(`firestore.rules: الأقواس متوازنة (${opens} فتح / ${closes} إغلاق)`);
+  } else {
+    fail(`firestore.rules: الأقواس غير متوازنة! (${opens} فتح / ${closes} إغلاق) — القاعدة راح ترفض النشر`);
+  }
+  // تحذير شائع: استخدام .field مباشرة بدل .get('field', default) على بيانات مو مضمون وجودها
+  const riskyDirectAccess = [...rules.matchAll(/get\([^)]*\)\.data\.([a-zA-Z_][a-zA-Z0-9_]*)\s*(?:!=|==)/g)];
+  if (riskyDirectAccess.length > 0) {
+    warn(`firestore.rules: فيه ${riskyDirectAccess.length} استخدام لـ .data.field مباشرة بدون get(key, default) — ممكن يرمي خطأ لو الحقل غير موجود (نفس مشكلة isPharmacyActive اللي صلحناها)`);
+  } else {
+    pass('firestore.rules: ما فيه استخدام مباشر خطير لحقول قد تكون غير موجودة');
+  }
+}
+
+// ===================================================================
+// النتيجة النهائية
+// ===================================================================
+console.log('\n' + '='.repeat(50));
+console.log(`النتيجة: ${passCount} نجح ✅  |  ${warnCount} تحذير ⚠️  |  ${failCount} فشل ❌`);
+console.log('='.repeat(50));
+
+if (failCount > 0) {
+  console.log('\n🔴 لا تنشري هذا التحديث قبل حل المشاكل التالية:\n');
+  failures.forEach((f, i) => console.log(`${i + 1}. ${f}`));
+  process.exit(1);
+} else {
+  console.log('\n🟢 كل الفحوصات نجحت — آمن تنشري التحديث.');
+  process.exit(0);
+}
