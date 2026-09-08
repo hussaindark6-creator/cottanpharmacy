@@ -266,6 +266,14 @@
               <input type="number" id="adminProdStockQty" placeholder="10" value="10" min="0" required>
             </div>
             <div class="form-field" style="flex:1;">
+              <label>⭐ التقييم (من 1 إلى 5)</label>
+              <input type="number" id="adminProdRating" placeholder="4.8" min="1" max="5" step="0.1">
+            </div>
+            <div class="form-field" style="flex:1;">
+              <label>عدد التقييمات المعروضة</label>
+              <input type="number" id="adminProdReviews" placeholder="0" min="0" value="0">
+            </div>
+            <div class="form-field" style="flex:1;">
               <label>نوع العبوة (الأيقونة) *</label>
               <select id="adminProdType">
                 <option value="bottle">زجاجة 🧴 (Bottle)</option>
@@ -699,11 +707,13 @@
             </div>
           </div>
 
-          <div style="display:flex; align-items:center; justify-content:space-between; gap:14px; background:#F9FAFB; padding:12px 14px; border-radius:12px; margin-top:8px;">
-            <div>
-              <div style="font-weight:800; font-size:13.5px; color:var(--ink);">اللون الرئيسي للموقع (Theme Color)</div>
+          <div style="background:#F9FAFB; padding:12px 14px; border-radius:12px; margin-top:8px;">
+            <div style="font-weight:800; font-size:13.5px; color:var(--ink); margin-bottom:10px;">اللون الرئيسي للموقع (Theme Color)</div>
+            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;" id="colorSwatchGrid"></div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <input type="color" id="adminPrimaryColorPicker" value="#E85D8A" oninput="onColorPickerChange()" style="width:44px; height:36px; padding:2px; cursor:pointer; border-radius:8px; border:1px solid #D1D5DB;">
+              <span style="font-size:11px; color:#6B7280;">أو اختاري لون مخصص بالكامل من هنا</span>
             </div>
-            <input type="color" id="adminPrimaryColorPicker" value="#E85D8A" style="width:54px; height:42px; padding:2px; cursor:pointer; border-radius:8px; border:1px solid #D1D5DB;">
           </div>
         </fieldset>
 
@@ -842,6 +852,16 @@
           <div class="form-field" style="flex:1;">
             <label>الكمية بالمخزن *</label>
             <input type="number" id="quickEditProdStockQty" placeholder="10" min="0" required>
+          </div>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <div class="form-field" style="flex:1;">
+            <label>⭐ التقييم (من 1 إلى 5)</label>
+            <input type="number" id="quickEditProdRating" placeholder="4.8" min="1" max="5" step="0.1">
+          </div>
+          <div class="form-field" style="flex:1;">
+            <label>عدد التقييمات المعروضة</label>
+            <input type="number" id="quickEditProdReviews" placeholder="0" min="0">
           </div>
           <div class="form-field" style="flex:1;">
             <label>نوع العبوة (الأيقونة)</label>
@@ -1314,6 +1334,38 @@
     }
 
     // 🔒 قراءة وحفظ إعدادات الهوية (البانر، النصوص، بيانات التواصل)
+    // 🎨 لوحة ألوان جاهزة ومجرّبة — أسرع وأعملي من عجلة الألوان الكاملة
+    const COLOR_SWATCH_PRESETS = [
+      '#E85D8A', '#EC4899', '#F43F5E', '#EF4444', '#F97316',
+      '#F59E0B', '#84CC16', '#10B981', '#14B8A6', '#06B6D4',
+      '#0EA5E9', '#3B82F6', '#6366F1', '#8B5CF6', '#A855F7',
+      '#64748B', '#334155', '#111827'
+    ];
+
+    function renderColorSwatchGrid() {
+      const grid = document.getElementById('colorSwatchGrid');
+      if (!grid) return;
+      const currentColor = (document.getElementById('adminPrimaryColorPicker').value || '#E85D8A').toUpperCase();
+      grid.innerHTML = COLOR_SWATCH_PRESETS.map(c => `
+        <button type="button" onclick="selectColorSwatch('${c}')"
+          style="width:32px; height:32px; border-radius:9px; background:${c}; cursor:pointer;
+          border:${c.toUpperCase() === currentColor ? '3px solid #111827' : '2px solid rgba(0,0,0,0.08)'};
+          transform:${c.toUpperCase() === currentColor ? 'scale(1.1)' : 'scale(1)'}; transition:all .12s;"
+          title="${c}"></button>
+      `).join('');
+    }
+
+    function selectColorSwatch(hex) {
+      document.getElementById('adminPrimaryColorPicker').value = hex;
+      renderColorSwatchGrid();
+    }
+
+    function onColorPickerChange() {
+      renderColorSwatchGrid();
+    }
+
+    document.addEventListener('DOMContentLoaded', renderColorSwatchGrid);
+
     async function loadPharmacyDesignAndSecrets() {
       if (!db) return;
       try {
@@ -1323,6 +1375,7 @@
           const p = pubSnap.data();
           if (document.getElementById('adminPharmacyNameInput')) document.getElementById('adminPharmacyNameInput').value = p.name || '';
           if (document.getElementById('adminPrimaryColorPicker')) document.getElementById('adminPrimaryColorPicker').value = p.primaryColor || '#E85D8A';
+          renderColorSwatchGrid();
           if (document.getElementById('adminSocialWhatsappInput')) document.getElementById('adminSocialWhatsappInput').value = p.socialWhatsapp || '';
           if (document.getElementById('adminSocialPhoneInput')) document.getElementById('adminSocialPhoneInput').value = p.socialPhone || '';
           if (document.getElementById('adminDeliveryStandard')) document.getElementById('adminDeliveryStandard').value = p.deliveryFeeStandard || 4000;
