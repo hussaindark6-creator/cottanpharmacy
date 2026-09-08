@@ -631,6 +631,8 @@ function openAdminQuickEditModal(id) {
   document.getElementById('sfQuickEditProdId').value = id;
   document.getElementById('sfQuickEditProdName').value = p.name || '';
   document.getElementById('sfQuickEditProdStockQty').value = (p.stockQuantity !== undefined) ? p.stockQuantity : 10;
+  document.getElementById('sfQuickEditProdRating').value = p.rating || '';
+  document.getElementById('sfQuickEditProdReviews').value = p.reviews || 0;
   document.getElementById('sfQuickEditProdDesc').value = p.description || '';
   document.getElementById('sfQuickEditProdIng').value = p.ingredients || '';
   document.getElementById('sfQuickEditProdUsage').value = p.usage || '';
@@ -663,6 +665,8 @@ async function saveSfQuickEdit() {
   const desc = document.getElementById('sfQuickEditProdDesc').value.trim();
   const ing = document.getElementById('sfQuickEditProdIng').value.trim();
   const usage = document.getElementById('sfQuickEditProdUsage').value.trim();
+  const rating = Number(document.getElementById('sfQuickEditProdRating').value || 0) || 0;
+  const reviews = Number(document.getElementById('sfQuickEditProdReviews').value || 0) || 0;
 
   if (!name) {
     showToast('يرجى إدخال اسم المنتج');
@@ -677,7 +681,9 @@ async function saveSfQuickEdit() {
       imageUrl: imgUrl,
       description: sanitizeText(desc),
       ingredients: sanitizeText(ing),
-      usage: sanitizeText(usage)
+      usage: sanitizeText(usage),
+      rating,
+      reviews
     }, { merge: true });
   }
 
@@ -961,12 +967,35 @@ function applyStoreSettings() {
   applyTheme(pharmacyProfile.templateId || 'template_default', pharmacyProfile.primaryColor);
   if (document.getElementById('headerLogoText')) document.getElementById('headerLogoText').textContent = pharmacyProfile.name || 'الصيدلية';
   if (document.getElementById('drawerLogoTitle')) document.getElementById('drawerLogoTitle').textContent = pharmacyProfile.name || 'الصيدلية';
+
+  // 🖼️ عرض شعار الصيدلية الفعلي المرفوع من لوحة التحكم (بدل الأيقونة الثابتة دايماً)
+  const logoMark = document.getElementById('headerLogoMark');
+  if (logoMark) {
+    const cleanLogo = sanitizeUrl(pharmacyProfile.logoUrl);
+    logoMark.innerHTML = cleanLogo
+      ? `<img src="${cleanLogo}" alt="${sanitizeText(pharmacyProfile.name || '')}" style="width:26px; height:26px; object-fit:cover; border-radius:50%;">`
+      : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent, #E85D8A)" stroke-width="2"><circle cx="12" cy="8" r="3"/><circle cx="8" cy="10" r="3"/><circle cx="16" cy="10" r="3"/><path d="M12 13v7"/></svg>`;
+  }
+
   const heroContainer = document.getElementById('heroBannerContainer');
   if (heroContainer) heroContainer.innerHTML = renderHeroBanner(pharmacyProfile);
 }
 
 function initFirestoreRealtimeSync() {
   if (!isFirebaseConfigured || !db) return;
+
+  // 🚀 قراءة أولى مباشرة من السيرفر (تتجاوز الذاكرة المؤقتة المحلية) — هذا يمنع
+  // ظهور بيانات قديمة مخزّنة محلياً لجزء من الثانية قبل وصول التحديث الحقيقي،
+  // وهو السبب الأرجح وراء "الصورة/اللون القديم يظهر أول، وبعد شوي يتغيّر"
+  dbPaths.pharmacyDoc().get({ source: 'server' }).then(doc => {
+    if (doc.exists) {
+      setPharmacyProfile(doc.data());
+      applyStoreSettings();
+      renderHome();
+    }
+  }).catch(() => {
+    // لو فشل (مثلاً بدون إنترنت لحظياً)، onSnapshot تحته بيتكفّل بعرض آخر نسخة متوفرة
+  });
 
   dbPaths.pharmacyDoc().onSnapshot(doc => {
     if (doc.exists) {
