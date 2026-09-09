@@ -87,6 +87,7 @@ export function setPharmacyProfile(newProfile) {
   pharmacyProfile = { ...pharmacyProfile, ...newProfile };
 }
 
+export function setBrandsData(newBrands) { brandsData = newBrands; }
 export function setProducts(newProds) { products = newProds; }
 export function setCategories(newCats) { categories = newCats; }
 export function setBundles(newBundles) { bundles = newBundles; }
