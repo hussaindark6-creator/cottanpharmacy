@@ -18,7 +18,7 @@ import {
 
 import {
   currentUser, setCurrentUser, currentStaffData,
-  cart, wishlist, myOrders, categories, products, bundles, brandsData,
+  cart, wishlist, myOrders, categories, products, bundles, brandsData, setBrandsData,
   pharmacyProfile, setPharmacyProfile, setProducts, setCategories, setBundles,
   listingMode, listingValue, setListingState,
   currentProductId, setCurrentProductId,
@@ -987,23 +987,34 @@ function initFirestoreRealtimeSync() {
   // 🚀 قراءة أولى مباشرة من السيرفر (تتجاوز الذاكرة المؤقتة المحلية) — هذا يمنع
   // ظهور بيانات قديمة مخزّنة محلياً لجزء من الثانية قبل وصول التحديث الحقيقي،
   // وهو السبب الأرجح وراء "الصورة/اللون القديم يظهر أول، وبعد شوي يتغيّر"
-  dbPaths.pharmacyDoc().get({ source: 'server' }).then(doc => {
-    if (doc.exists) {
-      setPharmacyProfile(doc.data());
-      applyStoreSettings();
-      renderHome();
-    }
+  // 🛠️ معالج مشترك لبيانات مستند الصيدلية — يشمل مزامنة brandsData
+  // (كانت هذي البيانات تُحفظ بنجاح من لوحة التحكم، بس ما أحد كان يقرأها
+  // رجوع بالمتجر — فالماركات/الشعارات الجديدة ما كانت تظهر أبداً للزبون)
+  function applyPharmacyDocData(data) {
+    setPharmacyProfile(data);
+    if (data.brandsData) setBrandsData({ ...brandsData, ...data.brandsData });
+    applyStoreSettings();
+    renderHome();
+  }
+
+  const pharmacyDocPromise = dbPaths.pharmacyDoc().get({ source: 'server' }).then(doc => {
+    if (doc.exists) applyPharmacyDocData(doc.data());
   }).catch(() => {
     // لو فشل (مثلاً بدون إنترنت لحظياً)، onSnapshot تحته بيتكفّل بعرض آخر نسخة متوفرة
   });
 
   dbPaths.pharmacyDoc().onSnapshot(doc => {
-    if (doc.exists) {
-      setPharmacyProfile(doc.data());
-      applyStoreSettings();
-      renderHome();
-    }
+    if (doc.exists) applyPharmacyDocData(doc.data());
   }, console.warn);
+
+  dbPaths.categoriesCol().get({ source: 'server' }).then(snap => {
+    if (!snap.empty) {
+      const list = [];
+      snap.forEach(d => list.push({ id: d.id, ...d.data() }));
+      setCategories(list);
+      renderModernCategories();
+    }
+  }).catch(() => {});
 
   dbPaths.categoriesCol().onSnapshot(snap => {
     if (!snap.empty) {
@@ -1013,6 +1024,16 @@ function initFirestoreRealtimeSync() {
       renderModernCategories();
     }
   }, console.warn);
+
+  dbPaths.bundlesCol().get({ source: 'server' }).then(snap => {
+    if (!snap.empty) {
+      const list = [];
+      snap.forEach(d => list.push({ id: d.id, ...d.data() }));
+      setBundles(list);
+      renderHomeBundles();
+      renderAllBundles();
+    }
+  }).catch(() => {});
 
   dbPaths.bundlesCol().onSnapshot(snap => {
     if (!snap.empty) {
@@ -1025,7 +1046,7 @@ function initFirestoreRealtimeSync() {
   }, console.warn);
 
   let didCheckSharedLink = false;
-  dbPaths.productsCol().onSnapshot(snap => {
+  function applyProductsSnapshot(snap) {
     if (!snap.empty) {
       const list = [];
       snap.forEach(doc => list.push({ id: doc.id, ...doc.data() }));
@@ -1037,16 +1058,32 @@ function initFirestoreRealtimeSync() {
         checkUrlHashForProduct();
       }
     }
-  }, console.warn);
+  }
+  const productsPromise = dbPaths.productsCol().get({ source: 'server' }).then(applyProductsSnapshot).catch(() => {});
+  dbPaths.productsCol().onSnapshot(applyProductsSnapshot, console.warn);
+
+  Promise.all([pharmacyDocPromise, productsPromise]).finally(hideAppLoadingOverlay);
 }
 
 // ---------------------------------------------------------
 // 🚀 نقطة الانطلاق
 // ---------------------------------------------------------
+// 🌸 إخفاء شاشة التحميل الأولية بسلاسة
+function hideAppLoadingOverlay() {
+  const overlay = document.getElementById('appLoadingOverlay');
+  if (!overlay || overlay.dataset.hidden) return;
+  overlay.dataset.hidden = '1';
+  overlay.style.opacity = '0';
+  setTimeout(() => overlay.remove(), 400);
+}
+
 async function bootstrapApp() {
   // 🌐 لو الموقع مفتوح من دومين مخصص مستقل (مو رابط فرعي معروف)، نتأكد أولاً
   // من هوية الصيدلية الصحيحة قبل أي رسم أو اتصال بقاعدة البيانات
   await resolveCustomDomainTenant();
+
+  // شبكة أمان: ما نخلي شاشة التحميل تعلق للأبد لو تأخر الاتصال لأي سبب
+  setTimeout(hideAppLoadingOverlay, 4000);
 
   patchTenantLinks();
   applyStoreSettings();
