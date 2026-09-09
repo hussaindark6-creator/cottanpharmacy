@@ -214,18 +214,53 @@ export function renderBundleCard(b) {
   const includedProds = (b.productIds || []).map(pid => findProduct(pid)).filter(Boolean);
   const cleanImg = sanitizeUrl(b.imageUrl);
 
+  function renderProdThumb(p) {
+    const color = getBrandColor(p.brand);
+    const img = sanitizeUrl(p.imageUrl);
+    return `<div style="width:100%; height:100%; border-radius:14px; overflow:hidden; background:${color}14; display:flex; align-items:center; justify-content:center;">
+      ${img ? `<img src="${img}" alt="${sanitizeText(p.name)}" style="width:100%; height:100%; object-fit:cover;">` : (icons[p.type || 'bottle'] || icons.bottle)(color)}
+    </div>`;
+  }
+
+  // 🎨 كولاج أنيق تلقائي من صور المنتجات المشمولة — يتكيّف حسب عددهم
+  function renderAutoCollage() {
+    const n = includedProds.length;
+    if (n === 0) {
+      return `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;">${icons.bottle('var(--accent, #E85D8A)')}</div>`;
+    }
+    if (n === 1) {
+      return renderProdThumb(includedProds[0]);
+    }
+    if (n === 2) {
+      return `<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; width:100%; height:100%;">
+        ${includedProds.map(p => `<div style="aspect-ratio:1/1;">${renderProdThumb(p)}</div>`).join('')}
+      </div>`;
+    }
+    if (n === 3) {
+      return `<div style="display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; gap:6px; width:100%; height:100%;">
+        <div style="grid-row:1 / 3;">${renderProdThumb(includedProds[0])}</div>
+        <div>${renderProdThumb(includedProds[1])}</div>
+        <div>${renderProdThumb(includedProds[2])}</div>
+      </div>`;
+    }
+    // 4 فأكثر: شبكة 2×2، وبطاقة أخيرة تعرض "+N" لو زاد العدد
+    const visible = includedProds.slice(0, 4);
+    return `<div style="display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; gap:6px; width:100%; height:100%;">
+      ${visible.map((p, idx) => {
+        const isLastVisible = idx === 3 && n > 4;
+        return `<div style="position:relative; aspect-ratio:1/1;">
+          ${renderProdThumb(p)}
+          ${isLastVisible ? `<div style="position:absolute; inset:0; background:rgba(0,0,0,0.55); border-radius:14px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:900; font-size:15px;">+${n - 3}</div>` : ''}
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
   return `
     <div class="bundle-card">
       <span class="bundle-savings-badge">${sanitizeText(b.savingsBadge || 'توفير فوري 💸')}</span>
-      <div class="bundle-thumb-row">
-        ${cleanImg ? `<img src="${cleanImg}" style="max-height:100px; object-fit:contain;">` : 
-          includedProds.map((p, idx) => `
-            <div class="bundle-thumb-item">
-              ${p.imageUrl ? `<img src="${sanitizeUrl(p.imageUrl)}">` : (icons[p.type || 'bottle'] || icons.bottle)(getBrandColor(p.brand))}
-            </div>
-            ${idx < includedProds.length - 1 ? '<span class="bundle-plus-icon">+</span>' : ''}
-          `).join('')
-        }
+      <div class="bundle-thumb-row" style="aspect-ratio:16/11; padding:10px;">
+        ${cleanImg ? `<img src="${cleanImg}" style="width:100%; height:100%; object-fit:cover; border-radius:14px;">` : renderAutoCollage()}
       </div>
       <h3 class="bundle-title">${sanitizeText(b.title)}</h3>
       <p class="bundle-desc">${sanitizeText(b.description)}</p>
