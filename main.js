@@ -977,6 +977,16 @@ function applyStoreSettings() {
       : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent, #E85D8A)" stroke-width="2"><circle cx="12" cy="8" r="3"/><circle cx="8" cy="10" r="3"/><circle cx="16" cy="10" r="3"/><path d="M12 13v7"/></svg>`;
   }
 
+  // نفس الشعار (أو صورة البانر) بدائرة شاشة التحميل لو توفرت
+  const loaderCircle = document.getElementById('loaderPhotoCircle');
+  if (loaderCircle && !loaderCircle.dataset.filled) {
+    const loaderImg = sanitizeUrl(pharmacyProfile.logoUrl || pharmacyProfile.bannerImgUrl);
+    if (loaderImg) {
+      loaderCircle.dataset.filled = '1';
+      loaderCircle.innerHTML = `<img src="${loaderImg}" style="width:100%; height:100%; object-fit:cover;">`;
+    }
+  }
+
   const heroContainer = document.getElementById('heroBannerContainer');
   if (heroContainer) heroContainer.innerHTML = renderHeroBanner(pharmacyProfile);
 }
@@ -1073,8 +1083,15 @@ function hideAppLoadingOverlay() {
   const overlay = document.getElementById('appLoadingOverlay');
   if (!overlay || overlay.dataset.hidden) return;
   overlay.dataset.hidden = '1';
-  overlay.style.opacity = '0';
-  setTimeout(() => overlay.remove(), 400);
+  if (window.__loaderInterval) clearInterval(window.__loaderInterval);
+  const bar = document.getElementById('loaderProgressBar');
+  const text = document.getElementById('loaderPercentText');
+  if (bar) bar.style.width = '100%';
+  if (text) text.textContent = '100%';
+  setTimeout(() => {
+    overlay.style.opacity = '0';
+    setTimeout(() => overlay.remove(), 400);
+  }, 180);
 }
 
 async function bootstrapApp() {
