@@ -983,6 +983,10 @@
         <div class="form-field">
           <label>الكلمات المفتاحية للأرشفة التلقائية (مفصولة بفواصل)</label>
           <textarea id="customCatKeywordsInput" rows="3" placeholder="supplement, vitamin, فيتامين, كولاجين, omega, zinc, now foods"></textarea>
+          <p style="font-size:11px; color:#DC2626; font-weight:700; margin-top:4px; line-height:1.6;">
+            ⚠️ مهم: اكتبي كلمات موجودة فعلاً باسم أو وصف المنتجات (خصوصاً بالإنجليزي، لأن أغلب بيانات البنك مكتوبة إنجليزي) —
+            لو تركتِ هذا الحقل فاضي، بيستخدم اسم القسم نفسه كلمة مفتاحية وحيدة، وإذا هذا الاسم ما يطابق أي منتج، ما راح يظهر لك أي شي بالقسم.
+          </p>
         </div>
         <button type="submit" class="admin-btn-save" style="background:#059669; font-weight:900;">
           💾 حفظ القسم وتفعيل الأرشفة التلقائية
@@ -1032,6 +1036,11 @@
         labelAr: "عناية بالطفل",
         icon: "👶",
         subCategories: ["Baby Diaper", "Baby Wipes", "Baby Wash/Shampoo", "Baby Skincare", "Baby Care Accessory"]
+      },
+      supplements: {
+        labelAr: "المكملات الغذائية",
+        icon: "💊",
+        subCategories: ["Supplement", "Vitamin", "Multivitamin", "Mineral", "Omega-3", "Probiotic", "Protein"]
       }
     };
 
@@ -1058,7 +1067,8 @@
         { key: 'dental', label: '🪥 عناية بالأسنان' },
         { key: 'baby_milk', label: '🍼 حليب أطفال' },
         { key: 'baby_care', label: '👶 عناية بالطفل' },
-        { key: 'hygiene', label: '🧼 نظافة عامة' }
+        { key: 'hygiene', label: '🧼 نظافة عامة' },
+        { key: 'supplements', label: '💊 المكملات الغذائية' }
       ];
 
       const customList = getSavedCustomCategories();
@@ -1151,6 +1161,11 @@
       }
       if (cat === 'hygiene' || name.includes('hand wash')) {
         return { main: 'hygiene', sub: "Hand Wash" };
+      }
+      if (cat === 'supplement' || cat === 'vitamin' || cat === 'multivitamin' || cat === 'mineral' || cat === 'probiotic' ||
+          name.includes('vitamin') || name.includes('supplement') || name.includes('multivitamin') ||
+          name.includes('omega') || name.includes('فيتامين') || name.includes('مكمل')) {
+        return { main: 'supplements', sub: item.subCategory || item.category || "Supplement" };
       }
       return { main: 'cosmetics', sub: item.subCategory || "Skincare" };
     }
@@ -1305,28 +1320,42 @@
       const sellingPrice = Number(priceInp ? priceInp.value : masterItem.price || masterItem.suggestedPrice || 15000);
       const stockQty = Number(qtyInp ? qtyInp.value : 10);
 
-      showToast(`جاري استيراد "${masterItem.name}"...`);
+      showToast(`جاري الحفظ...`);
 
       try {
-        const payload = {
-          ...masterItem,
-          masterCatalogId: masterId,
-          price: sellingPrice,
-          oldPrice: null,
-          stockQuantity: stockQty,
-          inStock: stockQty > 0,
-          isDeleted: false,
-          isSpecialOffer: false,
-          rating: 0,
-          reviews: 0,
-          views: 0,
-          orderCount: 0,
-          importedAt: firebase.firestore.FieldValue.serverTimestamp(),
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
+        // 🛡️ نتحقق أولاً: هل هذا المنتج مستورد أصلاً؟ لو نعم، نحدّث السعر والكمية
+        // فقط بدون ما نلمس التقييم/عدد الطلبات/حالة الأرشفة اللي ربما تغيّرت لاحقاً —
+        // قبل هذا الإصلاح، الضغط على "تحديث السعر والكمية" كان يصفّر كل هذا سهواً.
+        const existingSnap = await dbPaths.productsCol().doc(String(masterId)).get();
 
-        await dbPaths.productsCol().doc(String(masterId)).set(payload, { merge: true });
-        showToast(`🎉 تم استيراد "${masterItem.name}" بنجاح إلى متجرك!`);
+        if (existingSnap.exists) {
+          await dbPaths.productsCol().doc(String(masterId)).set({
+            price: sellingPrice,
+            stockQuantity: stockQty,
+            inStock: stockQty > 0,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+          showToast(`✅ تم تحديث السعر والكمية لـ "${masterItem.name}"`);
+        } else {
+          const payload = {
+            ...masterItem,
+            masterCatalogId: masterId,
+            price: sellingPrice,
+            oldPrice: null,
+            stockQuantity: stockQty,
+            inStock: stockQty > 0,
+            isDeleted: false,
+            isSpecialOffer: false,
+            rating: 0,
+            reviews: 0,
+            views: 0,
+            orderCount: 0,
+            importedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          };
+          await dbPaths.productsCol().doc(String(masterId)).set(payload, { merge: true });
+          showToast(`🎉 تم استيراد "${masterItem.name}" بنجاح إلى متجرك!`);
+        }
         filterTenantMasterCatalog();
       } catch (err) {
         showToast(`فشل الاستيراد: ${err.message}`);
@@ -1334,23 +1363,34 @@
     }
 
     // 🔒 قراءة وحفظ إعدادات الهوية (البانر، النصوص، بيانات التواصل)
-    // 🎨 لوحة ألوان جاهزة ومجرّبة — أسرع وأعملي من عجلة الألوان الكاملة
+    // 🎨 لوحة ألوان جاهزة ومنظمة بشكل شبكي — أقرب لتجربة منتقي الألوان الاحترافي
     const COLOR_SWATCH_PRESETS = [
-      '#E85D8A', '#EC4899', '#F43F5E', '#EF4444', '#F97316',
-      '#F59E0B', '#84CC16', '#10B981', '#14B8A6', '#06B6D4',
-      '#0EA5E9', '#3B82F6', '#6366F1', '#8B5CF6', '#A855F7',
-      '#64748B', '#334155', '#111827'
+      '#FCA5A5', '#F87171', '#EF4444', '#DC2626', '#B91C1C',
+      '#FDBA74', '#FB923C', '#F97316', '#EA580C', '#C2410C',
+      '#FDE047', '#FACC15', '#EAB308', '#CA8A04', '#A16207',
+      '#BEF264', '#A3E635', '#84CC16', '#65A30D', '#4D7C0F',
+      '#6EE7B7', '#34D399', '#10B981', '#059669', '#047857',
+      '#67E8F9', '#22D3EE', '#06B6D4', '#0891B2', '#0E7490',
+      '#93C5FD', '#60A5FA', '#3B82F6', '#2563EB', '#1D4ED8',
+      '#C4B5FD', '#A78BFA', '#8B5CF6', '#7C3AED', '#6D28D9',
+      '#F5D0FE', '#E879F9', '#D946EF', '#C026D3', '#A21CAF',
+      '#FBCFE8', '#F9A8D4', '#EC4899', '#DB2777', '#BE185D',
+      '#E85D8A', '#F43F5E', '#94A3B8', '#64748B', '#334155', '#0F172A'
     ];
 
     function renderColorSwatchGrid() {
       const grid = document.getElementById('colorSwatchGrid');
       if (!grid) return;
       const currentColor = (document.getElementById('adminPrimaryColorPicker').value || '#E85D8A').toUpperCase();
+      grid.style.display = 'grid';
+      grid.style.gridTemplateColumns = 'repeat(9, 1fr)';
+      grid.style.gap = '5px';
       grid.innerHTML = COLOR_SWATCH_PRESETS.map(c => `
         <button type="button" onclick="selectColorSwatch('${c}')"
-          style="width:32px; height:32px; border-radius:9px; background:${c}; cursor:pointer;
-          border:${c.toUpperCase() === currentColor ? '3px solid #111827' : '2px solid rgba(0,0,0,0.08)'};
-          transform:${c.toUpperCase() === currentColor ? 'scale(1.1)' : 'scale(1)'}; transition:all .12s;"
+          style="aspect-ratio:1/1; width:100%; border-radius:7px; background:${c}; cursor:pointer; padding:0;
+          border:${c.toUpperCase() === currentColor ? '3px solid #111827' : '1px solid rgba(0,0,0,0.06)'};
+          box-shadow:${c.toUpperCase() === currentColor ? '0 0 0 2px #fff inset' : 'none'};
+          transform:${c.toUpperCase() === currentColor ? 'scale(1.12)' : 'scale(1)'}; transition:transform .12s;"
           title="${c}"></button>
       `).join('');
     }
