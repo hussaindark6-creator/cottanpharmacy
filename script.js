@@ -2009,7 +2009,6 @@ async function handleAdminProductSave(e) {
     usage: sanitizeText(document.getElementById('adminProdUsage').value.trim()),
     inStock: document.getElementById('adminProdInStock').checked && stockQty > 0,
     isSpecialOffer: document.getElementById('adminProdIsOffer').checked,
-    isDeleted: false,
     rating: Number(document.getElementById('adminProdRating')?.value || 0) || 0,
     reviews: Number(document.getElementById('adminProdReviews')?.value || 0) || 0,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -2021,6 +2020,7 @@ async function handleAdminProductSave(e) {
       if (db) await dbPaths.productsCol().doc(docId).set(payload, { merge: true });
       showToast('تم حفظ تعديلات المنتج بنجاح ✓');
     } else {
+      payload.isDeleted = false;
       payload.views = 0;
       payload.orderCount = 0;
       if (db) {
@@ -2921,7 +2921,8 @@ async function handleAdminCategorySave(e) {
   const id = document.getElementById('adminCatIdInput').value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
   const label = document.getElementById('adminCatLabel').value.trim();
   const imageUrl = sanitizeUrl(document.getElementById('adminCatImgUrl').value.trim());
-  const icon = document.getElementById('adminCatIconSelect').value;
+  const iconSelectEl = document.getElementById('adminCatIconSelect');
+  const icon = iconSelectEl ? iconSelectEl.value : 'jar';
 
   if (!id || !label) {
     showToast('يرجى كتابة اسم القسم والمعرف بشكل صحيح');
