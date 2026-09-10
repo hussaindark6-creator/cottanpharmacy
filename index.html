@@ -80,17 +80,71 @@
 </head>
 <body>
   <!-- 🌸 شاشة تحميل أولية أنيقة — تغطي الموقع لحد ما توصل البيانات الحقيقية من السيرفر -->
-  <div id="appLoadingOverlay" style="position:fixed; inset:0; z-index:99999; background:linear-gradient(135deg, #FFF5F8 0%, #FFFFFF 55%, #FDF0F5 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; transition:opacity .4s ease;">
-    <div style="position:relative; width:64px; height:64px;">
-      <div style="position:absolute; inset:0; border-radius:50%; border:3px solid #F3D7E0; border-top-color:#E85D8A; animation:appLoaderSpin .9s linear infinite;"></div>
-      <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:22px; animation:appLoaderPulse 1.4s ease-in-out infinite;">🌸</div>
+  <div id="appLoadingOverlay" style="position:fixed; inset:0; z-index:99999; background:linear-gradient(160deg, #FDF2F6 0%, #FFF9FB 45%, #FBEAF1 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; overflow:hidden; transition:opacity .45s ease;">
+
+    <!-- زخارف خطية زهرية بالزوايا -->
+    <svg style="position:absolute; top:0; right:0; width:180px; opacity:.5;" viewBox="0 0 200 200" fill="none" stroke="#E8A6BE" stroke-width="1.5">
+      <path d="M200 10C150 0 90 30 60 80 C40 115 45 150 20 190" stroke-dasharray="4 5"/>
+    </svg>
+    <svg style="position:absolute; bottom:0; left:0; width:200px; opacity:.5;" viewBox="0 0 200 200" fill="none" stroke="#E8A6BE" stroke-width="1.5">
+      <path d="M0 190C60 200 120 170 150 120 C170 85 165 50 190 10" stroke-dasharray="4 5"/>
+    </svg>
+    <svg style="position:absolute; top:22%; right:18%; width:22px; opacity:.6;" viewBox="0 0 24 24" fill="none" stroke="#E85D8A" stroke-width="1.6">
+      <path d="M12 21s-7.5-4.9-10-9.5C.5 7.8 2.7 4 6.5 4 9 4 11 5.5 12 7c1-1.5 3-3 5.5-3 3.8 0 6 3.8 4.5 7.5C19.5 16.1 12 21 12 21Z"/>
+    </svg>
+    <svg style="position:absolute; bottom:26%; left:16%; width:16px; opacity:.5;" viewBox="0 0 24 24" fill="none" stroke="#E85D8A" stroke-width="1.6">
+      <path d="M12 21s-7.5-4.9-10-9.5C.5 7.8 2.7 4 6.5 4 9 4 11 5.5 12 7c1-1.5 3-3 5.5-3 3.8 0 6 3.8 4.5 7.5C19.5 16.1 12 21 12 21Z"/>
+    </svg>
+
+    <!-- الإطار الدائري -->
+    <div style="position:relative; width:150px; height:150px;">
+      <div style="position:absolute; inset:-8px; border-radius:50%; border:1.5px dashed #E8A6BE; animation:appLoaderSpinSlow 12s linear infinite;"></div>
+      <div id="loaderPhotoCircle" style="width:100%; height:100%; border-radius:50%; overflow:hidden; background:linear-gradient(135deg, #F7C6D6 0%, #F3A9C4 100%); display:flex; align-items:center; justify-content:center; box-shadow:0 10px 30px rgba(232,93,138,0.25);">
+        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.4"><path d="M10 2h4v3.2l1.4 1.6c.4.45.6 1 .6 1.6V20a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V8.4c0-.6.2-1.15.6-1.6L9 5.2V2Z" fill="#fff" fill-opacity=".2"/><rect x="9" y="11" width="6" height="8.4" rx="0.8" fill="#fff" fill-opacity=".35"/></svg>
+      </div>
     </div>
-    <div style="font-weight:900; font-size:14px; color:#B23A63; letter-spacing:.3px;">جاري تحضير متجرك...</div>
+
+    <div style="text-align:center;">
+      <div style="font-size:18px; margin-bottom:6px;">🌿</div>
+      <div style="font-weight:900; font-size:20px; color:#B23A63;">جاري تحميل الموقع</div>
+      <div style="font-size:12.5px; color:#C98BA3; margin-top:4px;">انتظر لحظة من فضلك ..</div>
+    </div>
+
+    <!-- شريط التحميل المخطط -->
+    <div style="width:220px;">
+      <div style="width:100%; height:9px; border-radius:999px; background:#F6D9E3; overflow:hidden;">
+        <div id="loaderProgressBar" style="width:8%; height:100%; border-radius:999px; background:repeating-linear-gradient(-45deg, #E85D8A 0, #E85D8A 8px, #F291AF 8px, #F291AF 16px); background-size:200% 100%; animation:appLoaderStripes .6s linear infinite; transition:width .35s ease;"></div>
+      </div>
+      <div id="loaderPercentText" style="text-align:center; font-size:12px; color:#C98BA3; font-weight:800; margin-top:8px;">0%</div>
+    </div>
+
+    <div style="display:flex; gap:6px; margin-top:2px;">
+      <span class="appLoaderDot" style="animation-delay:0s;"></span>
+      <span class="appLoaderDot" style="animation-delay:.2s;"></span>
+      <span class="appLoaderDot" style="animation-delay:.4s;"></span>
+    </div>
   </div>
   <style>
-    @keyframes appLoaderSpin { to { transform: rotate(360deg); } }
-    @keyframes appLoaderPulse { 0%, 100% { transform: scale(1); opacity:1; } 50% { transform: scale(1.15); opacity:.75; } }
+    @keyframes appLoaderSpinSlow { to { transform: rotate(360deg); } }
+    @keyframes appLoaderStripes { from { background-position:0 0; } to { background-position:32px 0; } }
+    .appLoaderDot { width:7px; height:7px; border-radius:50%; background:#E85D8A; display:inline-block; animation:appLoaderBounce 1s ease-in-out infinite; }
+    @keyframes appLoaderBounce { 0%, 100% { transform:translateY(0); opacity:.5; } 50% { transform:translateY(-5px); opacity:1; } }
   </style>
+  <script>
+    // ⏳ تحريك شريط التحميل بشكل تدريجي (بدون ما يوحي إنه خلص قبل لا توصل البيانات فعلاً)
+    (function () {
+      let pct = 8;
+      const bar = document.getElementById('loaderProgressBar');
+      const text = document.getElementById('loaderPercentText');
+      window.__loaderInterval = setInterval(() => {
+        if (pct < 88) {
+          pct += Math.random() * 6;
+          if (bar) bar.style.width = Math.min(pct, 88) + '%';
+          if (text) text.textContent = Math.round(Math.min(pct, 88)) + '%';
+        }
+      }, 220);
+    })();
+  </script>
 
 
   <!-- STOREFRONT FREEZE OVERLAY (مخفي افتراضياً) -->
