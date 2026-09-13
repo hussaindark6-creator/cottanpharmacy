@@ -1,6 +1,6 @@
 /* ==========================================================
    SaaS Multi-Tenant Pharmacy Engine — script.js
-   Version: 3.4.0 (Master Enterprise Edition + Custom Logo & Cloud R2)
+   Version: 5.0.0 (Master Enterprise Edition + R2 Auto-Rebuild & Loader Customizer)
    ========================================================== */
 
 // ================= 1. SUBDOMAIN & SLUG RESOLVER =================
@@ -224,6 +224,15 @@ async function apiFetch(endpoint, options = {}) {
   }
 }
 
+// دالة تلقائية لإعادة بناء كتالوج R2 السحابي ومسح كاش Edge عند أي تعديل للمنتجات
+function triggerR2CatalogRebuild() {
+  apiFetch('/api/admin/catalog/rebuild', { method: 'POST' })
+    .then(res => {
+      if (res && res.success) console.log("R2 catalog rebuilt successfully:", res.totalProducts);
+    })
+    .catch(err => console.warn("R2 catalog rebuild notice:", err));
+}
+
 // دالة رفع الصور المباشرة من الاستوديو أو الكاميرا إلى Cloudflare R2
 async function uploadDirectImageFile(fileInput, targetHiddenUrlId, previewImgId, previewBoxId) {
   const file = fileInput.files[0];
@@ -365,6 +374,9 @@ let pharmacyProfile = {
   heroMainTitle: 'متجر الصيدلية',
   heroSubTitle: 'نحن هنا لتحسين صحتكم وجمالكم',
   heroDescTitle: 'منتجات أصلية ومعتمدة 100%',
+  loaderImgUrl: '',
+  loaderCircleSize: 150,
+  loaderTitle: 'جاري تحميل الموقع',
   isActive: true,
   subscriptionExpiry: '2099-12-31',
   subscriptionPrice: 50000,
@@ -436,12 +448,11 @@ async function loadDynamicTheme(templateId) {
     activeThemeModule = module.default || module.TemplateA || module.TemplateB || module.TemplateDefault || window.TemplateDefault;
     if (!activeThemeModule) throw new Error("Template module export is empty");
   } catch (err) {
-    console.warn(`[Theme Engine] فشل استدعاء القالب (${targetKey})، جاري تشغيل خطة الطوارئ للقالب الافتراضي:`, err);
+    console.warn(`[Theme Engine] خطأ في تحميل القالب (${targetKey}):`, err);
     try {
       const fallbackModule = await import(`./templates/template_default.js?t=${Date.now()}`);
       activeThemeModule = fallbackModule.default || fallbackModule.TemplateDefault || window.TemplateDefault;
     } catch (fallbackErr) {
-      console.error("[Theme Engine] تعذر تحميل القالب الافتراضي:", fallbackErr);
       activeThemeModule = null;
     }
   }
@@ -536,9 +547,6 @@ function checkStorefrontSubscriptionLock() {
 }
 
 // ================= 8b. ADMIN PANEL SUBSCRIPTION LOCK GATE =================
-// 🛡️ نفس منطق قفل المتجر، بس للوحة التحكم نفسها — كانت هذي البوابة موجودة
-// بالـ HTML (subscriptionLockGate) بدون أي كود يفعّلها، يعني الأدمن يقدر يشتغل
-// عادي حتى لو صيدليته موقوفة أو منتهي اشتراكها.
 function checkAdminSubscriptionLock() {
   const isSuspended = pharmacyProfile.isActive === false;
   const todayStr = new Date().toISOString().split('T')[0];
@@ -626,7 +634,7 @@ async function sendOrderToPharmacyTelegram(orderObj) {
   }
 }
 
-// ================= 11. CONFIRM ORDER (WITH ATOMIC STOCK DECREMENT) =================
+// ================= 11. CONFIRM ORDER =================
 async function confirmOrder() {
   if (!lockAction('confirmOrder', 2500)) return;
 
@@ -868,7 +876,6 @@ function renderAdminCouponsList(coupons) {
   `).join('');
 }
 
-// ✏️ تعبئة فورم الكوبون بالبيانات الحالية للتعديل بدل الإنشاء
 function editAdminCoupon(id, coupon) {
   document.getElementById('couponDocId').value = id;
   document.getElementById('couponCodeInput').value = coupon.code || id;
@@ -914,7 +921,6 @@ async function handleAdminCouponSave(e) {
 
   if (db) {
     await dbPaths.couponsCol().doc(payload.code).set(payload, { merge: true });
-    // لو كنا نعدّل كوبون وتغيّر الكود، نحذف المستند القديم حتى ما يصير تكرار
     if (editingId && editingId !== payload.code) {
       await dbPaths.couponsCol().doc(editingId).delete().catch(() => {});
     }
@@ -988,7 +994,7 @@ function renderBundleCardHTML(b) {
 
   return `
     <div class="bundle-card">
-      <span class="bundle-savings-badge">${helpers ? helpers.sanitizeText(b.savingsBadge || 'توفير فوري 💸') : (b.savingsBadge || 'توفير فوري 💸')}</span>
+      <span class="bundle-savings-badge">${b.savingsBadge || 'توفير فوري 💸'}</span>
       <div class="bundle-thumb-row">
         ${cleanImg ? `<img src="${cleanImg}" style="max-height:100px; object-fit:contain;">` : 
           includedProds.map((p, idx) => `
@@ -1347,7 +1353,10 @@ async function handleApplyBulkDiscount(e) {
   });
 
   if (batch) {
-    try { await batch.commit(); } catch (err) { console.warn("Batch commit warning:", err); }
+    try { 
+      await batch.commit(); 
+      triggerR2CatalogRebuild();
+    } catch (err) { console.warn("Batch commit warning:", err); }
   }
 
   saveLocalState();
@@ -1355,14 +1364,14 @@ async function handleApplyBulkDiscount(e) {
   showToast(action === 'apply' ? `تم تطبيق خصم ${pct}% على ${targetProducts.length} منتج فورياً! ✓` : `تم استرجاع الأسعار الأصلية بنجاح ✓`);
 }
 
-// ================= 17. PROMO CARDS CRUD =================
+// ================= 17. HERO SLIDER & PROMO CARDS CRUD =================
 function renderPromoCardsListAdmin() {
   const container = document.getElementById('adminPromoCardsListGrid');
   if (!container) return;
   const cards = pharmacyProfile.promoCards || [];
 
   if (cards.length === 0) {
-    container.innerHTML = `<div class="no-results" style="padding:14px 0;">لا توجد بطاقات عروض نشطة.</div>`;
+    container.innerHTML = `<div class="no-results" style="padding:14px 0;">لا توجد شرائح عروض نشطة بالسلايدر.</div>`;
     return;
   }
 
@@ -1394,8 +1403,8 @@ function editPromoCard(cardId) {
   document.getElementById('promoCardDiscountText').value = card.discount || '';
   document.getElementById('promoCardImgUrl').value = card.img || '';
 
-  document.getElementById('adminPromoCardFormTitle').textContent = '✏️ تعديل بطاقة العرض: ' + card.title;
-  document.getElementById('adminSavePromoCardBtn').textContent = '💾 حفظ تعديلات البطاقة';
+  document.getElementById('adminPromoCardFormTitle').textContent = '✏️ تعديل شريحة العرض: ' + card.title;
+  document.getElementById('adminSavePromoCardBtn').textContent = '💾 حفظ تعديلات الشريحة بالسلايدر';
 }
 
 function resetPromoCardForm() {
@@ -1405,8 +1414,8 @@ function resetPromoCardForm() {
   document.getElementById('promoCardDesc').value = '';
   document.getElementById('promoCardDiscountText').value = '';
   document.getElementById('promoCardImgUrl').value = '';
-  document.getElementById('adminPromoCardFormTitle').textContent = '🎁 إضافة بطاقة عرض مميزة';
-  document.getElementById('adminSavePromoCardBtn').textContent = '💾 حفظ بطاقة العرض سحابياً';
+  document.getElementById('adminPromoCardFormTitle').textContent = '🎁 إضافة شريحة عرض جديدة للسلايدر العلوي';
+  document.getElementById('adminSavePromoCardBtn').textContent = '💾 حفظ شريحة العرض في السلايدر';
 }
 
 async function handleSavePromoCard(e) {
@@ -1440,52 +1449,23 @@ async function handleSavePromoCard(e) {
 
   saveLocalState();
   renderPromoCardsListAdmin();
-  renderPromoBanners();
 
   try {
     if (db) await dbPaths.pharmacyDoc().set({ promoCards: pharmacyProfile.promoCards }, { merge: true });
-    showToast('تم حفظ بطاقة العرض بنجاح ✓');
+    showToast('تم حفظ شريحة العرض وتحديث السلايدر العلوي بنجاح ✓');
     resetPromoCardForm();
   } catch (err) { console.error(err); }
 }
 
 async function deletePromoCard(cardId) {
   if (!assertAdmin()) return;
-  if (confirm('هل أنتِ متأكدة من حذف هذه البطاقة؟')) {
+  if (confirm('هل أنتِ متأكدة من حذف هذه الشريحة من السلايدر؟')) {
     pharmacyProfile.promoCards = (pharmacyProfile.promoCards || []).filter(c => c.id !== cardId);
     saveLocalState();
     renderPromoCardsListAdmin();
-    renderPromoBanners();
     if (db) await dbPaths.pharmacyDoc().set({ promoCards: pharmacyProfile.promoCards }, { merge: true });
-    showToast('تم حذف بطاقة العرض بنجاح ✓');
+    showToast('تم حذف الشريحة من السلايدر بنجاح ✓');
   }
-}
-
-function renderPromoBanners() {
-  const el = document.getElementById('promoBanners');
-  if (!el) return;
-  const cards = pharmacyProfile.promoCards || [];
-
-  if (cards.length === 0) {
-    el.innerHTML = '';
-    return;
-  }
-
-  el.innerHTML = `
-    <div class="section-head"><span></span><h2>عروض مميزة 🎁</h2></div>
-    ${cards.map(c => {
-      const cleanImg = sanitizeUrl(c.img);
-      return `
-        <div class="promo-banner">
-          <div class="promo-thumb">${cleanImg ? `<img src="${cleanImg}">` : icons.bottle('var(--accent, #E85D8A)')}</div>
-          <div class="promo-body">
-            <h3>${sanitizeText(c.title)}</h3>
-            <p>${sanitizeText(c.desc)}</p>
-            <div class="promo-discount">${sanitizeText(c.discount)}</div>
-            <button class="promo-cta" onclick="showView('offers')">تسوقي الآن</button>
-          </div>
-        </div>`;
-    }).join('')}`;
 }
 
 // ================= 18. REAL ANALYTICS =================
@@ -1828,8 +1808,11 @@ async function quickEditPrice(id, currentPrice) {
     showToast('يرجى إدخال سعر صحيح أكبر من صفر');
     return;
   }
-  if (db) await dbPaths.productsCol().doc(String(id)).set({ price: newPrice }, { merge: true });
-  showToast('تم تحديث السعر فورياً ✓');
+  if (db) {
+    await dbPaths.productsCol().doc(String(id)).set({ price: newPrice }, { merge: true });
+    triggerR2CatalogRebuild();
+  }
+  showToast('تم تحديث السعر ومسح الكاش فورياً ✓');
 }
 
 async function quickToggleStock(id) {
@@ -1837,11 +1820,13 @@ async function quickToggleStock(id) {
   const p = findProduct(id);
   if (!p) return;
   const newStock = (p.inStock === false) ? true : false;
-  if (db) await dbPaths.productsCol().doc(String(id)).set({ inStock: newStock }, { merge: true });
+  if (db) {
+    await dbPaths.productsCol().doc(String(id)).set({ inStock: newStock }, { merge: true });
+    triggerR2CatalogRebuild();
+  }
   showToast(newStock ? 'تم التعيين: متوفر 🟢' : 'تم التعيين: نفذت الكمية 🔴');
 }
 
-// فتح نافذة التعديل السريري الشامل
 function openAdminQuickEditModal(id) {
   if (!assertAdmin()) return;
   const p = findProduct(id) || archivedProducts.find(x => String(x.id) === String(id));
@@ -1861,7 +1846,6 @@ function openAdminQuickEditModal(id) {
   document.getElementById('quickEditProdCat').value = p.category || (categories[0] ? categories[0].id : 'face');
   document.getElementById('quickEditProdType').value = p.type || 'bottle';
   
-  // ضبط الصورة والمعاينة المباشرة
   const imgUrlInp = document.getElementById('quickEditProdImg');
   const imgPreviewEl = document.getElementById('quickEditProdImgPreviewEl');
   const imgPreviewBox = document.getElementById('quickEditProdImgPreviewBox');
@@ -1935,9 +1919,12 @@ async function saveAdminQuickEdit() {
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
 
-  if (db) await dbPaths.productsCol().doc(String(id)).set(updates, { merge: true });
+  if (db) {
+    await dbPaths.productsCol().doc(String(id)).set(updates, { merge: true });
+    triggerR2CatalogRebuild();
+  }
   closeAdminQuickEditModal();
-  showToast('تم تحديث تفاصيل الصنف بالكامل سحابياً ✓');
+  showToast('تم تحديث تفاصيل الصنف وإعادة بناء الكتالوج سحابياً ✓');
 }
 
 function openAdminQuickAddModal() {
@@ -2026,7 +2013,6 @@ async function handleAdminProductSave(e) {
       if (db) {
         const newRef = await dbPaths.productsCol().add(payload);
         
-        // ================= AUTO-CROWDSOURCING PIPELINE =================
         try {
           const subDocId = `sub_${currentPharmacyId}_${newRef.id}`;
           await dbPaths.masterCatalogSubmissionsCol().doc(subDocId).set({
@@ -2044,8 +2030,9 @@ async function handleAdminProductSave(e) {
           console.warn("Crowdsourcing hook warning:", crowdErr);
         }
       }
-      showToast('تمت إضافة المنتج وإرساله للبنك المركزي بنجاح! ✓');
+      showToast('تمت إضافة المنتج بنجاح! ✓');
     }
+    triggerR2CatalogRebuild();
     resetAdminProductForm();
   } catch (err) {
     showToast('حدث خطأ أثناء حفظ المنتج');
@@ -2055,12 +2042,13 @@ async function handleAdminProductSave(e) {
 // ----------------- سلة المحذوفات والأرشفة (SOFT DELETE) -----------------
 async function archiveProductConfirm(id, name) {
   if (!assertAdmin()) return;
-  if (confirm(`هل أنتِ متأكدة من نقل المنتج "${name}" إلى سلة المحذوفات؟ (يمكنك استرجاعه بأي وقت)`)) {
+  if (confirm(`هل أنتِ متأكدة من نقل المنتج "${name}" إلى سلة المحذوفات؟`)) {
     if (db) {
       await dbPaths.productsCol().doc(String(id)).set({
         isDeleted: true,
         deletedAt: firebase.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
+      triggerR2CatalogRebuild();
       showToast(`تم نقل "${name}" إلى سلة المحذوفات 🗑️`);
     }
   }
@@ -2073,6 +2061,7 @@ async function restoreProduct(id) {
       isDeleted: false,
       restoredAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
+    triggerR2CatalogRebuild();
     showToast('تم استرجاع المنتج وإعادته للمتجر بنجاح! ♻️');
     fetchArchivedProducts();
   }
@@ -2083,6 +2072,7 @@ async function permanentDeleteProduct(id, name) {
   if (confirm(`تحذير نهائي: هل تريد حذف "${name}" نهائياً من قاعدة البيانات بلا رجعة؟`)) {
     if (db) {
       await dbPaths.productsCol().doc(String(id)).delete();
+      triggerR2CatalogRebuild();
       showToast('تم حذف المنتج نهائياً من السيرفر');
       fetchArchivedProducts();
     }
@@ -2433,7 +2423,6 @@ function renderHome() {
   renderBrandStrip();
   renderHomeProductGrid();
   renderHomeBundles();
-  renderPromoBanners();
 }
 
 let homeActiveBrand = 'all';
@@ -2619,7 +2608,7 @@ function renderProductGrid(targetId, list, emptyMsg) {
       try {
         return activeThemeModule.renderProductCard(p, getTemplateHelpers());
       } catch (e) {
-        console.warn("[Theme Engine] خطأ في عرض بطاقة المنتج، استخدام العرض الافتراضي:", e);
+        console.warn("[Theme Engine] خطأ في عرض بطاقة المنتج:", e);
       }
     }
 
@@ -3195,7 +3184,7 @@ function sendRenewalReceiptWhatsApp(price) {
   window.open(`https://wa.me/9647813703288?text=${adminMsg}`, '_blank');
 }
 
-// ================= 30. THEME, LOGO & BRANDING CUSTOMIZATION =================
+// ================= 30. THEME, LOGO, LOADER & BRANDING CUSTOMIZATION =================
 async function handleSaveCustomization(e) {
   e.preventDefault();
   if (!assertAdmin() || !lockAction('saveCustomization', 1200)) return;
@@ -3232,13 +3221,16 @@ async function handleSaveCustomization(e) {
     heroSubTitle: sanitizeText(getVal('adminHeroSubTitle', 'نحن هنا لتحسين صحتكم وجمالكم')),
     heroDescTitle: sanitizeText(getVal('adminHeroDescTitle', 'منتجات أصلية ومعتمدة 100%')),
     bannerImgUrl: sanitizeUrl(getVal('adminBannerImgInput', 'https://imgdb.io/i/EQ4D9ag.png')),
+    loaderImgUrl: sanitizeUrl(getVal('adminLoaderImgInput', pharmacyProfile.loaderImgUrl || '')),
+    loaderCircleSize: Number(getVal('adminLoaderCircleSize', pharmacyProfile.loaderCircleSize || 150)),
+    loaderTitle: sanitizeText(getVal('adminLoaderTitleInput', pharmacyProfile.loaderTitle || 'جاري تحميل الموقع')),
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
 
   pharmacyProfile = { ...pharmacyProfile, ...newSettings };
   saveLocalState();
   applyStoreSettings();
-  showToast('تم تطبيق وحفظ الهوية والشعار سحابياً! ✨');
+  showToast('تم تطبيق وحفظ الهوية والشعار وشاشة التحميل سحابياً! ✨');
 
   try {
     if (db) await dbPaths.pharmacyDoc().set(newSettings, { merge: true });
@@ -3261,7 +3253,6 @@ function applyStoreSettings() {
   if (headerLogoText) headerLogoText.textContent = pharmacyProfile.name || 'الصيدلية';
   if (drawerLogoTitle) drawerLogoTitle.textContent = pharmacyProfile.name || 'الصيدلية';
 
-  // عرض شعار الصيدلية المخصص في واجهة المتجر
   const headerLogoMark = document.getElementById('headerLogoMark');
   if (headerLogoMark) {
     if (pharmacyProfile.logoUrl) {
@@ -3271,7 +3262,6 @@ function applyStoreSettings() {
     }
   }
 
-  // ملء حقول ومعاينة الشعار في لوحة الأدمن
   const adminLogoInput = document.getElementById('adminPharmacyLogoInput');
   const adminLogoPreview = document.getElementById('adminPharmacyLogoPreviewEl');
   const adminLogoBox = document.getElementById('adminPharmacyLogoPreviewBox');
@@ -3279,6 +3269,22 @@ function applyStoreSettings() {
     adminLogoInput.value = pharmacyProfile.logoUrl;
     if (adminLogoPreview) adminLogoPreview.src = pharmacyProfile.logoUrl;
     if (adminLogoBox) adminLogoBox.style.display = 'flex';
+  }
+
+  // تخصيص شاشة التحميل الأولية
+  const loaderWrap = document.getElementById('loaderCircleWrap');
+  const loaderImg = document.getElementById('loaderPhotoImg');
+  const loaderTitle = document.getElementById('loaderTitleText');
+  if (loaderWrap && pharmacyProfile.loaderCircleSize) {
+    loaderWrap.style.width = pharmacyProfile.loaderCircleSize + 'px';
+    loaderWrap.style.height = pharmacyProfile.loaderCircleSize + 'px';
+  }
+  if (loaderImg) {
+    const tImg = sanitizeUrl(pharmacyProfile.loaderImgUrl || pharmacyProfile.logoUrl || pharmacyProfile.bannerImgUrl);
+    if (tImg) loaderImg.src = tImg;
+  }
+  if (loaderTitle && pharmacyProfile.loaderTitle) {
+    loaderTitle.textContent = pharmacyProfile.loaderTitle;
   }
 
   const annEl = document.getElementById('announcementBar');
@@ -3341,7 +3347,6 @@ function initFirestoreSync() {
       if (pharmacyProfile.brandsData) brandsData = { ...brandsData, ...pharmacyProfile.brandsData };
       saveLocalState();
       applyStoreSettings();
-      renderPromoBanners();
       renderPromoCardsListAdmin();
       renderBrandStrip();
       checkStorefrontSubscriptionLock();
