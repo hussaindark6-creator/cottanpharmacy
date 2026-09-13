@@ -98,7 +98,7 @@
       <button class="admin-tab-btn-v" id="btnTabVProducts" onclick="switchAdminSection('products')">💊 منتجات ومخزن الصيدلية</button>
       <button class="admin-tab-btn-v" id="btnTabVTrash" onclick="switchAdminSection('trash')">🗑️ سلة المحذوفات (<span id="adminTrashCount">0</span>)</button>
       <button class="admin-tab-btn-v" id="btnTabVCats" onclick="switchAdminSection('cats')">🗂️ إدارة الأقسام</button>
-      <button class="admin-tab-btn-v" id="btnTabVOffers" onclick="switchAdminSection('offers')">🏷️ الخصومات والعروض</button>
+      <button class="admin-tab-btn-v" id="btnTabVOffers" onclick="switchAdminSection('offers')">🏷️ سلايدر العروض والخصومات</button>
       <button class="admin-tab-btn-v" id="btnTabVBundles" onclick="switchAdminSection('bundles')">🎁 حزم وبكجات التوفير</button>
       <button class="admin-tab-btn-v" id="btnTabVCoupons" onclick="switchAdminSection('coupons')">🎟️ إدارة أكواد الخصم</button>
       <button class="admin-tab-btn-v" id="btnTabVBrands" onclick="switchAdminSection('brands')">🏢 الماركات والشعارات</button>
@@ -106,7 +106,7 @@
       <button class="admin-tab-btn-v" id="btnTabVAudit" onclick="switchAdminSection('audit')">🛡️ سجل العمليات والحماية</button>
       <button class="admin-tab-btn-v" id="btnTabVStaff" onclick="switchAdminSection('staff')">👥 الموظفين والصلاحيات</button>
       <button class="admin-tab-btn-v" id="btnTabVSubscription" onclick="switchAdminSection('subscription')">💳 بيانات الاشتراك والدفع</button>
-      <button class="admin-tab-btn-v" id="btnTabVDesign" onclick="switchAdminSection('design')">🎨 الهوية البصرية والتصميم</button>
+      <button class="admin-tab-btn-v" id="btnTabVDesign" onclick="switchAdminSection('design')">🎨 الهوية، الشعار وشاشة التحميل</button>
     </div>
 
     <!-- 1. REAL ANALYTICS SECTION -->
@@ -190,7 +190,7 @@
       </div>
     </div>
 
-    <!-- 3. IMPORT FROM MASTER CATALOG (2-TIER CLASSIFICATION + CUSTOM '+' CATEGORY) -->
+    <!-- 3. IMPORT FROM MASTER CATALOG -->
     <div id="adminSecImport" style="display:none;">
       <div class="admin-fieldset" style="border-color:#10B981; background:#F0FDF4;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
@@ -205,10 +205,10 @@
           تصفح الأصناف حسب الفئات، أو أضف قسماً مخصصاً عبر زر <b>(+)</b> لأرشفة المكملات والمنتجات تلقائياً:
         </p>
 
-        <!-- Tier 1: Dynamic Main Category Buttons Container + '+' Button -->
+        <!-- Tier 1: Category Buttons -->
         <div id="tenantMainCatButtonsContainer" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;"></div>
 
-        <!-- Tier 2: Search + Sub-Categories + Dynamic Brands Dropdown -->
+        <!-- Tier 2: Search + Filters -->
         <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
           <input type="text" id="tenantImportSearchInput" oninput="filterTenantMasterCatalog()" placeholder="ابحث باسم المنتج، الماركة، أو الباركود..." style="flex:2; min-width:200px; padding:10px 14px; border:1.5px solid #A7F3D0; border-radius:12px; font-size:13px; outline:none; background:#fff;">
           
@@ -221,7 +221,6 @@
           </select>
         </div>
 
-        <!-- Master Items Grid -->
         <div id="tenantMasterCatalogGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:14px;">
           <div style="grid-column:1/-1; text-align:center; padding:30px; color:#047857; font-weight:800;">
             جاري جلب بيانات بنك المنتجات المركزي...
@@ -294,7 +293,6 @@
             </div>
           </div>
 
-          <!-- DIRECT DEVICE IMAGE UPLOAD FIELD (WebP Compressor) -->
           <div class="form-field">
             <label>صورة المنتج (اختيار مباشر من المعرض / الكاميرا)</label>
             <div style="display:flex; gap:10px; align-items:center;">
@@ -382,7 +380,7 @@
       </div>
     </div>
 
-    <!-- 7. OFFERS & PROMO CARDS -->
+    <!-- 7. OFFERS & HERO SLIDER CARDS -->
     <div id="adminSecOffers" style="display:none;">
       <div class="admin-fieldset">
         <legend>🎯 تطبيق خصم ذكي مجمع وتحديث الأسعار فورياً</legend>
@@ -418,7 +416,10 @@
       </div>
 
       <div class="admin-fieldset">
-        <legend id="adminPromoCardFormTitle">🎁 إدارة بطاقات "عروض مميزة" في الصفحة الرئيسية</legend>
+        <legend id="adminPromoCardFormTitle">🎁 إدارة شرائح سلايدر العروض في أعلى الصفحة الرئيسية</legend>
+        <p style="font-size:12px; color:var(--text-soft); margin-top:-4px; margin-bottom:12px;">
+          البطاقات المضافة هنا تظهر مباشرة في سلايدر البانرات العلوي التفاعلي، ويمكن للزبائن سحبها والتنقل بينها بالأصبع:
+        </p>
         <form id="adminPromoCardForm" onsubmit="handleSavePromoCard(event)">
           <input type="hidden" id="promoCardDocId" value="">
           <div class="form-field">
@@ -431,7 +432,7 @@
           </div>
           <div style="display:flex; gap:10px;">
             <div class="form-field" style="flex:1;">
-              <label>نص أو نسبة الخصم *</label>
+              <label>نص أو شارة الخصم *</label>
               <input type="text" id="promoCardDiscountText" placeholder="مثال: خصم حتى 30%" required>
             </div>
             <div class="form-field" style="flex:1;">
@@ -440,13 +441,13 @@
               <input type="hidden" id="promoCardImgUrl" value="">
             </div>
           </div>
-          <button type="submit" class="admin-btn-save" id="adminSavePromoCardBtn">💾 حفظ بطاقة العرض سحابياً</button>
+          <button type="submit" class="admin-btn-save" id="adminSavePromoCardBtn">💾 حفظ بطاقة العرض في السلايدر</button>
           <button type="button" onclick="resetPromoCardForm()" style="width:100%; margin-top:8px; font-size:13px; font-weight:700; color:var(--text-soft); padding:8px;">إلغاء ومسح الحقول</button>
         </form>
       </div>
 
       <div class="admin-fieldset">
-        <legend>قائمة بطاقات العروض المميزة المعروضة في الرئيسية</legend>
+        <legend>قائمة شرائح العروض المعروضة حالياً بالسلايدر العلوي</legend>
         <div id="adminPromoCardsListGrid" style="display:flex; flex-direction:column; gap:8px;"></div>
       </div>
     </div>
@@ -686,7 +687,7 @@
       </div>
     </div>
 
-    <!-- 15. DESIGN & BRANDING (ZERO-TRUST SECRET DECOUPLING) -->
+    <!-- 15. DESIGN, BRANDING & APP LOADER CUSTOMIZATION -->
     <div id="adminSecDesign" style="display:none;">
       <form onsubmit="handleSaveCustomization(event)">
         <fieldset class="admin-fieldset">
@@ -713,6 +714,33 @@
             <div style="display:flex; align-items:center; gap:10px;">
               <input type="color" id="adminPrimaryColorPicker" value="#E85D8A" oninput="onColorPickerChange()" style="width:44px; height:36px; padding:2px; cursor:pointer; border-radius:8px; border:1px solid #D1D5DB;">
               <span style="font-size:11px; color:#6B7280;">أو اختاري لون مخصص بالكامل من هنا</span>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- 🌸 تخصيص شاشة التحميل الأولية للمتجر (App Loader Customizer) -->
+        <fieldset class="admin-fieldset">
+          <legend>🌸 تخصيص شاشة التحميل الأولية للموقع (App Loading Screen)</legend>
+          <p style="font-size:12px; color:var(--text-soft); margin-top:-4px; margin-bottom:12px;">
+            يمكنك تخصيص الصورة المعروضة في دائرة التحميل وحجمها لتطابق هوية صيدليتك:
+          </p>
+          <div class="form-field">
+            <label>صورة شاشة التحميل (اختيار مباشر من المعرض / الكاميرا)</label>
+            <input type="file" accept="image/*" onchange="uploadDirectImageFile(this, 'adminLoaderImgInput', 'adminLoaderImgPreviewEl', 'adminLoaderImgPreviewBox')" style="width:100%; padding:8px; border:1.5px dashed var(--line); border-radius:12px; background:#fff; font-size:12px;">
+            <input type="hidden" id="adminLoaderImgInput" value="">
+            <div id="adminLoaderImgPreviewBox" style="margin-top:8px; display:none; align-items:center; gap:10px;">
+              <img id="adminLoaderImgPreviewEl" src="" style="height:60px; width:60px; object-fit:cover; border-radius:50%; border:1.5px solid var(--line);" alt="Loader Preview">
+              <span style="font-size:11px; color:#16A34A; font-weight:800;">✅ تم حفظ صورة التحميل</span>
+            </div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <div class="form-field" style="flex:1;">
+              <label>حجم دائرة صورة التحميل (بالبكسل: 80 - 220)</label>
+              <input type="number" id="adminLoaderCircleSize" placeholder="150" min="80" max="220" value="150">
+            </div>
+            <div class="form-field" style="flex:1;">
+              <label>عنوان نص التحميل</label>
+              <input type="text" id="adminLoaderTitleInput" placeholder="جاري تحميل الموقع">
             </div>
           </div>
         </fieldset>
@@ -874,7 +902,6 @@
           </div>
         </div>
 
-        <!-- DIRECT GALLERY IMAGE UPLOAD IN EDIT MODAL -->
         <div class="form-field">
           <label>تغيير صورة الصنف (من المعرض مباشرة)</label>
           <input type="file" accept="image/*" onchange="uploadDirectImageFile(this, 'quickEditProdImg', 'quickEditProdImgPreviewEl', 'quickEditProdImgPreviewBox')" style="width:100%; padding:8px; border:1.5px dashed var(--line); border-radius:12px; background:#fff; font-size:12px;">
@@ -984,8 +1011,7 @@
           <label>الكلمات المفتاحية للأرشفة التلقائية (مفصولة بفواصل)</label>
           <textarea id="customCatKeywordsInput" rows="3" placeholder="supplement, vitamin, فيتامين, كولاجين, omega, zinc, now foods"></textarea>
           <p style="font-size:11px; color:#DC2626; font-weight:700; margin-top:4px; line-height:1.6;">
-            ⚠️ مهم: اكتبي كلمات موجودة فعلاً باسم أو وصف المنتجات (خصوصاً بالإنجليزي، لأن أغلب بيانات البنك مكتوبة إنجليزي) —
-            لو تركتِ هذا الحقل فاضي، بيستخدم اسم القسم نفسه كلمة مفتاحية وحيدة، وإذا هذا الاسم ما يطابق أي منتج، ما راح يظهر لك أي شي بالقسم.
+            ⚠️ مهم: اكتبي كلمات موجودة فعلاً باسم أو وصف المنتجات (خصوصاً بالإنجليزي، لأن أغلب بيانات البنك مكتوبة إنجليزي).
           </p>
         </div>
         <button type="submit" class="admin-btn-save" style="background:#059669; font-weight:900;">
@@ -1001,7 +1027,7 @@
   <!-- Main JavaScript File -->
   <script src="script.js"></script>
 
-  <!-- Complete Inline Admin Script Logic (All 15 Tabs Operations) -->
+  <!-- Complete Inline Admin Script Logic -->
   <script>
     let activeMainCategory = 'all';
     let cachedMasterCatalog = [];
@@ -1323,9 +1349,6 @@
       showToast(`جاري الحفظ...`);
 
       try {
-        // 🛡️ نتحقق أولاً: هل هذا المنتج مستورد أصلاً؟ لو نعم، نحدّث السعر والكمية
-        // فقط بدون ما نلمس التقييم/عدد الطلبات/حالة الأرشفة اللي ربما تغيّرت لاحقاً —
-        // قبل هذا الإصلاح، الضغط على "تحديث السعر والكمية" كان يصفّر كل هذا سهواً.
         const existingSnap = await dbPaths.productsCol().doc(String(masterId)).get();
 
         if (existingSnap.exists) {
@@ -1362,8 +1385,6 @@
       }
     }
 
-    // 🔒 قراءة وحفظ إعدادات الهوية (البانر، النصوص، بيانات التواصل)
-    // 🎨 لوحة ألوان جاهزة ومنظمة بشكل شبكي — أقرب لتجربة منتقي الألوان الاحترافي
     const COLOR_SWATCH_PRESETS = [
       '#FCA5A5', '#F87171', '#EF4444', '#DC2626', '#B91C1C',
       '#FDBA74', '#FB923C', '#F97316', '#EA580C', '#C2410C',
@@ -1406,10 +1427,10 @@
 
     document.addEventListener('DOMContentLoaded', renderColorSwatchGrid);
 
+    // 🌸 قراءة إعدادات الصيدلية وشاشة التحميل
     async function loadPharmacyDesignAndSecrets() {
       if (!db) return;
       try {
-        // 1. قراءة المستند العام
         const pubSnap = await dbPaths.pharmacyDoc().get();
         if (pubSnap.exists) {
           const p = pubSnap.data();
@@ -1428,6 +1449,16 @@
           if (document.getElementById('adminShowPharmacistBanner')) document.getElementById('adminShowPharmacistBanner').checked = (p.showPharmacistBanner !== false);
           if (document.getElementById('adminPharmacistTitleInput')) document.getElementById('adminPharmacistTitleInput').value = p.pharmacistCtaTitle || '';
           if (document.getElementById('adminPharmacistDescInput')) document.getElementById('adminPharmacistDescInput').value = p.pharmacistCtaDesc || '';
+          
+          // إعدادات شاشة التحميل الأولية
+          if (document.getElementById('adminLoaderCircleSize')) document.getElementById('adminLoaderCircleSize').value = p.loaderCircleSize || 150;
+          if (document.getElementById('adminLoaderTitleInput')) document.getElementById('adminLoaderTitleInput').value = p.loaderTitle || 'جاري تحميل الموقع';
+          if (p.loaderImgUrl) {
+            document.getElementById('adminLoaderImgInput').value = p.loaderImgUrl;
+            document.getElementById('adminLoaderImgPreviewEl').src = p.loaderImgUrl;
+            document.getElementById('adminLoaderImgPreviewBox').style.display = 'flex';
+          }
+
           if (p.logoUrl) {
             document.getElementById('adminPharmacyLogoInput').value = p.logoUrl;
             document.getElementById('adminPharmacyLogoPreviewEl').src = p.logoUrl;
@@ -1466,8 +1497,12 @@
       const pharmacistCtaTitle = document.getElementById('adminPharmacistTitleInput').value.trim();
       const pharmacistCtaDesc = document.getElementById('adminPharmacistDescInput').value.trim();
 
+      // شاشة التحميل
+      const loaderImgUrl = sanitizeUrl(document.getElementById('adminLoaderImgInput')?.value.trim() || '');
+      const loaderCircleSize = Number(document.getElementById('adminLoaderCircleSize')?.value || 150);
+      const loaderTitle = document.getElementById('adminLoaderTitleInput')?.value.trim() || 'جاري تحميل الموقع';
+
       try {
-        // تحديث المستند العام
         await dbPaths.pharmacyDoc().set({
           name: sanitizeText(name),
           logoUrl,
@@ -1485,16 +1520,18 @@
           showPharmacistBanner,
           pharmacistCtaTitle: sanitizeText(pharmacistCtaTitle),
           pharmacistCtaDesc: sanitizeText(pharmacistCtaDesc),
+          loaderImgUrl,
+          loaderCircleSize,
+          loaderTitle: sanitizeText(loaderTitle),
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
 
-        showToast('تم حفظ وتطبيق الهوية والبانر سحابياً! ✨');
+        showToast('تم حفظ وتطبيق الهوية وشاشة التحميل سحابياً! ✨');
       } catch (err) {
         showToast(`خطأ: ${err.message}`);
       }
     }
 
-    // ربط الدوال عند بدء التحميل
     window.addEventListener('DOMContentLoaded', () => {
       loadPharmacyDesignAndSecrets();
       fetchTenantMasterCatalog();
