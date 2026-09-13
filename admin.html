@@ -90,7 +90,7 @@
       </button>
     </div>
 
-    <!-- ADMIN TABS NAVIGATION -->
+    <!-- ADMIN TABS NAVIGATION (15 TABS) -->
     <div class="admin-tabs-nav-view">
       <button class="admin-tab-btn-v active" id="btnTabVStats" onclick="switchAdminSection('stats')">📊 الإحصائيات والأرباح</button>
       <button class="admin-tab-btn-v" id="btnTabVOrders" onclick="switchAdminSection('orders')">📦 إدارة الطلبات والشحن</button>
@@ -205,10 +205,8 @@
           تصفح الأصناف حسب الفئات، أو أضف قسماً مخصصاً عبر زر <b>(+)</b> لأرشفة المكملات والمنتجات تلقائياً:
         </p>
 
-        <!-- Tier 1: Category Buttons -->
         <div id="tenantMainCatButtonsContainer" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;"></div>
 
-        <!-- Tier 2: Search + Filters -->
         <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
           <input type="text" id="tenantImportSearchInput" oninput="filterTenantMasterCatalog()" placeholder="ابحث باسم المنتج، الماركة، أو الباركود..." style="flex:2; min-width:200px; padding:10px 14px; border:1.5px solid #A7F3D0; border-radius:12px; font-size:13px; outline:none; background:#fff;">
           
@@ -380,7 +378,7 @@
       </div>
     </div>
 
-    <!-- 7. OFFERS & HERO SLIDER CARDS -->
+    <!-- 7. OFFERS & HERO SLIDER CARDS (WITH PRODUCT LINKING & COLORS) -->
     <div id="adminSecOffers" style="display:none;">
       <div class="admin-fieldset">
         <legend>🎯 تطبيق خصم ذكي مجمع وتحديث الأسعار فورياً</legend>
@@ -418,7 +416,7 @@
       <div class="admin-fieldset">
         <legend id="adminPromoCardFormTitle">🎁 إدارة شرائح سلايدر العروض في أعلى الصفحة الرئيسية</legend>
         <p style="font-size:12px; color:var(--text-soft); margin-top:-4px; margin-bottom:12px;">
-          البطاقات المضافة هنا تظهر مباشرة في سلايدر البانرات العلوي التفاعلي، ويمكن للزبائن سحبها والتنقل بينها بالأصبع:
+          البطاقات المضافة هنا تظهر مباشرة في سلايدر البانرات العلوي التفاعلي، ويمكنك تحديد منتجات مخصصة ولون شريحة العرض:
         </p>
         <form id="adminPromoCardForm" onsubmit="handleSavePromoCard(event)">
           <input type="hidden" id="promoCardDocId" value="">
@@ -436,11 +434,31 @@
               <input type="text" id="promoCardDiscountText" placeholder="مثال: خصم حتى 30%" required>
             </div>
             <div class="form-field" style="flex:1;">
-              <label>صورة العرض (من المعرض)</label>
-              <input type="file" accept="image/*" onchange="uploadDirectImageFile(this, 'promoCardImgUrl')" style="width:100%; padding:8px; border:1.5px dashed var(--line); border-radius:12px; font-size:11px;">
-              <input type="hidden" id="promoCardImgUrl" value="">
+              <label>لون خلفية الشريحة بالسلايدر (Color / Gradient)</label>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <input type="color" id="promoCardBgColor" value="#FFF0F3" style="width:44px; height:42px; padding:2px; border-radius:8px; border:1px solid var(--line); cursor:pointer;">
+                <input type="text" id="promoCardBgColorText" placeholder="linear-gradient(...) أو كود لون" style="flex:1; font-size:11.5px; padding:10px;">
+              </div>
             </div>
           </div>
+          <div class="form-field">
+            <label>صورة العرض (من المعرض)</label>
+            <input type="file" accept="image/*" onchange="uploadDirectImageFile(this, 'promoCardImgUrl')" style="width:100%; padding:8px; border:1.5px dashed var(--line); border-radius:12px; font-size:11px;">
+            <input type="hidden" id="promoCardImgUrl" value="">
+          </div>
+
+          <!-- 🌟 اختيار المنتجات المشمولة بالعرض (Search & Chips Selector) -->
+          <div class="form-field">
+            <label>المنتجات المشمولة في هذا العرض (عند نقر الزبون على البانر تظهر له هذه المنتجات حصراً)</label>
+            <div class="bundle-search-box-wrap">
+              <input type="text" id="offerProdSearchInput" class="bundle-search-input" placeholder="ابحث باسم المنتج لإضافته للعرض..." oninput="searchOfferProducts(this.value)">
+              <div id="offerProdSearchResults" class="bundle-search-results-list"></div>
+            </div>
+            <div id="offerProdChipsContainer" class="bundle-chips-container">
+              <span style="font-size:11.5px; color:var(--text-soft); align-self:center;" id="offerProdChipsPlaceholder">لم يتم تحديد منتجات بعد (إذا تركتها فارغة سيفتح كل العروض).</span>
+            </div>
+          </div>
+
           <button type="submit" class="admin-btn-save" id="adminSavePromoCardBtn">💾 حفظ بطاقة العرض في السلايدر</button>
           <button type="button" onclick="resetPromoCardForm()" style="width:100%; margin-top:8px; font-size:13px; font-weight:700; color:var(--text-soft); padding:8px;">إلغاء ومسح الحقول</button>
         </form>
@@ -452,7 +470,7 @@
       </div>
     </div>
 
-    <!-- 8. BUNDLES -->
+    <!-- 8. BUNDLES (WITH SCALABLE SEARCH & CHIPS SELECTOR FOR 1,000+ ITEMS) -->
     <div id="adminSecBundles" style="display:none;">
       <div class="admin-fieldset">
         <legend id="adminBundleFormTitle">🎁 إضافة حزمة / بكج توفير جديد</legend>
@@ -487,10 +505,19 @@
               <input type="hidden" id="bundleImgInput" value="">
             </div>
           </div>
+
+          <!-- 🌟 منتقي منتجات البكج الذكي (Search & Chips) لآلاف المنتجات -->
           <div class="form-field">
-            <label>اختيار المنتجات المكونة للبكج (تحديد متعدد)</label>
-            <div id="bundleProductsChecklist" style="max-height:160px; overflow-y:auto; border:1.5px solid var(--line); border-radius:12px; padding:10px; background:#fff;"></div>
+            <label>اختيار المنتجات المكونة للبكج (نظام البحث والبطاقات الذكي لآلاف الأصناف)</label>
+            <div class="bundle-search-box-wrap">
+              <input type="text" id="bundleProductSearchInput" class="bundle-search-input" placeholder="ابحث باسم المنتج أو الماركة لإضافته للبكج..." oninput="searchBundleProducts(this.value)">
+              <div id="bundleSearchResultsList" class="bundle-search-results-list"></div>
+            </div>
+            <div id="bundleChipsContainer" class="bundle-chips-container">
+              <span style="font-size:11.5px; color:var(--text-soft); align-self:center;" id="bundleChipsPlaceholder">اضغط على المنتجات من نتائج البحث أعلاه لإضافتها هنا.</span>
+            </div>
           </div>
+
           <button type="submit" class="admin-btn-save" id="btnSaveBundle">💾 حفظ وتفعيل البكج في المتجر</button>
           <button type="button" onclick="resetAdminBundleForm()" style="width:100%; margin-top:8px; font-size:13px; font-weight:700; color:var(--text-soft); padding:8px;">إلغاء ومسح الحقول</button>
         </form>
@@ -697,7 +724,6 @@
             <input type="text" id="adminPharmacyNameInput" placeholder="صيدلية القطن" required>
           </div>
           
-          <!-- DIRECT PHARMACY LOGO UPLOAD (WebP) -->
           <div class="form-field">
             <label>شعار الصيدلية (Logo) - اختيار مباشر من المعرض / الكاميرا</label>
             <input type="file" accept="image/*" onchange="uploadDirectImageFile(this, 'adminPharmacyLogoInput', 'adminPharmacyLogoPreviewEl', 'adminPharmacyLogoPreviewBox')" style="width:100%; padding:8px; border:1.5px dashed var(--line); border-radius:12px; background:#fff; font-size:12px;">
@@ -718,34 +744,47 @@
           </div>
         </fieldset>
 
-        <!-- 🌸 تخصيص شاشة التحميل الأولية للمتجر (App Loader Customizer) -->
-        <fieldset class="admin-fieldset">
-          <legend>🌸 تخصيص شاشة التحميل الأولية للموقع (App Loading Screen)</legend>
+        <!-- 🌸 تخصيص واجهة شاشة التحميل الأولية المباشرة (App Loading Screen Customizer) -->
+        <fieldset class="admin-fieldset" style="border:1.5px solid #E85D8A; background:#FFFBFD;">
+          <legend style="color:var(--rose-deep); font-weight:900;">🌸 تخصيص واجهة شاشة التحميل الأولية (App Loading Screen)</legend>
           <p style="font-size:12px; color:var(--text-soft); margin-top:-4px; margin-bottom:12px;">
-            يمكنك تخصيص الصورة المعروضة في دائرة التحميل وحجمها لتطابق هوية صيدليتك:
+            تعديل كامل لشاشة التحميل التي تظهر للزبائن عند فتح الموقع (الخلفية، الصورة، الحجم، والنصوص):
           </p>
+          
           <div class="form-field">
             <label>صورة شاشة التحميل (اختيار مباشر من المعرض / الكاميرا)</label>
             <input type="file" accept="image/*" onchange="uploadDirectImageFile(this, 'adminLoaderImgInput', 'adminLoaderImgPreviewEl', 'adminLoaderImgPreviewBox')" style="width:100%; padding:8px; border:1.5px dashed var(--line); border-radius:12px; background:#fff; font-size:12px;">
             <input type="hidden" id="adminLoaderImgInput" value="">
             <div id="adminLoaderImgPreviewBox" style="margin-top:8px; display:none; align-items:center; gap:10px;">
               <img id="adminLoaderImgPreviewEl" src="" style="height:60px; width:60px; object-fit:cover; border-radius:50%; border:1.5px solid var(--line);" alt="Loader Preview">
-              <span style="font-size:11px; color:#16A34A; font-weight:800;">✅ تم حفظ صورة التحميل</span>
+              <span style="font-size:11px; color:#16A34A; font-weight:800;">✅ تم تحديث صورة التحميل</span>
             </div>
           </div>
+
           <div style="display:flex; gap:10px;">
             <div class="form-field" style="flex:1;">
               <label>حجم دائرة صورة التحميل (بالبكسل: 80 - 220)</label>
               <input type="number" id="adminLoaderCircleSize" placeholder="150" min="80" max="220" value="150">
             </div>
             <div class="form-field" style="flex:1;">
-              <label>عنوان نص التحميل</label>
+              <label>لون خلفية شاشة التحميل (أو تدرج CSS)</label>
+              <input type="text" id="adminLoaderBgColor" placeholder="linear-gradient(160deg, #FDF2F6 0%, #FBEAF1 100%)" value="linear-gradient(160deg, #FDF2F6 0%, #FFF9FB 45%, #FBEAF1 100%)">
+            </div>
+          </div>
+
+          <div style="display:flex; gap:10px;">
+            <div class="form-field" style="flex:1;">
+              <label>العنوان الرئيسي أثناء التحميل</label>
               <input type="text" id="adminLoaderTitleInput" placeholder="جاري تحميل الموقع">
+            </div>
+            <div class="form-field" style="flex:1;">
+              <label>النص الفرعي الصغير</label>
+              <input type="text" id="adminLoaderSubInput" placeholder="انتظر لحظة من فضلك ..">
             </div>
           </div>
         </fieldset>
 
-        <!-- 🖼️ بانر الواجهة الرئيسية (الصورة والنصوص) -->
+        <!-- 🖼️ بانر الواجهة الرئيسية -->
         <fieldset class="admin-fieldset">
           <legend>🖼️ بانر الصفحة الرئيسية (الصورة والنصوص)</legend>
 
@@ -1427,7 +1466,7 @@
 
     document.addEventListener('DOMContentLoaded', renderColorSwatchGrid);
 
-    // 🌸 قراءة إعدادات الصيدلية وشاشة التحميل
+    // 🌸 قراءة إعدادات الصيدلية وشاشة التحميل المخصصة
     async function loadPharmacyDesignAndSecrets() {
       if (!db) return;
       try {
@@ -1450,9 +1489,11 @@
           if (document.getElementById('adminPharmacistTitleInput')) document.getElementById('adminPharmacistTitleInput').value = p.pharmacistCtaTitle || '';
           if (document.getElementById('adminPharmacistDescInput')) document.getElementById('adminPharmacistDescInput').value = p.pharmacistCtaDesc || '';
           
-          // إعدادات شاشة التحميل الأولية
+          // 🌸 ملء إعدادات واجهة شاشة التحميل الأولية
           if (document.getElementById('adminLoaderCircleSize')) document.getElementById('adminLoaderCircleSize').value = p.loaderCircleSize || 150;
           if (document.getElementById('adminLoaderTitleInput')) document.getElementById('adminLoaderTitleInput').value = p.loaderTitle || 'جاري تحميل الموقع';
+          if (document.getElementById('adminLoaderSubInput')) document.getElementById('adminLoaderSubInput').value = p.loaderSubText || 'انتظر لحظة من فضلك ..';
+          if (document.getElementById('adminLoaderBgColor')) document.getElementById('adminLoaderBgColor').value = p.loaderBgColor || 'linear-gradient(160deg, #FDF2F6 0%, #FFF9FB 45%, #FBEAF1 100%)';
           if (p.loaderImgUrl) {
             document.getElementById('adminLoaderImgInput').value = p.loaderImgUrl;
             document.getElementById('adminLoaderImgPreviewEl').src = p.loaderImgUrl;
@@ -1497,10 +1538,12 @@
       const pharmacistCtaTitle = document.getElementById('adminPharmacistTitleInput').value.trim();
       const pharmacistCtaDesc = document.getElementById('adminPharmacistDescInput').value.trim();
 
-      // شاشة التحميل
+      // إعدادات شاشة التحميل المخصصة
       const loaderImgUrl = sanitizeUrl(document.getElementById('adminLoaderImgInput')?.value.trim() || '');
       const loaderCircleSize = Number(document.getElementById('adminLoaderCircleSize')?.value || 150);
       const loaderTitle = document.getElementById('adminLoaderTitleInput')?.value.trim() || 'جاري تحميل الموقع';
+      const loaderSubText = document.getElementById('adminLoaderSubInput')?.value.trim() || 'انتظر لحظة من فضلك ..';
+      const loaderBgColor = document.getElementById('adminLoaderBgColor')?.value.trim() || 'linear-gradient(160deg, #FDF2F6 0%, #FFF9FB 45%, #FBEAF1 100%)';
 
       try {
         await dbPaths.pharmacyDoc().set({
@@ -1523,6 +1566,8 @@
           loaderImgUrl,
           loaderCircleSize,
           loaderTitle: sanitizeText(loaderTitle),
+          loaderSubText: sanitizeText(loaderSubText),
+          loaderBgColor: sanitizeText(loaderBgColor),
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
 
