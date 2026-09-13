@@ -1,6 +1,6 @@
 /* ==========================================================
    SaaS Multi-Tenant Pharmacy — COMPLETE MASTER STYLESHEET
-   Version: 5.0.0 (Master Enterprise Edition - Zero Omission)
+   Version: 6.0.0 (Master Enterprise Edition - Zero Omission)
    ========================================================== */
 
 :root, html[data-theme="light"] {
@@ -987,6 +987,120 @@ header {
   justify-content: space-between;
   margin-top: auto;
   margin-bottom: 10px;
+}
+
+/* ==========================================================
+   SEARCH & CHIPS SELECTOR FOR BUNDLES (منتقي البكجات الذكي)
+   ========================================================== */
+.bundle-chips-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 48px;
+  padding: 8px;
+  background: #F9FAFB;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+
+.bundle-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #FFFFFF;
+  border: 1px solid var(--rose, #FFB7C5);
+  color: var(--ink);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 800;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  animation: fadeIn 0.15s ease;
+}
+
+.bundle-chip .chip-price {
+  color: var(--rose-deep);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+}
+
+.bundle-chip-remove {
+  background: #FEE2E2;
+  color: var(--red);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 900;
+  transition: background 0.15s;
+}
+
+.bundle-chip-remove:hover {
+  background: #FECACA;
+}
+
+.bundle-search-box-wrap {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.bundle-search-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 12.5px;
+  outline: none;
+  background: #FFFFFF;
+}
+
+.bundle-search-input:focus {
+  border-color: var(--accent);
+}
+
+.bundle-search-results-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  background: #FFFFFF;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-hover);
+  z-index: 60;
+  display: none;
+}
+
+.bundle-search-results-list.open {
+  display: block;
+}
+
+.bundle-search-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid #F3F4F6;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.15s;
+}
+
+.bundle-search-item:last-child {
+  border-bottom: none;
+}
+
+.bundle-search-item:hover {
+  background: var(--surface);
+  color: var(--accent);
 }
 
 /* ==========================================================
