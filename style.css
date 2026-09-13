@@ -1,6 +1,6 @@
 /* ==========================================================
    SaaS Multi-Tenant Pharmacy — COMPLETE MASTER STYLESHEET
-   Version: 4.0.0 (Master Enterprise Edition - Zero Omission)
+   Version: 5.0.0 (Master Enterprise Edition - Zero Omission)
    ========================================================== */
 
 :root, html[data-theme="light"] {
@@ -529,10 +529,63 @@ header {
 }
 
 /* ==========================================================
-   HERO BANNER & PHARMACIST CTA
+   HERO BANNER SLIDER & CAROUSEL (سلايدر البانرات العلوي)
    ========================================================== */
 .hero-wrap { 
   padding: 10px 0 14px; 
+}
+
+.hero-slider-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+}
+
+.hero-slider-track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  gap: 12px;
+  border-radius: var(--radius-lg);
+}
+
+.hero-slider-track::-webkit-scrollbar {
+  display: none;
+}
+
+.hero-slide {
+  flex: 0 0 100%;
+  width: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.hero-slider-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.hero-slider-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--line, #FFE4E8);
+  border: 1px solid var(--rose, #FFB7C5);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hero-slider-dot.active {
+  width: 22px;
+  background: var(--accent, #E85D8A);
+  border-color: var(--accent, #E85D8A);
 }
 
 .qutn-hybrid-banner {
@@ -610,6 +663,30 @@ header {
   object-position: center 20%; 
   mask-image: linear-gradient(to right, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 100%); 
   -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 100%); 
+}
+
+/* شرائح العروض المخصصة داخل السلايدر */
+.hero-promo-slide {
+  position: relative;
+  width: 100%;
+  min-height: 190px;
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--line);
+  background: linear-gradient(135deg, var(--surface) 0%, #FFFFFF 50%, var(--surface-hover) 100%);
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 28px;
+  gap: 18px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.hero-promo-slide:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
 }
 
 .consult-cta-banner {
@@ -1091,6 +1168,41 @@ header {
 }
 
 /* ==========================================================
+   PROGRESSIVE PAGINATION BUTTON (زر التصفح التدريجي)
+   ========================================================== */
+.load-more-container {
+  text-align: center;
+  margin: 24px 0 12px;
+}
+
+.load-more-btn {
+  background: #FFFFFF;
+  color: var(--rose-deep, var(--accent));
+  border: 1.5px solid var(--line);
+  font-size: 13.5px;
+  font-weight: 800;
+  padding: 12px 28px;
+  border-radius: 999px;
+  box-shadow: var(--shadow-soft);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.load-more-btn:hover {
+  background: var(--surface);
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+.load-more-btn:active {
+  transform: translateY(0);
+}
+
+/* ==========================================================
    ADMIN CARD ACTIONS & FLOATING BUTTON
    ========================================================== */
 .admin-card-actions { 
@@ -1561,11 +1673,12 @@ header {
   display: block; 
 }
 
+/* صندوق التقييم التفاعلي بالنجوم */
 .star-rating-box {
   background: var(--surface);
   border: 1.5px solid var(--line);
-  border-radius: 14px;
-  padding: 16px;
+  border-radius: 16px;
+  padding: 20px;
   text-align: center;
   margin-bottom: 14px;
 }
@@ -1574,18 +1687,23 @@ header {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   direction: ltr;
+  margin: 8px 0;
 }
 
 .star-btn {
-  font-size: 30px;
+  font-size: 32px;
   color: #D1D5DB;
   cursor: pointer;
+  transition: transform 0.15s ease, color 0.15s ease;
+  user-select: none;
 }
 
+.star-btn:hover,
 .star-btn.active {
-  color: var(--gold);
+  color: var(--gold, #F2B807);
+  transform: scale(1.15);
 }
 
 .pd-qty-row { 
@@ -2140,7 +2258,7 @@ header {
 }
 
 /* ==========================================================
-   ADMIN PANEL VIEW STYLES (لوحة تحكم الصيدلية)
+   ADMIN PANEL VIEW STYLES
    ========================================================== */
 .admin-nav-header { background: #111827; color: #fff; padding: 14px 0; border-bottom: 1px solid #374151; position: sticky; top: 0; z-index: 100; }
 .admin-nav-wrap { display: flex; align-items: center; justify-content: space-between; }
