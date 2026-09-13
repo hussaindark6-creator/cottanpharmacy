@@ -1,6 +1,6 @@
 /* ==========================================================
    SaaS Multi-Tenant Pharmacy Engine — script.js
-   Version: 5.0.0 (Master Enterprise Edition + R2 Auto-Rebuild & Loader Customizer)
+   Version: 6.0.0 (Master Enterprise Edition - Zero Omission)
    ========================================================== */
 
 // ================= 1. SUBDOMAIN & SLUG RESOLVER =================
@@ -166,9 +166,9 @@ function isCurrentUserAdmin() {
   return currentStaffData.role === 'owner' || currentStaffData.role === 'manager' || currentStaffData.role === 'admin';
 }
 
-function assertAdmin() {
+function assertAdmin(showToastFn = showToast) {
   if (!isCurrentUserAdmin()) {
-    showToast('⚠️ غير مصرح: هذه العملية مخصصة لمشرف الصيدلية فقط.');
+    if (typeof showToastFn === 'function') showToastFn('⚠️ غير مصرح: هذه العملية مخصصة لمشرف الصيدلية فقط.');
     return false;
   }
   return true;
@@ -377,6 +377,8 @@ let pharmacyProfile = {
   loaderImgUrl: '',
   loaderCircleSize: 150,
   loaderTitle: 'جاري تحميل الموقع',
+  loaderSubText: 'انتظر لحظة من فضلك ..',
+  loaderBgColor: 'linear-gradient(160deg, #FDF2F6 0%, #FFF9FB 45%, #FBEAF1 100%)',
   isActive: true,
   subscriptionExpiry: '2099-12-31',
   subscriptionPrice: 50000,
@@ -939,97 +941,74 @@ async function deleteAdminCoupon(id) {
   }
 }
 
-// ================= 13. BUNDLES SYSTEM =================
-function populateBundleProductsChecklist() {
-  const container = document.getElementById('bundleProductsChecklist');
+// ================= 13. BUNDLES SYSTEM (SEARCH & CHIPS SELECTOR) =================
+let currentBundleSelectedProductIds = [];
+
+function renderBundleChips() {
+  const container = document.getElementById('bundleChipsContainer');
   if (!container) return;
-  const activeProds = products.filter(p => p.isDeleted !== true);
-  container.innerHTML = activeProds.map(p => `
-    <label style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:700; margin-bottom:6px; cursor:pointer;">
-      <input type="checkbox" value="${p.id}" class="bundle-prod-cb" style="width:16px; height:16px;">
-      <span>${sanitizeText(p.name)} (${fmtPrice(p.price)})</span>
-    </label>
-  `).join('');
-}
-
-function renderHomeBundles() {
-  const sec = document.getElementById('homeBundlesSection');
-  const grid = document.getElementById('homeBundlesGrid');
-  if (!sec || !grid) return;
-
-  if (bundles.length === 0) {
-    sec.style.display = 'none';
+  if (currentBundleSelectedProductIds.length === 0) {
+    container.innerHTML = `<span style="font-size:11.5px; color:var(--text-soft); align-self:center;" id="bundleChipsPlaceholder">اضغط على المنتجات من نتائج البحث أعلاه لإضافتها هنا.</span>`;
     return;
   }
-
-  sec.style.display = 'block';
-  grid.innerHTML = bundles.map(b => renderBundleCardHTML(b)).join('');
+  container.innerHTML = currentBundleSelectedProductIds.map(id => {
+    const p = findProduct(id);
+    const name = p ? p.name : id;
+    const price = p ? fmtPrice(p.price) : '';
+    return `
+      <div class="bundle-chip">
+        <span>${sanitizeText(name)}</span>
+        <span class="chip-price">(${price})</span>
+        <span class="bundle-chip-remove" onclick="removeBundleProductChip('${sanitizeText(id)}')">✕</span>
+      </div>
+    `;
+  }).join('');
 }
 
-function renderAllBundles() {
-  const grid = document.getElementById('allBundlesGrid');
-  const countEl = document.getElementById('allBundlesCount');
-  if (countEl) countEl.textContent = bundles.length + ' بكجات توفير';
-  if (!grid) return;
-
-  if (bundles.length === 0) {
-    grid.innerHTML = `<div class="no-results">لا توجد بكجات توفير متاحة حالياً 🌸</div>`;
+function searchBundleProducts(q) {
+  const listEl = document.getElementById('bundleSearchResultsList');
+  if (!listEl) return;
+  const term = (q || '').trim().toLowerCase();
+  if (!term) {
+    listEl.classList.remove('open');
+    listEl.innerHTML = '';
     return;
   }
+  const matched = products.filter(p => {
+    if (p.isDeleted === true) return false;
+    const n = (p.name || '').toLowerCase();
+    const b = (p.brand || '').toLowerCase();
+    const bc = (p.barcode || '').toLowerCase();
+    return n.includes(term) || b.includes(term) || bc.includes(term);
+  }).slice(0, 15);
 
-  grid.innerHTML = bundles.map(b => renderBundleCardHTML(b)).join('');
-}
-
-function renderBundleCardHTML(b) {
-  if (activeThemeModule && typeof activeThemeModule.renderBundleCard === 'function') {
-    try {
-      return activeThemeModule.renderBundleCard(b, getTemplateHelpers());
-    } catch (e) {
-      console.warn("[Theme Engine] خطأ في عرض بطاقة البكج:", e);
-    }
+  if (matched.length === 0) {
+    listEl.innerHTML = `<div style="padding:10px; font-size:12px; color:var(--text-soft); text-align:center;">لا توجد منتجات مطابقة.</div>`;
+  } else {
+    listEl.innerHTML = matched.map(p => `
+      <div class="bundle-search-item" onclick="addBundleProductChip('${sanitizeText(p.id)}')">
+        <div><b>${sanitizeText(p.name)}</b> <span style="color:var(--text-soft); font-size:11px;">(${sanitizeText(p.brand)})</span></div>
+        <span class="mono" style="font-weight:800; color:var(--rose-deep);">${fmtPrice(p.price)} ➕</span>
+      </div>
+    `).join('');
   }
-
-  const includedProds = (b.productIds || []).map(pid => findProduct(pid)).filter(Boolean);
-  const cleanImg = sanitizeUrl(b.imageUrl);
-
-  return `
-    <div class="bundle-card">
-      <span class="bundle-savings-badge">${b.savingsBadge || 'توفير فوري 💸'}</span>
-      <div class="bundle-thumb-row">
-        ${cleanImg ? `<img src="${cleanImg}" style="max-height:100px; object-fit:contain;">` : 
-          includedProds.map((p, idx) => `
-            <div class="bundle-thumb-item">
-              ${p.imageUrl ? `<img src="${sanitizeUrl(p.imageUrl)}">` : (icons[p.type || 'bottle'] || icons.bottle)(getBrandColor(p.brand))}
-            </div>
-            ${idx < includedProds.length - 1 ? '<span class="bundle-plus-icon">+</span>' : ''}
-          `).join('')
-        }
-      </div>
-      <h3 class="bundle-title">${sanitizeText(b.title)}</h3>
-      <p class="bundle-desc">${sanitizeText(b.description)}</p>
-      <div class="bundle-items-list">
-        <b>مكونات البكج:</b>
-        ${includedProds.map(p => `<span>• ${sanitizeText(p.name)} (${sanitizeText(p.brand)})</span>`).join('')}
-      </div>
-      <div class="bundle-price-box">
-        <div>
-          <span class="p-price mono" style="font-size:17px; color:var(--rose-deep);">${fmtPrice(b.price)}</span>
-          ${b.oldPrice ? `<span class="p-oldprice mono" style="margin-inline-start:6px;">${fmtPrice(b.oldPrice)}</span>` : ''}
-        </div>
-      </div>
-      <button class="add-cart-btn" onclick="addBundleToCart('${sanitizeText(b.id)}')">
-        🎁 أضف البكج كاملاً للسلة
-      </button>
-    </div>
-  `;
+  listEl.classList.add('open');
 }
 
-function addBundleToCart(bundleId) {
-  const cartKey = 'bundle_' + bundleId;
-  cart[cartKey] = (cart[cartKey] || 0) + 1;
-  updateCartBadge();
-  saveLocalState();
-  showToast('تمت إضافة البكج كاملاً للسلة بتخفيض التوفير! 🎁');
+function addBundleProductChip(id) {
+  if (!currentBundleSelectedProductIds.includes(String(id))) {
+    currentBundleSelectedProductIds.push(String(id));
+    renderBundleChips();
+  }
+  const listEl = document.getElementById('bundleSearchResultsList');
+  if (listEl) listEl.classList.remove('open');
+  const inputEl = document.getElementById('bundleProductSearchInput');
+  if (inputEl) inputEl.value = '';
+}
+
+function removeBundleProductChip(id) {
+  currentBundleSelectedProductIds = currentBundleSelectedProductIds.filter(x => x !== String(id));
+  renderBundleChips();
 }
 
 function renderAdminBundlesList() {
@@ -1071,9 +1050,8 @@ function editAdminBundle(bundleId) {
   document.getElementById('bundleSavingsInput').value = b.savingsBadge || '';
   document.getElementById('bundleImgInput').value = b.imageUrl || '';
 
-  document.querySelectorAll('.bundle-prod-cb').forEach(cb => {
-    cb.checked = (b.productIds || []).includes(cb.value);
-  });
+  currentBundleSelectedProductIds = (b.productIds || []).map(String);
+  renderBundleChips();
 
   document.getElementById('adminBundleFormTitle').textContent = '✏️ تعديل البكج: ' + b.title;
   document.getElementById('btnSaveBundle').textContent = '💾 حفظ تعديلات البكج';
@@ -1088,7 +1066,8 @@ function resetAdminBundleForm() {
   document.getElementById('bundlePriceInput').value = '';
   document.getElementById('bundleSavingsInput').value = 'وفر 15,000 د.ع 💸';
   document.getElementById('bundleImgInput').value = '';
-  document.querySelectorAll('.bundle-prod-cb').forEach(cb => cb.checked = false);
+  currentBundleSelectedProductIds = [];
+  renderBundleChips();
   document.getElementById('adminBundleFormTitle').textContent = '🎁 إضافة حزمة / بكج توفير جديد';
   document.getElementById('btnSaveBundle').textContent = '💾 حفظ وتفعيل البكج في المتجر';
 }
@@ -1105,8 +1084,6 @@ async function handleAdminBundleSave(e) {
   const savings = document.getElementById('bundleSavingsInput').value.trim();
   const img = sanitizeUrl(document.getElementById('bundleImgInput').value.trim());
 
-  const selectedProdIds = Array.from(document.querySelectorAll('.bundle-prod-cb:checked')).map(cb => cb.value);
-
   if (!title || !desc || isNaN(price) || price <= 0) {
     showToast('يرجى التأكد من ملء جميع الحقول الإلزامية');
     return;
@@ -1120,13 +1097,14 @@ async function handleAdminBundleSave(e) {
     price: price,
     savingsBadge: sanitizeText(savings),
     imageUrl: img,
-    productIds: selectedProdIds,
+    productIds: currentBundleSelectedProductIds.slice(),
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
 
   if (db) {
     await dbPaths.bundlesCol().doc(payload.id).set(payload, { merge: true });
-    showToast('تم حفظ بكج التوفير بنجاح! 🎁');
+    triggerR2CatalogRebuild();
+    showToast('تم حفظ بكج التوفير وتحديث السيرفر بنجاح! 🎁');
     resetAdminBundleForm();
   }
 }
@@ -1134,7 +1112,10 @@ async function handleAdminBundleSave(e) {
 async function deleteAdminBundle(id) {
   if (!assertAdmin()) return;
   if (confirm('هل أنتِ متأكدة من حذف هذا البكج؟')) {
-    if (db) await dbPaths.bundlesCol().doc(String(id)).delete();
+    if (db) {
+      await dbPaths.bundlesCol().doc(String(id)).delete();
+      triggerR2CatalogRebuild();
+    }
     showToast('تم حذف البكج بنجاح ✓');
   }
 }
@@ -1206,7 +1187,7 @@ function closeReceiptModal() {
   if (modal) modal.classList.remove('open');
 }
 
-// ================= 15. 100% REAL RATINGS ENGINE & AUTOFILL =================
+// ================= 15. REAL RATINGS ENGINE & AUTOFILL =================
 function rateProductInstant(stars) {
   if (!currentProductId) return;
   const p = findProduct(currentProductId);
@@ -1364,7 +1345,73 @@ async function handleApplyBulkDiscount(e) {
   showToast(action === 'apply' ? `تم تطبيق خصم ${pct}% على ${targetProducts.length} منتج فورياً! ✓` : `تم استرجاع الأسعار الأصلية بنجاح ✓`);
 }
 
-// ================= 17. HERO SLIDER & PROMO CARDS CRUD =================
+// ================= 17. HERO SLIDER OFFERS & PROMO CARDS CRUD =================
+let currentOfferSelectedProductIds = [];
+
+function renderOfferProdChips() {
+  const container = document.getElementById('offerProdChipsContainer');
+  if (!container) return;
+  if (currentOfferSelectedProductIds.length === 0) {
+    container.innerHTML = `<span style="font-size:11.5px; color:var(--text-soft); align-self:center;" id="offerProdChipsPlaceholder">لم يتم تحديد منتجات بعد (إذا تركتها فارغة سيفتح كل العروض).</span>`;
+    return;
+  }
+  container.innerHTML = currentOfferSelectedProductIds.map(id => {
+    const p = findProduct(id);
+    const name = p ? p.name : id;
+    return `
+      <div class="bundle-chip">
+        <span>${sanitizeText(name)}</span>
+        <span class="bundle-chip-remove" onclick="removeOfferProductChip('${sanitizeText(id)}')">✕</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function searchOfferProducts(q) {
+  const listEl = document.getElementById('offerProdSearchResults');
+  if (!listEl) return;
+  const term = (q || '').trim().toLowerCase();
+  if (!term) {
+    listEl.classList.remove('open');
+    listEl.innerHTML = '';
+    return;
+  }
+  const matched = products.filter(p => {
+    if (p.isDeleted === true) return false;
+    const n = (p.name || '').toLowerCase();
+    const b = (p.brand || '').toLowerCase();
+    return n.includes(term) || b.includes(term);
+  }).slice(0, 15);
+
+  if (matched.length === 0) {
+    listEl.innerHTML = `<div style="padding:10px; font-size:12px; color:var(--text-soft); text-align:center;">لا توجد منتجات مطابقة.</div>`;
+  } else {
+    listEl.innerHTML = matched.map(p => `
+      <div class="bundle-search-item" onclick="addOfferProductChip('${sanitizeText(p.id)}')">
+        <div><b>${sanitizeText(p.name)}</b> <span style="color:var(--text-soft); font-size:11px;">(${sanitizeText(p.brand)})</span></div>
+        <span class="mono" style="font-weight:800; color:var(--accent);">➕ إضافة للعرض</span>
+      </div>
+    `).join('');
+  }
+  listEl.classList.add('open');
+}
+
+function addOfferProductChip(id) {
+  if (!currentOfferSelectedProductIds.includes(String(id))) {
+    currentOfferSelectedProductIds.push(String(id));
+    renderOfferProdChips();
+  }
+  const listEl = document.getElementById('offerProdSearchResults');
+  if (listEl) listEl.classList.remove('open');
+  const inputEl = document.getElementById('offerProdSearchInput');
+  if (inputEl) inputEl.value = '';
+}
+
+function removeOfferProductChip(id) {
+  currentOfferSelectedProductIds = currentOfferSelectedProductIds.filter(x => x !== String(id));
+  renderOfferProdChips();
+}
+
 function renderPromoCardsListAdmin() {
   const container = document.getElementById('adminPromoCardsListGrid');
   if (!container) return;
@@ -1383,7 +1430,7 @@ function renderPromoCardsListAdmin() {
         </div>
         <div>
           <div style="font-weight:900; font-size:13.5px;">${sanitizeText(c.title)} <span class="log-badge">${sanitizeText(c.discount)}</span></div>
-          <div style="font-size:11.5px; color:var(--text-soft);">${sanitizeText(c.desc)}</div>
+          <div style="font-size:11.5px; color:var(--text-soft);">${sanitizeText(c.desc)} · ${(c.productIds || []).length} منتجات مشمولة</div>
         </div>
       </div>
       <div style="display:flex; gap:6px;">
@@ -1403,6 +1450,12 @@ function editPromoCard(cardId) {
   document.getElementById('promoCardDiscountText').value = card.discount || '';
   document.getElementById('promoCardImgUrl').value = card.img || '';
 
+  if (document.getElementById('promoCardBgColor')) document.getElementById('promoCardBgColor').value = card.slideBgColor || '#FFF0F3';
+  if (document.getElementById('promoCardBgColorText')) document.getElementById('promoCardBgColorText').value = card.slideBgColor || '';
+
+  currentOfferSelectedProductIds = (card.productIds || []).map(String);
+  renderOfferProdChips();
+
   document.getElementById('adminPromoCardFormTitle').textContent = '✏️ تعديل شريحة العرض: ' + card.title;
   document.getElementById('adminSavePromoCardBtn').textContent = '💾 حفظ تعديلات الشريحة بالسلايدر';
 }
@@ -1414,6 +1467,10 @@ function resetPromoCardForm() {
   document.getElementById('promoCardDesc').value = '';
   document.getElementById('promoCardDiscountText').value = '';
   document.getElementById('promoCardImgUrl').value = '';
+  if (document.getElementById('promoCardBgColor')) document.getElementById('promoCardBgColor').value = '#FFF0F3';
+  if (document.getElementById('promoCardBgColorText')) document.getElementById('promoCardBgColorText').value = '';
+  currentOfferSelectedProductIds = [];
+  renderOfferProdChips();
   document.getElementById('adminPromoCardFormTitle').textContent = '🎁 إضافة شريحة عرض جديدة للسلايدر العلوي';
   document.getElementById('adminSavePromoCardBtn').textContent = '💾 حفظ شريحة العرض في السلايدر';
 }
@@ -1428,6 +1485,8 @@ async function handleSavePromoCard(e) {
   const discount = document.getElementById('promoCardDiscountText').value.trim();
   const img = sanitizeUrl(document.getElementById('promoCardImgUrl').value.trim());
 
+  const bgColorVal = document.getElementById('promoCardBgColorText')?.value.trim() || document.getElementById('promoCardBgColor')?.value || '';
+
   if (!title || !desc || !discount) {
     showToast('يرجى تعبئة كافة الحقول المطلوبة');
     return;
@@ -1440,7 +1499,9 @@ async function handleSavePromoCard(e) {
     title: sanitizeText(title),
     desc: sanitizeText(desc),
     discount: sanitizeText(discount),
-    img: img
+    img: img,
+    slideBgColor: bgColorVal,
+    productIds: currentOfferSelectedProductIds.slice()
   };
 
   const idx = pharmacyProfile.promoCards.findIndex(c => c.id === cardObj.id);
@@ -1451,7 +1512,10 @@ async function handleSavePromoCard(e) {
   renderPromoCardsListAdmin();
 
   try {
-    if (db) await dbPaths.pharmacyDoc().set({ promoCards: pharmacyProfile.promoCards }, { merge: true });
+    if (db) {
+      await dbPaths.pharmacyDoc().set({ promoCards: pharmacyProfile.promoCards }, { merge: true });
+      triggerR2CatalogRebuild();
+    }
     showToast('تم حفظ شريحة العرض وتحديث السلايدر العلوي بنجاح ✓');
     resetPromoCardForm();
   } catch (err) { console.error(err); }
@@ -1463,7 +1527,10 @@ async function deletePromoCard(cardId) {
     pharmacyProfile.promoCards = (pharmacyProfile.promoCards || []).filter(c => c.id !== cardId);
     saveLocalState();
     renderPromoCardsListAdmin();
-    if (db) await dbPaths.pharmacyDoc().set({ promoCards: pharmacyProfile.promoCards }, { merge: true });
+    if (db) {
+      await dbPaths.pharmacyDoc().set({ promoCards: pharmacyProfile.promoCards }, { merge: true });
+      triggerR2CatalogRebuild();
+    }
     showToast('تم حذف الشريحة من السلايدر بنجاح ✓');
   }
 }
@@ -2143,12 +2210,13 @@ function switchAdminSection(sec) {
   if (sec === 'products') populateCategoryDropdowns();
   if (sec === 'coupons') fetchAdminCoupons();
   if (sec === 'bundles') {
-    populateBundleProductsChecklist();
+    renderBundleChips();
     renderAdminBundlesList();
   }
   if (sec === 'audit') fetchAuditLogs();
   if (sec === 'offers') {
     updateDiscountTargetOptions();
+    renderOfferProdChips();
     renderPromoCardsListAdmin();
   }
   if (sec === 'cats') renderAdminCategoriesList();
@@ -2422,7 +2490,6 @@ function renderCurrentActiveView() {
 function renderHome() {
   renderBrandStrip();
   renderHomeProductGrid();
-  renderHomeBundles();
 }
 
 let homeActiveBrand = 'all';
@@ -3187,7 +3254,7 @@ function sendRenewalReceiptWhatsApp(price) {
 // ================= 30. THEME, LOGO, LOADER & BRANDING CUSTOMIZATION =================
 async function handleSaveCustomization(e) {
   e.preventDefault();
-  if (!assertAdmin() || !lockAction('saveCustomization', 1200)) return;
+  if (!assertAdmin(showToast)) return;
 
   const getVal = (id, defaultVal = '') => {
     const el = document.getElementById(id);
@@ -3224,6 +3291,8 @@ async function handleSaveCustomization(e) {
     loaderImgUrl: sanitizeUrl(getVal('adminLoaderImgInput', pharmacyProfile.loaderImgUrl || '')),
     loaderCircleSize: Number(getVal('adminLoaderCircleSize', pharmacyProfile.loaderCircleSize || 150)),
     loaderTitle: sanitizeText(getVal('adminLoaderTitleInput', pharmacyProfile.loaderTitle || 'جاري تحميل الموقع')),
+    loaderSubText: sanitizeText(getVal('adminLoaderSubInput', pharmacyProfile.loaderSubText || 'انتظر لحظة من فضلك ..')),
+    loaderBgColor: sanitizeText(getVal('adminLoaderBgColor', pharmacyProfile.loaderBgColor || 'linear-gradient(160deg, #FDF2F6 0%, #FFF9FB 45%, #FBEAF1 100%)')),
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
 
@@ -3271,13 +3340,17 @@ function applyStoreSettings() {
     if (adminLogoBox) adminLogoBox.style.display = 'flex';
   }
 
-  // تخصيص شاشة التحميل الأولية
+  // تطبيق تخصيص شاشة التحميل الأولية
   const loaderWrap = document.getElementById('loaderCircleWrap');
   const loaderImg = document.getElementById('loaderPhotoImg');
   const loaderTitle = document.getElementById('loaderTitleText');
+  const loaderSub = document.getElementById('loaderSubText');
+  const loaderOverlay = document.getElementById('appLoadingOverlay');
+
   if (loaderWrap && pharmacyProfile.loaderCircleSize) {
-    loaderWrap.style.width = pharmacyProfile.loaderCircleSize + 'px';
-    loaderWrap.style.height = pharmacyProfile.loaderCircleSize + 'px';
+    const sz = `${pharmacyProfile.loaderCircleSize}px`;
+    loaderWrap.style.width = sz;
+    loaderWrap.style.height = sz;
   }
   if (loaderImg) {
     const tImg = sanitizeUrl(pharmacyProfile.loaderImgUrl || pharmacyProfile.logoUrl || pharmacyProfile.bannerImgUrl);
@@ -3285,6 +3358,12 @@ function applyStoreSettings() {
   }
   if (loaderTitle && pharmacyProfile.loaderTitle) {
     loaderTitle.textContent = pharmacyProfile.loaderTitle;
+  }
+  if (loaderSub && pharmacyProfile.loaderSubText) {
+    loaderSub.textContent = pharmacyProfile.loaderSubText;
+  }
+  if (loaderOverlay && pharmacyProfile.loaderBgColor) {
+    loaderOverlay.style.background = pharmacyProfile.loaderBgColor;
   }
 
   const annEl = document.getElementById('announcementBar');
@@ -3373,8 +3452,6 @@ function initFirestoreSync() {
       const loaded = [];
       snap.forEach(d => loaded.push({ id: d.id, ...d.data() }));
       bundles = loaded;
-      renderHomeBundles();
-      renderAllBundles();
       renderAdminBundlesList();
     }
   }, err => console.warn(err));
@@ -3394,7 +3471,6 @@ function initFirestoreSync() {
       saveLocalState();
       renderCurrentActiveView();
       renderModernCategories();
-      populateBundleProductsChecklist();
       fetchRealAnalytics();
       checkLowStockAlerts();
     }
@@ -3519,20 +3595,6 @@ async function fetchAuditLogs() {
     `).join('');
   } else {
     tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:14px;">لا توجد سجلات بعد.</td></tr>`;
-  }
-}
-
-async function handleSaveSecuritySettings(e) {
-  e.preventDefault();
-  if (!assertAdmin()) return;
-  const maxOrdersPerHour = Number(document.getElementById('secMaxOrdersHour').value);
-  const maxRequestsPerMin = Number(document.getElementById('secMaxReqsMin').value);
-
-  if (db) {
-    await dbPaths.pharmacyDoc().set({
-      rateLimits: { maxOrdersPerHour, maxRequestsPerMin }
-    }, { merge: true });
-    showToast('تم حفظ سياسات الحماية بنجاح ✓');
   }
 }
 
@@ -3828,7 +3890,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   renderHome();
   renderModernCategories();
   populateCategoryDropdowns();
-  populateBundleProductsChecklist();
   updateCartBadge();
   renderAccountView();
   updateUserHeaderProfile();
@@ -3845,10 +3906,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     fetchRealAnalytics();
     listenToAdminOrdersRealtime();
     fetchAdminCoupons();
+    renderBundleChips();
     renderAdminBundlesList();
     fetchAuditLogs();
     renderAdminCategoriesList();
     renderAdminBrandsList();
+    renderOfferProdChips();
     renderPromoCardsListAdmin();
     fetchStaffList();
     fetchArchivedProducts();
@@ -3859,3 +3922,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   }
 });
+// ربط دوال البكجات والعروض بالنطاق العام للنافذة (window)
+window.searchBundleProducts = searchBundleProducts;
+window.addBundleProductChip = addBundleProductChip;
+window.removeBundleProductChip = removeBundleProductChip;
+window.searchOfferProducts = searchOfferProducts;
+window.addOfferProductChip = addOfferProductChip;
+window.removeOfferProductChip = removeOfferProductChip;
+
