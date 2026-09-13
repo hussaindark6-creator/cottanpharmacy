@@ -38,7 +38,7 @@
 
     /* إخفاء صارم لكافة النوافذ المنبثقة افتراضياً */
     .notif-modal-overlay, .success-modal-overlay, .iab-modal, .consult-modal-overlay, 
-    .welcome-modal-overlay, .receipt-modal-overlay, .storefront-freeze-overlay {
+    .welcome-modal-overlay, .receipt-modal-overlay, .storefront-freeze-overlay, .admin-quick-modal-overlay {
       display: none !important;
       position: fixed;
       inset: 0;
@@ -51,7 +51,7 @@
     }
     .notif-modal-overlay.open, .success-modal-overlay.open, .iab-modal.open, 
     .consult-modal-overlay.open, .welcome-modal-overlay.open, .receipt-modal-overlay.open, 
-    .storefront-freeze-overlay.open {
+    .storefront-freeze-overlay.open, .admin-quick-modal-overlay.open {
       display: flex !important;
     }
 
@@ -79,7 +79,8 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
 </head>
 <body>
-  <!-- 🌸 شاشة تحميل أولية أنيقة — تغطي الموقع لحد ما توصل البيانات الحقيقية من السيرفر -->
+
+  <!-- 🌸 شاشة تحميل أولية ديناميكية (قابلة للتخصيص من لوحة المشرف) -->
   <div id="appLoadingOverlay" style="position:fixed; inset:0; z-index:99999; background:linear-gradient(160deg, #FDF2F6 0%, #FFF9FB 45%, #FBEAF1 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; overflow:hidden; transition:opacity .45s ease;">
 
     <!-- زخارف خطية زهرية بالزوايا -->
@@ -89,25 +90,25 @@
     <svg style="position:absolute; bottom:0; left:0; width:200px; opacity:.5;" viewBox="0 0 200 200" fill="none" stroke="#E8A6BE" stroke-width="1.5">
       <path d="M0 190C60 200 120 170 150 120 C170 85 165 50 190 10" stroke-dasharray="4 5"/>
     </svg>
-    <svg style="position:absolute; top:22%; right:18%; width:22px; opacity:.6;" viewBox="0 0 24 24" fill="none" stroke="#E85D8A" stroke-width="1.6">
+    <svg style="position:absolute; top:22%; right:18%; width:22px; opacity:.6;" viewBox="0 0 24 24" fill="none" stroke="var(--accent, #E85D8A)" stroke-width="1.6">
       <path d="M12 21s-7.5-4.9-10-9.5C.5 7.8 2.7 4 6.5 4 9 4 11 5.5 12 7c1-1.5 3-3 5.5-3 3.8 0 6 3.8 4.5 7.5C19.5 16.1 12 21 12 21Z"/>
     </svg>
-    <svg style="position:absolute; bottom:26%; left:16%; width:16px; opacity:.5;" viewBox="0 0 24 24" fill="none" stroke="#E85D8A" stroke-width="1.6">
+    <svg style="position:absolute; bottom:26%; left:16%; width:16px; opacity:.5;" viewBox="0 0 24 24" fill="none" stroke="var(--accent, #E85D8A)" stroke-width="1.6">
       <path d="M12 21s-7.5-4.9-10-9.5C.5 7.8 2.7 4 6.5 4 9 4 11 5.5 12 7c1-1.5 3-3 5.5-3 3.8 0 6 3.8 4.5 7.5C19.5 16.1 12 21 12 21Z"/>
     </svg>
 
-    <!-- الإطار الدائري -->
-    <div style="position:relative; width:150px; height:150px;">
-      <div style="position:absolute; inset:-8px; border-radius:50%; border:1.5px dashed #E8A6BE; animation:appLoaderSpinSlow 12s linear infinite;"></div>
+    <!-- الإطار الدائري (حجم وصورة قابلة للتخصيص من المشرف) -->
+    <div id="loaderCircleWrap" style="position:relative; width:150px; height:150px; transition:all .3s ease;">
+      <div id="loaderBorderCircle" style="position:absolute; inset:-8px; border-radius:50%; border:1.5px dashed #E8A6BE; animation:appLoaderSpinSlow 12s linear infinite;"></div>
       <div id="loaderPhotoCircle" style="width:100%; height:100%; border-radius:50%; overflow:hidden; background:linear-gradient(135deg, #F7C6D6 0%, #F3A9C4 100%); display:flex; align-items:center; justify-content:center; box-shadow:0 10px 30px rgba(232,93,138,0.25);">
-        <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.4"><path d="M10 2h4v3.2l1.4 1.6c.4.45.6 1 .6 1.6V20a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V8.4c0-.6.2-1.15.6-1.6L9 5.2V2Z" fill="#fff" fill-opacity=".2"/><rect x="9" y="11" width="6" height="8.4" rx="0.8" fill="#fff" fill-opacity=".35"/></svg>
+        <img id="loaderPhotoImg" src="https://imgdb.io/i/EQ4D9ag.png" alt="Loader" style="width:100%; height:100%; object-fit:cover;">
       </div>
     </div>
 
     <div style="text-align:center;">
-      <div style="font-size:18px; margin-bottom:6px;">🌿</div>
-      <div style="font-weight:900; font-size:20px; color:#B23A63;">جاري تحميل الموقع</div>
-      <div style="font-size:12.5px; color:#C98BA3; margin-top:4px;">انتظر لحظة من فضلك ..</div>
+      <div id="loaderLeafIcon" style="font-size:18px; margin-bottom:6px;">🌿</div>
+      <div id="loaderTitleText" style="font-weight:900; font-size:20px; color:#B23A63;">جاري تحميل الموقع</div>
+      <div id="loaderSubText" style="font-size:12.5px; color:#C98BA3; margin-top:4px;">انتظر لحظة من فضلك ..</div>
     </div>
 
     <!-- شريط التحميل المخطط -->
@@ -131,7 +132,6 @@
     @keyframes appLoaderBounce { 0%, 100% { transform:translateY(0); opacity:.5; } 50% { transform:translateY(-5px); opacity:1; } }
   </style>
   <script>
-    // ⏳ تحريك شريط التحميل بشكل تدريجي (بدون ما يوحي إنه خلص قبل لا توصل البيانات فعلاً)
     (function () {
       let pct = 8;
       const bar = document.getElementById('loaderProgressBar');
@@ -146,8 +146,7 @@
     })();
   </script>
 
-
-  <!-- STOREFRONT FREEZE OVERLAY (مخفي افتراضياً) -->
+  <!-- STOREFRONT FREEZE OVERLAY -->
   <div class="storefront-freeze-overlay" id="storefrontFreezeModal" style="display: none !important;">
     <div class="welcome-card" style="border: 1.5px solid #EF4444; max-width: 420px; background: #fff; text-align: center;">
       <div style="font-size: 52px; margin-bottom: 12px;">🔒</div>
@@ -289,7 +288,17 @@
 
   <!-- ============ 1. HOME VIEW ============ -->
   <main class="view active" id="view-home">
-    <div class="wrap hero-wrap" id="heroBannerContainer"></div>
+
+    <!-- 🌟 HERO SLIDER CONTAINER (سلايدر متحرك بالسحب يميناً ويساراً) -->
+    <div class="wrap hero-wrap">
+      <div class="hero-slider-wrapper" id="heroSliderWrapper">
+        <div class="hero-slider-track" id="heroBannerContainer">
+          <!-- Slide 1: Main Hero Banner + Additional Promo Slides rendered via JS -->
+        </div>
+        <!-- Slider Navigation Dots Indicator -->
+        <div class="hero-slider-dots" id="heroSliderDots"></div>
+      </div>
+    </div>
 
     <!-- Pharmacist CTA Banner -->
     <div class="wrap" id="homePharmacistCtaWrap">
@@ -330,11 +339,13 @@
         <h2 id="homeGridTitle">الأكثر مبيعاً 🔥</h2>
       </div>
       <div class="product-grid" id="bestSellersGrid"></div>
-    </section>
 
-    <!-- Promo Banners Section -->
-    <section class="wrap section" id="promoBannersSection">
-      <div id="promoBanners"></div>
+      <!-- Progressive Pagination Button (Home Grid) -->
+      <div id="homeLoadMoreWrap" class="load-more-container" style="display:none;">
+        <button type="button" id="homeLoadMoreBtn" class="load-more-btn" onclick="window.App.loadMoreHomeProducts()">
+          عرض المزيد من المنتجات ⬇️
+        </button>
+      </div>
     </section>
   </main>
 
@@ -350,6 +361,13 @@
         <h2 id="listingTitle">المنتجات</h2>
       </div>
       <div class="product-grid" id="listingGrid"></div>
+
+      <!-- Progressive Pagination Button (Listing Grid) -->
+      <div id="listingLoadMoreWrap" class="load-more-container" style="display:none;">
+        <button type="button" id="listingLoadMoreBtn" class="load-more-btn" onclick="window.App.loadMoreListingProducts()">
+          عرض المزيد من المنتجات ⬇️
+        </button>
+      </div>
     </div>
   </div>
 
@@ -438,14 +456,33 @@
         <span>متوفر بالمخزون</span>
       </div>
 
+      <!-- TABS SECTION (WITH 4TH REVIEWS & RATING TAB) -->
       <div class="pd-tabs">
         <button class="pd-tab active" onclick="switchPdTab('desc')">الوصف الطبي</button>
         <button class="pd-tab" onclick="switchPdTab('ing')">المكونات الفعالة</button>
         <button class="pd-tab" onclick="switchPdTab('use')">طريقة الاستخدام</button>
+        <button class="pd-tab" onclick="switchPdTab('reviews')">التقييمات والآراء ⭐</button>
       </div>
+
       <div class="pd-tab-content active" id="pdTabDesc"></div>
       <div class="pd-tab-content" id="pdTabIng"></div>
       <div class="pd-tab-content" id="pdTabUse"></div>
+
+      <!-- 🌟 TAB 4: CUSTOMER 5-STAR INTERACTIVE RATING WIDGET -->
+      <div class="pd-tab-content" id="pdTabReviews">
+        <div class="star-rating-box">
+          <h4 style="margin:0 0 6px; font-weight:800; font-size:14px; color:var(--ink);">ما هو تقييمكِ لهذا المنتج؟</h4>
+          <p style="font-size:12px; color:var(--text-soft); margin:0 0 12px;">انقري على النجوم لمشاركة تجربتكِ مع الزبائن والاطلاع على التقييم المعتمد:</p>
+          <div class="star-rating-row" id="productInteractiveStars">
+            <span class="star-btn" onclick="window.App.rateProductInstant(1)">★</span>
+            <span class="star-btn" onclick="window.App.rateProductInstant(2)">★</span>
+            <span class="star-btn" onclick="window.App.rateProductInstant(3)">★</span>
+            <span class="star-btn" onclick="window.App.rateProductInstant(4)">★</span>
+            <span class="star-btn" onclick="window.App.rateProductInstant(5)">★</span>
+          </div>
+          <div id="instantRatingMsg" style="margin-top:10px; font-size:12px; font-weight:800; color:var(--accent);"></div>
+        </div>
+      </div>
 
       <div class="pd-qty-row">
         <div class="pd-qty-stepper">
@@ -477,7 +514,6 @@
         <h2>سلة المشتريات</h2>
       </div>
       <div id="cartItemsList"></div>
-
       <div id="cartSummaryBlock"></div>
     </div>
   </div>
@@ -660,48 +696,7 @@
     </div>
   </div>
 
-  <!-- BOTTOM NAVIGATION BAR -->
-  <nav class="bottom-nav">
-    <button class="bn-item" onclick="showView('account')" id="bn-account">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>
-      <span class="lbl" id="bnAccountLbl">حسابي</span>
-    </button>
-    <button class="bn-item" onclick="showView('orders')" id="bn-orders">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-      <span class="lbl">طلباتي</span>
-    </button>
-    <button class="bn-item active" onclick="showView('home')" id="bn-home">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/></svg>
-      <span class="lbl">الرئيسية</span>
-    </button>
-    <button class="bn-item" onclick="showView('bundles')" id="bn-bundles">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-      <span class="lbl">البكجات</span>
-    </button>
-    <button class="bn-item" onclick="showView('categories')" id="bn-categories">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-      <span class="lbl">الأقسام</span>
-    </button>
-    <button class="bn-item" onclick="window.App.showView('cart')" id="bn-cart">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h2l2.4 12.4a2 2 0 0 0 2 1.6h8.4a2 2 0 0 0 2-1.6L22 8H6"/><circle cx="9" cy="21" r="1.4" fill="currentColor" stroke="none"/><circle cx="18" cy="21" r="1.4" fill="currentColor" stroke="none"/></svg>
-      <span class="lbl">السلة</span>
-      <span class="badge-count" id="bnCartBadge" style="display:none;">0</span>
-    </button>
-    <a class="bn-item" href="admin.html" id="bn-admin" style="display:none; color:#F59E0B;">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      <span class="lbl">إعدادات الأدمن</span>
-    </a>
-  </nav>
-
-  <!-- WhatsApp Floating FAB -->
-  <button class="fab-whatsapp" onclick="openWhatsapp()" aria-label="واتساب">
-    <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.7 14.2c-.2.6-1.4 1.2-1.9 1.2-.5.1-1.1.1-1.8-.1-.4-.1-1-.3-1.7-.6-3-1.3-4.9-4.3-5.1-4.5-.1-.2-1.2-1.6-1.2-3s.8-2.2 1.1-2.5c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5.2.5.8 1.9.8 2.1.1.2.1.3 0 .5-.1.2-.1.3-.3.5-.1.2-.3.4-.4.5-.2.2-.3.4-.1.7.2.3.9 1.5 2 2.4 1.3 1.2 2.4 1.5 2.8 1.7.3.2.5.1.7-.1l.9-1c.2-.3.4-.2.7-.1l1.8.9c.3.1.5.2.5.4.1.2.1.7-.1 1.3Z"/></svg>
-  </button>
-
-  <!-- Toast Notification Box -->
-  <div class="toast" id="toast"></div>
-
-  <!-- Storefront Inline Product Quick-Edit Modal (Admin) -->
+  <!-- 🌟 5. STOREFRONT INLINE PRODUCT QUICK-EDIT MODAL (WITH DYNAMIC CATEGORY DROPDOWN) -->
   <div class="admin-quick-modal-overlay" id="sfQuickEditModal">
     <div class="admin-quick-card" style="max-width: 560px; max-height: 90vh; overflow-y: auto;">
       <div class="consult-header">
@@ -714,6 +709,12 @@
         <div class="form-field">
           <label>اسم المنتج *</label>
           <input type="text" id="sfQuickEditProdName" required>
+        </div>
+
+        <!-- 🌟 الحقل الجديد لاختيار القسم وتحديث العداد تلقائياً -->
+        <div class="form-field">
+          <label>القسم / التصنيف *</label>
+          <select id="sfQuickEditProdCat" required style="width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:12px; font-family:inherit; font-size:13.5px; background:#fff; color:var(--ink); outline:none;"></select>
         </div>
 
         <div class="form-field">
@@ -762,7 +763,48 @@
     </div>
   </div>
 
-  <!-- 🌟 تشغيل المحرك الرئيسي المستقل والمباشر -->
+  <!-- BOTTOM NAVIGATION BAR -->
+  <nav class="bottom-nav">
+    <button class="bn-item" onclick="showView('account')" id="bn-account">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>
+      <span class="lbl" id="bnAccountLbl">حسابي</span>
+    </button>
+    <button class="bn-item" onclick="showView('orders')" id="bn-orders">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <span class="lbl">طلباتي</span>
+    </button>
+    <button class="bn-item active" onclick="showView('home')" id="bn-home">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/></svg>
+      <span class="lbl">الرئيسية</span>
+    </button>
+    <button class="bn-item" onclick="showView('bundles')" id="bn-bundles">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+      <span class="lbl">البكجات</span>
+    </button>
+    <button class="bn-item" onclick="showView('categories')" id="bn-categories">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      <span class="lbl">الأقسام</span>
+    </button>
+    <button class="bn-item" onclick="window.App.showView('cart')" id="bn-cart">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h2l2.4 12.4a2 2 0 0 0 2 1.6h8.4a2 2 0 0 0 2-1.6L22 8H6"/><circle cx="9" cy="21" r="1.4" fill="currentColor" stroke="none"/><circle cx="18" cy="21" r="1.4" fill="currentColor" stroke="none"/></svg>
+      <span class="lbl">السلة</span>
+      <span class="badge-count" id="bnCartBadge" style="display:none;">0</span>
+    </button>
+    <a class="bn-item" href="admin.html" id="bn-admin" style="display:none; color:#F59E0B;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span class="lbl">إعدادات الأدمن</span>
+    </a>
+  </nav>
+
+  <!-- WhatsApp Floating FAB -->
+  <button class="fab-whatsapp" onclick="openWhatsapp()" aria-label="واتساب">
+    <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.7 14.2c-.2.6-1.4 1.2-1.9 1.2-.5.1-1.1.1-1.8-.1-.4-.1-1-.3-1.7-.6-3-1.3-4.9-4.3-5.1-4.5-.1-.2-1.2-1.6-1.2-3s.8-2.2 1.1-2.5c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5.2.5.8 1.9.8 2.1.1.2.1.3 0 .5-.1.2-.1.3-.3.5-.1.2-.3.4-.4.5-.2.2-.3.4-.1.7.2.3.9 1.5 2 2.4 1.3 1.2 2.4 1.5 2.8 1.7.3.2.5.1.7-.1l.9-1c.2-.3.4-.2.7-.1l1.8.9c.3.1.5.2.5.4.1.2.1.7-.1 1.3Z"/></svg>
+  </button>
+
+  <!-- Toast Notification Box -->
+  <div class="toast" id="toast"></div>
+
+  <!-- المحرك البرمجي الرئيسي المستقل والمباشر -->
   <script type="module" src="main.js"></script>
 </body>
 </html>
