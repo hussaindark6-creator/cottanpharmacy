@@ -139,14 +139,13 @@
       </div>
     </aside>
 
-    <!-- Mobile top bar with menu toggle -->
+    <!-- Main View Area -->
     <div class="flex-1 min-w-0 flex flex-col lg:mr-72">
       <header class="lg:hidden bg-slate-900 border-b border-slate-800 sticky top-0 z-20 h-14 flex items-center px-4 gap-3 w-full">
         <button onclick="toggleSuperSidebar()" class="text-white text-xl">☰</button>
         <h1 class="text-sm font-black text-white">SaaS Executive Portal</h1>
       </header>
 
-      <!-- Main Content Container -->
       <main class="flex-1 min-w-0 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         
       <!-- ================= TAB 1: OVERVIEW & FINANCIALS ================= -->
@@ -400,25 +399,21 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-3">
-              <!-- Bulk Delete Action Button -->
               <button id="btnBulkDeleteMaster" onclick="handleBulkDeleteMasterProducts()" class="hidden bg-red-500/15 hover:bg-red-500/25 text-red-400 border border-red-500/40 px-4 py-2.5 rounded-xl font-black text-xs transition flex items-center gap-2 shadow-lg shadow-red-500/10">
                 <span>🗑️ حذف الأصناف المحددة (<span id="selectedMasterCount">0</span>)</span>
               </button>
 
-              <!-- Upload JSON / CSV Button -->
               <label class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl transition cursor-pointer flex items-center gap-2 shadow-lg shadow-emerald-500/20">
                 <span>📥 رفع ملف بيانات (JSON / CSV)</span>
                 <input type="file" id="masterJsonFileInput" accept=".json,.csv" class="hidden" onchange="handleMasterBulkUpload(event)">
               </label>
 
-              <!-- Backup / Export JSON -->
               <button onclick="exportMasterCatalogJSON()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs px-4 py-2.5 rounded-xl border border-slate-700 transition flex items-center gap-1.5">
                 💾 تصدير نسخة JSON
               </button>
             </div>
           </div>
 
-          <!-- Progress Bar during Bulk Upload -->
           <div id="bulkUploadProgressBar" class="hidden mb-6 bg-slate-950 border border-slate-800 p-4 rounded-2xl space-y-2">
             <div class="flex justify-between text-xs font-bold">
               <span id="bulkUploadStatusText" class="text-emerald-400">جاري معالجة ورفع الأصناف...</span>
@@ -429,7 +424,6 @@
             </div>
           </div>
 
-          <!-- Search & Filter Controls -->
           <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 mb-6">
             <div class="sm:col-span-8">
               <input type="text" id="masterSearchInput" oninput="filterMasterCatalog()" placeholder="ابحث باسم المنتج، البراند، أو الباركود..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
@@ -439,7 +433,6 @@
             </div>
           </div>
 
-          <!-- Master Catalog Table with Select-All Checkbox -->
           <div class="overflow-x-auto -mx-4 sm:mx-0">
             <table class="w-full text-right text-sm min-w-[750px]">
               <thead class="bg-slate-950/60 text-slate-400 font-bold border-b border-slate-800 text-xs">
@@ -460,7 +453,6 @@
             </table>
           </div>
 
-          <!-- Pagination Bar -->
           <div class="flex items-center justify-between pt-6 border-t border-slate-800 mt-4 text-xs">
             <button id="btnPrevMasterPage" onclick="changeMasterPage(-1)" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-4 py-2 rounded-xl transition disabled:opacity-40" disabled>
               ← الصفحة السابقة
@@ -507,7 +499,7 @@
         </div>
       </section>
 
-      <!-- ================= TAB 6: INFRASTRUCTURE & SCALING HUB (5 SERVICES DETAILED) ================= -->
+      <!-- ================= TAB 6: INFRASTRUCTURE & SCALING HUB ================= -->
       <section id="secSuperInfra" class="tab-content hidden space-y-8">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl">
           <div class="flex items-center gap-3 pb-6 border-b border-slate-800 mb-6">
@@ -521,8 +513,7 @@
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            
-            <!-- Service 1: Google Firebase Blaze Plan -->
+            <!-- Google Firebase Blaze -->
             <div class="bg-slate-950 border border-slate-800 hover:border-amber-500/40 rounded-2xl p-5 flex flex-col justify-between transition group">
               <div>
                 <div class="flex items-center justify-between mb-3">
@@ -536,7 +527,7 @@
                 <div class="bg-slate-900/80 rounded-xl p-3 text-xs space-y-1.5 mb-4 border border-slate-800/80">
                   <div class="text-slate-300"><b>الباقة الحالية (Spark):</b> 50k قراءة و20k كتابة يومياً (مجاناً 100%).</div>
                   <div class="text-amber-400"><b>باقة الترقية (Blaze):</b> قراءة وكتابة وتوسيع غير محدود.</div>
-                  <div class="text-emerald-400 font-mono"><b>السعر:</b> الدفع حسب الاستهلاك (Pay as you go) يبدأ من 0.06$ لكل 100k قراءة إضافية.</div>
+                  <div class="text-emerald-400 font-mono"><b>السعر:</b> الدفع حسب الاستهلاك يبدأ من 0.06$ لكل 100k قراءة إضافية.</div>
                 </div>
               </div>
               <a href="https://console.firebase.google.com/project/cottanpharmacy/usage" target="_blank" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs py-2.5 rounded-xl text-center transition shadow-lg shadow-amber-500/10 flex items-center justify-center gap-1.5">
@@ -544,7 +535,7 @@
               </a>
             </div>
 
-            <!-- Service 2: Cloudflare Workers Paid -->
+            <!-- Cloudflare Workers Paid -->
             <div class="bg-slate-950 border border-slate-800 hover:border-orange-500/40 rounded-2xl p-5 flex flex-col justify-between transition group">
               <div>
                 <div class="flex items-center justify-between mb-3">
@@ -553,10 +544,10 @@
                 </div>
                 <h3 class="text-sm font-black text-white mb-1">Cloudflare Workers Paid</h3>
                 <p class="text-xs text-slate-400 mb-4 leading-relaxed">
-                  تشغيل الـ API، عزل ومعالجة النطاقات الفرعية (Subdomains)، وإعادة احتساب الأسعار ومراقبة الأمان.
+                  تشغيل الـ API، عزل النطاقات الفرعية، الكاش السحابي 30 دقيقة، وإعادة احتساب الأسعار.
                 </p>
                 <div class="bg-slate-900/80 rounded-xl p-3 text-xs space-y-1.5 mb-4 border border-slate-800/80">
-                  <div class="text-slate-300"><b>الباقة الحالية (Free):</b> 100,000 طلب يومياً (100k req/day مجاناً).</div>
+                  <div class="text-slate-300"><b>الباقة الحالية (Free):</b> 100,000 طلب يومياً (مجاناً).</div>
                   <div class="text-orange-400"><b>باقة الترقية (Paid):</b> 10 ملايين طلب شهرياً مع وقت معالجة 30s.</div>
                   <div class="text-emerald-400 font-mono"><b>السعر:</b> 5$ شهرياً (يشمل 10,000,000 طلب API).</div>
                 </div>
@@ -566,19 +557,19 @@
               </a>
             </div>
 
-            <!-- Service 3: Cloudflare R2 Storage -->
+            <!-- Cloudflare R2 Storage -->
             <div class="bg-slate-950 border border-slate-800 hover:border-blue-500/40 rounded-2xl p-5 flex flex-col justify-between transition group">
               <div>
                 <div class="flex items-center justify-between mb-3">
                   <span class="text-2xl">📦</span>
-                  <span class="bg-blue-500/10 text-blue-400 border border-blue-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full">تخزين صور المنتجات</span>
+                  <span class="bg-blue-500/10 text-blue-400 border border-blue-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full">تخزين الصور والكتالوج</span>
                 </div>
                 <h3 class="text-sm font-black text-white mb-1">Cloudflare R2 Object Storage</h3>
                 <p class="text-xs text-slate-400 mb-4 leading-relaxed">
                   استضافة صور الكتالوج والبانرات بسرعة فائقة وبدون أي رسوم لنقل البيانات (Zero Egress Fees).
                 </p>
                 <div class="bg-slate-900/80 rounded-xl p-3 text-xs space-y-1.5 mb-4 border border-slate-800/80">
-                  <div class="text-slate-300"><b>الباقة الحالية (Free):</b> 10 جيجابايت تخزين مجاني + باندويث مفتوح.</div>
+                  <div class="text-slate-300"><b>الباقة الحالية (Free):</b> 10 جيجابايت تخزين مجاني + 10M قراءة شهرياً.</div>
                   <div class="text-blue-400"><b>باقة الترقية:</b> سعة غير محدودة لملايين صور المنتجات.</div>
                   <div class="text-emerald-400 font-mono"><b>السعر:</b> 0.015$ لكل 1 جيجابايت إضافي شهرياً.</div>
                 </div>
@@ -588,7 +579,7 @@
               </a>
             </div>
 
-            <!-- Service 4: Cloudflare Pro Plan -->
+            <!-- Cloudflare Pro Plan -->
             <div class="bg-slate-950 border border-slate-800 hover:border-purple-500/40 rounded-2xl p-5 flex flex-col justify-between transition group">
               <div>
                 <div class="flex items-center justify-between mb-3">
@@ -610,7 +601,7 @@
               </a>
             </div>
 
-            <!-- Service 5: Telegram Bot API -->
+            <!-- Telegram Bot API -->
             <div class="bg-slate-950 border border-slate-800 hover:border-sky-500/40 rounded-2xl p-5 flex flex-col justify-between transition group">
               <div>
                 <div class="flex items-center justify-between mb-3">
@@ -631,12 +622,11 @@
                 <span>فتح BotFather لإدارة البوتات ↗️</span>
               </a>
             </div>
-
           </div>
         </div>
       </section>
 
-      <!-- ================= TAB 7: SUPER ADMIN PAYMENT INFO (QI CARD & ZAINCASH ONLY) ================= -->
+      <!-- ================= TAB 7: SUPER ADMIN PAYMENT INFO (QI CARD & ZAINCASH) ================= -->
       <section id="secSuperPaymentInfo" class="tab-content hidden space-y-8">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl max-w-3xl mx-auto">
           <div class="flex items-center gap-3 pb-6 border-b border-slate-800 mb-6">
@@ -675,7 +665,7 @@
         </div>
       </section>
 
-      <!-- ================= TAB: SUBSCRIPTION PACKAGES ================= -->
+      <!-- ================= TAB 8: SUBSCRIPTION PACKAGES ================= -->
       <section id="secSuperPackages" class="tab-content hidden space-y-8">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl">
           <div class="flex items-center gap-3 pb-6 border-b border-slate-800 mb-6">
@@ -684,14 +674,12 @@
             </div>
             <div>
               <h2 class="text-lg font-black text-white">باقات الاشتراك</h2>
-              <p class="text-xs text-slate-400">حددي أسعار وميزات كل باقة — تظهر هذي الباقات عند إنشاء أو تعديل أي صيدلية.</p>
+              <p class="text-xs text-slate-400">حددي أسعار وميزات كل باقة — تظهر هذه الباقات عند إنشاء أو تعديل أي صيدلية.</p>
             </div>
           </div>
 
-          <!-- Existing packages list -->
           <div id="packagesListGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8"></div>
 
-          <!-- Add / Edit package form -->
           <div class="bg-slate-950/60 border border-slate-800 rounded-2xl p-5">
             <h3 class="text-sm font-black text-amber-400 mb-4" id="packageFormTitle">➕ إضافة باقة جديدة</h3>
             <form onsubmit="handleSavePackage(event)" class="space-y-4">
@@ -731,7 +719,7 @@
         </div>
       </section>
 
-      <!-- ================= TAB 8: CONSOLIDATED & INDIVIDUAL REPORTS ================= -->
+      <!-- ================= TAB 9: CONSOLIDATED & INDIVIDUAL REPORTS ================= -->
       <section id="secSuperReports" class="tab-content hidden space-y-8">
         <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/40 border border-emerald-500/30 rounded-3xl p-6 sm:p-8 shadow-xl">
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -752,7 +740,6 @@
           </div>
         </div>
 
-        <!-- Individual Stores Report Directory -->
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-8 shadow-md">
           <div class="pb-4 border-b border-slate-800 mb-6">
             <h3 class="text-base font-black text-white">تصدير تقارير المبيعات الفردية لكل صيدلية</h3>
@@ -783,7 +770,7 @@
 
   <!-- MODALS SECTION -->
   
-  <!-- 1. FULL EDIT PHARMACY MODAL -->
+  <!-- 1. FULL EDIT PHARMACY MODAL (WITH SECRETS & CUSTOM DOMAIN SYNC) -->
   <div id="fullEditModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between pb-4 border-b border-slate-800 mb-6">
@@ -850,7 +837,7 @@
           <div class="sm:col-span-2 border-t border-slate-800 pt-4">
             <label class="block text-xs font-bold text-amber-400 mb-1">🌐 دومين مخصص للصيدلية (اختياري)</label>
             <input type="text" id="editCustomDomain" placeholder="www.pharmacyname.com" class="w-full bg-slate-950 border border-amber-500/40 rounded-xl px-4 py-2.5 text-sm text-white font-mono" oninput="this.value = this.value.toLowerCase().trim()">
-            <p class="text-[10px] text-slate-500 mt-1">اكتبي الدومين بدون https:// — بعد الحفظ وجّهي DNS مالت هذا الدومين لاستضافة الموقع (Cloudflare Pages Custom Domain)</p>
+            <p class="text-[10px] text-slate-500 mt-1">اكتبي الدومين بدون https:// — بعد الحفظ وجّهي DNS الخاص بهذا الدومين لاستضافة Cloudflare Pages</p>
           </div>
         </div>
 
@@ -890,7 +877,7 @@
   <!-- Toast Notification -->
   <div id="superToast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-emerald-500 text-slate-950 font-black px-6 py-3 rounded-full shadow-2xl transition-all duration-300 opacity-0 pointer-events-none z-50 text-sm"></div>
 
-  <!-- Script Logic -->
+  <!-- Main JavaScript Logic -->
   <script>
     const SUPER_ADMIN_EMAIL = "hussaindark6@gmail.com";
 
@@ -941,7 +928,6 @@
       loadSuperAdminPaymentInfo();
     });
 
-    // 📱 فتح/إغلاق القائمة الجانبية بالجوال
     function toggleSuperSidebar(forceOpen) {
       const sidebar = document.getElementById('superSidebar');
       const overlay = document.getElementById('sidebarOverlay');
@@ -975,7 +961,6 @@
         document.getElementById(tabMap[tabKey][1]).classList.remove('hidden');
       }
 
-      // بالجوال، نسكر القائمة الجانبية تلقائياً بعد اختيار أي تبويب
       const sidebar = document.getElementById('superSidebar');
       if (sidebar && window.innerWidth < 1024) toggleSuperSidebar(false);
 
@@ -1121,7 +1106,6 @@
       }
     }
 
-    // 🔒 إنشاء الصيدلية وفصل الأسرار في private_settings/config
     async function handleCreatePharmacy(e) {
       e.preventDefault();
       if (!db) return;
@@ -1140,7 +1124,6 @@
       const chatId = document.getElementById('inpTeleChatId').value.trim();
 
       try {
-        // 1. المستند العام للصيدلية (بدون أسرار)
         await db.collection('pharmacies').doc(slug).set({
           id: slug,
           name,
@@ -1161,7 +1144,6 @@
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // 2. المستند السري المفصول (Secrets Decoupling)
         await db.collection('pharmacies').doc(slug).collection('private_settings').doc('config').set({
           telegramConfig: {
             botToken,
@@ -1203,7 +1185,6 @@
       }
     }
 
-    // ================= DYNAMIC BILLING =================
     function saveBillingMultiplierSettings() {
       const config = {
         freeOrders: Number(document.getElementById('cfgFreeOrders').value || 100),
@@ -1283,7 +1264,6 @@
       }
     }
 
-    // ================= MASTER CATALOG PAGINATION & BULK ACTIONS =================
     async function fetchMasterCatalog() {
       if (!db) return;
       try {
@@ -1389,7 +1369,6 @@
       }
     }
 
-    // 🗑️ الحذف الجماعي السريع عبر Batches
     async function handleBulkDeleteMasterProducts() {
       const ids = Array.from(window.selectedMasterItemIds);
       if (!confirm(`تحذير: هل أنت متأكد من حذف (${ids.length}) صنف دفعة واحدة من الكتالوج المركزي؟`)) return;
@@ -1429,7 +1408,6 @@
       }
     }
 
-    // 📥 استيراد ملفات JSON / CSV مع شريط تقدم
     async function handleMasterBulkUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -1530,7 +1508,6 @@
       showToast('تم تصدير نسخة JSON بنجاح 💾');
     }
 
-    // ================= CROWDSOURCING SUBMISSIONS =================
     async function fetchCrowdsourcedSubmissions() {
       if (!db) return;
       const tbody = document.getElementById('crowdsourceTableBody');
@@ -1610,7 +1587,6 @@
       }
     }
 
-    // ================= PAYMENT INFO (QI CARD & ZAINCASH ONLY) =================
     async function loadSuperAdminPaymentInfo() {
       if (!db) return;
       try {
@@ -1644,7 +1620,6 @@
       }
     }
 
-    // ================= SUBSCRIPTION PACKAGES =================
     async function fetchSubscriptionPackages() {
       if (!db) return;
       try {
@@ -1729,7 +1704,7 @@
     }
 
     async function deletePackage(id) {
-      if (!confirm('هل أنتِ متأكدة من حذف هذي الباقة؟ الصيدليات المشتركة فيها حالياً تبقى ببياناتها الحالية بدون تأثر.')) return;
+      if (!confirm('هل أنتِ متأكدة من حذف هذه الباقة؟')) return;
       try {
         await db.collection('system').doc('subscription_packages').collection('packages').doc(id).delete();
         showToast('تم حذف الباقة');
@@ -1739,7 +1714,6 @@
       }
     }
 
-    // تعبئة قوائم اختيار الباقة بنماذج إنشاء/تعديل الصيدلية
     function populatePackageDropdowns(packages) {
       const options = '<option value="">— بدون باقة (تسعير يدوي) —</option>' +
         packages.map(p => `<option value="${p.id}">${p.name} — ${Number(p.price || 0).toLocaleString()} د.ع</option>`).join('');
@@ -1749,7 +1723,6 @@
       });
     }
 
-    // عند اختيار باقة بنموذج التعديل، نعبّي السعر والسقف تلقائياً (تبقى قابلة للتعديل اليدوي)
     function applyPackageToEditForm() {
       const pkgId = document.getElementById('editPackageId').value;
       const pkg = (window.cachedPackagesList || []).find(p => p.id === pkgId);
@@ -1759,7 +1732,6 @@
       }
     }
 
-    // نفس الفكرة لنموذج إنشاء صيدلية جديدة
     function applyPackageToCreateForm() {
       const pkgId = document.getElementById('newPharmacyPackageId').value;
       const pkg = (window.cachedPackagesList || []).find(p => p.id === pkgId);
@@ -1769,7 +1741,6 @@
       }
     }
 
-    // ================= CONSOLIDATED & INDIVIDUAL REPORTS =================
     function renderIndividualReportsList() {
       const tbody = document.getElementById('individualReportsTableBody');
       const slugs = Object.keys(window.cachedPharmaciesMap);
@@ -1920,7 +1891,6 @@
       }
     }
 
-    // ================= FULL EDIT MODAL (WITH SECRETS DECOUPLING) =================
     async function openFullEditModal(slug) {
       const data = window.cachedPharmaciesMap[slug] || {};
       document.getElementById('editOldSlugId').value = slug;
@@ -1936,7 +1906,6 @@
       document.getElementById('editTeleBotToken').value = (data.telegramConfig && data.telegramConfig.botToken) || '';
       document.getElementById('editTeleChatId').value = (data.telegramConfig && data.telegramConfig.chatId) || '';
 
-      // 🌐 نبحث هل فيه دومين مخصص مربوط بهذي الصيدلية حالياً
       document.getElementById('editCustomDomain').value = '';
       document.getElementById('editOldCustomDomain').value = '';
       try {
@@ -2013,7 +1982,6 @@
         showToast('خطأ: ' + err.message, true);
       }
 
-      // 🌐 تحديث ربط الدومين المخصص (منفصل عن try/catch الأساسية حتى لا يفشل حفظ باقي البيانات لو صار خطأ هنا)
       try {
         const domainsRef = db.collection('system').doc('custom_domains').collection('domains');
         if (oldCustomDomain && oldCustomDomain !== customDomain) {
@@ -2030,7 +1998,6 @@
       }
     }
 
-    // ================= SUPER ADMIN TELEGRAM SETTINGS =================
     function openSuperTeleSettingsModal() {
       document.getElementById('superTeleModal').classList.remove('hidden');
     }
