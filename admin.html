@@ -76,6 +76,13 @@
       <p id="adminWelcomeDesc">مرحباً بك — إدارة متكاملة للطلبات، الموظفين، المنتجات، والاشتراكات.</p>
     </div>
 
+    <!-- ⚡ (إصلاح #1) زر توليد وحبس كتالوج R2 السحابي يدوياً بنقرة واحدة -->
+    <div class="admin-cache-rebuild-bar">
+      <button type="button" onclick="manualRebuildR2Catalog()" id="btnManualRebuildCache" class="admin-cache-rebuild-btn">
+        ⚡ توليد وحبس كتالوج R2 السحابي الآن
+      </button>
+    </div>
+
     <!-- LOW STOCK ALERT BANNER -->
     <div id="adminLowStockAlertBanner" style="display:none; background:#FEF3C7; border:1.5px solid #FDE68A; border-radius:14px; padding:12px 16px; margin-bottom:16px; align-items:center; justify-content:space-between;">
       <div style="display:flex; align-items:center; gap:10px;">
@@ -229,6 +236,34 @@
 
     <!-- 4. PRODUCT MANAGEMENT SECTION -->
     <div id="adminSecProducts" style="display:none;">
+
+      <!-- 🧹 (إصلاح #5) أداة فحص وتنظيف المنتجات التجريبية / غير المصنفة -->
+      <div class="admin-fieldset" style="border-color:#FDE68A; background:#FFFBEB;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+          <legend style="color:#92400E; margin-bottom:0;">🧹 فحص وتنظيف المنتجات التجريبية / غير المصنفة (<span id="adminCleanupCount">0</span>)</legend>
+          <button type="button" onclick="scanForUncategorizedOrTestProducts()" style="background:#D97706; color:#fff; font-weight:800; font-size:11.5px; padding:7px 14px; border-radius:999px;">
+            🔍 فحص المنتجات الآن
+          </button>
+        </div>
+        <p style="font-size:12px; color:#92400E; margin-top:-4px; margin-bottom:12px; line-height:1.6;">
+          يفحص هذا القسم الأصناف التي لا تملك قسماً مصنفاً صحيحاً ضمن أقسام المتجر الحالية، أو التي تحمل أسماء تجريبية شائعة
+          (مثل Novalac, Lactonic, Example, Test, Demo) قد تكون أُضيفت بالخطأ أثناء الاستيراد من بنك المنتجات. حددي الأصناف
+          ثم انقلي المحدد لسلة المحذوفات أو احذفيه نهائياً لتختفي من شاشة الزبائن فوراً.
+        </p>
+        <div id="adminCleanupResultsGrid" style="display:flex; flex-direction:column; gap:8px; max-height:320px; overflow-y:auto; margin-bottom:12px;">
+          <div class="no-results" style="padding:16px 0;">اضغط زر "فحص المنتجات الآن" لبدء الفحص.</div>
+        </div>
+        <div id="adminCleanupActionsBar" style="display:none; gap:10px; align-items:center; flex-wrap:wrap;">
+          <span style="font-size:11.5px; font-weight:800; color:#92400E;">المحدد: (<span id="adminCleanupSelectedCount">0</span>)</span>
+          <button type="button" onclick="cleanupArchiveSelected()" style="background:#FEF3C7; color:#92400E; border:1px solid #FDE68A; font-weight:800; font-size:11.5px; padding:8px 14px; border-radius:999px;">
+            🗑️ نقل المحدد لسلة المحذوفات
+          </button>
+          <button type="button" onclick="cleanupPermanentDeleteSelected()" style="background:#FEE2E2; color:#991B1B; border:1px solid #FECACA; font-weight:800; font-size:11.5px; padding:8px 14px; border-radius:999px;">
+            ❌ حذف نهائي للمحدد
+          </button>
+        </div>
+      </div>
+
       <div class="admin-fieldset">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
           <legend id="adminFormModeTitleV" style="margin:0;">إضافة منتج أو دواء جديد يدوياً</legend>
@@ -416,7 +451,7 @@
       <div class="admin-fieldset">
         <legend id="adminPromoCardFormTitle">🎁 إدارة شرائح سلايدر العروض في أعلى الصفحة الرئيسية</legend>
         <p style="font-size:12px; color:var(--text-soft); margin-top:-4px; margin-bottom:12px;">
-          البطاقات المضافة هنا تظهر مباشرة في سلايدر البانرات العلوي التفاعلي، ويمكنك تحديد منتجات مخصصة ولون شريحة العرض:
+          البطاقات المضافة هنا تظهر مباشرة في سلايدر البانرات العلوي التفاعلي، ويمكنك تحديد منتجات مخصصة ولون شريحة العرض (يظهر اللون المختار فعلياً على الشريحة):
         </p>
         <form id="adminPromoCardForm" onsubmit="handleSavePromoCard(event)">
           <input type="hidden" id="promoCardDocId" value="">
@@ -447,14 +482,21 @@
             <input type="hidden" id="promoCardImgUrl" value="">
           </div>
 
-          <!-- 🌟 اختيار المنتجات المشمولة بالعرض (Search & Chips Selector) -->
+          <!-- 🌟 (إصلاح #2) اختيار المنتجات المشمولة بالعرض عبر تصفح مبوب حسب القسم/الماركة -->
           <div class="form-field">
             <label>المنتجات المشمولة في هذا العرض (عند نقر الزبون على البانر تظهر له هذه المنتجات حصراً)</label>
-            <div class="bundle-search-box-wrap">
-              <input type="text" id="offerProdSearchInput" class="bundle-search-input" placeholder="ابحث باسم المنتج لإضافته للعرض..." oninput="searchOfferProducts(this.value)">
-              <div id="offerProdSearchResults" class="bundle-search-results-list"></div>
+            <div style="display:flex; gap:8px; margin-bottom:8px;">
+              <select id="offerFilterCategorySelect" onchange="handleOfferCategoryFilterChange()" style="flex:1; padding:9px 10px; border:1.5px solid var(--line); border-radius:10px; font-size:12.5px; font-weight:700;">
+                <option value="">📂 تصفح حسب القسم...</option>
+              </select>
+              <select id="offerFilterBrandSelect" onchange="handleOfferBrandFilterChange()" style="flex:1; padding:9px 10px; border:1.5px solid var(--line); border-radius:10px; font-size:12.5px; font-weight:700;">
+                <option value="">🏢 تصفح حسب الماركة...</option>
+              </select>
             </div>
-            <div id="offerProdChipsContainer" class="bundle-chips-container">
+            <div id="offerCategorizedProductsList" class="categorized-picker-list">
+              <div class="categorized-picker-empty">اختر قسماً أو ماركة أعلاه لعرض منتجاتها هنا.</div>
+            </div>
+            <div id="offerProdChipsContainer" class="bundle-chips-container" style="margin-top:8px;">
               <span style="font-size:11.5px; color:var(--text-soft); align-self:center;" id="offerProdChipsPlaceholder">لم يتم تحديد منتجات بعد (إذا تركتها فارغة سيفتح كل العروض).</span>
             </div>
           </div>
@@ -470,7 +512,7 @@
       </div>
     </div>
 
-    <!-- 8. BUNDLES (WITH SCALABLE SEARCH & CHIPS SELECTOR FOR 1,000+ ITEMS) -->
+    <!-- 8. BUNDLES (WITH CATEGORIZED TABBED SELECTOR FOR 1,000+ ITEMS — FIX #2) -->
     <div id="adminSecBundles" style="display:none;">
       <div class="admin-fieldset">
         <legend id="adminBundleFormTitle">🎁 إضافة حزمة / بكج توفير جديد</legend>
@@ -506,15 +548,22 @@
             </div>
           </div>
 
-          <!-- 🌟 منتقي منتجات البكج الذكي (Search & Chips) لآلاف المنتجات -->
+          <!-- 🌟 (إصلاح #2) منتقي منتجات البكج المبوب حسب القسم/الماركة بدلاً من البحث بالاسم -->
           <div class="form-field">
-            <label>اختيار المنتجات المكونة للبكج (نظام البحث والبطاقات الذكي لآلاف الأصناف)</label>
-            <div class="bundle-search-box-wrap">
-              <input type="text" id="bundleProductSearchInput" class="bundle-search-input" placeholder="ابحث باسم المنتج أو الماركة لإضافته للبكج..." oninput="searchBundleProducts(this.value)">
-              <div id="bundleSearchResultsList" class="bundle-search-results-list"></div>
+            <label>اختيار المنتجات المكونة للبكج (تصفح مبوب حسب القسم أو الماركة — يناسب آلاف الأصناف)</label>
+            <div style="display:flex; gap:8px; margin-bottom:8px;">
+              <select id="bundleFilterCategorySelect" onchange="handleBundleCategoryFilterChange()" style="flex:1; padding:9px 10px; border:1.5px solid var(--line); border-radius:10px; font-size:12.5px; font-weight:700;">
+                <option value="">📂 تصفح حسب القسم...</option>
+              </select>
+              <select id="bundleFilterBrandSelect" onchange="handleBundleBrandFilterChange()" style="flex:1; padding:9px 10px; border:1.5px solid var(--line); border-radius:10px; font-size:12.5px; font-weight:700;">
+                <option value="">🏢 تصفح حسب الماركة...</option>
+              </select>
             </div>
-            <div id="bundleChipsContainer" class="bundle-chips-container">
-              <span style="font-size:11.5px; color:var(--text-soft); align-self:center;" id="bundleChipsPlaceholder">اضغط على المنتجات من نتائج البحث أعلاه لإضافتها هنا.</span>
+            <div id="bundleCategorizedProductsList" class="categorized-picker-list">
+              <div class="categorized-picker-empty">اختر قسماً أو ماركة أعلاه لعرض منتجاتها هنا.</div>
+            </div>
+            <div id="bundleChipsContainer" class="bundle-chips-container" style="margin-top:8px;">
+              <span style="font-size:11.5px; color:var(--text-soft); align-self:center;" id="bundleChipsPlaceholder">لم تُحدد أي منتجات بعد.</span>
             </div>
           </div>
 
@@ -767,8 +816,13 @@
               <input type="number" id="adminLoaderCircleSize" placeholder="150" min="80" max="220" value="150">
             </div>
             <div class="form-field" style="flex:1;">
-              <label>لون خلفية شاشة التحميل (أو تدرج CSS)</label>
-              <input type="text" id="adminLoaderBgColor" placeholder="linear-gradient(160deg, #FDF2F6 0%, #FBEAF1 100%)" value="linear-gradient(160deg, #FDF2F6 0%, #FFF9FB 45%, #FBEAF1 100%)">
+              <!-- 🌟 (إصلاح #4) منتقي ألوان مرئي حقيقي باللمس بجانب الحقل النصي المتقدم (بدون فقدان ميزة التدرجات) -->
+              <label>لون خلفية شاشة التحميل (منتقي مرئي أو تدرج CSS مخصص)</label>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <input type="color" id="adminLoaderBgColorPicker" value="#FDF2F6" oninput="syncLoaderBgColorFromPicker()" style="width:50px; height:42px; padding:2px; cursor:pointer; border-radius:10px; border:1px solid var(--line); flex-shrink:0;">
+                <input type="text" id="adminLoaderBgColor" placeholder="linear-gradient(160deg, #FDF2F6 0%, #FBEAF1 100%)" value="linear-gradient(160deg, #FDF2F6 0%, #FFF9FB 45%, #FBEAF1 100%)" style="flex:1;">
+              </div>
+              <p style="font-size:10.5px; color:var(--text-soft); margin-top:4px;">لمسة سريعة على المنتقي الدائري لاختيار لون صلب، أو عدّلي الحقل النصي مباشرة لتدرج CSS متقدم.</p>
             </div>
           </div>
 
@@ -1464,6 +1518,13 @@
       renderColorSwatchGrid();
     }
 
+    // 🌟 (إصلاح #4) مزامنة منتقي ألوان خلفية شاشة التحميل المرئي مع الحقل النصي المتقدم
+    function syncLoaderBgColorFromPicker() {
+      const picker = document.getElementById('adminLoaderBgColorPicker');
+      const textField = document.getElementById('adminLoaderBgColor');
+      if (picker && textField) textField.value = picker.value;
+    }
+
     document.addEventListener('DOMContentLoaded', renderColorSwatchGrid);
 
     // 🌸 قراءة إعدادات الصيدلية وشاشة التحميل المخصصة
@@ -1493,7 +1554,12 @@
           if (document.getElementById('adminLoaderCircleSize')) document.getElementById('adminLoaderCircleSize').value = p.loaderCircleSize || 150;
           if (document.getElementById('adminLoaderTitleInput')) document.getElementById('adminLoaderTitleInput').value = p.loaderTitle || 'جاري تحميل الموقع';
           if (document.getElementById('adminLoaderSubInput')) document.getElementById('adminLoaderSubInput').value = p.loaderSubText || 'انتظر لحظة من فضلك ..';
-          if (document.getElementById('adminLoaderBgColor')) document.getElementById('adminLoaderBgColor').value = p.loaderBgColor || 'linear-gradient(160deg, #FDF2F6 0%, #FFF9FB 45%, #FBEAF1 100%)';
+          const loaderBgVal = p.loaderBgColor || 'linear-gradient(160deg, #FDF2F6 0%, #FFF9FB 45%, #FBEAF1 100%)';
+          if (document.getElementById('adminLoaderBgColor')) document.getElementById('adminLoaderBgColor').value = loaderBgVal;
+          // 🌟 (إصلاح #4) إن كانت القيمة المحفوظة لوناً صلباً بسيطاً (hex) نُزامن منتقي الألوان المرئي معها أيضاً
+          if (document.getElementById('adminLoaderBgColorPicker') && /^#[0-9A-Fa-f]{6}$/.test(loaderBgVal.trim())) {
+            document.getElementById('adminLoaderBgColorPicker').value = loaderBgVal.trim();
+          }
           if (p.loaderImgUrl) {
             document.getElementById('adminLoaderImgInput').value = p.loaderImgUrl;
             document.getElementById('adminLoaderImgPreviewEl').src = p.loaderImgUrl;
@@ -1538,7 +1604,7 @@
       const pharmacistCtaTitle = document.getElementById('adminPharmacistTitleInput').value.trim();
       const pharmacistCtaDesc = document.getElementById('adminPharmacistDescInput').value.trim();
 
-      // إعدادات شاشة التحميل المخصصة
+      // إعدادات شاشة التحميل المخصصة — (إصلاح #4) تُقرأ من الحقل النصي المتزامن مع منتقي الألوان المرئي
       const loaderImgUrl = sanitizeUrl(document.getElementById('adminLoaderImgInput')?.value.trim() || '');
       const loaderCircleSize = Number(document.getElementById('adminLoaderCircleSize')?.value || 150);
       const loaderTitle = document.getElementById('adminLoaderTitleInput')?.value.trim() || 'جاري تحميل الموقع';
