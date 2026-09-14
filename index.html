@@ -125,14 +125,61 @@
       <span class="appLoaderDot" style="animation-delay:.4s;"></span>
     </div>
   </div>
+
   <style>
     @keyframes appLoaderSpinSlow { to { transform: rotate(360deg); } }
     @keyframes appLoaderStripes { from { background-position:0 0; } to { background-position:32px 0; } }
     .appLoaderDot { width:7px; height:7px; border-radius:50%; background:#E85D8A; display:inline-block; animation:appLoaderBounce 1s ease-in-out infinite; }
     @keyframes appLoaderBounce { 0%, 100% { transform:translateY(0); opacity:.5; } 50% { transform:translateY(-5px); opacity:1; } }
   </style>
+
+  <!-- 🚀 الحل الجذري لمشكلة وميض شاشة التحميل (Bug #1 Fix) -->
+  <!-- يتم تنفيذ هذا السكربت لحظياً قبل رسم الصفحة لتطبيق الإعدادات المخصصة فوراً -->
   <script>
-    (function () {
+    (function() {
+      try {
+        // 1. استخراج معرف الصيدلية
+        const urlParams = new URLSearchParams(window.location.search);
+        let pId = urlParams.get('pharmacy') || urlParams.get('p_id') || urlParams.get('p') || urlParams.get('id');
+        if (!pId) {
+          const hostname = window.location.hostname.toLowerCase();
+          const ignored = ['pages.dev', 'workers.dev', 'web.app', 'firebaseapp.com', 'localhost', '127.0.0.1'];
+          const isPlatformHost = ignored.some(d => hostname === d || hostname.endsWith('.' + d));
+          if (!isPlatformHost) {
+            const parts = hostname.split('.');
+            if (parts.length >= 3 && parts[0] !== 'www') pId = parts[0];
+          }
+        }
+        if (!pId) pId = sessionStorage.getItem('saas_active_pharmacy_id') || 'cottanpharmacy';
+        pId = pId.toLowerCase().trim();
+
+        // 2. قراءة إعدادات المتجر من الـ LocalStorage (كاش)
+        const settingsRaw = localStorage.getItem('saas_' + pId + '_store_settings');
+        if (settingsRaw) {
+          const settings = JSON.parse(settingsRaw);
+
+          // 3. تطبيق الإعدادات المخصصة فوراً على عناصر الواجهة
+          const overlay = document.getElementById('appLoadingOverlay');
+          const circleWrap = document.getElementById('loaderCircleWrap');
+          const photoImg = document.getElementById('loaderPhotoImg');
+          const titleText = document.getElementById('loaderTitleText');
+          const subText = document.getElementById('loaderSubText');
+
+          if (settings.loaderBgColor && overlay) overlay.style.background = settings.loaderBgColor;
+          if (settings.loaderCircleSize && circleWrap) {
+            circleWrap.style.width = settings.loaderCircleSize + 'px';
+            circleWrap.style.height = settings.loaderCircleSize + 'px';
+          }
+          const imgTarget = settings.loaderImgUrl || settings.logoUrl || settings.bannerImgUrl;
+          if (imgTarget && photoImg) photoImg.src = imgTarget;
+          if (settings.loaderTitle && titleText) titleText.textContent = settings.loaderTitle;
+          if (settings.loaderSubText && subText) subText.textContent = settings.loaderSubText;
+        }
+      } catch(e) {
+        console.warn("Fast-load script fallback:", e);
+      }
+
+      // تحريك شريط التقدم
       let pct = 8;
       const bar = document.getElementById('loaderProgressBar');
       const text = document.getElementById('loaderPercentText');
