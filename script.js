@@ -233,6 +233,38 @@ function triggerR2CatalogRebuild() {
     .catch(err => console.warn("R2 catalog rebuild notice:", err));
 }
 
+// 🌟 أداة يدوية بواجهة توست واضحة: توليد وحبس كتالوج R2 السحابي فوراً بنقرة واحدة (إصلاح #1)
+async function manualRebuildR2Catalog() {
+  if (!assertAdmin()) return;
+  if (!lockAction('manualRebuildR2Catalog', 3000)) return;
+
+  const btn = document.getElementById('btnManualRebuildCache');
+  const originalLabel = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '⏳ جاري توليد الكتالوج وحبسه في R2...';
+  }
+
+  showToast('جاري توليد كتالوج R2 السحابي ومسح الكاش القديم...');
+
+  try {
+    const res = await apiFetch('/api/admin/catalog/rebuild', { method: 'POST' });
+    if (res && res.success) {
+      showToast(`✅ تم توليد وحبس كتالوج R2 بنجاح (${res.totalProducts || 0} منتج) وتفعيل الكاش الجديد لمدة ساعة! ⚡`);
+    } else {
+      showToast('⚠️ تعذر توليد الكتالوج، يرجى المحاولة مجدداً بعد قليل.');
+    }
+  } catch (err) {
+    showToast('⚠️ خطأ أثناء الاتصال بسيرفر R2، تحقق من الاتصال.');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalLabel || '⚡ توليد وحبس كتالوج R2 السحابي الآن';
+    }
+  }
+}
+window.manualRebuildR2Catalog = manualRebuildR2Catalog;
+
 // دالة رفع الصور المباشرة من الاستوديو أو الكاميرا إلى Cloudflare R2
 async function uploadDirectImageFile(fileInput, targetHiddenUrlId, previewImgId, previewBoxId) {
   const file = fileInput.files[0];
@@ -941,14 +973,81 @@ async function deleteAdminCoupon(id) {
   }
 }
 
-// ================= 13. BUNDLES SYSTEM (SEARCH & CHIPS SELECTOR) =================
+// ================= 13. BUNDLES SYSTEM (CATEGORIZED TABBED SELECTOR — FIX #2) =================
 let currentBundleSelectedProductIds = [];
+
+// 🌟 تعبئة قوائم الأقسام والماركات المنسدلة لمنتقي البكجات المبوب
+function populateBundleFilterDropdowns() {
+  const catSel = document.getElementById('bundleFilterCategorySelect');
+  const brandSel = document.getElementById('bundleFilterBrandSelect');
+  if (catSel) {
+    catSel.innerHTML = `<option value="">📂 تصفح حسب القسم...</option>` +
+      categories.map(c => `<option value="${sanitizeText(c.id)}">${sanitizeText(c.label)}</option>`).join('');
+  }
+  if (brandSel) {
+    const brandKeys = Object.keys(brandsData);
+    brandSel.innerHTML = `<option value="">🏢 تصفح حسب الماركة...</option>` +
+      brandKeys.map(k => `<option value="${sanitizeText(k)}">${sanitizeText(brandsData[k].name || k)}</option>`).join('');
+  }
+}
+
+function handleBundleCategoryFilterChange() {
+  const catSel = document.getElementById('bundleFilterCategorySelect');
+  const brandSel = document.getElementById('bundleFilterBrandSelect');
+  const val = catSel ? catSel.value : '';
+  if (val && brandSel) brandSel.value = '';
+  renderBundleCategorizedList('category', val);
+}
+
+function handleBundleBrandFilterChange() {
+  const catSel = document.getElementById('bundleFilterCategorySelect');
+  const brandSel = document.getElementById('bundleFilterBrandSelect');
+  const val = brandSel ? brandSel.value : '';
+  if (val && catSel) catSel.value = '';
+  renderBundleCategorizedList('brand', val);
+}
+
+function renderBundleCategorizedList(mode, value) {
+  const listEl = document.getElementById('bundleCategorizedProductsList');
+  if (!listEl) return;
+  if (!value) {
+    listEl.innerHTML = `<div class="categorized-picker-empty">اختر قسماً أو ماركة أعلاه لعرض منتجاتها هنا.</div>`;
+    return;
+  }
+  const matched = products.filter(p => {
+    if (p.isDeleted === true) return false;
+    return mode === 'category' ? p.category === value : p.brand === value;
+  });
+  if (matched.length === 0) {
+    listEl.innerHTML = `<div class="categorized-picker-empty">لا توجد منتجات ضمن هذا التصنيف حالياً.</div>`;
+    return;
+  }
+  listEl.innerHTML = matched.map(p => {
+    const isChecked = currentBundleSelectedProductIds.includes(String(p.id));
+    return `
+      <label class="categorized-picker-item">
+        <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleBundleProductCheckbox('${sanitizeText(p.id)}', this.checked)">
+        <span class="cp-name">${sanitizeText(p.name)} <span style="color:var(--text-soft); font-weight:600;">(${sanitizeText(p.brand || '')})</span></span>
+        <span class="cp-price">${fmtPrice(p.price)}</span>
+      </label>
+    `;
+  }).join('');
+}
+
+function toggleBundleProductCheckbox(id, checked) {
+  if (checked) {
+    if (!currentBundleSelectedProductIds.includes(String(id))) currentBundleSelectedProductIds.push(String(id));
+  } else {
+    currentBundleSelectedProductIds = currentBundleSelectedProductIds.filter(x => x !== String(id));
+  }
+  renderBundleChips();
+}
 
 function renderBundleChips() {
   const container = document.getElementById('bundleChipsContainer');
   if (!container) return;
   if (currentBundleSelectedProductIds.length === 0) {
-    container.innerHTML = `<span style="font-size:11.5px; color:var(--text-soft); align-self:center;" id="bundleChipsPlaceholder">اضغط على المنتجات من نتائج البحث أعلاه لإضافتها هنا.</span>`;
+    container.innerHTML = `<span style="font-size:11.5px; color:var(--text-soft); align-self:center;" id="bundleChipsPlaceholder">لم تُحدد أي منتجات بعد — اختر قسماً أو ماركة أعلاه وحدد المنتجات بواسطة صناديق الاختيار.</span>`;
     return;
   }
   container.innerHTML = currentBundleSelectedProductIds.map(id => {
@@ -966,33 +1065,8 @@ function renderBundleChips() {
 }
 
 function searchBundleProducts(q) {
-  const listEl = document.getElementById('bundleSearchResultsList');
-  if (!listEl) return;
-  const term = (q || '').trim().toLowerCase();
-  if (!term) {
-    listEl.classList.remove('open');
-    listEl.innerHTML = '';
-    return;
-  }
-  const matched = products.filter(p => {
-    if (p.isDeleted === true) return false;
-    const n = (p.name || '').toLowerCase();
-    const b = (p.brand || '').toLowerCase();
-    const bc = (p.barcode || '').toLowerCase();
-    return n.includes(term) || b.includes(term) || bc.includes(term);
-  }).slice(0, 15);
-
-  if (matched.length === 0) {
-    listEl.innerHTML = `<div style="padding:10px; font-size:12px; color:var(--text-soft); text-align:center;">لا توجد منتجات مطابقة.</div>`;
-  } else {
-    listEl.innerHTML = matched.map(p => `
-      <div class="bundle-search-item" onclick="addBundleProductChip('${sanitizeText(p.id)}')">
-        <div><b>${sanitizeText(p.name)}</b> <span style="color:var(--text-soft); font-size:11px;">(${sanitizeText(p.brand)})</span></div>
-        <span class="mono" style="font-weight:800; color:var(--rose-deep);">${fmtPrice(p.price)} ➕</span>
-      </div>
-    `).join('');
-  }
-  listEl.classList.add('open');
+  // ⚠️ تم استبدال البحث النصي بنظام التصفح المبوب حسب القسم/الماركة (renderBundleCategorizedList).
+  // الدالة أُبقيت فارغة للحفاظ على التوافق مع أي استدعاء قديم متبقٍ في القوالب الخارجية.
 }
 
 function addBundleProductChip(id) {
@@ -1000,15 +1074,16 @@ function addBundleProductChip(id) {
     currentBundleSelectedProductIds.push(String(id));
     renderBundleChips();
   }
-  const listEl = document.getElementById('bundleSearchResultsList');
-  if (listEl) listEl.classList.remove('open');
-  const inputEl = document.getElementById('bundleProductSearchInput');
-  if (inputEl) inputEl.value = '';
 }
 
 function removeBundleProductChip(id) {
   currentBundleSelectedProductIds = currentBundleSelectedProductIds.filter(x => x !== String(id));
   renderBundleChips();
+  // إعادة رسم القائمة المبوبة الحالية (إن كانت مفتوحة) لتحديث حالة صناديق الاختيار
+  const activeCat = document.getElementById('bundleFilterCategorySelect')?.value;
+  const activeBrand = document.getElementById('bundleFilterBrandSelect')?.value;
+  if (activeCat) renderBundleCategorizedList('category', activeCat);
+  else if (activeBrand) renderBundleCategorizedList('brand', activeBrand);
 }
 
 function renderAdminBundlesList() {
@@ -1051,6 +1126,9 @@ function editAdminBundle(bundleId) {
   document.getElementById('bundleImgInput').value = b.imageUrl || '';
 
   currentBundleSelectedProductIds = (b.productIds || []).map(String);
+  if (document.getElementById('bundleFilterCategorySelect')) document.getElementById('bundleFilterCategorySelect').value = '';
+  if (document.getElementById('bundleFilterBrandSelect')) document.getElementById('bundleFilterBrandSelect').value = '';
+  renderBundleCategorizedList('category', '');
   renderBundleChips();
 
   document.getElementById('adminBundleFormTitle').textContent = '✏️ تعديل البكج: ' + b.title;
@@ -1067,6 +1145,9 @@ function resetAdminBundleForm() {
   document.getElementById('bundleSavingsInput').value = 'وفر 15,000 د.ع 💸';
   document.getElementById('bundleImgInput').value = '';
   currentBundleSelectedProductIds = [];
+  if (document.getElementById('bundleFilterCategorySelect')) document.getElementById('bundleFilterCategorySelect').value = '';
+  if (document.getElementById('bundleFilterBrandSelect')) document.getElementById('bundleFilterBrandSelect').value = '';
+  renderBundleCategorizedList('category', '');
   renderBundleChips();
   document.getElementById('adminBundleFormTitle').textContent = '🎁 إضافة حزمة / بكج توفير جديد';
   document.getElementById('btnSaveBundle').textContent = '💾 حفظ وتفعيل البكج في المتجر';
@@ -1345,8 +1426,74 @@ async function handleApplyBulkDiscount(e) {
   showToast(action === 'apply' ? `تم تطبيق خصم ${pct}% على ${targetProducts.length} منتج فورياً! ✓` : `تم استرجاع الأسعار الأصلية بنجاح ✓`);
 }
 
-// ================= 17. HERO SLIDER OFFERS & PROMO CARDS CRUD =================
+// ================= 17. HERO SLIDER OFFERS & PROMO CARDS CRUD (CATEGORIZED SELECTOR — FIX #2) =================
 let currentOfferSelectedProductIds = [];
+
+function populateOfferFilterDropdowns() {
+  const catSel = document.getElementById('offerFilterCategorySelect');
+  const brandSel = document.getElementById('offerFilterBrandSelect');
+  if (catSel) {
+    catSel.innerHTML = `<option value="">📂 تصفح حسب القسم...</option>` +
+      categories.map(c => `<option value="${sanitizeText(c.id)}">${sanitizeText(c.label)}</option>`).join('');
+  }
+  if (brandSel) {
+    const brandKeys = Object.keys(brandsData);
+    brandSel.innerHTML = `<option value="">🏢 تصفح حسب الماركة...</option>` +
+      brandKeys.map(k => `<option value="${sanitizeText(k)}">${sanitizeText(brandsData[k].name || k)}</option>`).join('');
+  }
+}
+
+function handleOfferCategoryFilterChange() {
+  const catSel = document.getElementById('offerFilterCategorySelect');
+  const brandSel = document.getElementById('offerFilterBrandSelect');
+  const val = catSel ? catSel.value : '';
+  if (val && brandSel) brandSel.value = '';
+  renderOfferCategorizedList('category', val);
+}
+
+function handleOfferBrandFilterChange() {
+  const catSel = document.getElementById('offerFilterCategorySelect');
+  const brandSel = document.getElementById('offerFilterBrandSelect');
+  const val = brandSel ? brandSel.value : '';
+  if (val && catSel) catSel.value = '';
+  renderOfferCategorizedList('brand', val);
+}
+
+function renderOfferCategorizedList(mode, value) {
+  const listEl = document.getElementById('offerCategorizedProductsList');
+  if (!listEl) return;
+  if (!value) {
+    listEl.innerHTML = `<div class="categorized-picker-empty">اختر قسماً أو ماركة أعلاه لعرض منتجاتها هنا.</div>`;
+    return;
+  }
+  const matched = products.filter(p => {
+    if (p.isDeleted === true) return false;
+    return mode === 'category' ? p.category === value : p.brand === value;
+  });
+  if (matched.length === 0) {
+    listEl.innerHTML = `<div class="categorized-picker-empty">لا توجد منتجات ضمن هذا التصنيف حالياً.</div>`;
+    return;
+  }
+  listEl.innerHTML = matched.map(p => {
+    const isChecked = currentOfferSelectedProductIds.includes(String(p.id));
+    return `
+      <label class="categorized-picker-item">
+        <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleOfferProductCheckbox('${sanitizeText(p.id)}', this.checked)">
+        <span class="cp-name">${sanitizeText(p.name)} <span style="color:var(--text-soft); font-weight:600;">(${sanitizeText(p.brand || '')})</span></span>
+        <span class="cp-price">${fmtPrice(p.price)}</span>
+      </label>
+    `;
+  }).join('');
+}
+
+function toggleOfferProductCheckbox(id, checked) {
+  if (checked) {
+    if (!currentOfferSelectedProductIds.includes(String(id))) currentOfferSelectedProductIds.push(String(id));
+  } else {
+    currentOfferSelectedProductIds = currentOfferSelectedProductIds.filter(x => x !== String(id));
+  }
+  renderOfferProdChips();
+}
 
 function renderOfferProdChips() {
   const container = document.getElementById('offerProdChipsContainer');
@@ -1368,32 +1515,8 @@ function renderOfferProdChips() {
 }
 
 function searchOfferProducts(q) {
-  const listEl = document.getElementById('offerProdSearchResults');
-  if (!listEl) return;
-  const term = (q || '').trim().toLowerCase();
-  if (!term) {
-    listEl.classList.remove('open');
-    listEl.innerHTML = '';
-    return;
-  }
-  const matched = products.filter(p => {
-    if (p.isDeleted === true) return false;
-    const n = (p.name || '').toLowerCase();
-    const b = (p.brand || '').toLowerCase();
-    return n.includes(term) || b.includes(term);
-  }).slice(0, 15);
-
-  if (matched.length === 0) {
-    listEl.innerHTML = `<div style="padding:10px; font-size:12px; color:var(--text-soft); text-align:center;">لا توجد منتجات مطابقة.</div>`;
-  } else {
-    listEl.innerHTML = matched.map(p => `
-      <div class="bundle-search-item" onclick="addOfferProductChip('${sanitizeText(p.id)}')">
-        <div><b>${sanitizeText(p.name)}</b> <span style="color:var(--text-soft); font-size:11px;">(${sanitizeText(p.brand)})</span></div>
-        <span class="mono" style="font-weight:800; color:var(--accent);">➕ إضافة للعرض</span>
-      </div>
-    `).join('');
-  }
-  listEl.classList.add('open');
+  // ⚠️ تم استبدال البحث النصي بنظام التصفح المبوب حسب القسم/الماركة (renderOfferCategorizedList).
+  // الدالة أُبقيت فارغة للحفاظ على التوافق مع أي استدعاء قديم متبقٍ في القوالب الخارجية.
 }
 
 function addOfferProductChip(id) {
@@ -1401,15 +1524,15 @@ function addOfferProductChip(id) {
     currentOfferSelectedProductIds.push(String(id));
     renderOfferProdChips();
   }
-  const listEl = document.getElementById('offerProdSearchResults');
-  if (listEl) listEl.classList.remove('open');
-  const inputEl = document.getElementById('offerProdSearchInput');
-  if (inputEl) inputEl.value = '';
 }
 
 function removeOfferProductChip(id) {
   currentOfferSelectedProductIds = currentOfferSelectedProductIds.filter(x => x !== String(id));
   renderOfferProdChips();
+  const activeCat = document.getElementById('offerFilterCategorySelect')?.value;
+  const activeBrand = document.getElementById('offerFilterBrandSelect')?.value;
+  if (activeCat) renderOfferCategorizedList('category', activeCat);
+  else if (activeBrand) renderOfferCategorizedList('brand', activeBrand);
 }
 
 function renderPromoCardsListAdmin() {
@@ -1454,6 +1577,9 @@ function editPromoCard(cardId) {
   if (document.getElementById('promoCardBgColorText')) document.getElementById('promoCardBgColorText').value = card.slideBgColor || '';
 
   currentOfferSelectedProductIds = (card.productIds || []).map(String);
+  if (document.getElementById('offerFilterCategorySelect')) document.getElementById('offerFilterCategorySelect').value = '';
+  if (document.getElementById('offerFilterBrandSelect')) document.getElementById('offerFilterBrandSelect').value = '';
+  renderOfferCategorizedList('category', '');
   renderOfferProdChips();
 
   document.getElementById('adminPromoCardFormTitle').textContent = '✏️ تعديل شريحة العرض: ' + card.title;
@@ -1470,6 +1596,9 @@ function resetPromoCardForm() {
   if (document.getElementById('promoCardBgColor')) document.getElementById('promoCardBgColor').value = '#FFF0F3';
   if (document.getElementById('promoCardBgColorText')) document.getElementById('promoCardBgColorText').value = '';
   currentOfferSelectedProductIds = [];
+  if (document.getElementById('offerFilterCategorySelect')) document.getElementById('offerFilterCategorySelect').value = '';
+  if (document.getElementById('offerFilterBrandSelect')) document.getElementById('offerFilterBrandSelect').value = '';
+  renderOfferCategorizedList('category', '');
   renderOfferProdChips();
   document.getElementById('adminPromoCardFormTitle').textContent = '🎁 إضافة شريحة عرض جديدة للسلايدر العلوي';
   document.getElementById('adminSavePromoCardBtn').textContent = '💾 حفظ شريحة العرض في السلايدر';
@@ -2192,6 +2321,112 @@ function renderTrashBinList() {
   `).join('');
 }
 
+// ================= 21b. CLEANUP TOOL: UNCATEGORIZED / TEST PRODUCTS (FIX #5) =================
+const SUSPICIOUS_TEST_KEYWORDS = ['test', 'تجربة', 'demo', 'sample', 'placeholder', 'example', 'novalac', 'lactonic', 'تست', 'xxx', 'dummy'];
+let cleanupSelectedIds = new Set();
+let cleanupLastFlaggedList = [];
+
+function scanForUncategorizedOrTestProducts() {
+  const knownCategoryIds = new Set(categories.map(c => c.id));
+  const flagged = products.filter(p => {
+    if (p.isDeleted === true) return false;
+    const noCategory = !p.category || !knownCategoryIds.has(p.category);
+    const nameLower = (p.name || '').toLowerCase();
+    const brandLower = (p.brand || '').toLowerCase();
+    const looksLikeTest = SUSPICIOUS_TEST_KEYWORDS.some(kw => nameLower.includes(kw) || brandLower.includes(kw));
+    return noCategory || looksLikeTest;
+  });
+  cleanupLastFlaggedList = flagged;
+  renderCleanupScanResults(flagged);
+}
+
+function renderCleanupScanResults(flagged) {
+  const container = document.getElementById('adminCleanupResultsGrid');
+  const countEl = document.getElementById('adminCleanupCount');
+  const actionsBar = document.getElementById('adminCleanupActionsBar');
+  if (!container) return;
+
+  cleanupSelectedIds = new Set();
+  const selCountEl = document.getElementById('adminCleanupSelectedCount');
+  if (selCountEl) selCountEl.textContent = '0';
+  if (countEl) countEl.textContent = flagged.length;
+
+  if (flagged.length === 0) {
+    container.innerHTML = `<div class="no-results" style="padding:20px 0;">🌸 ممتاز! لا توجد منتجات غير مصنفة أو تجريبية حالياً.</div>`;
+    if (actionsBar) actionsBar.style.display = 'none';
+    return;
+  }
+
+  if (actionsBar) actionsBar.style.display = 'flex';
+  const knownCategoryIds = new Set(categories.map(c => c.id));
+
+  container.innerHTML = flagged.map(p => {
+    const noCategory = !p.category || !knownCategoryIds.has(p.category);
+    return `
+      <label style="display:flex; align-items:center; gap:10px; background:#FFFBEB; border:1.5px solid #FDE68A; border-radius:12px; padding:10px 14px; cursor:pointer;">
+        <input type="checkbox" onchange="toggleCleanupSelection('${sanitizeText(p.id)}', this.checked)" style="width:18px; height:18px; accent-color:#D97706; cursor:pointer; flex-shrink:0;">
+        <div style="flex:1; min-width:0;">
+          <div style="font-weight:800; font-size:13px; color:#92400E;">${sanitizeText(p.name || 'بدون اسم')} <span style="font-weight:600; color:#B45309;">(${sanitizeText(p.brand || 'بدون ماركة')})</span></div>
+          <div style="font-size:11px; color:#B45309; margin-top:2px;">
+            ${noCategory ? '⚠️ بدون قسم مصنف صحيح' : '🔎 اسم يشبه بيانات تجريبية'} · السعر: ${fmtPrice(p.price)}
+          </div>
+        </div>
+      </label>
+    `;
+  }).join('');
+}
+
+function toggleCleanupSelection(id, checked) {
+  if (checked) cleanupSelectedIds.add(String(id));
+  else cleanupSelectedIds.delete(String(id));
+  const cntBadge = document.getElementById('adminCleanupSelectedCount');
+  if (cntBadge) cntBadge.textContent = cleanupSelectedIds.size;
+}
+
+async function cleanupArchiveSelected() {
+  if (!assertAdmin()) return;
+  if (cleanupSelectedIds.size === 0) { showToast('يرجى تحديد منتج واحد على الأقل'); return; }
+  if (!confirm(`نقل (${cleanupSelectedIds.size}) منتج إلى سلة المحذوفات؟`)) return;
+  showToast('جاري النقل لسلة المحذوفات...');
+  try {
+    if (db) {
+      const batch = db.batch();
+      cleanupSelectedIds.forEach(id => {
+        const ref = dbPaths.productsCol().doc(String(id));
+        batch.set(ref, { isDeleted: true, deletedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+      });
+      await batch.commit();
+      triggerR2CatalogRebuild();
+    }
+    showToast('✅ تم نقل الأصناف المحددة لسلة المحذوفات بنجاح');
+    scanForUncategorizedOrTestProducts();
+  } catch (err) {
+    showToast('⚠️ خطأ أثناء النقل: ' + (err && err.message ? err.message : ''));
+  }
+}
+
+async function cleanupPermanentDeleteSelected() {
+  if (!assertAdmin()) return;
+  if (cleanupSelectedIds.size === 0) { showToast('يرجى تحديد منتج واحد على الأقل'); return; }
+  if (!confirm(`تحذير نهائي: حذف (${cleanupSelectedIds.size}) منتج نهائياً بلا رجعة؟`)) return;
+  showToast('جاري الحذف النهائي...');
+  try {
+    if (db) {
+      const batch = db.batch();
+      cleanupSelectedIds.forEach(id => {
+        const ref = dbPaths.productsCol().doc(String(id));
+        batch.delete(ref);
+      });
+      await batch.commit();
+      triggerR2CatalogRebuild();
+    }
+    showToast('✅ تم الحذف النهائي للأصناف المحددة');
+    scanForUncategorizedOrTestProducts();
+  } catch (err) {
+    showToast('⚠️ خطأ أثناء الحذف: ' + (err && err.message ? err.message : ''));
+  }
+}
+
 // ================= 22. ADMIN SECTIONS CONTROLLER =================
 function switchAdminSection(sec) {
   const sections = ['Stats', 'Orders', 'Import', 'Products', 'Cats', 'Offers', 'Bundles', 'Coupons', 'Brands', 'Notifs', 'Audit', 'Staff', 'Design', 'Subscription', 'Trash'];
@@ -2207,15 +2442,17 @@ function switchAdminSection(sec) {
   if (sec === 'stats') fetchRealAnalytics();
   if (sec === 'orders') fetchAdminOrdersList();
   if (sec === 'import' && typeof fetchTenantMasterCatalog === 'function') fetchTenantMasterCatalog();
-  if (sec === 'products') populateCategoryDropdowns();
+  if (sec === 'products') { populateCategoryDropdowns(); }
   if (sec === 'coupons') fetchAdminCoupons();
   if (sec === 'bundles') {
+    populateBundleFilterDropdowns();
     renderBundleChips();
     renderAdminBundlesList();
   }
   if (sec === 'audit') fetchAuditLogs();
   if (sec === 'offers') {
     updateDiscountTargetOptions();
+    populateOfferFilterDropdowns();
     renderOfferProdChips();
     renderPromoCardsListAdmin();
   }
@@ -3292,6 +3529,7 @@ async function handleSaveCustomization(e) {
     loaderCircleSize: Number(getVal('adminLoaderCircleSize', pharmacyProfile.loaderCircleSize || 150)),
     loaderTitle: sanitizeText(getVal('adminLoaderTitleInput', pharmacyProfile.loaderTitle || 'جاري تحميل الموقع')),
     loaderSubText: sanitizeText(getVal('adminLoaderSubInput', pharmacyProfile.loaderSubText || 'انتظر لحظة من فضلك ..')),
+    // 🌟 (إصلاح #4) يقرأ القيمة من الحقل النصي المتزامن مع منتقي الألوان المرئي adminLoaderBgColorPicker
     loaderBgColor: sanitizeText(getVal('adminLoaderBgColor', pharmacyProfile.loaderBgColor || 'linear-gradient(160deg, #FDF2F6 0%, #FFF9FB 45%, #FBEAF1 100%)')),
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
@@ -3362,6 +3600,7 @@ function applyStoreSettings() {
   if (loaderSub && pharmacyProfile.loaderSubText) {
     loaderSub.textContent = pharmacyProfile.loaderSubText;
   }
+  // 🌟 (إصلاح #4) تطبيق لون/تدرج خلفية شاشة التحميل المختار من منتقي الألوان المرئي أو الحقل النصي
   if (loaderOverlay && pharmacyProfile.loaderBgColor) {
     loaderOverlay.style.background = pharmacyProfile.loaderBgColor;
   }
@@ -3408,7 +3647,7 @@ function applyStoreSettings() {
   if (pLink) pLink.href = `tel:${pharmacyProfile.socialPhone || ''}`;
 }
 
-// ================= 31. FIRESTORE REALTIME SYNC =================
+// ================= 31. FIRESTORE REALTIME SYNC (FIX #1: ADMIN-ONLY LIVE PRICE SYNC) =================
 function initFirestoreSync() {
   if (!isFirebaseConfigured || !db) return;
 
@@ -3444,6 +3683,8 @@ function initFirestoreSync() {
       renderAdminCategoriesList();
       populateCategoryDropdowns();
       updateDiscountTargetOptions();
+      populateBundleFilterDropdowns();
+      populateOfferFilterDropdowns();
     }
   }, err => console.warn(err));
 
@@ -3456,6 +3697,9 @@ function initFirestoreSync() {
     }
   }, err => console.warn(err));
 
+  // 🛡️ (إصلاح #1) الاشتراك اللحظي على المنتجات هنا (على مستوى صفحة الأدمن admin.html) يبقى مسموحاً
+  // لأنه محمي أصلاً بقواعد Firestore (isTenantStaff) وهذا الملف الوحيد الذي يخدم لوحة التحكم فقط،
+  // وليس واجهة الزبائن index.html — لذا لا يوجد أي تسريب للسعر عبر WebSockets للزبائن هنا.
   dbPaths.productsCol().onSnapshot(snap => {
     if (!snap.empty) {
       const loaded = [];
@@ -3598,7 +3842,9 @@ async function fetchAuditLogs() {
   }
 }
 
-// ================= 33. GOOGLE AUTH & REDIRECT =================
+// ================= 33. GOOGLE AUTH & REDIRECT (FIX #1: CACHE STATUS TOAST AFTER LOGIN) =================
+let lastCatalogCacheStatus = null;
+
 function updateUserHeaderProfile() {
   const chipAvatar = document.getElementById('userChipAvatar');
   const chipName = document.getElementById('userChipName');
@@ -3709,6 +3955,16 @@ async function signInWithGoogle() {
   }
 }
 
+// 🌟 (إصلاح #1) يعرض إشعار حالة كاش R2 (HIT/MISS) للمشرف فقط، بعد ثانية واحدة من التأكد الفعلي
+// من تسجيل دخوله عبر onAuthStateChanged — بدلاً من فحصه قبل معرفة هوية المستخدم (كان يفشل صامتاً).
+function announceCacheStatusToAdminIfNeeded() {
+  if (!lastCatalogCacheStatus) return;
+  if (!isCurrentUserAdmin()) return;
+  setTimeout(() => {
+    showToast(`⚡ كاش Cloudflare R2: [${lastCatalogCacheStatus}] (كاش ساعة كاملة)`);
+  }, 1000);
+}
+
 if (isFirebaseConfigured && auth) {
   auth.getRedirectResult()
     .then(async (result) => {
@@ -3719,6 +3975,7 @@ if (isFirebaseConfigured && auth) {
         updateUserHeaderProfile();
         renderAccountView();
         updateAdminInterfaceState();
+        announceCacheStatusToAdminIfNeeded();
       }
     })
     .catch((error) => {
@@ -3740,6 +3997,11 @@ if (isFirebaseConfigured && auth) {
     updateAdminInterfaceState();
     updateUserHeaderProfile();
     renderAccountView();
+
+    // 🌟 (إصلاح #1) الآن هوية المستخدم مؤكدة 100% — نعرض إشعار حالة الكاش هنا بعد ثانية واحدة
+    if (user) {
+      announceCacheStatusToAdminIfNeeded();
+    }
   });
 }
 
@@ -3906,11 +4168,13 @@ window.addEventListener('DOMContentLoaded', async () => {
     fetchRealAnalytics();
     listenToAdminOrdersRealtime();
     fetchAdminCoupons();
+    populateBundleFilterDropdowns();
     renderBundleChips();
     renderAdminBundlesList();
     fetchAuditLogs();
     renderAdminCategoriesList();
     renderAdminBrandsList();
+    populateOfferFilterDropdowns();
     renderOfferProdChips();
     renderPromoCardsListAdmin();
     fetchStaffList();
@@ -3922,11 +4186,19 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   }
 });
-// ربط دوال البكجات والعروض بالنطاق العام للنافذة (window)
-window.searchBundleProducts = searchBundleProducts;
-window.addBundleProductChip = addBundleProductChip;
+// ربط دوال البكجات والعروض المبوبة بالنطاق العام للنافذة (window)
+window.populateBundleFilterDropdowns = populateBundleFilterDropdowns;
+window.handleBundleCategoryFilterChange = handleBundleCategoryFilterChange;
+window.handleBundleBrandFilterChange = handleBundleBrandFilterChange;
+window.toggleBundleProductCheckbox = toggleBundleProductCheckbox;
 window.removeBundleProductChip = removeBundleProductChip;
-window.searchOfferProducts = searchOfferProducts;
-window.addOfferProductChip = addOfferProductChip;
+window.populateOfferFilterDropdowns = populateOfferFilterDropdowns;
+window.handleOfferCategoryFilterChange = handleOfferCategoryFilterChange;
+window.handleOfferBrandFilterChange = handleOfferBrandFilterChange;
+window.toggleOfferProductCheckbox = toggleOfferProductCheckbox;
 window.removeOfferProductChip = removeOfferProductChip;
-
+// أدوات التنظيف (إصلاح #5)
+window.scanForUncategorizedOrTestProducts = scanForUncategorizedOrTestProducts;
+window.toggleCleanupSelection = toggleCleanupSelection;
+window.cleanupArchiveSelected = cleanupArchiveSelected;
+window.cleanupPermanentDeleteSelected = cleanupPermanentDeleteSelected;
