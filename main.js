@@ -1,6 +1,7 @@
 /* ==========================================================
    SaaS Multi-Tenant Engine — js/main.js
-   Version: 6.0.0 (1-Hour R2 Cache, Hero Slider Offers, 30-Item Pagination & Ratings)
+   Version: 6.0.1 (1-Hour R2 Cache w/ Correct Admin Toast Timing,
+                    Hero Slider Forced Custom Colors, Manual R2 Rebuild)
    ========================================================== */
 
 import {
@@ -139,6 +140,7 @@ function renderCurrentActiveView() {
 
 // ---------------------------------------------------------
 // 🌟 سلايدر البانرات العلوي، ربط المنتجات والألوان
+// (إصلاح #3: فرض لون/تدرج شريحة العرض المختار من لوحة التحكم بقوة عبر Inline Style)
 // ---------------------------------------------------------
 let currentHeroSlideIndex = 0;
 
@@ -151,10 +153,14 @@ function renderHeroSlider() {
   const mainBannerHtml = `<div class="hero-slide" data-slide-index="0">${renderHeroBanner(pharmacyProfile)}</div>`;
 
   const promoSlidesHtml = promoCards.map((c, idx) => {
-    const customBg = c.slideBgColor ? `background:${sanitizeText(c.slideBgColor)};` : '';
+    // 🌟 (إصلاح #3) نطبّق لون/تدرج الخلفية المختار من الأدمن بقوة (!important) عبر الـ Inline Style
+    // كي يطغى دائماً على تدرج الخلفية الافتراضي المعرّف في كلاس .hero-promo-slide بملف style.css.
+    const rawBg = (c.slideBgColor || '').toString().trim();
+    const customBgStyle = rawBg ? `background: ${sanitizeText(rawBg)} !important;` : '';
+
     return `
       <div class="hero-slide" data-slide-index="${idx + 1}" onclick="window.App.openPromoSlideOffer('${sanitizeText(c.id)}')">
-        <div class="hero-promo-slide" style="${customBg}">
+        <div class="hero-promo-slide" style="${customBgStyle}">
           <div class="banner-text-col">
             ${c.discount ? `<span style="display:inline-block; font-size:11px; font-weight:900; background:#fff; color:var(--accent); padding:3px 10px; border-radius:999px; width:fit-content; border:1px solid var(--line); margin-bottom:6px;">${sanitizeText(c.discount)}</span>` : ''}
             <h2 class="main-title" style="font-size: clamp(20px, 3.2vw, 30px);">${sanitizeText(c.title)}</h2>
@@ -887,6 +893,38 @@ async function saveSfQuickEdit() {
 }
 
 // ---------------------------------------------------------
+// ⚡ (إصلاح #1) أداة يدوية لتوليد وحبس كتالوج R2 السحابي بنقرة واحدة من لوحة التحكم
+// ---------------------------------------------------------
+async function manualRebuildR2Catalog() {
+  if (!isCurrentUserAdmin(pharmacyProfile, currentStaffData)) return;
+
+  const btn = document.getElementById('btnManualRebuildCache');
+  const originalLabel = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '⏳ جاري توليد الكتالوج وحبسه في R2...';
+  }
+
+  showToast('جاري توليد كتالوج R2 السحابي ومسح الكاش القديم...');
+
+  try {
+    const res = await apiFetch('/api/admin/catalog/rebuild', { method: 'POST' });
+    if (res && res.success) {
+      showToast(`✅ تم توليد وحبس كتالوج R2 بنجاح (${res.totalProducts || 0} منتج) وتفعيل الكاش الجديد لمدة ساعة! ⚡`);
+    } else {
+      showToast('⚠️ تعذر توليد الكتالوج، يرجى المحاولة مجدداً بعد قليل.');
+    }
+  } catch (err) {
+    showToast('⚠️ خطأ أثناء الاتصال بسيرفر R2، تحقق من الاتصال.');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalLabel || '⚡ توليد وحبس كتالوج R2 السحابي الآن';
+    }
+  }
+}
+
+// ---------------------------------------------------------
 // 📂 القائمة الجانبية والبيانات المحفوظة
 // ---------------------------------------------------------
 function openMenu() {
@@ -1141,6 +1179,7 @@ async function handleSignOut() {
 
 // ---------------------------------------------------------
 // 🎨 إعدادات المتجر وشاشة التحميل الديناميكية
+// (إصلاح #4: تطبيق لون/تدرج خلفية شاشة التحميل من منتقي الألوان المرئي أو الحقل النصي المتقدم)
 // ---------------------------------------------------------
 function applyStoreSettings() {
   applyTheme(pharmacyProfile.templateId || 'template_default', pharmacyProfile.primaryColor);
@@ -1173,6 +1212,8 @@ function applyStoreSettings() {
   if (loaderTitle && pharmacyProfile.loaderTitle) {
     loaderTitle.textContent = pharmacyProfile.loaderTitle;
   }
+  // 🌟 (إصلاح #4) قيمة loaderBgColor تُحفظ إما من منتقي الألوان المرئي (hex) أو من الحقل النصي
+  // المتقدم (تدرج CSS)؛ نطبقها مباشرة على خلفية شاشة التحميل بدون أي فقدان لميزة التدرجات.
   if (loaderOverlay && pharmacyProfile.loaderBgColor) {
     loaderOverlay.style.background = pharmacyProfile.loaderBgColor;
   }
@@ -1182,24 +1223,25 @@ function applyStoreSettings() {
 
 // ---------------------------------------------------------
 // 🚀 مزامنة البيانات السحابية (كاش R2 لساعة كاملة + فصل onSnapshot)
+// (إصلاح #1: حفظ حالة الكاش وعرض التوست فقط بعد تأكيد تسجيل دخول المشرف داخل
+//  auth.onAuthStateChanged، ومنع onSnapshot للمنتجات تماماً عن غير المشرف المعتمد)
 // ---------------------------------------------------------
+let lastCatalogCacheStatus = null;
+
 async function fetchCatalogFromR2() {
   try {
     const res = await fetch(`${WORKER_API_BASE}/api/catalog?pharmacy=${encodeURIComponent(currentPharmacyId)}`);
     if (res.ok) {
       const cacheStatus = res.headers.get("X-Cache-Status") || res.headers.get("cf-cache-status") || "HIT";
+      lastCatalogCacheStatus = cacheStatus;
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
         setProducts(data);
         saveLocalState();
         renderCurrentActiveView();
-
-        // 🌟 إظهار مؤشر فحص الكاش للمشرف فقط على الشاشة ليتأكد بدون حاسبة
-        if (isCurrentUserAdmin(pharmacyProfile, currentStaffData)) {
-          setTimeout(() => {
-            showToast(`⚡ كاش Cloudflare R2: [${cacheStatus}] (كاش ساعة كاملة)`);
-          }, 1200);
-        }
+        // ⚠️ لا نعرض توست حالة الكاش هنا لأن هوية المستخدم (مشرف أم لا) لم تُحسم بعد في هذه
+        // اللحظة من دورة تحميل الصفحة — سيتم عرضه لاحقاً من داخل auth.onAuthStateChanged
+        // عبر announceCacheStatusToAdminIfNeeded() بعد التأكد الكامل من صلاحيات المستخدم.
         return true;
       }
     }
@@ -1207,6 +1249,16 @@ async function fetchCatalogFromR2() {
     console.warn("R2 catalog fetch fallback to Firestore:", e);
   }
   return false;
+}
+
+// 🌟 (إصلاح #1) يُستدعى فقط من داخل auth.onAuthStateChanged بعد التأكد الفعلي من هوية
+// المستخدم وصلاحياته الإدارية — يعرض إشعار حالة كاش R2 (HIT/MISS) بعد ثانية واحدة بالضبط.
+function announceCacheStatusToAdminIfNeeded() {
+  if (!lastCatalogCacheStatus) return;
+  if (!isCurrentUserAdmin(pharmacyProfile, currentStaffData)) return;
+  setTimeout(() => {
+    showToast(`⚡ كاش Cloudflare R2: [${lastCatalogCacheStatus}] (كاش ساعة كاملة)`);
+  }, 1000);
 }
 
 function initFirestoreRealtimeSync() {
@@ -1280,15 +1332,17 @@ function initFirestoreRealtimeSync() {
     }
   }
 
-  // 1. جلب الكتالوج من كاش R2 السريع أولاً
+  // 1. جلب الكتالوج من كاش R2 السريع أولاً (متاح لجميع الزوار — لا يكشف onSnapshot اللحظي)
   fetchCatalogFromR2().then(success => {
     if (!success) {
       dbPaths.productsCol().get({ source: 'server' }).then(applyProductsSnapshot).catch(() => {});
     }
   });
 
-  // 2. 🛡️ الحل الجذري لمنع وصول السعر للزبائن فورياً:
-  // لا يتم فتح اتصال فايربيس المباشر onSnapshot للزبائن؛ يُفتح حصراً إذا كان المستخدم مسجل كأدمن!
+  // 2. 🛡️ (إصلاح #1) الحل الجذري لمنع وصول السعر للزبائن فورياً عبر WebSockets:
+  // لا يُفتح اتصال Firestore المباشر onSnapshot على المنتجات إطلاقاً لغير المشرف المعتمد.
+  // هذا الفحص يُعاد تكراره أيضاً داخل auth.onAuthStateChanged أدناه فور تأكد الهوية،
+  // بحيث يبقى كاش الـ 60 دقيقة هو المصدر الوحيد للزوار العاديين طوال الوقت.
   if (isCurrentUserAdmin(pharmacyProfile, currentStaffData)) {
     window.__adminProductsSyncAttached = true;
     dbPaths.productsCol().onSnapshot(applyProductsSnapshot, console.warn);
@@ -1335,8 +1389,10 @@ async function bootstrapApp() {
       renderAccountView();
       renderCurrentActiveView();
 
-      // تفعيل المزامنة اللحظية إذا اتضح أن المستخدم مشرف
-      if (isCurrentUserAdmin(pharmacyProfile, currentStaffData) && !window.__adminProductsSyncAttached) {
+      const adminConfirmedNow = isCurrentUserAdmin(pharmacyProfile, currentStaffData);
+
+      // تفعيل المزامنة اللحظية إذا اتضح أن المستخدم مشرف (ومنعها تماماً غير ذلك)
+      if (user && adminConfirmedNow && !window.__adminProductsSyncAttached) {
         window.__adminProductsSyncAttached = true;
         dbPaths.productsCol().onSnapshot(snap => {
           if (!snap.empty) {
@@ -1347,6 +1403,12 @@ async function bootstrapApp() {
             renderCurrentActiveView();
           }
         }, console.warn);
+      }
+
+      // 🌟 (إصلاح #1) الآن فقط — بعد أن أصبحت هوية المستخدم وصلاحياته مؤكدة 100% —
+      // نعرض إشعار حالة كاش R2 (HIT/MISS) للمشرف، بعد ثانية واحدة بالضبط من هذه اللحظة.
+      if (user && adminConfirmedNow) {
+        announceCacheStatusToAdminIfNeeded();
       }
     });
   }
@@ -1370,7 +1432,7 @@ window.App = {
   shareCurrentProduct, applyPromoCode, removePromoCode,
   setAccountAuthTab, registerWithPhone, loginWithPhone,
   rateProductInstant, loadMoreHomeProducts, loadMoreListingProducts,
-  goToHeroSlide, openPromoSlideOffer
+  goToHeroSlide, openPromoSlideOffer, manualRebuildR2Catalog
 };
 
 // دوال مباشرة لضمان عمل أزرار onclick
@@ -1391,3 +1453,4 @@ window.openBestSellers = openBestSellers;
 window.selectDelivery = selectDelivery;
 window.onSearch = onSearch;
 window.uploadDirectImageFile = uploadDirectImageFile;
+window.manualRebuildR2Catalog = manualRebuildR2Catalog;
