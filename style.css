@@ -1,6 +1,6 @@
 /* ==========================================================
    SaaS Multi-Tenant Pharmacy — COMPLETE MASTER STYLESHEET
-   Version: 6.0.0 (Master Enterprise Edition - Zero Omission)
+   Version: 6.0.1 (Categorized Picker UI, Hero Slide Custom Colors)
    ========================================================== */
 
 :root, html[data-theme="light"] {
@@ -665,7 +665,11 @@ header {
   -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 100%); 
 }
 
-/* شرائح العروض المخصصة داخل السلايدر */
+/* شرائح العروض المخصصة داخل السلايدر
+   ⚠️ (إصلاح #3) هذا التدرج هو مجرد خلفية افتراضية احتياطية فقط تُستخدم عندما لا يحدد
+   الأدمن أي لون مخصص للشريحة. لا نضع هنا !important كي لا يمنع أبداً تطبيق اللون أو
+   التدرج المختار من لوحة التحكم عبر الـ Inline Style في main.js (الذي يُطبَّق هو بقوة
+   !important لضمان ظهوره دائماً فوق هذه الخلفية الافتراضية). */
 .hero-promo-slide {
   position: relative;
   width: 100%;
@@ -990,7 +994,7 @@ header {
 }
 
 /* ==========================================================
-   SEARCH & CHIPS SELECTOR FOR BUNDLES (منتقي البكجات الذكي)
+   BUNDLE / OFFER CHIPS (المنتجات المختارة نهائياً)
    ========================================================== */
 .bundle-chips-container {
   display: flex;
@@ -1044,6 +1048,8 @@ header {
   background: #FECACA;
 }
 
+/* Legacy search box classes (kept for backward compatibility with any
+   external template code that might still reference them) */
 .bundle-search-box-wrap {
   position: relative;
   margin-bottom: 8px;
@@ -1101,6 +1107,76 @@ header {
 .bundle-search-item:hover {
   background: var(--surface);
   color: var(--accent);
+}
+
+/* ==========================================================
+   🌟 (إصلاح #2) نظام الاختيار المبوّب حسب القسم/الماركة
+   يحل محل البحث النصي القديم للبكجات وشرائح العروض — صندوق
+   دائم الظهور (وليس منسدلاً) مع صناديق اختيار (Checkbox) وسعر
+   بجانب كل منتج، يناسب آلاف المنتجات دون الحاجة لكتابة الاسم.
+   ========================================================== */
+.categorized-picker-list {
+  position: static;
+  max-height: 260px;
+  overflow-y: auto;
+  background: #FFFFFF;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 8px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.categorized-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-bottom: 1px solid #F3F4F6;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: background .15s;
+}
+
+.categorized-picker-item:last-child {
+  border-bottom: none;
+}
+
+.categorized-picker-item:hover {
+  background: var(--surface);
+}
+
+.categorized-picker-item input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.categorized-picker-item .cp-name {
+  flex: 1;
+  font-weight: 700;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.categorized-picker-item .cp-price {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 800;
+  color: var(--rose-deep);
+  font-size: 11.5px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.categorized-picker-empty {
+  padding: 18px 10px;
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--text-soft);
 }
 
 /* ==========================================================
@@ -2433,6 +2509,62 @@ header {
 .log-table th { background: #F3F4F6; padding: 8px 10px; font-weight: 800; border-bottom: 1px solid var(--line); color: var(--ink); }
 .log-table td { padding: 9px 10px; border-bottom: 1px solid var(--line); color: var(--text-soft); }
 .log-badge { display: inline-block; padding: 2px 7px; border-radius: 6px; font-size: 10.5px; font-weight: 800; background: var(--surface); color: var(--accent); border: 1px solid var(--line); }
+
+/* ==========================================================
+   ⚡ MANUAL R2 CACHE REBUILD BUTTON (إصلاح #1)
+   ========================================================== */
+.admin-cache-rebuild-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 14px;
+}
+
+.admin-cache-rebuild-btn {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  color: #fff;
+  font-weight: 900;
+  font-size: 12.5px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.3);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: transform .15s;
+}
+
+.admin-cache-rebuild-btn:hover {
+  transform: translateY(-1px);
+}
+
+.admin-cache-rebuild-btn:disabled {
+  opacity: .7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ==========================================================
+   🧹 CLEANUP / UNCATEGORIZED PRODUCTS TOOL (إصلاح #5)
+   ========================================================== */
+.admin-cleanup-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #FFFBEB;
+  border: 1.5px solid #FDE68A;
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.admin-cleanup-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #D97706;
+  cursor: pointer;
+  flex-shrink: 0;
+}
 
 /* ==========================================================
    TOAST NOTIFICATION
