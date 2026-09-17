@@ -1,75 +1,64 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" id="htmlRoot" data-theme="light" data-template="template_default">
+<html lang="ar" dir="rtl" id="htmlRoot" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="color-scheme" content="light">
-  <meta name="theme-color" content="#ffffff">
-  <title>متجر الصيدلية | منصة العناية والصحة</title>
+  <meta name="theme-color" content="#E85D8A">
+  <title>الصيدلية | متجرك الإلكتروني للعناية والصحة</title>
+
+  <!-- 🌸 (إصلاح حرج #1 — وميض شاشة التحميل) سكربت متزامن (Inline) يعمل قبل أي رسم للصفحة:
+       يقرأ إعدادات الصيدلية (store_settings) من localStorage استناداً لمعرف الصيدلية الحالي
+       (من ?pharmacy= أو الـ Subdomain)، ويحقن اللون الأساسي فوراً في جذر الصفحة قبل أول Paint،
+       بحيث لا تظهر أي ألوان/شعار افتراضي ثم تتبدل لاحقاً (Flash of Unstyled/Wrong Content). -->
+  <script>
+    (function () {
+      try {
+        var params = new URLSearchParams(window.location.search);
+        var pid = params.get('pharmacy') || params.get('p_id') || params.get('p') || params.get('id');
+        if (!pid) {
+          try { pid = sessionStorage.getItem('saas_active_pharmacy_id'); } catch (e2) {}
+        }
+        if (!pid) {
+          var host = window.location.hostname.toLowerCase();
+          var ignoredHosts = ['pages.dev', 'workers.dev', 'web.app', 'firebaseapp.com', 'github.io', 'vercel.app', 'netlify.app', 'localhost', '127.0.0.1'];
+          var isPlatformHost = ignoredHosts.some(function (d) { return host === d || host.endsWith('.' + d); });
+          if (!isPlatformHost) {
+            var parts = host.split('.');
+            if (parts.length >= 3 && parts[0] !== 'www') pid = parts[0];
+          }
+        }
+        if (!pid) pid = 'cottanpharmacy';
+        pid = pid.toLowerCase().trim();
+        window.__earlyPharmacyId = pid;
+
+        var raw = localStorage.getItem('saas_' + pid + '_store_settings');
+        if (raw) {
+          var settings = JSON.parse(raw);
+          window.__preloadedStoreSettings = settings;
+          var root = document.documentElement;
+          if (settings.primaryColor && /^#[0-9A-Fa-f]{6}$/.test(settings.primaryColor)) {
+            var hex = settings.primaryColor;
+            var r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+            root.style.setProperty('--accent', hex);
+            root.style.setProperty('--rose-deep', hex);
+            root.style.setProperty('--surface', 'rgba(' + r + ',' + g + ',' + b + ',0.08)');
+            root.style.setProperty('--surface-hover', 'rgba(' + r + ',' + g + ',' + b + ',0.14)');
+            root.style.setProperty('--line', 'rgba(' + r + ',' + g + ',' + b + ',0.18)');
+            root.style.setProperty('--rose', 'rgba(' + r + ',' + g + ',' + b + ',0.4)');
+          }
+          if (settings.templateId) root.setAttribute('data-template', settings.templateId);
+          if (settings.loaderBgColor) root.style.setProperty('--early-loader-bg', settings.loaderBgColor);
+        }
+      } catch (e) { /* فشل القراءة المبكرة ليس خطأ حرجاً — سيتم تطبيق الإعدادات لاحقاً بشكل طبيعي */ }
+    })();
+  </script>
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Embedded Critical Styles -->
-  <style>
-    :root {
-      --ink: #1F2937; --text-soft: #6B7280; --paper: #FFFFFF; --surface: #FFF0F3;
-      --surface-hover: #FFE4EA; --line: #FFE4E8; --rose: #FFB7C5; --rose-deep: #E85D8A;
-      --accent: #E85D8A; --accent-dark: #C7436E; --gold: #F2B807; --green: #16A34A; --red: #DC2626;
-      --radius-lg: 20px; --radius-md: 16px; --radius-sm: 12px;
-      --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.05);
-      --shadow-hover: 0 10px 26px rgba(0, 0, 0, 0.12);
-    }
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    html, body { margin: 0; padding: 0; background: #FFFFFF; color: var(--ink); font-family: 'Cairo', sans-serif; line-height: 1.6; padding-bottom: 84px; min-height: 100vh; }
-    .mono { font-family: 'IBM Plex Mono', monospace; }
-    a { color: inherit; text-decoration: none; }
-    button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
-    img { max-width: 100%; display: block; }
-    svg { max-width: 100%; height: auto; vertical-align: middle; }
-    .wrap { max-width: 540px; margin: 0 auto; padding: 0 16px; }
-    @media (min-width: 768px) { .wrap { max-width: 820px; } }
-    @media (min-width: 1024px) { .wrap { max-width: 1100px; } }
-    
-    .view { display: none !important; }
-    .view.active { display: block !important; }
-
-    /* إخفاء صارم لكافة النوافذ المنبثقة افتراضياً */
-    .notif-modal-overlay, .success-modal-overlay, .iab-modal, .consult-modal-overlay, 
-    .welcome-modal-overlay, .receipt-modal-overlay, .storefront-freeze-overlay, .admin-quick-modal-overlay {
-      display: none !important;
-      position: fixed;
-      inset: 0;
-      z-index: 150;
-      background: rgba(31, 41, 55, 0.65);
-      backdrop-filter: blur(4px);
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .notif-modal-overlay.open, .success-modal-overlay.open, .iab-modal.open, 
-    .consult-modal-overlay.open, .welcome-modal-overlay.open, .receipt-modal-overlay.open, 
-    .storefront-freeze-overlay.open, .admin-quick-modal-overlay.open {
-      display: flex !important;
-    }
-
-    .storefront-freeze-overlay {
-      z-index: 999999 !important;
-      background: rgba(17, 24, 39, 0.96) !important;
-      backdrop-filter: blur(10px) !important;
-    }
-
-    .menu-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 70; opacity: 0; pointer-events: none; transition: opacity .25s; }
-    .menu-overlay.open { opacity: 1; pointer-events: auto; }
-    .menu-drawer { position: fixed; top: 0; bottom: 0; right: 0; width: min(300px, 82vw); background: #fff; z-index: 80; transform: translateX(100%); transition: transform .3s ease; padding: 24px 18px; overflow-y: auto; display: flex; flex-direction: column; }
-    .menu-drawer.open { transform: translateX(0); }
-    .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--accent); color: #fff; padding: 12px 24px; border-radius: 999px; font-weight: 800; font-size: 13px; z-index: 200; opacity: 0; transition: all .25s; pointer-events: none; }
-    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-  </style>
-
-  <!-- Complete External Stylesheet -->
   <link rel="stylesheet" href="style.css">
 
   <!-- Firebase SDKs (Compat v9.22.1) -->
@@ -77,781 +66,495 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
+
+  <script>
+    // 🌸 حقن الصورة/العنوان/الحجم فوراً في شاشة التحميل بمجرد توفر عنصرها بالـ DOM (بلا انتظار script.js بالكامل)
+    document.addEventListener('DOMContentLoaded', function () {
+      var s = window.__preloadedStoreSettings;
+      var overlay = document.getElementById('appLoadingOverlay');
+      if (overlay && s) {
+        if (s.loaderBgColor) overlay.style.background = s.loaderBgColor;
+        var img = document.getElementById('loaderPhotoImg');
+        var targetImg = s.loaderImgUrl || s.logoUrl || s.bannerImgUrl;
+        if (img && targetImg) img.src = targetImg;
+        var wrap = document.getElementById('loaderCircleWrap');
+        if (wrap && s.loaderCircleSize) { wrap.style.width = s.loaderCircleSize + 'px'; wrap.style.height = s.loaderCircleSize + 'px'; }
+        var title = document.getElementById('loaderTitleText');
+        if (title && s.loaderTitle) title.textContent = s.loaderTitle;
+        var sub = document.getElementById('loaderSubText');
+        if (sub && s.loaderSubText) sub.textContent = s.loaderSubText;
+      }
+      // 🛡️ صمام أمان: إن تعذر تحميل script.js أو تعطلت الشبكة، لا تبقى شاشة التحميل عالقة للأبد
+      setTimeout(function () {
+        if (overlay && !overlay.dataset.hidden) {
+          overlay.style.opacity = '0';
+          setTimeout(function () { overlay.remove(); }, 400);
+        }
+      }, 6000);
+    });
+  </script>
 </head>
 <body>
 
-  <!-- 🌸 شاشة تحميل أولية قابلة للتخصيص من لوحة المشرف -->
-  <div id="appLoadingOverlay" style="position:fixed; inset:0; z-index:99999; background:linear-gradient(160deg, #FDF2F6 0%, #FFF9FB 45%, #FBEAF1 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:22px; overflow:hidden; transition:opacity .45s ease;">
-
-    <!-- زخارف خطية بالزوايا -->
-    <svg style="position:absolute; top:0; right:0; width:180px; opacity:.5;" viewBox="0 0 200 200" fill="none" stroke="#E8A6BE" stroke-width="1.5">
-      <path d="M200 10C150 0 90 30 60 80 C40 115 45 150 20 190" stroke-dasharray="4 5"/>
-    </svg>
-    <svg style="position:absolute; bottom:0; left:0; width:200px; opacity:.5;" viewBox="0 0 200 200" fill="none" stroke="#E8A6BE" stroke-width="1.5">
-      <path d="M0 190C60 200 120 170 150 120 C170 85 165 50 190 10" stroke-dasharray="4 5"/>
-    </svg>
-    <svg style="position:absolute; top:22%; right:18%; width:22px; opacity:.6;" viewBox="0 0 24 24" fill="none" stroke="var(--accent, #E85D8A)" stroke-width="1.6">
-      <path d="M12 21s-7.5-4.9-10-9.5C.5 7.8 2.7 4 6.5 4 9 4 11 5.5 12 7c1-1.5 3-3 5.5-3 3.8 0 6 3.8 4.5 7.5C19.5 16.1 12 21 12 21Z"/>
-    </svg>
-    <svg style="position:absolute; bottom:26%; left:16%; width:16px; opacity:.5;" viewBox="0 0 24 24" fill="none" stroke="var(--accent, #E85D8A)" stroke-width="1.6">
-      <path d="M12 21s-7.5-4.9-10-9.5C.5 7.8 2.7 4 6.5 4 9 4 11 5.5 12 7c1-1.5 3-3 5.5-3 3.8 0 6 3.8 4.5 7.5C19.5 16.1 12 21 12 21Z"/>
-    </svg>
-
-    <!-- الإطار الدائري (حجم وصورة قابلة للتخصيص) -->
-    <div id="loaderCircleWrap" style="position:relative; width:150px; height:150px; transition:all .3s ease;">
-      <div id="loaderBorderCircle" style="position:absolute; inset:-8px; border-radius:50%; border:1.5px dashed #E8A6BE; animation:appLoaderSpinSlow 12s linear infinite;"></div>
-      <div id="loaderPhotoCircle" style="width:100%; height:100%; border-radius:50%; overflow:hidden; background:linear-gradient(135deg, #F7C6D6 0%, #F3A9C4 100%); display:flex; align-items:center; justify-content:center; box-shadow:0 10px 30px rgba(232,93,138,0.25);">
-        <img id="loaderPhotoImg" src="https://imgdb.io/i/EQ4D9ag.png" alt="Loader" style="width:100%; height:100%; object-fit:cover;">
-      </div>
+  <!-- ================= شاشة التحميل الأولية ================= -->
+  <div id="appLoadingOverlay" style="position:fixed; inset:0; z-index:99999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; background:linear-gradient(160deg, #FDF2F6 0%, #FFF9FB 45%, #FBEAF1 100%); transition:opacity .4s ease;">
+    <div id="loaderCircleWrap" style="width:120px; height:120px; border-radius:50%; background:#fff; box-shadow:0 8px 30px rgba(232,93,138,0.18); display:flex; align-items:center; justify-content:center; overflow:hidden; border:3px solid #fff;">
+      <img id="loaderPhotoImg" src="" alt="" style="width:100%; height:100%; object-fit:cover; display:none;" onload="this.style.display='block'; this.previousElementSibling && (this.previousElementSibling.style.display='none');">
+      <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#E85D8A" stroke-width="1.6"><circle cx="12" cy="8" r="3.4"/><circle cx="7.5" cy="10.5" r="3.4"/><circle cx="16.5" cy="10.5" r="3.4"/><path d="M12 14v8"/></svg>
     </div>
+    <div id="loaderTitleText" style="font-weight:900; font-size:15px; color:#E85D8A;">جاري تحميل الموقع</div>
+    <div id="loaderSubText" style="font-size:12px; color:#9D6274; font-weight:700;">انتظر لحظة من فضلك ..</div>
+  </div>
 
-    <div style="text-align:center;">
-      <div id="loaderLeafIcon" style="font-size:18px; margin-bottom:6px;">🌿</div>
-      <div id="loaderTitleText" style="font-weight:900; font-size:20px; color:#B23A63;">جاري تحميل الموقع</div>
-      <div id="loaderSubText" style="font-size:12.5px; color:#C98BA3; margin-top:4px;">انتظر لحظة من فضلك ..</div>
-    </div>
-
-    <!-- شريط التحميل المخطط -->
-    <div style="width:220px;">
-      <div style="width:100%; height:9px; border-radius:999px; background:#F6D9E3; overflow:hidden;">
-        <div id="loaderProgressBar" style="width:8%; height:100%; border-radius:999px; background:repeating-linear-gradient(-45deg, #E85D8A 0, #E85D8A 8px, #F291AF 8px, #F291AF 16px); background-size:200% 100%; animation:appLoaderStripes .6s linear infinite; transition:width .35s ease;"></div>
-      </div>
-      <div id="loaderPercentText" style="text-align:center; font-size:12px; color:#C98BA3; font-weight:800; margin-top:8px;">0%</div>
-    </div>
-
-    <div style="display:flex; gap:6px; margin-top:2px;">
-      <span class="appLoaderDot" style="animation-delay:0s;"></span>
-      <span class="appLoaderDot" style="animation-delay:.2s;"></span>
-      <span class="appLoaderDot" style="animation-delay:.4s;"></span>
+  <!-- ================= شاشة تجميد المتجر (اشتراك منتهي / موقوف) ================= -->
+  <div class="welcome-modal-overlay" id="storefrontFreezeModal" style="z-index:99998;">
+    <div class="welcome-card">
+      <div style="font-size:44px; margin-bottom:10px;">🌙</div>
+      <h3 style="font-size:18px; font-weight:900; margin:0 0 10px;">المتجر متوقف مؤقتاً</h3>
+      <p id="storefrontFreezeDesc" style="font-size:13px; color:var(--text-soft); line-height:1.7;">عذراً، هذا المتجر متوقف مؤقتاً لأعمال الصيانة والتجديد.</p>
     </div>
   </div>
 
-  <style>
-    @keyframes appLoaderSpinSlow { to { transform: rotate(360deg); } }
-    @keyframes appLoaderStripes { from { background-position:0 0; } to { background-position:32px 0; } }
-    .appLoaderDot { width:7px; height:7px; border-radius:50%; background:#E85D8A; display:inline-block; animation:appLoaderBounce 1s ease-in-out infinite; }
-    @keyframes appLoaderBounce { 0%, 100% { transform:translateY(0); opacity:.5; } 50% { transform:translateY(-5px); opacity:1; } }
-  </style>
-
-  <!-- 🚀 الحل الجذري لمشكلة وميض شاشة التحميل (Bug #1 Fix) -->
-  <!-- يتم تنفيذ هذا السكربت لحظياً قبل رسم الصفحة لتطبيق الإعدادات المخصصة فوراً -->
-  <script>
-    (function() {
-      try {
-        // 1. استخراج معرف الصيدلية
-        const urlParams = new URLSearchParams(window.location.search);
-        let pId = urlParams.get('pharmacy') || urlParams.get('p_id') || urlParams.get('p') || urlParams.get('id');
-        if (!pId) {
-          const hostname = window.location.hostname.toLowerCase();
-          const ignored = ['pages.dev', 'workers.dev', 'web.app', 'firebaseapp.com', 'localhost', '127.0.0.1'];
-          const isPlatformHost = ignored.some(d => hostname === d || hostname.endsWith('.' + d));
-          if (!isPlatformHost) {
-            const parts = hostname.split('.');
-            if (parts.length >= 3 && parts[0] !== 'www') pId = parts[0];
-          }
-        }
-        if (!pId) pId = sessionStorage.getItem('saas_active_pharmacy_id') || 'cottanpharmacy';
-        pId = pId.toLowerCase().trim();
-
-        // 2. قراءة إعدادات المتجر من الـ LocalStorage (كاش)
-        const settingsRaw = localStorage.getItem('saas_' + pId + '_store_settings');
-        if (settingsRaw) {
-          const settings = JSON.parse(settingsRaw);
-
-          // 3. تطبيق الإعدادات المخصصة فوراً على عناصر الواجهة
-          const overlay = document.getElementById('appLoadingOverlay');
-          const circleWrap = document.getElementById('loaderCircleWrap');
-          const photoImg = document.getElementById('loaderPhotoImg');
-          const titleText = document.getElementById('loaderTitleText');
-          const subText = document.getElementById('loaderSubText');
-
-          if (settings.loaderBgColor && overlay) overlay.style.background = settings.loaderBgColor;
-          if (settings.loaderCircleSize && circleWrap) {
-            circleWrap.style.width = settings.loaderCircleSize + 'px';
-            circleWrap.style.height = settings.loaderCircleSize + 'px';
-          }
-          const imgTarget = settings.loaderImgUrl || settings.logoUrl || settings.bannerImgUrl;
-          if (imgTarget && photoImg) photoImg.src = imgTarget;
-          if (settings.loaderTitle && titleText) titleText.textContent = settings.loaderTitle;
-          if (settings.loaderSubText && subText) subText.textContent = settings.loaderSubText;
-        }
-      } catch(e) {
-        console.warn("Fast-load script fallback:", e);
-      }
-
-      // تحريك شريط التقدم
-      let pct = 8;
-      const bar = document.getElementById('loaderProgressBar');
-      const text = document.getElementById('loaderPercentText');
-      window.__loaderInterval = setInterval(() => {
-        if (pct < 88) {
-          pct += Math.random() * 6;
-          if (bar) bar.style.width = Math.min(pct, 88) + '%';
-          if (text) text.textContent = Math.round(Math.min(pct, 88)) + '%';
-        }
-      }, 220);
-    })();
-  </script>
-
-  <!-- STOREFRONT FREEZE OVERLAY -->
-  <div class="storefront-freeze-overlay" id="storefrontFreezeModal" style="display: none !important;">
-    <div class="welcome-card" style="border: 1.5px solid #EF4444; max-width: 420px; background: #fff; text-align: center;">
-      <div style="font-size: 52px; margin-bottom: 12px;">🔒</div>
-      <h3 style="color: #DC2626; font-size: 20px; font-weight: 900; margin: 0 0 8px;">المتجر متوقف مؤقتاً</h3>
-      <p id="storefrontFreezeDesc" style="font-size: 13px; color: #4B5563; line-height: 1.7; margin: 0 0 20px;">
-        عذراً، هذا المتجر متوقف مؤقتاً لأعمال الصيانة والتجديد.
-      </p>
-      <div style="font-size: 11.5px; color: #9CA3AF;">منصة المتاجر الإلكترونية السحابية © 2026</div>
-    </div>
-  </div>
-
-  <!-- STICKY ADMIN BAR -->
-  <div id="adminTopBar" class="admin-sticky-bar" style="display:none;">
-    <div style="display:flex; align-items:center; gap:8px;">
-      <span>⚙️ لوحة الإدارة والصلاحيات</span>
-    </div>
-    <a href="admin.html" class="admin-bar-btn">لوحة التحكم ⚙️</a>
-  </div>
-
-  <!-- ANNOUNCEMENT BAR -->
-  <div id="announcementBar" class="announcement-bar">
-    <span id="announcementText">✨ أهلاً بكم في متجرنا الإلكتروني 🌸</span>
-  </div>
-
-  <!-- SIDE MENU DRAWER OVERLAY -->
-  <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
-
-  <!-- SIDE MENU DRAWER -->
-  <aside class="menu-drawer" id="menuDrawer">
-    <div class="drawer-header">
-      <h3 id="drawerLogoTitle">الصيدلية</h3>
-      <button onclick="closeMenu()" class="icon-btn" aria-label="إغلاق">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <div class="menu-links">
-      <button class="menu-link" onclick="showView('home')">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/></svg>
-        الرئيسية
-      </button>
-      <button class="menu-link" onclick="showView('categories')">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-        الأقسام والتصنيفات
-      </button>
-      <button class="menu-link" onclick="showView('bundles')">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-        حزم وبكجات التوفير 🎁
-      </button>
-      <button class="menu-link" onclick="showView('orders')">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-        طلباتي 📦
-      </button>
-      <button class="menu-link" id="drawerConsultBtn" onclick="document.getElementById('consultModal').classList.add('open'); closeMenu();">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M12 7v6M9 10h6"/></svg>
-        استشر الصيدلي مجاناً 🩺
-      </button>
-      <a class="menu-link" id="adminMenuLink" href="admin.html" style="display:none; color:#F59E0B; font-weight:900;">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        لوحة تحكم المشرف ⚙️
-      </a>
-      <button class="menu-link" onclick="showView('offers')">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12 12 20l-8-8V4h8Z"/><circle cx="8" cy="8" r="1.4" fill="currentColor" stroke="none"/></svg>
-        العروض والخصومات
-      </button>
-      <button class="menu-link" onclick="showView('wishlist')">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.5-4.9-10-9.5C.5 7.8 2.7 4 6.5 4 9 4 11 5.5 12 7c1-1.5 3-3 5.5-3 3.8 0 6 3.8 4.5 7.5C19.5 16.1 12 21 12 21Z"/></svg>
-        المفضلة
-      </button>
-      <button class="menu-link" onclick="showView('account')">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>
-        حسابي والتزامن
-      </button>
-    </div>
-
-    <!-- Social Channels -->
-    <div class="drawer-social-section">
-      <div class="drawer-social-title">تواصل معنا مباشرة 🌸</div>
-      <div class="drawer-social-grid">
-        <a id="drawerSocialWhatsapp" href="#" target="_blank" class="drawer-social-icon" title="WhatsApp">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.7 14.2c-.2.6-1.4 1.2-1.9 1.2-.5.1-1.1.1-1.8-.1-.4-.1-1-.3-1.7-.6-3-1.3-4.9-4.3-5.1-4.5-.1-.2-1.2-1.6-1.2-3s.8-2.2 1.1-2.5c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5.2.5.8 1.9.8 2.1.1.2.1.3 0 .5-.1.2-.1.3-.3.5-.1.2-.3.4-.4.5-.2.2-.3.4-.1.7.2.3.9 1.5 2 2.4 1.3 1.2 2.4 1.5 2.8 1.7.3.2.5.1.7-.1l.9-1c.2-.3.4-.2.7-.1l1.8.9c.3.1.5.2.5.4.1.2.1.7-.1 1.3Z"/></svg>
-        </a>
-        <a id="drawerSocialTelegram" href="#" target="_blank" class="drawer-social-icon" title="Telegram">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="m20.665 3.717-17.73 6.837c-1.21.486-1.203 1.161-.222 1.462l4.552 1.42 10.532-6.645c.498-.303.953-.14.579.192l-8.533 7.701h-.002l-.313 4.67c.458 0 .66-.21.916-.457l2.199-2.138 4.573 3.378c.844.465 1.452.226 1.662-.782l3-14.13c.308-1.237-.474-1.8-1.282-1.439z"/></svg>
-        </a>
-        <a id="drawerSocialInstagram" href="#" target="_blank" class="drawer-social-icon" title="Instagram">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-        </a>
-        <a id="drawerSocialPhone" href="#" class="drawer-social-icon" title="Phone">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-        </a>
-      </div>
-      <div class="drawer-footer">جميع الحقوق محفوظة © 2026 — منتجات أصلية 100%</div>
-    </div>
-  </aside>
-
-  <!-- MAIN HEADER -->
-  <header id="mainHeader">
-    <div class="wrap nav">
-      <button class="icon-btn" onclick="openMenu()" aria-label="القائمة">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-      </button>
-      
-      <div class="logo-block" onclick="showView('home')">
-        <span class="logo-text" id="headerLogoText">الصيدلية</span>
-        <span class="logo-mark" id="headerLogoMark">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent, #E85D8A)" stroke-width="2"><circle cx="12" cy="8" r="3"/><circle cx="8" cy="10" r="3"/><circle cx="16" cy="10" r="3"/><path d="M12 13v7"/></svg>
-        </span>
-      </div>
-
-      <div class="header-actions">
-        <button class="icon-btn" onclick="document.getElementById('notifModal').classList.add('open')" aria-label="الإشعارات" title="الإشعارات">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-          <span class="badge-count" id="notifBadge" style="display:none;">0</span>
-        </button>
-
-        <div class="user-header-chip" id="userHeaderChip">
-          <div class="user-chip-main" onclick="showView('account')" title="حسابي">
-            <div class="user-chip-avatar" id="userChipAvatar">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px;"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>
-            </div>
-            <span class="user-chip-name" id="userChipName">دخول</span>
-          </div>
-        </div>
-
-        <button class="icon-btn" onclick="showView('cart')" aria-label="السلة">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h2l2.4 12.4a2 2 0 0 0 2 1.6h8.4a2 2 0 0 0 2-1.6L22 8H6"/><circle cx="9" cy="21" r="1.4" fill="currentColor" stroke="none"/><circle cx="18" cy="21" r="1.4" fill="currentColor" stroke="none"/></svg>
+  <!-- ================= الهيدر العلوي ================= -->
+  <header>
+    <div class="wrap">
+      <div class="nav" dir="ltr">
+        <!-- 🛒 أيقونة السلة (تظهر على اليسار بصرياً) -->
+        <button class="icon-btn" onclick="window.App ? window.App.showView('cart') : showView('cart')" aria-label="السلة">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/><circle cx="9" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/></svg>
           <span class="badge-count" id="cartBadge" style="display:none;">0</span>
         </button>
+
+        <!-- 🌸 الشعار في المنتصف -->
+        <div class="logo-block" dir="rtl" onclick="showView('home')">
+          <div class="logo-mark" id="headerLogoMark">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent, #E85D8A)" stroke-width="2"><circle cx="12" cy="8" r="3"/><circle cx="8" cy="10" r="3"/><circle cx="16" cy="10" r="3"/><path d="M12 13v7"/></svg>
+          </div>
+          <span class="logo-text" id="headerLogoText">الصيدلية</span>
+        </div>
+
+        <!-- 👤 أيقونة الحساب (تظهر على اليمين بصرياً) -->
+        <button class="icon-btn" onclick="openMenu()" aria-label="حسابي">
+          <span id="userChipAvatarWrap" style="width:26px; height:26px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:var(--surface);">
+            <svg id="userChipAvatar" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>
+          </span>
+          <span id="notifBadge" class="badge-count" style="display:none;">0</span>
+        </button>
       </div>
     </div>
-    
+
+    <!-- شريط الترحيب -->
+    <div class="announcement-bar" id="announcementBar">
+      <span id="announcementText">✨ أهلاً بكم في متجرنا الإلكتروني 🌸</span>
+    </div>
+
+    <!-- 🔍 حقل البحث الرئيسي -->
     <div class="wrap search-wrap">
       <div class="search-bar">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-        <input type="text" id="searchInput" placeholder="ابحثِ عن اسم الدواء، المادة الفعالة، الماركة..." oninput="onSearch(this.value)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="search" id="mainSearchInput" placeholder="إبحث عن منتج، ماركة أو قسم..." onkeydown="if(event.key==='Enter'){onSearch(this.value);}">
+      </div>
+    </div>
+
+    <!-- 🧭 شريط التنقل الأفقي للتبويبات -->
+    <div class="wrap">
+      <div class="top-tab-nav">
+        <button type="button" id="tab-home" class="top-tab active" onclick="showView('home')">الرئيسية</button>
+        <button type="button" id="tab-categories" class="top-tab" onclick="showView('categories')">أقسام</button>
+        <button type="button" id="tab-bundles" class="top-tab" onclick="showView('bundles')">بكجات</button>
+        <button type="button" id="tab-offers" class="top-tab" onclick="showView('offers')">العروض</button>
       </div>
     </div>
   </header>
 
-  <!-- ============ 1. HOME VIEW ============ -->
-  <main class="view active" id="view-home">
-
-    <!-- 🌟 HERO SLIDER CONTAINER (سلايدر متحرك بالسحب يميناً ويساراً) -->
-    <div class="wrap hero-wrap">
-      <div class="hero-slider-wrapper" id="heroSliderWrapper">
-        <div class="hero-slider-track" id="heroBannerContainer">
-          <!-- Slide 1: Main Hero Banner + Additional Promo Slides rendered via JS -->
-        </div>
-        <!-- Slider Navigation Dots Indicator -->
-        <div class="hero-slider-dots" id="heroSliderDots"></div>
+  <!-- ================= القائمة الجانبية (حسابي) ================= -->
+  <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
+  <div class="menu-drawer" id="menuDrawer">
+    <div class="drawer-header">
+      <div class="logo-block" onclick="showView('home')">
+        <div class="logo-mark"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><circle cx="12" cy="8" r="3"/><circle cx="8" cy="10" r="3"/><circle cx="16" cy="10" r="3"/><path d="M12 13v7"/></svg></div>
+        <h3 id="drawerLogoTitle">الصيدلية</h3>
       </div>
+      <button class="icon-btn" onclick="closeMenu()">✕</button>
     </div>
 
-    <!-- Pharmacist CTA Banner -->
-    <div class="wrap" id="homePharmacistCtaWrap">
-      <div class="consult-cta-banner" onclick="document.getElementById('consultModal').classList.add('open')">
-        <div class="consult-cta-icon">
-          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="var(--accent, #E85D8A)" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M12 7v6M9 10h6"/></svg>
-        </div>
-        <div class="consult-cta-text">
-          <h4 id="pharmacistCtaTitle">استشر الصيدلي مجاناً 🩺</h4>
-          <p id="pharmacistCtaDesc">تحدث مع الصيدلي المختص مباشرة للحصول على تشخيص دقيق لروتينك وروشتتك</p>
-        </div>
-        <button class="consult-cta-btn" type="button">استشر الآن</button>
-      </div>
+    <div class="menu-links">
+      <button class="menu-link" onclick="showView('account')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg><span id="userChipName">حسابي / تسجيل الدخول</span></button>
+      <button class="menu-link" onclick="showView('orders')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l1.5-3h15L21 7"/><path d="M3 7h18v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/><path d="M9 11a3 3 0 0 0 6 0"/></svg><span>طلباتي</span></button>
+      <button class="menu-link" onclick="showView('wishlist')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.5-4.9-10-9.5C.5 7.8 2.7 4 6.5 4 9 4 11 5.5 12 7c1-1.5 3-3 5.5-3 3.8 0 6 3.8 4.5 7.5C19.5 16.1 12 21 12 21Z"/></svg><span>المفضلة</span></button>
+      <button class="menu-link" id="drawerConsultBtn" onclick="openConsultModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.7-2.5 2-2.5 4"/><path d="M12 17h.01"/></svg><span id="pharmacistCtaTitle">استشر الصيدلي مجاناً 🩺</span></button>
+      <button class="menu-link" onclick="openNotifModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z"/><path d="M10.3 19a2 2 0 0 0 3.4 0"/></svg><span>الإشعارات</span></button>
+      <a class="menu-link" id="adminMenuLink" href="admin.html" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82"/></svg><span>لوحة تحكم المشرف</span></a>
+      <button class="menu-link" id="userHeaderLogoutBtn" onclick="handleSignOut()" style="display:none; color:var(--red);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg><span>تسجيل الخروج</span></button>
     </div>
 
-    <!-- Product Bundles Section -->
-    <section class="wrap section" id="homeBundlesSection" style="display:none;">
-      <div class="section-head">
-        <span class="see-all" onclick="showView('bundles')">عرض كل البكجات</span>
-        <h2>🎁 حزم وبكجات التوفير المميزة</h2>
+    <div class="drawer-social-section">
+      <div class="drawer-social-title">تواصلي معنا</div>
+      <div class="drawer-social-grid">
+        <a class="drawer-social-icon" id="drawerSocialWhatsapp" href="#" target="_blank"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Z" opacity=".15"/><path d="M17.3 14.5c-.3-.15-1.7-.85-2-1s-.5-.15-.7.15-.8 1-.95 1.15-.35.2-.6.05a8 8 0 0 1-2.4-1.5 9 9 0 0 1-1.65-2.1c-.15-.3 0-.45.15-.6l.4-.5c.15-.15.2-.3.3-.5s.05-.35 0-.5-.7-1.6-.95-2.2-.5-.5-.7-.5h-.6a1.1 1.1 0 0 0-.8.4 3.5 3.5 0 0 0-1.05 2.55 6 6 0 0 0 1.3 3.15 13 13 0 0 0 5 4.4c.7.3 1.25.5 1.7.6a4 4 0 0 0 1.85.1 3 3 0 0 0 2-1.4 2.5 2.5 0 0 0 .15-1.4c-.05-.15-.25-.2-.5-.35Z"/></svg></a>
+        <a class="drawer-social-icon" id="drawerSocialInstagram" href="#" target="_blank"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg></a>
+        <a class="drawer-social-icon" id="drawerSocialTelegram" href="#" target="_blank"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></a>
+        <a class="drawer-social-icon" id="drawerSocialPhone" href="#"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.7A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .3 2 .6 3a2 2 0 0 1-.5 2.1L8 10a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c1 .3 2 .5 3 .6a2 2 0 0 1 1.7 2Z"/></svg></a>
       </div>
-      <div class="bundle-grid" id="homeBundlesGrid"></div>
-    </section>
+      <div class="drawer-footer">جميع الحقوق محفوظة 🌸</div>
+    </div>
+  </div>
 
-    <!-- Shop by Brand Section -->
-    <section class="wrap section">
-      <div class="section-head">
-        <span class="see-all" onclick="openBestSellers()">عرض الكل</span>
-        <h2>تسوق حسب الماركة</h2>
-      </div>
-      <div class="brand-strip" id="brandStrip"></div>
-    </section>
+  <!-- ================= المحتوى الرئيسي ================= -->
+  <main class="wrap">
 
-    <!-- Best Sellers Section -->
-    <section class="wrap section">
-      <div class="section-head">
-        <span class="see-all" onclick="openBestSellers()">عرض الكل</span>
-        <h2 id="homeGridTitle">الأكثر مبيعاً 🔥</h2>
-      </div>
-      <div class="product-grid" id="bestSellersGrid"></div>
+    <!-- ▬▬▬▬▬▬▬▬▬▬ VIEW: الرئيسية ▬▬▬▬▬▬▬▬▬▬ -->
+    <div class="view active" id="view-home">
 
-      <!-- Progressive Pagination Button (Home Grid - 30 items) -->
-      <div id="homeLoadMoreWrap" class="load-more-container" style="display:none;">
-        <button type="button" id="homeLoadMoreBtn" class="load-more-btn" onclick="window.App.loadMoreHomeProducts()">
-          عرض المزيد من المنتجات ⬇️
-        </button>
+      <!-- 🎠 البنر الرئيسي المتحرك -->
+      <div class="hero-wrap">
+        <div class="hero-slider-wrapper">
+          <div class="hero-slider-track" id="heroCarouselTrack"></div>
+        </div>
+        <div class="hero-slider-dots" id="heroCarouselDots"></div>
       </div>
-    </section>
-  </main>
 
-  <!-- ============ 2. LISTING & SEARCH VIEW ============ -->
-  <div class="view" id="view-listing">
-    <div class="wrap">
-      <div class="pd-back" onclick="showView('home')">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
-        رجوع للرئيسية
+      <!-- ⭕ ممر الأقسام الدائري -->
+      <div class="section">
+        <div class="home-cat-circles-row" id="homeCategoryCircles"></div>
       </div>
-      <div class="section-head" style="margin-top:10px;">
-        <span class="mono" id="listingCount" style="font-size:12px; color:var(--text-soft);"></span>
+
+      <!-- 🎁 بطاقتا العروض المزدوجتان -->
+      <div class="double-banner-row">
+        <div class="double-banner-card double-banner-bundles" onclick="showView('bundles')">
+          <div class="double-banner-text">
+            <h4>بكجات مميزة</h4>
+            <p>توفير أكثر.. عناية أكمل</p>
+            <span class="double-banner-btn">اكتشف البكجات ←</span>
+          </div>
+          <div class="double-banner-icon">🎁</div>
+        </div>
+        <div class="double-banner-card double-banner-offers" onclick="showView('offers')">
+          <div class="double-banner-text">
+            <h4>عروض خاصة</h4>
+            <p>على أفضل المنتجات</p>
+            <span class="double-banner-btn">تسوق الآن ←</span>
+          </div>
+          <div class="double-banner-icon">🏷️</div>
+        </div>
+      </div>
+
+      <!-- 🎁 معاينة بكجات على الرئيسية (تظهر فقط إذا وُجدت بكجات) -->
+      <div class="section" id="homeBundlesSection" style="display:none;">
+        <div class="section-head">
+          <span class="see-all" onclick="showView('bundles')">عرض الكل ›</span>
+          <h2>🎁 بكجات التوفير</h2>
+        </div>
+        <div class="bundle-grid" id="homeBundlesGrid"></div>
+      </div>
+
+      <!-- 🏢 أشهر الماركات -->
+      <div class="section">
+        <div class="section-head">
+          <span class="see-all" onclick="showView('categories')">عرض الكل ›</span>
+          <h2>أشهر الماركات</h2>
+        </div>
+        <div class="brand-strip" id="brandStrip"></div>
+      </div>
+
+      <!-- 🔥 الأكثر مبيعاً -->
+      <div class="section">
+        <div class="section-head">
+          <span class="see-all" onclick="openBestSellers()">عرض الكل ›</span>
+          <h2 id="homeGridTitle">الأكثر مبيعاً 🔥</h2>
+        </div>
+        <div class="product-grid" id="bestSellersGrid"></div>
+      </div>
+
+    </div>
+
+    <!-- ▬▬▬▬▬▬▬▬▬▬ VIEW: نتائج البحث / قوائم فرعية ▬▬▬▬▬▬▬▬▬▬ -->
+    <div class="view" id="view-listing">
+      <div class="section-head" style="margin-top:14px;">
+        <span class="mono" id="listingCount" style="font-size:12px; color:var(--text-soft); font-weight:800;">0 منتج</span>
         <h2 id="listingTitle">المنتجات</h2>
       </div>
       <div class="product-grid" id="listingGrid"></div>
-
-      <!-- Progressive Pagination Button (Listing Grid - 30 items) -->
-      <div id="listingLoadMoreWrap" class="load-more-container" style="display:none;">
-        <button type="button" id="listingLoadMoreBtn" class="load-more-btn" onclick="window.App.loadMoreListingProducts()">
-          عرض المزيد من المنتجات ⬇️
-        </button>
-      </div>
     </div>
-  </div>
 
-  <!-- ============ 3. MODERN CATEGORIES GRID VIEW ============ -->
-  <div class="view" id="view-categories">
-    <div class="wrap">
-      <div class="section-head" style="margin-top:16px;">
-        <span style="font-size:12px; font-weight:700; color:var(--text-soft);" id="categoriesTotalCount"></span>
-        <h2>تصفح الأقسام والتصنيفات 🌸</h2>
+    <!-- ▬▬▬▬▬▬▬▬▬▬ VIEW: الأقسام ▬▬▬▬▬▬▬▬▬▬ -->
+    <div class="view" id="view-categories">
+      <div class="section-head" style="margin-top:14px;">
+        <span class="mono" id="categoriesTotalCount" style="font-size:12px; color:var(--text-soft); font-weight:800;">0 أقسام معتمدة</span>
+        <h2>🗂️ جميع الأقسام</h2>
       </div>
-      <p style="font-size:13px; color:var(--text-soft); margin-top:-6px; margin-bottom:12px;">اختاري القسم لتصفح كافة المنتجات المعتمدة والأصلية 100%:</p>
       <div class="cat-grid-modern" id="catRowFull"></div>
     </div>
-  </div>
 
-  <!-- ============ 4. BUNDLES VIEW ============ -->
-  <div class="view" id="view-bundles">
-    <div class="wrap">
-      <div class="pd-back" onclick="showView('home')">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
-        رجوع للرئيسية
+    <!-- ▬▬▬▬▬▬▬▬▬▬ VIEW: بكجات التوفير ▬▬▬▬▬▬▬▬▬▬ -->
+    <div class="view" id="view-bundles">
+      <div class="section-head" style="margin-top:14px;">
+        <span class="mono" id="allBundlesCount" style="font-size:12px; color:var(--text-soft); font-weight:800;">0 بكجات توفير</span>
+        <h2>🎁 حزم وبكجات التوفير</h2>
       </div>
-      <div class="section-head" style="margin-top:10px;">
-        <span class="mono" id="allBundlesCount" style="font-size:12px; color:var(--text-soft);"></span>
-        <h2>حزم وبكجات التوفير المتكاملة 🎁</h2>
-      </div>
-      <p style="font-size:13px; color:var(--text-soft); margin-top:-6px; margin-bottom:14px;">مجموعات علاجية متكاملة مختارة بعناية من الصيدلي مع خصم توفيري إضافي:</p>
       <div class="bundle-grid" id="allBundlesGrid"></div>
     </div>
-  </div>
 
-  <!-- ============ 5. MY ORDERS VIEW ============ -->
-  <div class="view" id="view-orders">
-    <div class="wrap">
-      <div class="section-head" style="margin-top:16px;">
-        <span class="mono" id="myOrdersCount" style="font-size:12px; color:var(--text-soft);"></span>
-        <h2>طلباتي وتتبع الشحن 📦</h2>
-      </div>
-      <div id="myOrdersContainer" style="margin-top:12px;"></div>
-    </div>
-  </div>
-
-  <!-- ============ 6. OFFERS VIEW ============ -->
-  <div class="view" id="view-offers">
-    <div class="wrap">
+    <!-- ▬▬▬▬▬▬▬▬▬▬ VIEW: العروض ▬▬▬▬▬▬▬▬▬▬ -->
+    <div class="view" id="view-offers">
       <div class="section-head" style="margin-top:14px;">
-        <span class="mono" id="offersCount" style="font-size:12px; color:var(--text-soft);"></span>
-        <h2>العروض والخصومات 🎁</h2>
+        <span class="mono" id="offersCount" style="font-size:12px; color:var(--text-soft); font-weight:800;">0 عرض</span>
+        <h2>🏷️ العروض والخصومات</h2>
       </div>
       <div class="product-grid" id="offersGrid"></div>
     </div>
-  </div>
 
-  <!-- ============ 7. WISHLIST VIEW ============ -->
-  <div class="view" id="view-wishlist">
-    <div class="wrap">
-      <div class="section-head" style="margin-top:14px;">
-        <span></span>
-        <h2>المفضلة ❤️</h2>
-      </div>
+    <!-- ▬▬▬▬▬▬▬▬▬▬ VIEW: المفضلة ▬▬▬▬▬▬▬▬▬▬ -->
+    <div class="view" id="view-wishlist">
+      <div class="section-head" style="margin-top:14px;"><h2>❤️ قائمة المفضلة</h2></div>
       <div class="product-grid" id="wishlistGrid"></div>
     </div>
-  </div>
 
-  <!-- ============ 8. PRODUCT DETAIL VIEW ============ -->
-  <div class="view" id="view-product">
-    <div class="wrap">
-      <div style="display:flex; align-items:center; justify-content:space-between; padding-top:6px;">
-        <div class="pd-back" onclick="goBackFromProduct()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
-          رجوع
+    <!-- ▬▬▬▬▬▬▬▬▬▬ VIEW: السلة ▬▬▬▬▬▬▬▬▬▬ -->
+    <div class="view" id="view-cart">
+      <div class="section-head" style="margin-top:14px;"><h2>🛒 سلة المشتريات</h2></div>
+      <div class="applied-promo-tag" id="appliedPromoBadge" style="display:none;"></div>
+      <div id="cartItemsList"></div>
+      <div id="cartSummaryBlock"></div>
+    </div>
+
+    <!-- ▬▬▬▬▬▬▬▬▬▬ VIEW: إتمام الطلب ▬▬▬▬▬▬▬▬▬▬ -->
+    <div class="view" id="view-checkout">
+      <div class="section-head" style="margin-top:14px;"><h2>📦 إتمام الطلب</h2></div>
+
+      <div class="autofill-indicator" id="autofillNoticeBox" style="display:none;">
+        <span>📌 تم تعبئة بياناتك المحفوظة مسبقاً تلقائياً</span>
+        <span style="cursor:pointer; text-decoration:underline; font-weight:800;" onclick="clearSavedCustomerData()">مسح</span>
+      </div>
+
+      <div class="form-field">
+        <label>الاسم الكامل *</label>
+        <input type="text" id="custName" placeholder="مثال: سارة أحمد">
+      </div>
+      <div class="form-field">
+        <label>رقم الهاتف *</label>
+        <input type="tel" id="custPhone" placeholder="07xxxxxxxxx">
+      </div>
+      <div class="form-field">
+        <label>العنوان بالتفصيل *</label>
+        <textarea id="custAddress" rows="2" placeholder="المحافظة، المنطقة، أقرب نقطة دالة..."></textarea>
+      </div>
+
+      <div class="form-field">
+        <label>طريقة التوصيل</label>
+        <div class="delivery-options">
+          <div class="delivery-opt selected" id="delStandard" onclick="selectDelivery('standard')">🚚 توصيل عادي</div>
+          <div class="delivery-opt" id="delExpress" onclick="selectDelivery('express')">🛵 توصيل سريع</div>
         </div>
-        <div class="pd-back" onclick="window.App.shareCurrentProduct()" style="gap:6px;">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5l6.8-3.9M8.6 13.5l6.8 3.9"/></svg>
-          مشاركة
+      </div>
+
+      <div class="form-field">
+        <label>كود الخصم (اختياري)</label>
+        <div class="promo-input-group">
+          <input type="text" id="promoCodeInput" placeholder="اكتبي الكود هنا">
+          <button type="button" onclick="applyPromoCode(document.getElementById('promoCodeInput').value)">تفعيل</button>
         </div>
+      </div>
+
+      <div id="checkoutSummaryBlock"></div>
+
+      <button class="checkout-btn" id="confirmOrderBtn" onclick="confirmOrder()" style="margin-top:16px;">تأكيد الطلب</button>
+    </div>
+
+    <!-- ▬▬▬▬▬▬▬▬▬▬ VIEW: طلباتي ▬▬▬▬▬▬▬▬▬▬ -->
+    <div class="view" id="view-orders">
+      <div class="section-head" style="margin-top:14px;">
+        <span class="mono" id="myOrdersCount" style="font-size:12px; color:var(--text-soft); font-weight:800;">0 طلب</span>
+        <h2>📦 طلباتي</h2>
+      </div>
+      <div id="myOrdersContainer"></div>
+    </div>
+
+    <!-- ▬▬▬▬▬▬▬▬▬▬ VIEW: حسابي ▬▬▬▬▬▬▬▬▬▬ -->
+    <div class="view" id="view-account">
+      <div class="section-head" style="margin-top:14px;"><h2>👤 حسابي</h2></div>
+      <div id="accountAuthContainer"></div>
+    </div>
+
+    <!-- ▬▬▬▬▬▬▬▬▬▬ VIEW: تفاصيل المنتج ▬▬▬▬▬▬▬▬▬▬ -->
+    <div class="view" id="view-product">
+      <div class="pd-back" onclick="goBackFromProduct()">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+        <span>رجوع</span>
       </div>
 
       <div class="pd-image" id="pdImage"></div>
-      <div class="pd-brand" id="pdBrand"></div>
+
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <div class="pd-brand" id="pdBrand"></div>
+        <button class="icon-btn" onclick="shareCurrentProduct()" aria-label="مشاركة">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.6 6.8-3.9M8.6 13.4l6.8 3.9"/></svg>
+        </button>
+      </div>
       <h1 class="pd-name" id="pdName"></h1>
       <div class="pd-rating" id="pdRating"></div>
       <div class="pd-price-row" id="pdPriceRow"></div>
-      <div class="pd-stock" id="pdStock">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 13l4 4L19 7"/></svg>
-        <span>متوفر بالمخزون</span>
-      </div>
+      <div class="pd-stock" id="pdStock"></div>
 
-      <!-- TABS SECTION (WITH 4TH REVIEWS & RATING TAB) -->
       <div class="pd-tabs">
-        <button class="pd-tab active" onclick="switchPdTab('desc')">الوصف الطبي</button>
-        <button class="pd-tab" onclick="switchPdTab('ing')">المكونات الفعالة</button>
-        <button class="pd-tab" onclick="switchPdTab('use')">طريقة الاستخدام</button>
-        <button class="pd-tab" onclick="switchPdTab('reviews')">التقييمات والآراء ⭐</button>
+        <div class="pd-tab active" onclick="switchPdTab('desc')">الوصف</div>
+        <div class="pd-tab" onclick="switchPdTab('ing')">المكونات</div>
+        <div class="pd-tab" onclick="switchPdTab('use')">الاستخدام</div>
+        <div class="pd-tab" onclick="switchPdTab('reviews')">التقييمات</div>
       </div>
-
       <div class="pd-tab-content active" id="pdTabDesc"></div>
       <div class="pd-tab-content" id="pdTabIng"></div>
       <div class="pd-tab-content" id="pdTabUse"></div>
-
-      <!-- 🌟 TAB 4: CUSTOMER 5-STAR INTERACTIVE RATING WIDGET -->
       <div class="pd-tab-content" id="pdTabReviews">
         <div class="star-rating-box">
-          <h4 style="margin:0 0 6px; font-weight:800; font-size:14px; color:var(--ink);">ما هو تقييمكِ لهذا المنتج؟</h4>
-          <p style="font-size:12px; color:var(--text-soft); margin:0 0 12px;">انقري على النجوم لمشاركة تجربتكِ مع الزبائن والاطلاع على التقييم المعتمد:</p>
-          <div class="star-rating-row" id="productInteractiveStars">
-            <span class="star-btn" onclick="window.App.rateProductInstant(1)">★</span>
-            <span class="star-btn" onclick="window.App.rateProductInstant(2)">★</span>
-            <span class="star-btn" onclick="window.App.rateProductInstant(3)">★</span>
-            <span class="star-btn" onclick="window.App.rateProductInstant(4)">★</span>
-            <span class="star-btn" onclick="window.App.rateProductInstant(5)">★</span>
+          <div style="font-weight:800; font-size:13.5px; margin-bottom:6px;">قيّمي هذا المنتج</div>
+          <div class="star-rating-row">
+            <span class="star-btn" onclick="rateProductInstant(1)">★</span>
+            <span class="star-btn" onclick="rateProductInstant(2)">★</span>
+            <span class="star-btn" onclick="rateProductInstant(3)">★</span>
+            <span class="star-btn" onclick="rateProductInstant(4)">★</span>
+            <span class="star-btn" onclick="rateProductInstant(5)">★</span>
           </div>
-          <div id="instantRatingMsg" style="margin-top:10px; font-size:12px; font-weight:800; color:var(--accent);"></div>
+          <div id="instantRatingMsg" style="font-size:12px; color:var(--accent); font-weight:800;"></div>
         </div>
       </div>
 
       <div class="pd-qty-row">
         <div class="pd-qty-stepper">
           <button onclick="changePdQty(-1)">−</button>
-          <span class="val mono" id="pdQtyVal">1</span>
+          <span class="val" id="pdQtyVal">1</span>
           <button onclick="changePdQty(1)">+</button>
         </div>
-        <button class="pd-add-btn" id="pdAddBtn">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h2l2.4 12.4a2 2 0 0 0 2 1.6h8.4a2 2 0 0 0 2-1.6L22 8H6"/></svg>
-          أضف إلى السلة
-        </button>
+        <button class="pd-add-btn" id="pdAddBtn">أضف إلى السلة 🛒</button>
       </div>
 
-      <!-- Suggested Cross-Selling Products -->
-      <div id="pdSuggestedWrap" style="margin-top:28px; border-top:1.5px solid var(--line); padding-top:18px;">
-        <div class="section-head">
-          <h2>منتجات تُكمل روتينك 🌸</h2>
-        </div>
-        <div class="product-grid" id="pdSuggestedGrid"></div>
-      </div>
+      <div class="section-head"><h2 style="font-size:15px;">منتجات ذات صلة</h2></div>
+      <div class="product-grid" id="pdSuggestedGrid"></div>
+    </div>
+
+  </main>
+
+  <!-- ================= شريط التنقل السفلي الثابت ================= -->
+  <nav class="bottom-nav">
+    <div class="bn-item active" id="bn-home" onclick="showView('home')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 10.5 9-7.5 9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg>
+      <span class="lbl">الرئيسية</span>
+    </div>
+    <div class="bn-item" id="bn-categories" onclick="showView('categories')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      <span class="lbl">أقسام</span>
+    </div>
+    <div class="bn-item" id="bn-bundles" onclick="showView('bundles')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="13" rx="1.5"/><path d="M3 8h18M12 8v13M8 8a3 3 0 0 1 0-6c2 0 4 3 4 6M16 8a3 3 0 0 0 0-6c-2 0-4 3-4 6"/></svg>
+      <span class="lbl">بكجات</span>
+    </div>
+    <div class="bn-item" id="bn-cart" onclick="showView('cart')" style="position:relative;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/><circle cx="9" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/></svg>
+      <span class="lbl">السلة</span>
+      <span class="badge-count" id="bnCartBadge" style="display:none; top:-2px; left:50%; transform:translateX(6px);">0</span>
+    </div>
+    <div class="bn-item" id="bn-account" onclick="showView('account')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>
+      <span class="lbl" id="bnAccountLbl">حسابي</span>
+    </div>
+    <a class="bn-item" id="bn-admin" href="admin.html" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82"/></svg>
+      <span class="lbl">الإدارة</span>
+    </a>
+  </nav>
+
+  <!-- زر واتساب عائم -->
+  <div class="fab-whatsapp" onclick="openWhatsapp()" role="button" aria-label="واتساب">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Z" opacity=".2"/><path d="M17.3 14.5c-.3-.15-1.7-.85-2-1s-.5-.15-.7.15-.8 1-.95 1.15-.35.2-.6.05a8 8 0 0 1-2.4-1.5 9 9 0 0 1-1.65-2.1c-.15-.3 0-.45.15-.6l.4-.5c.15-.15.2-.3.3-.5s.05-.35 0-.5-.7-1.6-.95-2.2-.5-.5-.7-.5h-.6a1.1 1.1 0 0 0-.8.4 3.5 3.5 0 0 0-1.05 2.55 6 6 0 0 0 1.3 3.15 13 13 0 0 0 5 4.4c.7.3 1.25.5 1.7.6a4 4 0 0 0 1.85.1 3 3 0 0 0 2-1.4 2.5 2.5 0 0 0 .15-1.4c-.05-.15-.25-.2-.5-.35Z"/></svg>
+  </div>
+
+  <!-- ================= المودالات ================= -->
+
+  <!-- بانر استشارة الصيدلي (اختياري يظهر أعلى الرئيسية إن رغبتِ باستخدامه لاحقاً) -->
+  <div id="homePharmacistCtaWrap" style="display:none;"></div>
+
+  <!-- IN-APP BROWSER WARNING MODAL -->
+  <div class="iab-modal" id="iabModal">
+    <div class="iab-content">
+      <div class="iab-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg></div>
+      <h3 style="font-weight:900; font-size:16px; margin:0 0 10px;">افتحي الموقع بمتصفح خارجي</h3>
+      <div class="iab-step"><span class="iab-step-num">1</span><span>اضغطي على أيقونة (⋮) أو (⋯) أعلى الشاشة</span></div>
+      <div class="iab-step"><span class="iab-step-num">2</span><span>اختاري "فتح في المتصفح" (Open in Browser)</span></div>
+      <div class="iab-step"><span class="iab-step-num">3</span><span>سجّلي الدخول بأمان عبر Google من هناك</span></div>
+      <button class="iab-close-btn" onclick="document.getElementById('iabModal').classList.remove('open')">فهمت ✓</button>
     </div>
   </div>
 
-  <!-- ============ 9. CART VIEW ============ -->
-  <div class="view" id="view-cart">
-    <div class="wrap">
-      <div class="section-head" style="margin-top:14px;">
-        <span></span>
-        <h2>سلة المشتريات</h2>
-      </div>
-      <div id="cartItemsList"></div>
-      <div id="cartSummaryBlock"></div>
-    </div>
-  </div>
-
-  <!-- ============ 10. CHECKOUT VIEW ============ -->
-  <div class="view" id="view-checkout">
-    <div class="wrap">
-      <div class="pd-back" onclick="showView('cart')">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
-        رجوع للسلة
-      </div>
-      <div class="section-head" style="margin-top:10px;">
-        <span></span>
-        <h2>إتمام الطلب السريع 🛍️</h2>
-      </div>
-
-      <div id="autofillNoticeBox" style="display:none;" class="autofill-indicator">
-        <span>✨ تم ملء بياناتكِ المحفوظة تلقائياً</span>
-        <button type="button" onclick="clearSavedCustomerData()" style="color:#DC2626; font-size:11.5px; font-weight:800; text-decoration:underline;">مسح/تعديل</button>
-      </div>
-
-      <div class="form-field">
-        <label>الاسم الكامل *</label>
-        <input type="text" id="custName" placeholder="مثال: سارة أحمد" required>
-      </div>
-      <div class="form-field">
-        <label>رقم الهاتف *</label>
-        <input type="tel" id="custPhone" placeholder="07xxxxxxxxx" required>
-      </div>
-      <div class="form-field">
-        <label>العنوان بالتفصيل *</label>
-        <textarea id="custAddress" rows="3" placeholder="المحافظة، المنطقة، أقرب نقطة دالة..." required></textarea>
-      </div>
-
-      <div class="form-field">
-        <label>طريقة التوصيل</label>
-        <div class="delivery-options">
-          <div class="delivery-opt selected" id="delStandard" onclick="selectDelivery('standard')">توصيل عادي<br><span style="font-weight:400;">24-48 ساعة</span></div>
-          <div class="delivery-opt" id="delExpress" onclick="selectDelivery('express')">توصيل سريع<br><span style="font-weight:400;">خلال يوم</span></div>
-        </div>
-      </div>
-      <div class="form-field">
-        <label>كود الخصم (اختياري)</label>
-        <div style="display:flex; gap:8px;">
-          <input type="text" id="promoCodeInput" placeholder="ادخلي كود الخصم إن وجد" style="flex:1;">
-          <button type="button" id="applyPromoBtn" onclick="window.App.applyPromoCode()" style="background:var(--accent); color:#fff; font-weight:800; font-size:12.5px; padding:0 18px; border-radius:10px; white-space:nowrap;">تفعيل</button>
-        </div>
-        <div id="promoCodeStatus" style="margin-top:6px; font-size:12px; font-weight:800;"></div>
-      </div>
-      <div id="checkoutSummaryBlock"></div>
-      <button class="checkout-btn" id="confirmOrderBtn" onclick="executeAtomicOrderCheckout()">
-        تأكيد الطلب
-      </button>
-    </div>
-  </div>
-
-  <!-- ============ 11. ACCOUNT VIEW ============ -->
-  <div class="view" id="view-account">
-    <div class="wrap">
-      <div class="section-head" style="margin-top:14px;">
-        <span></span>
-        <h2>حسابي والتزامن</h2>
-      </div>
-      <div id="accountAuthContainer"></div>
-    </div>
-  </div>
-
-  <!-- ============ MODALS & POPUPS ============ -->
-  <!-- 1. Notifications Modal -->
-  <div class="notif-modal-overlay" id="notifModal">
-    <div class="notif-modal-card">
+  <!-- CONSULT MODAL -->
+  <div class="consult-modal-overlay" id="consultModal">
+    <div class="consult-modal-card" style="background:#fff; border-radius:var(--radius-lg); max-width:440px; width:100%; max-height:88vh; overflow-y:auto; border:1.5px solid var(--line);">
       <div class="consult-header">
-        <h3 style="display:flex; align-items:center; gap:8px;">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-          الإشعارات والتنبيهات
-        </h3>
-        <button class="icon-btn" onclick="document.getElementById('notifModal').classList.remove('open')" aria-label="إغلاق">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-        </button>
+        <div>
+          <span class="consult-badge-pill">استشارة مجانية 🩺</span>
+          <h3 style="margin:2px 0 0; font-weight:900; font-size:16px;">استشيري الصيدلي مباشرة</h3>
+        </div>
+        <button class="icon-btn" onclick="closeConsultModal()">✕</button>
+      </div>
+      <form class="consult-body" onsubmit="handleConsultSubmit(event)">
+        <input type="hidden" id="consultCondition" value="عام">
+        <div class="form-field"><label>الاسم *</label><input type="text" id="consultName" required></div>
+        <div class="form-field"><label>العمر *</label><input type="number" id="consultAge" min="1" max="110" required></div>
+        <div class="form-field">
+          <label>نوع الاستشارة</label>
+          <div style="display:flex; flex-wrap:wrap; gap:8px;">
+            <button type="button" class="consult-toggle-btn active" data-val="عام" onclick="selectConsultCondition(this)" style="padding:8px 14px; border-radius:999px; border:1.5px solid var(--line); font-weight:800; font-size:12px;">عام</button>
+            <button type="button" class="consult-toggle-btn" data-val="بشرة" onclick="selectConsultCondition(this)" style="padding:8px 14px; border-radius:999px; border:1.5px solid var(--line); font-weight:800; font-size:12px;">بشرة</button>
+            <button type="button" class="consult-toggle-btn" data-val="شعر" onclick="selectConsultCondition(this)" style="padding:8px 14px; border-radius:999px; border:1.5px solid var(--line); font-weight:800; font-size:12px;">شعر</button>
+            <button type="button" class="consult-toggle-btn" data-val="أطفال" onclick="selectConsultCondition(this)" style="padding:8px 14px; border-radius:999px; border:1.5px solid var(--line); font-weight:800; font-size:12px;">أطفال</button>
+          </div>
+        </div>
+        <div class="form-field"><label>وصف الحالة أو الاستفسار *</label><textarea id="consultDesc" rows="3" required></textarea></div>
+        <button type="submit" class="consult-submit-btn">إرسال الاستشارة عبر واتساب 💬</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- NOTIFICATIONS MODAL -->
+  <div class="notif-modal-overlay" id="notifModal">
+    <div class="notif-modal-card" style="background:#fff; border-radius:var(--radius-lg); max-width:420px; width:100%; max-height:80vh; display:flex; flex-direction:column; border:1.5px solid var(--line);">
+      <div class="consult-header">
+        <h3 style="margin:0; font-weight:900; font-size:16px;">🔔 الإشعارات</h3>
+        <button class="icon-btn" onclick="closeNotifModal()">✕</button>
       </div>
       <div class="notif-list" id="notifList"></div>
     </div>
   </div>
 
-  <!-- 2. Order Success Modal -->
+  <!-- ORDER SUCCESS MODAL -->
   <div class="success-modal-overlay" id="orderSuccessModal">
     <div class="success-card">
-      <div class="success-icon-badge">🌸</div>
-      <h3>تم إتمام الطلب بنجاح!</h3>
-      <p id="successModalMsg">شكراً لثقتكِ بنا. تم توثيق طلبكِ بنجاح، وجاري التوجيه للواتساب لتأكيد الشحن.</p>
-      <div class="success-actions">
-        <button type="button" class="pd-add-btn" onclick="document.getElementById('orderSuccessModal').classList.remove('open'); showView('orders');">📦 متابعة طلباتي</button>
-        <button type="button" style="padding:10px; font-weight:800; color:var(--text-soft);" onclick="document.getElementById('orderSuccessModal').classList.remove('open'); showView('home');">العودة للرئيسية</button>
-      </div>
+      <div class="success-icon-badge">✓</div>
+      <h3 style="font-weight:900; font-size:17px; margin:0 0 8px;">تم استلام طلبكِ بنجاح!</h3>
+      <p id="successModalMsg" style="font-size:13px; color:var(--text-soft); line-height:1.7; margin:0 0 20px;"></p>
+      <button class="welcome-action-btn" onclick="closeSuccessModalAndGoOrders()">عرض طلباتي</button>
+      <button type="button" onclick="closeSuccessModal()" style="width:100%; margin-top:8px; padding:10px; font-weight:700; color:var(--text-soft);">العودة للرئيسية</button>
     </div>
   </div>
 
-  <!-- 3. Pharmacist Direct Consultation Modal -->
-  <div class="consult-modal-overlay" id="consultModal">
-    <div class="consult-modal-card">
-      <div class="consult-header">
-        <div class="consult-title-wrap">
-          <span class="consult-badge-pill">خدمة الاستشارة المباشرة</span>
-          <h3>استشارة صيدلانية فورية 🩺</h3>
-        </div>
-        <button class="icon-btn" onclick="document.getElementById('consultModal').classList.remove('open')" aria-label="إغلاق">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-        </button>
+  <!-- WELCOME OFFER MODAL -->
+  <div class="welcome-modal-overlay" id="welcomeOfferModal">
+    <div class="welcome-card">
+      <button class="welcome-close-btn" onclick="closeWelcomeModal()">✕</button>
+      <div style="font-size:40px; margin-bottom:8px;">🌸</div>
+      <h3 style="font-size:18px; font-weight:900; margin:0 0 8px;">هدية ترحيبية لكِ!</h3>
+      <p style="font-size:13px; color:var(--text-soft); margin:0;">استخدمي الكود التالي واحصلي على خصم فوري على طلبكِ الأول:</p>
+      <div class="welcome-code-box">
+        <span>QUTN10</span>
+        <button type="button" onclick="copyWelcomeCode()">نسخ</button>
       </div>
-      <div class="consult-body">
-        <form id="consultForm" onsubmit="event.preventDefault(); openWhatsapp(); document.getElementById('consultModal').classList.remove('open');">
-          <div class="form-field">
-            <label>الاسم الكامل *</label>
-            <input type="text" id="consultName" placeholder="مثال: سارة علي" required>
-          </div>
-          <div class="form-field">
-            <label>العمر *</label>
-            <input type="number" id="consultAge" placeholder="25" required min="1" max="100">
-          </div>
-          <div class="form-field">
-            <label>نوع البشرة أو المشكلة بالتفصيل *</label>
-            <textarea id="consultDesc" rows="3" placeholder="صفي مشكلة بشرتك أو اسألي عن روتين محدد..." required></textarea>
-          </div>
-          <button type="submit" class="consult-submit-btn">
-            إرسال الاستشارة ومتابعتها على واتساب
-          </button>
-        </form>
-      </div>
+      <button class="welcome-action-btn" onclick="applyWelcomeAndShop()">تسوقي الآن 🛍️</button>
     </div>
   </div>
 
-  <!-- 4. 80mm THERMAL RECEIPT MODAL -->
-  <div class="receipt-modal-overlay" id="thermalReceiptModal">
-    <div class="receipt-modal-card">
-      <div class="no-print" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <h4 style="margin:0; font-weight:900;">🖨️ معاينة بوليصة الشحن (80mm)</h4>
-        <button onclick="closeReceiptModal()" style="font-weight:900; font-size:16px;">✕</button>
-      </div>
-      
-      <div class="receipt-print-area" id="receiptPrintArea">
-        <div class="receipt-header">
-          <h3 id="recStoreHeaderTitle">الصيدلية 🌸</h3>
-          <p style="margin:2px 0; font-size:11px;">منتجات عناية وتجميل أصلية 100%</p>
-          <p style="margin:2px 0; font-size:10px;">هاتف: <span id="recStorePhone">07813703288</span></p>
-        </div>
-        <div class="receipt-divider"></div>
-        <div style="font-size:11px; margin-bottom:6px;">
-          <div><b>رقم الوصل:</b> <span class="mono" id="recOrderId">#ORD-123456</span></div>
-          <div><b>التاريخ:</b> <span id="recOrderDate"></span></div>
-          <div><b>العميل:</b> <span id="recCustName"></span></div>
-          <div><b>الهاتف:</b> <span id="recCustPhone" class="mono"></span></div>
-          <div><b>العنوان:</b> <span id="recCustAddress"></span></div>
-          <div><b>نوع التوصيل:</b> <span id="recDeliveryType"></span></div>
-        </div>
-        <div class="receipt-divider"></div>
-        <table class="receipt-table">
-          <thead>
-            <tr>
-              <th>المادة</th>
-              <th>العدد</th>
-              <th>السعر</th>
-            </tr>
-          </thead>
-          <tbody id="recItemsTbody"></tbody>
-        </table>
-        <div class="receipt-divider"></div>
-        <div style="font-size:12px; font-weight:800;">
-          <div style="display:flex; justify-content:space-between;"><span>أجرة التوصيل:</span><span id="recDeliveryFee" class="mono">0 د.ع</span></div>
-          <div style="display:flex; justify-content:space-between;" id="recDiscountRow"><span>الخصم:</span><span id="recDiscountVal" class="mono">0 د.ع</span></div>
-          <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:900; margin-top:4px;"><span>المجموع الكلي:</span><span id="recGrandTotal" class="mono">0 د.ع</span></div>
-        </div>
-        <div class="receipt-footer">
-          <p style="margin:4px 0;">شكراً لتسوقكم معنا 🌸</p>
-        </div>
-      </div>
-
-      <div class="no-print" style="display:flex; gap:8px; margin-top:14px;">
-        <button type="button" onclick="window.print()" class="admin-btn-save" style="margin:0; background:#10B981;">🖨️ طباعة الوصل الحراري</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 🌟 5. STOREFRONT INLINE PRODUCT QUICK-EDIT MODAL (WITH CATEGORY DROPDOWN) -->
-  <div class="admin-quick-modal-overlay" id="sfQuickEditModal">
-    <div class="admin-quick-card" style="max-width: 560px; max-height: 90vh; overflow-y: auto;">
-      <div class="consult-header">
-        <h3 style="color:#111827; font-weight:900;">✏️ تعديل سريع لتفاصيل المنتج</h3>
-        <button class="icon-btn" onclick="window.App.closeSfQuickEditModal()">✕</button>
-      </div>
-      <div style="padding:18px; text-align:right;">
-        <input type="hidden" id="sfQuickEditProdId">
-
-        <div class="form-field">
-          <label>اسم المنتج *</label>
-          <input type="text" id="sfQuickEditProdName" required>
-        </div>
-
-        <!-- حقل اختيار القسم لتحديث العداد تلقائياً -->
-        <div class="form-field">
-          <label>القسم / التصنيف *</label>
-          <select id="sfQuickEditProdCat" required style="width:100%; padding:10px 12px; border:1.5px solid var(--line); border-radius:12px; font-family:inherit; font-size:13.5px; background:#fff; color:var(--ink); outline:none;"></select>
-        </div>
-
-        <div class="form-field">
-          <label>الكمية بالمخزن *</label>
-          <input type="number" id="sfQuickEditProdStockQty" min="0" required>
-        </div>
-
-        <div style="display:flex; gap:10px;">
-          <div class="form-field" style="flex:1;">
-            <label>⭐ التقييم (من 1 إلى 5)</label>
-            <input type="number" id="sfQuickEditProdRating" placeholder="4.8" min="1" max="5" step="0.1">
-          </div>
-          <div class="form-field" style="flex:1;">
-            <label>عدد التقييمات المعروضة</label>
-            <input type="number" id="sfQuickEditProdReviews" placeholder="0" min="0">
-          </div>
-        </div>
-
-        <div class="form-field">
-          <label>صورة المنتج (اختيار مباشر من المعرض / الكاميرا)</label>
-          <input type="file" accept="image/*" onchange="uploadDirectImageFile(this, 'sfQuickEditProdImg', 'sfQuickEditProdImgPreviewEl', 'sfQuickEditProdImgPreviewBox')" style="width:100%; padding:8px; border:1.5px dashed var(--line); border-radius:12px; background:#fff; font-size:12px;">
-          <input type="hidden" id="sfQuickEditProdImg" value="">
-          <div id="sfQuickEditProdImgPreviewBox" style="margin-top:8px; display:none; align-items:center; gap:10px;">
-            <img id="sfQuickEditProdImgPreviewEl" src="" style="height:70px; width:70px; object-fit:cover; border-radius:10px; border:1px solid var(--line);" alt="Preview">
-            <span style="font-size:11px; color:#16A34A; font-weight:800;">✅ تم تحديث الصورة</span>
-          </div>
-        </div>
-
-        <div class="form-field">
-          <label>الوصف المفصل والفوائد</label>
-          <textarea id="sfQuickEditProdDesc" rows="3" placeholder="تفاصيل المنتج والفوائد..."></textarea>
-        </div>
-
-        <div class="form-field">
-          <label>المكونات الفعالة والتركيبة (Ingredients)</label>
-          <input type="text" id="sfQuickEditProdIng" placeholder="Hyaluronic Acid, Ceramides...">
-        </div>
-
-        <div class="form-field">
-          <label>طريقة الاستخدام والإرشادات (Usage)</label>
-          <input type="text" id="sfQuickEditProdUsage" placeholder="يوضع صباحاً ومساءً...">
-        </div>
-
-        <button type="button" class="admin-btn-save" onclick="window.App.saveSfQuickEdit()">💾 حفظ التعديلات</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- BOTTOM NAVIGATION BAR -->
-  <nav class="bottom-nav">
-    <button class="bn-item" onclick="showView('account')" id="bn-account">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>
-      <span class="lbl" id="bnAccountLbl">حسابي</span>
-    </button>
-    <button class="bn-item" onclick="showView('orders')" id="bn-orders">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-      <span class="lbl">طلباتي</span>
-    </button>
-    <button class="bn-item active" onclick="showView('home')" id="bn-home">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/></svg>
-      <span class="lbl">الرئيسية</span>
-    </button>
-    <button class="bn-item" onclick="showView('bundles')" id="bn-bundles">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-      <span class="lbl">البكجات</span>
-    </button>
-    <button class="bn-item" onclick="showView('categories')" id="bn-categories">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-      <span class="lbl">الأقسام</span>
-    </button>
-    <button class="bn-item" onclick="window.App.showView('cart')" id="bn-cart">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h2l2.4 12.4a2 2 0 0 0 2 1.6h8.4a2 2 0 0 0 2-1.6L22 8H6"/><circle cx="9" cy="21" r="1.4" fill="currentColor" stroke="none"/><circle cx="18" cy="21" r="1.4" fill="currentColor" stroke="none"/></svg>
-      <span class="lbl">السلة</span>
-      <span class="badge-count" id="bnCartBadge" style="display:none;">0</span>
-    </button>
-    <a class="bn-item" href="admin.html" id="bn-admin" style="display:none; color:#F59E0B;">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      <span class="lbl">إعدادات الأدمن</span>
-    </a>
-  </nav>
-
-  <!-- WhatsApp Floating FAB -->
-  <button class="fab-whatsapp" onclick="openWhatsapp()" aria-label="واتساب">
-    <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.7 14.2c-.2.6-1.4 1.2-1.9 1.2-.5.1-1.1.1-1.8-.1-.4-.1-1-.3-1.7-.6-3-1.3-4.9-4.3-5.1-4.5-.1-.2-1.2-1.6-1.2-3s.8-2.2 1.1-2.5c.3-.3.6-.4.8-.4h.6c.2 0 .4 0 .6.5.2.5.8 1.9.8 2.1.1.2.1.3 0 .5-.1.2-.1.3-.3.5-.1.2-.3.4-.4.5-.2.2-.3.4-.1.7.2.3.9 1.5 2 2.4 1.3 1.2 2.4 1.5 2.8 1.7.3.2.5.1.7-.1l.9-1c.2-.3.4-.2.7-.1l1.8.9c.3.1.5.2.5.4.1.2.1.7-.1 1.3Z"/></svg>
-  </button>
-
-  <!-- Toast Notification Box -->
+  <!-- Toast -->
   <div class="toast" id="toast"></div>
 
-  <!-- المحرك البرمجي الرئيسي المستقل والمباشر -->
-  <script type="module" src="main.js"></script>
+  <!-- Main JavaScript -->
+  <script src="script.js"></script>
 </body>
 </html>
