@@ -224,13 +224,37 @@ async function apiFetch(endpoint, options = {}) {
   }
 }
 
-// دالة تلقائية لإعادة بناء كتالوج R2 السحابي ومسح كاش Edge عند أي تعديل للمنتجات
+// دالة تلقائية لإعادة بناء كتالوج R2 السحابي بالكامل (مسح شامل من Firestore) - تُستخدم فقط
+// للعمليات التي تمس عدة منتجات دفعة واحدة (خصم مجمّع، حفظ بكج/عرض، ...) لأنها أثقل وأبطأ.
 function triggerR2CatalogRebuild() {
   apiFetch('/api/admin/catalog/rebuild', { method: 'POST' })
     .then(res => {
       if (res && res.success) console.log("R2 catalog rebuilt successfully:", res.totalProducts);
     })
     .catch(err => console.warn("R2 catalog rebuild notice:", err));
+}
+
+// ⚡ تحديث سريع بـ 0 قراءات من Firestore: يعدّل صنفاً واحداً مباشرة داخل ملف الكتالوج المخزّن في
+// R2 (بدل إعادة مسح كل المنتجات)، ويُستخدم في التعديلات الفردية السريعة (السعر، المخزون، التعديل الشامل)
+function updateR2CatalogItem(productId, updates) {
+  apiFetch('/api/admin/catalog/update-item', {
+    method: 'POST',
+    body: JSON.stringify({ productId: String(productId), updates })
+  }).then(res => {
+    if (!res || !res.success) {
+      // احتياط: إن فشل التحديث السريع لأي سبب (أول مرة لا يوجد ملف كتالوج بعد)، نلجأ لإعادة البناء الكاملة
+      triggerR2CatalogRebuild();
+    }
+  }).catch(() => triggerR2CatalogRebuild());
+}
+
+// 🗑️ حذف صورة يتيمة من Cloudflare R2 (تُستدعى عند الحذف النهائي لمنتج أو استبدال صورته بأخرى)
+function deleteOrphanImageFromR2(imageUrl) {
+  if (!imageUrl || typeof imageUrl !== 'string' || !imageUrl.includes('/api/images/')) return;
+  apiFetch('/api/admin/images/delete', {
+    method: 'POST',
+    body: JSON.stringify({ imageUrl })
+  }).catch(err => console.warn('Orphan image delete notice:', err));
 }
 
 // 🌟 أداة يدوية بواجهة توست واضحة: توليد وحبس كتالوج R2 السحابي فوراً بنقرة واحدة (إصلاح #1)
@@ -728,7 +752,8 @@ async function confirmOrder() {
   const newOrderObj = {
     id: orderId,
     pharmacyId: currentPharmacyId,
-    date: new Date().toLocaleDateString('ar-IQ', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+    // 🔵 (تحديث): اعتماد اللغة الإنجليزية للتواريخ والأشهر في كامل الوصولات والتقارير المطبوعة
+    date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
     name,
     phone,
     address,
@@ -1426,6 +1451,97 @@ async function handleApplyBulkDiscount(e) {
   showToast(action === 'apply' ? `تم تطبيق خصم ${pct}% على ${targetProducts.length} منتج فورياً! ✓` : `تم استرجاع الأسعار الأصلية بنجاح ✓`);
 }
 
+// ================= 16b. BULK PRICE & CURRENCY MULTIPLIER TOOL =================
+function updatePriceMultiplierTargetOptions() {
+  const scopeEl = document.getElementById('priceMultScope');
+  if (!scopeEl) return;
+  const scope = scopeEl.value;
+  const wrap = document.getElementById('priceMultTargetWrap');
+  const lbl = document.getElementById('priceMultTargetLbl');
+  const sel = document.getElementById('priceMultTargetSelect');
+  if (!wrap || !sel) return;
+
+  if (scope === 'all') {
+    wrap.style.display = 'none';
+    sel.removeAttribute('required');
+    return;
+  }
+  wrap.style.display = 'block';
+  sel.setAttribute('required', 'required');
+
+  if (scope === 'brand') {
+    lbl.textContent = 'اختيار الماركة / الشركة *';
+    sel.innerHTML = Object.keys(brandsData).map(b => `<option value="${sanitizeText(b)}">${sanitizeText(b)}</option>`).join('');
+  } else if (scope === 'category') {
+    lbl.textContent = 'اختيار القسم *';
+    sel.innerHTML = categories.map(c => `<option value="${sanitizeText(c.id)}">${sanitizeText(c.label)}</option>`).join('');
+  }
+}
+
+// دالة التقريب الذكي لأقرب فئة نقدية (250 أو 500 د.ع) حسب اختيار المشرف
+function roundPriceToNearest(price, nearest) {
+  if (!nearest || nearest <= 0) return Math.round(price);
+  return Math.round(price / nearest) * nearest;
+}
+
+async function handleApplyBulkPriceMultiplier(e) {
+  e.preventDefault();
+  if (!assertAdmin() || !lockAction('bulkPriceMultiplier', 2000)) return;
+
+  const scope = document.getElementById('priceMultScope').value;
+  const target = document.getElementById('priceMultTargetSelect') ? document.getElementById('priceMultTargetSelect').value : '';
+  const pct = Number(document.getElementById('priceMultPercentage').value);
+  const direction = document.getElementById('priceMultDirection').value; // 'increase' | 'decrease'
+  const roundTo = Number(document.getElementById('priceMultRoundTo').value || 0);
+
+  if (isNaN(pct) || pct <= 0 || pct > 500) {
+    showToast('يرجى إدخال نسبة صحيحة أكبر من صفر');
+    return;
+  }
+
+  let targetProducts = [];
+  const activeProds = products.filter(p => p.isDeleted !== true);
+  if (scope === 'all') targetProducts = activeProds.slice();
+  else if (scope === 'brand') targetProducts = activeProds.filter(p => p.brand === target);
+  else if (scope === 'category') targetProducts = activeProds.filter(p => p.category === target);
+
+  if (targetProducts.length === 0) {
+    showToast('لم يتم العثور على منتجات مطابقة لهذا النطاق');
+    return;
+  }
+
+  if (!confirm(`سيتم ${direction === 'increase' ? 'رفع' : 'خفض'} أسعار (${targetProducts.length}) منتج بنسبة ${pct}%. هل أنتِ متأكدة؟`)) return;
+
+  showToast('جاري تعديل الأسعار دفعة واحدة...');
+  const batch = db ? db.batch() : null;
+  const multiplier = direction === 'increase' ? (1 + pct / 100) : (1 - pct / 100);
+
+  targetProducts.forEach(p => {
+    let newPrice = Math.max(0, p.price * multiplier);
+    if (roundTo > 0) newPrice = roundPriceToNearest(newPrice, roundTo);
+    p.price = newPrice;
+    if (batch && p.id) {
+      const docRef = dbPaths.productsCol().doc(String(p.id));
+      batch.set(docRef, { price: newPrice }, { merge: true });
+    }
+  });
+
+  if (batch) {
+    try {
+      await batch.commit();
+      triggerR2CatalogRebuild();
+    } catch (err) {
+      console.warn('Bulk price multiplier batch warning:', err);
+      showToast('حدث خطأ أثناء تحديث بعض الأسعار');
+      return;
+    }
+  }
+
+  saveLocalState();
+  renderCurrentActiveView();
+  showToast(`✅ تم تعديل أسعار ${targetProducts.length} منتج بنسبة ${direction === 'increase' ? '+' : '-'}${pct}% بنجاح!`);
+}
+
 // ================= 17. HERO SLIDER OFFERS & PROMO CARDS CRUD (CATEGORIZED SELECTOR — FIX #2) =================
 let currentOfferSelectedProductIds = [];
 
@@ -1804,6 +1920,82 @@ function renderRealAnalyticsView() {
 // ================= 19. REALTIME ORDERS SNAPSHOT =================
 let adminOrdersUnsubscribe = null;
 
+// ================= 19b. AUDIO ALERT FOR NEW ORDERS =================
+let knownOrderIdsForAlert = null; // null = أول تحميل، لا نُنبّه على الطلبات الموجودة أصلاً
+let adminAlertMuted = false;
+let audioAlertRepeatTimer = null;
+
+function getAudioMuteStorageKey() {
+  return `saas_${currentPharmacyId}_admin_alert_muted`;
+}
+
+function initAdminAudioAlertPreference() {
+  adminAlertMuted = localStorage.getItem(getAudioMuteStorageKey()) === '1';
+  updateAudioMuteButtonUI();
+}
+
+function toggleAdminAudioAlertMute() {
+  adminAlertMuted = !adminAlertMuted;
+  localStorage.setItem(getAudioMuteStorageKey(), adminAlertMuted ? '1' : '0');
+  if (adminAlertMuted && audioAlertRepeatTimer) {
+    clearInterval(audioAlertRepeatTimer);
+    audioAlertRepeatTimer = null;
+  }
+  updateAudioMuteButtonUI();
+  showToast(adminAlertMuted ? '🔇 تم كتم تنبيه الطلبات الجديدة' : '🔊 تم تفعيل تنبيه الطلبات الجديدة');
+}
+
+function updateAudioMuteButtonUI() {
+  const btn = document.getElementById('adminAlertMuteBtn');
+  if (!btn) return;
+  btn.textContent = adminAlertMuted ? '🔇' : '🔊';
+  btn.title = adminAlertMuted ? 'تفعيل صوت تنبيه الطلبات' : 'كتم صوت تنبيه الطلبات';
+  btn.style.background = adminAlertMuted ? '#374151' : '#F59E0B';
+}
+
+// نغمة تنبيه مُولّدة برمجياً عبر Web Audio API (بدون أي ملف صوتي خارجي)
+function playNewOrderBeep() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const playTone = (freq, startTime, duration) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.35, startTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+    const now = ctx.currentTime;
+    playTone(880, now, 0.18);
+    playTone(1108, now + 0.22, 0.22);
+  } catch (e) {
+    console.warn('Audio alert error:', e);
+  }
+}
+
+function triggerRepeatingNewOrderAlert() {
+  if (adminAlertMuted) return;
+  if (audioAlertRepeatTimer) clearInterval(audioAlertRepeatTimer);
+  let repeats = 0;
+  playNewOrderBeep();
+  audioAlertRepeatTimer = setInterval(() => {
+    repeats++;
+    if (repeats >= 4) {
+      clearInterval(audioAlertRepeatTimer);
+      audioAlertRepeatTimer = null;
+      return;
+    }
+    playNewOrderBeep();
+  }, 1600);
+}
+
 function listenToAdminOrdersRealtime() {
   if (!isFirebaseConfigured || !db) return;
 
@@ -1820,6 +2012,17 @@ function listenToAdminOrdersRealtime() {
       const timeB = (b.createdAt && b.createdAt.toMillis) ? b.createdAt.toMillis() : new Date(b.date || 0).getTime();
       return timeB - timeA;
     });
+
+    // 🔔 التنبيه الصوتي: نقارن معرّفات الطلبات الحالية بآخر لقطة معروفة لاكتشاف أي طلب جديد فعلاً
+    const currentIds = new Set(orders.map(o => o.id));
+    if (knownOrderIdsForAlert !== null) {
+      const hasNewOrder = orders.some(o => !knownOrderIdsForAlert.has(o.id));
+      if (hasNewOrder) {
+        triggerRepeatingNewOrderAlert();
+        showToast('🛎️ لديك طلب جديد وارد الآن!');
+      }
+    }
+    knownOrderIdsForAlert = currentIds;
 
     window.adminLastOrdersList = orders;
     totalOrdersCount = orders.length;
@@ -1934,6 +2137,44 @@ async function updateOrderStatus(orderId, newStatus) {
 }
 
 // ================= 20. EXCEL/CSV EXPORT =================
+// ================= 20b. FINANCIAL REPORT: GROUPED BY 3 CATEGORIES + ENGLISH DATES =================
+// ⚠️ ملاحظة تقنية مهمة: لا يحتوي نظام المنتجات على حقل "سعر التكلفة" (Cost Price)، لذا يُحتسب هنا
+// "صافي المبيعات" (Total Sales) لكل قسم كمؤشر مالي دقيق بدل "الربح الصافي" الذي يتطلب تسجيل تكلفة
+// شراء كل صنف أولاً. يمكن إضافة حقل costPrice لاحقاً لمنتج لاحتساب ربح حقيقي دقيق.
+function classifyCategoryGroup(categoryIdOrLabel) {
+  const s = (categoryIdOrLabel || '').toString().toLowerCase();
+  if (s.includes('milk') || s.includes('حليب')) return 'baby_milk';
+  if (s.includes('dental') || s.includes('tooth') || s.includes('paste') || s.includes('اسنان') || s.includes('سنان') || s.includes('oral')) return 'oral_care';
+  return 'cosmetics';
+}
+
+function getOrderItemGroup(item) {
+  if (item.isBundle) return 'cosmetics';
+  const prod = findProduct(item.id) || archivedProducts.find(p => String(p.id) === String(item.id));
+  const catId = prod ? prod.category : '';
+  const catObj = categories.find(c => c.id === catId);
+  return classifyCategoryGroup((catObj && catObj.label) || catId);
+}
+
+// تنسيق تاريخ الطلب بالإنجليزية الكاملة (مثال: September 16, 2026, 02:30 PM) بدل الأشهر العربية
+function formatOrderDateEnglish(o) {
+  try {
+    if (o.createdAt && typeof o.createdAt.toDate === 'function') {
+      return o.createdAt.toDate().toLocaleString('en-US', {
+        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+    }
+  } catch (e) {}
+  // احتياط: إن لم يوجد createdAt (طلبات قديمة محلية)، نعرض التاريخ المخزن كما هو
+  return o.date || '';
+}
+
+const REPORT_GROUP_LABELS = {
+  cosmetics: 'Cosmetics & Personal Care (قسم الكوزمتك)',
+  baby_milk: 'Baby Milk & Formula (قسم حليب الأطفال)',
+  oral_care: 'Oral & Dental Care (قسم عناية الأسنان)'
+};
+
 async function buildDetailedOrdersCSV() {
   let orders = window.adminLastOrdersList || [];
   if (orders.length === 0 && db) {
@@ -1942,33 +2183,73 @@ async function buildDetailedOrdersCSV() {
   }
   if (orders.length === 0) orders = myOrders;
 
-  let csv = "Order ID,Date & Time,Customer Name,Phone Number,Full Address,Delivery Method,Order Status,Items Ordered,Total Amount (IQD),Delivery Fee (IQD),Net Store (IQD)\n";
+  const groups = {
+    cosmetics: { orders: new Set(), totalSales: 0, rows: [] },
+    baby_milk: { orders: new Set(), totalSales: 0, rows: [] },
+    oral_care: { orders: new Set(), totalSales: 0, rows: [] }
+  };
+
   let totalCOD = 0, totalDelivery = 0, totalNetStore = 0;
 
   orders.forEach(o => {
     const orderTotal = Number(o.total || 0);
     const delFee = (o.deliveryFee !== undefined) ? Number(o.deliveryFee) : ((o.deliveryMethod === 'express') ? (pharmacyProfile.deliveryFeeExpress || 8000) : (pharmacyProfile.deliveryFeeStandard || 4000));
     const netStore = Math.max(0, orderTotal - delFee);
-
     totalCOD += orderTotal;
     totalDelivery += delFee;
     totalNetStore += netStore;
 
-    const itemsFormatted = (o.items || []).map(it => `${it.name} (x${it.quantity})`).join(" + ");
-    csv += `"${o.id}","${o.date || ''}","${o.name || ''}","${o.phone || ''}","${(o.address || '').replace(/"/g, '""')}","${o.deliveryMethod === 'express' ? 'Express' : 'Standard'}","${o.status || ''}","${itemsFormatted.replace(/"/g, '""')}","${orderTotal}","${delFee}","${netStore}"\n`;
+    const englishDate = formatOrderDateEnglish(o);
+    const itemsByGroup = { cosmetics: [], baby_milk: [], oral_care: [] };
+
+    (o.items || []).forEach(it => {
+      const group = getOrderItemGroup(it);
+      itemsByGroup[group].push(it);
+    });
+
+    Object.keys(itemsByGroup).forEach(group => {
+      const itemsInGroup = itemsByGroup[group];
+      if (itemsInGroup.length === 0) return;
+      const groupSubtotal = itemsInGroup.reduce((sum, it) => sum + (Number(it.lineTotal) || (Number(it.price || it.unitPrice || 0) * Number(it.quantity || 1))), 0);
+      groups[group].orders.add(o.id);
+      groups[group].totalSales += groupSubtotal;
+      const itemsFormatted = itemsInGroup.map(it => `${it.name} (x${it.quantity})`).join(' + ');
+      groups[group].rows.push(
+        `"${o.id}","${englishDate}","${o.name || ''}","${o.phone || ''}","${itemsFormatted.replace(/"/g, '""')}","${groupSubtotal}"`
+      );
+    });
   });
 
-  csv += `\n"TOTALS","${orders.length} Orders","","","","","","","${totalCOD} IQD","${totalDelivery} IQD","${totalNetStore} IQD"\n`;
+  let csv = `SaaS Pharmacy Financial Report - ${pharmacyProfile.name || currentPharmacyId}\n`;
+  csv += `Generated: ${new Date().toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}\n\n`;
+
+  ['cosmetics', 'baby_milk', 'oral_care'].forEach(group => {
+    const g = groups[group];
+    csv += `=== ${REPORT_GROUP_LABELS[group]} ===\n`;
+    csv += `Order ID,Date,Customer Name,Phone Number,Items Ordered,Section Sales (IQD)\n`;
+    if (g.rows.length === 0) {
+      csv += `"No orders in this section yet","","","","",""\n`;
+    } else {
+      csv += g.rows.join('\n') + '\n';
+    }
+    csv += `"SECTION TOTALS","${g.orders.size} Orders","","","","${g.totalSales} IQD"\n\n`;
+  });
+
+  csv += `=== OVERALL STORE TOTALS ===\n`;
+  csv += `"TOTAL ORDERS","${orders.length}"\n`;
+  csv += `"TOTAL SALES (IQD)","${totalCOD}"\n`;
+  csv += `"TOTAL DELIVERY FEES (IQD)","${totalDelivery}"\n`;
+  csv += `"NET STORE REVENUE (IQD, excl. delivery)","${totalNetStore}"\n`;
 
   return { csv, totalOrders: orders.length, totalRevenue: totalCOD, totalDelivery, totalNetStore };
 }
 
 async function exportOrdersToCSV() {
   if (!assertAdmin()) return;
-  showToast('جاري تصدير وتحميل ملف المبيعات...');
+  showToast('جاري تصدير وتحميل ملف المبيعات المقسّم حسب الأقسام...');
   try {
     const report = await buildDetailedOrdersCSV();
-    const dateStr = new Date().toISOString().split('T')[0];
+    const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' }).replace(/\s|,/g, '-');
     const fileName = `Sales_Report_${currentPharmacyId}_${dateStr}.csv`;
 
     const blob = new Blob(["\uFEFF" + report.csv], { type: 'text/csv;charset=utf-8;' });
@@ -2006,7 +2287,7 @@ async function quickEditPrice(id, currentPrice) {
   }
   if (db) {
     await dbPaths.productsCol().doc(String(id)).set({ price: newPrice }, { merge: true });
-    triggerR2CatalogRebuild();
+    updateR2CatalogItem(id, { price: newPrice });
   }
   showToast('تم تحديث السعر ومسح الكاش فورياً ✓');
 }
@@ -2018,7 +2299,7 @@ async function quickToggleStock(id) {
   const newStock = (p.inStock === false) ? true : false;
   if (db) {
     await dbPaths.productsCol().doc(String(id)).set({ inStock: newStock }, { merge: true });
-    triggerR2CatalogRebuild();
+    updateR2CatalogItem(id, { inStock: newStock });
   }
   showToast(newStock ? 'تم التعيين: متوفر 🟢' : 'تم التعيين: نفذت الكمية 🔴');
 }
@@ -2116,11 +2397,17 @@ async function saveAdminQuickEdit() {
   };
 
   if (db) {
+    const existingProd = findProduct(id);
+    const oldImageUrl = existingProd ? existingProd.imageUrl : null;
     await dbPaths.productsCol().doc(String(id)).set(updates, { merge: true });
-    triggerR2CatalogRebuild();
+    updateR2CatalogItem(id, updates);
+    // 🗑️ إذا تم استبدال صورة المنتج بأخرى جديدة، نحذف الصورة القديمة اليتيمة من R2 تلقائياً
+    if (oldImageUrl && imageUrl && oldImageUrl !== imageUrl) {
+      deleteOrphanImageFromR2(oldImageUrl);
+    }
   }
   closeAdminQuickEditModal();
-  showToast('تم تحديث تفاصيل الصنف وإعادة بناء الكتالوج سحابياً ✓');
+  showToast('تم تحديث تفاصيل الصنف فورياً ✓');
 }
 
 function openAdminQuickAddModal() {
@@ -2267,8 +2554,11 @@ async function permanentDeleteProduct(id, name) {
   if (!assertAdmin()) return;
   if (confirm(`تحذير نهائي: هل تريد حذف "${name}" نهائياً من قاعدة البيانات بلا رجعة؟`)) {
     if (db) {
+      const existingProd = archivedProducts.find(x => String(x.id) === String(id)) || findProduct(id);
+      const imgToDelete = existingProd ? existingProd.imageUrl : null;
       await dbPaths.productsCol().doc(String(id)).delete();
       triggerR2CatalogRebuild();
+      if (imgToDelete) deleteOrphanImageFromR2(imgToDelete); // 🗑️ حذف الصورة اليتيمة من R2 نهائياً
       showToast('تم حذف المنتج نهائياً من السيرفر');
       fetchArchivedProducts();
     }
@@ -2452,6 +2742,7 @@ function switchAdminSection(sec) {
   if (sec === 'audit') fetchAuditLogs();
   if (sec === 'offers') {
     updateDiscountTargetOptions();
+    updatePriceMultiplierTargetOptions();
     populateOfferFilterDropdowns();
     renderOfferProdChips();
     renderPromoCardsListAdmin();
@@ -2620,6 +2911,12 @@ function showView(name) {
     if (el) el.classList.toggle('active', name === k);
   });
 
+  // 🎯 شريط التبويبات الأفقي العلوي (الرئيسية | أقسام | بكجات | العروض)
+  ['home', 'categories', 'bundles', 'offers'].forEach(k => {
+    const el = document.getElementById('tab-' + k);
+    if (el) el.classList.toggle('active', name === k);
+  });
+
   if (name === 'checkout') checkAndAutofillCustomer();
   renderCurrentActiveView();
 }
@@ -2683,7 +2980,8 @@ function renderListing() {
   const titles = {
     category: (categories.find(c => c.id === listingValue) || {}).label,
     search: `نتائج البحث عن: "${listingValue}"`,
-    bestsellers: 'الأكثر مبيعاً 🔥'
+    bestsellers: 'الأكثر مبيعاً 🔥',
+    promo_offer: `عروض: ${window.__currentPromoTitle || 'المنتجات المشمولة بالعرض'}`
   };
   titleEl.textContent = titles[listingMode] || 'المنتجات';
 
@@ -2701,6 +2999,9 @@ function renderListing() {
     });
   } else if (listingMode === 'bestsellers') {
     list = list.sort((a, b) => (Number(b.orderCount) || 0) - (Number(a.orderCount) || 0));
+  } else if (listingMode === 'promo_offer') {
+    const allowedSet = new Set((listingValue || []).map(String));
+    list = list.filter(p => allowedSet.has(String(p.id)));
   }
 
   const countEl = document.getElementById('listingCount');
@@ -2725,8 +3026,137 @@ function renderCurrentActiveView() {
 }
 
 function renderHome() {
+  renderHeroCarousel();
+  renderHomeCategoryCircles();
+  renderHomeBundlesPreview();
   renderBrandStrip();
   renderHomeProductGrid();
+}
+
+// ================= 7b. HERO CAROUSEL (بنر متحرك بنقاط تصفح) =================
+let currentHeroSlideIndex = 0;
+
+function renderHeroCarousel() {
+  const track = document.getElementById('heroCarouselTrack');
+  const dotsWrap = document.getElementById('heroCarouselDots');
+  if (!track) return;
+
+  const promoCards = pharmacyProfile.promoCards || [];
+  const mainSlideHtml = `
+    <div class="hero-slide" data-slide-index="0">
+      <div class="qutn-hybrid-banner" onclick="showView('listing'); openBestSellers();">
+        <div class="banner-text-col">
+          <h2 class="main-title">${sanitizeText(pharmacyProfile.heroMainTitle || 'متجر الصيدلية')}</h2>
+          <p class="sub-title">${sanitizeText(pharmacyProfile.heroSubTitle || '')}</p>
+          <p class="desc-title"><span>${sanitizeText(pharmacyProfile.heroDescTitle || '')}</span></p>
+          <button type="button" class="hero-cta-btn" onclick="event.stopPropagation(); showView('listing'); openBestSellers();">تسوقي الآن ←</button>
+        </div>
+        ${pharmacyProfile.bannerImgUrl ? `<div class="banner-model-col"><img src="${sanitizeUrl(pharmacyProfile.bannerImgUrl)}" alt="banner" loading="lazy"></div>` : ''}
+      </div>
+    </div>`;
+
+  const promoSlidesHtml = promoCards.map((c, idx) => {
+    const rawBg = (c.slideBgColor || '').toString().trim();
+    const customBgStyle = rawBg ? `background: ${sanitizeText(rawBg)} !important;` : '';
+    return `
+      <div class="hero-slide" data-slide-index="${idx + 1}">
+        <div class="hero-promo-slide" style="${customBgStyle}" onclick="openPromoSlideOffer('${sanitizeText(c.id)}')">
+          <div class="banner-text-col">
+            ${c.discount ? `<span class="hero-promo-badge">${sanitizeText(c.discount)}</span>` : ''}
+            <h2 class="main-title" style="font-size: clamp(20px, 3.2vw, 30px);">${sanitizeText(c.title)}</h2>
+            <p class="sub-title">${sanitizeText(c.desc)}</p>
+            <button type="button" class="hero-cta-btn" onclick="event.stopPropagation(); openPromoSlideOffer('${sanitizeText(c.id)}')">تسوقي الآن ←</button>
+          </div>
+          ${c.img ? `<div class="banner-model-col"><img src="${sanitizeUrl(c.img)}" alt="${sanitizeText(c.title)}" loading="lazy"></div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  track.innerHTML = mainSlideHtml + promoSlidesHtml;
+
+  const totalSlides = 1 + promoCards.length;
+  if (dotsWrap) {
+    if (totalSlides > 1) {
+      dotsWrap.style.display = 'flex';
+      dotsWrap.innerHTML = Array.from({ length: totalSlides }).map((_, i) =>
+        `<button type="button" class="hero-slider-dot ${i === 0 ? 'active' : ''}" onclick="goToHeroSlide(${i})" aria-label="الشريحة ${i + 1}"></button>`
+      ).join('');
+    } else {
+      dotsWrap.style.display = 'none';
+    }
+  }
+
+  setupHeroCarouselScrollListener();
+}
+
+function setupHeroCarouselScrollListener() {
+  const track = document.getElementById('heroCarouselTrack');
+  if (!track || track.dataset.scrollBound) return;
+  track.dataset.scrollBound = '1';
+  let t;
+  track.addEventListener('scroll', () => {
+    clearTimeout(t);
+    t = setTimeout(() => {
+      const w = track.clientWidth;
+      if (w > 0) updateHeroCarouselDots(Math.round(Math.abs(track.scrollLeft) / w));
+    }, 60);
+  }, { passive: true });
+}
+
+function updateHeroCarouselDots(activeIndex) {
+  currentHeroSlideIndex = activeIndex;
+  document.querySelectorAll('.hero-slider-dot').forEach((dot, idx) => {
+    dot.classList.toggle('active', idx === activeIndex);
+  });
+}
+
+function goToHeroSlide(index) {
+  const track = document.getElementById('heroCarouselTrack');
+  if (!track) return;
+  const w = track.clientWidth;
+  track.scrollTo({ left: index * w * (document.dir === 'rtl' ? -1 : 1), behavior: 'smooth' });
+  updateHeroCarouselDots(index);
+}
+
+// عند نقر الزبون على شريحة عرض مخصصة: عرض منتجات هذا العرض حصراً (أو كل العروض إن لم تُحدد منتجات)
+function openPromoSlideOffer(cardId) {
+  const card = (pharmacyProfile.promoCards || []).find(c => String(c.id) === String(cardId));
+  if (!card) { showView('offers'); return; }
+  if (card.productIds && card.productIds.length > 0) {
+    listingMode = 'promo_offer';
+    listingValue = card.productIds;
+    window.__currentPromoTitle = card.title || 'منتجات العرض';
+    renderListing();
+    showListingView();
+  } else {
+    showView('offers');
+  }
+}
+
+// ================= 5b. HOME CIRCULAR CATEGORIES (ممر الأقسام الدائري بالرئيسية) =================
+function renderHomeCategoryCircles() {
+  const wrap = document.getElementById('homeCategoryCircles');
+  if (!wrap) return;
+
+  const visibleCats = categories.slice(0, 6);
+  const circlesHtml = visibleCats.map(c => {
+    const cleanImg = sanitizeUrl(c.imageUrl);
+    return `
+      <div class="home-cat-circle" onclick="openCategory('${sanitizeText(c.id)}')">
+        <div class="home-cat-circle-img">
+          ${cleanImg ? `<img src="${cleanImg}" alt="${sanitizeText(c.label)}" loading="lazy">` : (catIcons[c.icon] || catIcons.jar)('var(--accent, #E85D8A)')}
+        </div>
+        <span class="home-cat-circle-lbl">${sanitizeText(c.label)}</span>
+      </div>`;
+  }).join('');
+
+  const moreHtml = `
+    <div class="home-cat-circle" onclick="showView('categories')">
+      <div class="home-cat-circle-img home-cat-circle-more">⋯</div>
+      <span class="home-cat-circle-lbl">المزيد</span>
+    </div>`;
+
+  wrap.innerHTML = circlesHtml + moreHtml;
 }
 
 let homeActiveBrand = 'all';
@@ -2785,6 +3215,69 @@ function renderOffers() {
   const countEl = document.getElementById('offersCount');
   if (countEl) countEl.textContent = discounted.length + ' عرض';
   renderProductGrid('offersGrid', discounted);
+}
+
+// ================= 24b. STOREFRONT BUNDLES VIEW (كانت مفقودة بالكامل من واجهة الزبائن) =================
+function addBundleToCart(bundleId) {
+  const cartKey = 'bundle_' + bundleId;
+  cart[cartKey] = (cart[cartKey] || 0) + 1;
+  updateCartBadge();
+  saveLocalState();
+  showToast('تمت إضافة البكج كاملاً للسلة! 🎁');
+}
+
+function renderBundleCardHtml(b) {
+  const cleanImg = sanitizeUrl(b.imageUrl);
+  const linkedProducts = (b.productIds || []).map(id => findProduct(id)).filter(Boolean);
+  const thumbsHtml = linkedProducts.slice(0, 3).map((p, idx) => {
+    const pImg = sanitizeUrl(p.imageUrl);
+    return `
+      ${idx > 0 ? '<span class="bundle-plus-icon">+</span>' : ''}
+      <div class="bundle-thumb-item">
+        ${pImg ? `<img src="${pImg}" alt="${sanitizeText(p.name)}">` : (icons[p.type] || icons.bottle)(getBrandColor(p.brand))}
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="bundle-card">
+      ${b.savingsBadge ? `<span class="bundle-savings-badge">${sanitizeText(b.savingsBadge)}</span>` : ''}
+      <div class="bundle-thumb-row">
+        ${cleanImg ? `<img src="${cleanImg}" alt="${sanitizeText(b.title)}" style="width:100%; height:100%; object-fit:cover; border-radius:12px;">` : (thumbsHtml || icons.bottle('var(--accent)'))}
+      </div>
+      <h3 class="bundle-title">🎁 ${sanitizeText(b.title)}</h3>
+      <p class="bundle-desc">${sanitizeText(b.description)}</p>
+      ${linkedProducts.length > 0 ? `
+        <div class="bundle-items-list">
+          ${linkedProducts.map(p => `<span>• ${sanitizeText(p.name)}</span>`).join('')}
+        </div>` : ''}
+      <div class="bundle-price-box">
+        <span class="pd-price mono" style="font-size:19px;">${fmtPrice(b.price)}</span>
+        ${b.oldPrice ? `<span class="p-oldprice mono">${fmtPrice(b.oldPrice)}</span>` : ''}
+      </div>
+      <button class="add-cart-btn" onclick="addBundleToCart('${sanitizeText(b.id)}')">أضف البكج كاملاً للسلة 🎁</button>
+    </div>`;
+}
+
+function renderAllBundles() {
+  const grid = document.getElementById('allBundlesGrid');
+  const countEl = document.getElementById('allBundlesCount');
+  if (countEl) countEl.textContent = bundles.length + ' بكجات توفير';
+  if (!grid) return;
+  if (bundles.length === 0) {
+    grid.innerHTML = `<div class="no-results">لا توجد بكجات توفير متاحة حالياً 🌸</div>`;
+    return;
+  }
+  grid.innerHTML = bundles.map(b => renderBundleCardHtml(b)).join('');
+}
+
+// عرض بكجات مصغّرة على الصفحة الرئيسية (إن وُجد قسم مخصص لها في index.html)
+function renderHomeBundlesPreview() {
+  const sec = document.getElementById('homeBundlesSection');
+  const grid = document.getElementById('homeBundlesGrid');
+  if (!sec || !grid) return;
+  if (bundles.length === 0) { sec.style.display = 'none'; return; }
+  sec.style.display = 'block';
+  grid.innerHTML = bundles.slice(0, 4).map(b => renderBundleCardHtml(b)).join('');
 }
 
 function renderWishlist() {
@@ -3544,6 +4037,20 @@ async function handleSaveCustomization(e) {
   } catch (err) { console.warn(err); }
 }
 
+// 🌸 (إصلاح #1: وميض شاشة التحميل) إخفاء متدرّج لشاشة التحميل الأولية بعد اكتمال أول رسم فعلي للواجهة.
+// ملاحظة: القيم (الصورة، اللون، الحجم) نفسها تُحقن فوراً من سكربت متزامن (Inline) في أعلى <head>
+// الخاص بـ index.html قبل أي Paint، لذا لا يحدث أي وميض بصورة افتراضية ثم صورة الصيدلية الحقيقية.
+function hideAppLoadingOverlay() {
+  const overlay = document.getElementById('appLoadingOverlay');
+  if (!overlay || overlay.dataset.hidden) return;
+  overlay.dataset.hidden = '1';
+  setTimeout(() => {
+    overlay.style.opacity = '0';
+    overlay.style.pointerEvents = 'none';
+    setTimeout(() => overlay.remove(), 400);
+  }, 150);
+}
+
 function applyStoreSettings() {
   if (pharmacyProfile.primaryColor) {
     applyDynamicThemeColor(pharmacyProfile.primaryColor);
@@ -3607,7 +4114,6 @@ function applyStoreSettings() {
 
   const annEl = document.getElementById('announcementBar');
   const annTextEl = document.getElementById('announcementText');
-  const heroImgEl = document.getElementById('primaryHeroBannerImg');
   const pharmWrap = document.getElementById('homePharmacistCtaWrap');
   const drawerPharmBtn = document.getElementById('drawerConsultBtn');
 
@@ -3618,7 +4124,8 @@ function applyStoreSettings() {
   if (annTextEl && pharmacyProfile.announcementText) {
     annTextEl.textContent = pharmacyProfile.announcementText;
   }
-  if (heroImgEl && pharmacyProfile.bannerImgUrl) heroImgEl.src = sanitizeUrl(pharmacyProfile.bannerImgUrl);
+  // 🎠 البنر الرئيسي أصبح سلايدر متحرك بنقاط تصفح (بدل صورة ثابتة واحدة) — يُبنى بالكامل عبر renderHeroCarousel()
+  renderHeroCarousel();
 
   if (pharmWrap) {
     const isPharmVisible = (pharmacyProfile.showPharmacistBanner === true || pharmacyProfile.showPharmacistBanner === 'true' || pharmacyProfile.showPharmacistBanner === undefined);
@@ -3697,10 +4204,13 @@ function initFirestoreSync() {
     }
   }, err => console.warn(err));
 
-  // 🛡️ (إصلاح #1) الاشتراك اللحظي على المنتجات هنا (على مستوى صفحة الأدمن admin.html) يبقى مسموحاً
-  // لأنه محمي أصلاً بقواعد Firestore (isTenantStaff) وهذا الملف الوحيد الذي يخدم لوحة التحكم فقط،
-  // وليس واجهة الزبائن index.html — لذا لا يوجد أي تسريب للسعر عبر WebSockets للزبائن هنا.
-  dbPaths.productsCol().onSnapshot(snap => {
+  // 🛡️ (إصلاح حرج - عزل الأسعار عن الزبائن) script.js يخدم كلاً من index.html (الزبائن) و
+  // admin.html (الإدارة) معاً، لذا فتح onSnapshot على المنتجات هنا بلا شرط كان يعني تسريب اتصال
+  // Firestore اللحظي (وبالتالي الأسعار الحقيقية والتعديلات الفورية) لأي زائر عادي في المتجر أيضاً.
+  // الحل: كل الزوار (بمن فيهم الزبائن) يحصلون على قائمة المنتجات فقط عبر كاش R2 السحابي (ساعة
+  // كاملة، بلا اتصال حي)، بينما الاشتراك اللحظي (onSnapshot) لا يُفتح إلا بعد التأكد الفعلي من أن
+  // المستخدم مشرف معتمد (يتم تفعيله من داخل auth.onAuthStateChanged أدناه بعد إثبات الهوية).
+  function applyProductsSnapshot(snap) {
     if (!snap.empty) {
       const loaded = [];
       snap.forEach(doc => loaded.push({ id: doc.id, ...doc.data() }));
@@ -3715,13 +4225,56 @@ function initFirestoreSync() {
       saveLocalState();
       renderCurrentActiveView();
       renderModernCategories();
-      fetchRealAnalytics();
       checkLowStockAlerts();
+      if (isCurrentUserAdmin()) fetchRealAnalytics();
     }
-  }, err => console.warn(err));
+  }
+
+  fetchCatalogFromR2().then(success => {
+    if (!success) {
+      // احتياط: إن تعذر جلب كاش R2 (سيرفر غير مهيأ)، نجلب لقطة واحدة غير حية من Firestore بدل فتح اتصال دائم
+      dbPaths.productsCol().get().then(applyProductsSnapshot).catch(err => console.warn(err));
+    }
+  });
+
+  if (isCurrentUserAdmin() && !window.__adminProductsSyncAttached) {
+    window.__adminProductsSyncAttached = true;
+    dbPaths.productsCol().onSnapshot(applyProductsSnapshot, err => console.warn(err));
+  }
 
   listenToNotifications();
   recordRealVisit();
+}
+
+// 🌟 جلب كتالوج المنتجات من كاش Cloudflare R2 السريع (متاح لجميع الزوار بأمان، بلا اتصال حي)
+// (المتغير lastCatalogCacheStatus معرّف لاحقاً بقسم "GOOGLE AUTH" ويُستخدم هنا أيضاً)
+async function fetchCatalogFromR2() {
+  try {
+    const res = await fetch(`${WORKER_API_BASE}/api/catalog?pharmacy=${encodeURIComponent(currentPharmacyId)}`, {
+      headers: { 'X-Pharmacy-Id': currentPharmacyId }
+    });
+    if (res.ok) {
+      const cacheStatus = res.headers.get('X-Cache-Status') || res.headers.get('cf-cache-status') || 'HIT';
+      lastCatalogCacheStatus = cacheStatus;
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        products = data;
+        products.forEach(p => {
+          if (p.brand && !brandsData[p.brand]) {
+            brandsData[p.brand] = { name: p.brand, color: hashColor(p.brand), logoUrl: '' };
+          }
+        });
+        saveLocalState();
+        renderCurrentActiveView();
+        renderModernCategories();
+        checkLowStockAlerts();
+        return true;
+      }
+    }
+  } catch (e) {
+    console.warn('R2 catalog fetch fallback to Firestore:', e);
+  }
+  return false;
 }
 
 // ================= 32. NOTIFICATIONS & BROADCAST =================
@@ -3998,9 +4551,38 @@ if (isFirebaseConfigured && auth) {
     updateUserHeaderProfile();
     renderAccountView();
 
-    // 🌟 (إصلاح #1) الآن هوية المستخدم مؤكدة 100% — نعرض إشعار حالة الكاش هنا بعد ثانية واحدة
+    // 🌟 الآن هوية المستخدم مؤكدة 100% — نعرض إشعار حالة الكاش هنا بعد ثانية واحدة
     if (user) {
       announceCacheStatusToAdminIfNeeded();
+    }
+
+    // 🛡️ تفعيل الاشتراك اللحظي بالمنتجات (السعر الحي) حصراً بعد تأكيد أن المستخدم مشرف معتمد
+    if (user && isCurrentUserAdmin() && db && !window.__adminProductsSyncAttached) {
+      window.__adminProductsSyncAttached = true;
+      dbPaths.productsCol().onSnapshot(snap => {
+        if (!snap.empty) {
+          const loaded = [];
+          snap.forEach(doc => loaded.push({ id: doc.id, ...doc.data() }));
+          products = loaded;
+          products.forEach(p => {
+            if (p.brand && !brandsData[p.brand]) {
+              brandsData[p.brand] = { name: p.brand, color: hashColor(p.brand), logoUrl: '' };
+            }
+          });
+          saveLocalState();
+          renderCurrentActiveView();
+          renderModernCategories();
+          checkLowStockAlerts();
+          fetchRealAnalytics();
+        }
+      }, err => console.warn(err));
+    }
+
+    // ⚡ (تحميل كسول) بمجرد تأكد صلاحيات الأدمن، نهيّئ فقط تبويب الإحصائيات الظاهر افتراضياً؛
+    // بقية التبويبات (الطلبات، بنك المنتجات، الموظفين...) لا تُحمّل إلا عند نقر المشرف عليها فعلياً.
+    if (user && isCurrentUserAdmin() && document.getElementById('adminSecStats')) {
+      checkLowStockAlerts();
+      switchAdminSection('stats');
     }
   });
 }
@@ -4161,29 +4743,16 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   await loadDynamicTheme(pharmacyProfile.templateId);
   renderCurrentActiveView();
+  hideAppLoadingOverlay(); // 🌸 إخفاء شاشة التحميل الأولية بسلاسة بعد اكتمال أول عملية رسم للواجهة
 
   window.addEventListener('hashchange', checkUrlHashForProduct);
 
+  // ⚡ (تحميل كسول للوحة الأدمن) لا نجلب أي قائمة ثقيلة (طلبات، بنك منتجات، موظفين...) هنا مطلقاً.
+  // بمجرد تأكد صلاحيات المشرف عبر auth.onAuthStateChanged، يتم تلقائياً تفعيل تبويب "الإحصائيات"
+  // فقط كبداية، وبقية التبويبات (switchAdminSection) تجلب بياناتها حصراً عند الضغط عليها فعلياً —
+  // هذا يقلل قراءات Firestore غير الضرورية عند كل فتح للوحة التحكم بشكل كبير.
   if (window.location.pathname.includes('admin.html') || document.getElementById('adminOrdersManageContainer')) {
-    fetchRealAnalytics();
-    listenToAdminOrdersRealtime();
-    fetchAdminCoupons();
-    populateBundleFilterDropdowns();
-    renderBundleChips();
-    renderAdminBundlesList();
-    fetchAuditLogs();
-    renderAdminCategoriesList();
-    renderAdminBrandsList();
-    populateOfferFilterDropdowns();
-    renderOfferProdChips();
-    renderPromoCardsListAdmin();
-    fetchStaffList();
-    fetchArchivedProducts();
-    fetchSuperAdminPaymentInfo();
-    checkLowStockAlerts();
-    if (typeof fetchTenantMasterCatalog === 'function') {
-      fetchTenantMasterCatalog();
-    }
+    initAdminAudioAlertPreference();
   }
 });
 // ربط دوال البكجات والعروض المبوبة بالنطاق العام للنافذة (window)
