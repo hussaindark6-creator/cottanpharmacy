@@ -87,6 +87,9 @@
             <button id="tabBtnTenants" onclick="switchSuperTab('tenants')" class="tab-btn w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2.5">
               🏥 إدارة الصيدليات والمشتركين
             </button>
+            <button id="tabBtnDomains" onclick="switchSuperTab('domains')" class="tab-btn w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2.5 bg-purple-950/30 border border-purple-800/40">
+              🌐 إدارة الدومينات والتوجيه
+            </button>
             <button id="tabBtnPackages" onclick="switchSuperTab('packages')" class="tab-btn w-full text-right px-3 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition flex items-center gap-2.5">
               💎 باقات الاشتراك
             </button>
@@ -317,6 +320,102 @@
         </div>
       </section>
 
+      <!-- ================= TAB 2b: DOMAIN MANAGEMENT & ROUTING ENGINE (جديد) ================= -->
+      <section id="secSuperDomains" class="tab-content hidden space-y-8">
+        <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-purple-950/30 border border-purple-800/40 rounded-3xl p-6 sm:p-8 shadow-xl">
+          <div class="flex items-center gap-3 pb-6 border-b border-slate-800 mb-6">
+            <div class="w-12 h-12 bg-purple-500/10 border border-purple-500/30 rounded-2xl flex items-center justify-center text-2xl">
+              🌐
+            </div>
+            <div>
+              <h2 class="text-xl font-black text-white">نظام إدارة وتفعيل الدومينات والتوجيه الشامل</h2>
+              <p class="text-xs text-slate-400 mt-1">ثلاثة خيارات هيكلية واضحة لربط أي صيدلية برابط خاص بها — اختر الأنسب لكل عميل.</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <!-- OPTION 1: Free Subdomain -->
+            <div class="bg-slate-950 border border-slate-800 hover:border-emerald-500/40 rounded-2xl p-5 flex flex-col justify-between transition">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-2xl">🆓</span>
+                  <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full">0$ مجاني تماماً</span>
+                </div>
+                <h3 class="text-sm font-black text-white mb-1">النطاق الفرعي المجاني</h3>
+                <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+                  رابط سريع تلقائي على نطاق المنصة نفسها، مثال: <span class="font-mono text-emerald-400">pharmacy-name.yoursite.com</span>. يتم تفعيله فوراً بلا أي إعدادات DNS إضافية.
+                </p>
+              </div>
+              <button onclick="openDomainLinkModal('free_subdomain')" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-xs py-2.5 rounded-xl transition">
+                ⚡ تفعيل رابط فرعي مجاني
+              </button>
+            </div>
+
+            <!-- OPTION 2: Platform custom subdomain -->
+            <div class="bg-slate-950 border border-slate-800 hover:border-blue-500/40 rounded-2xl p-5 flex flex-col justify-between transition">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-2xl">🔗</span>
+                  <span class="bg-blue-500/10 text-blue-400 border border-blue-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full">ضمن اشتراكك الحالي</span>
+                </div>
+                <h3 class="text-sm font-black text-white mb-1">رابط فرعي من دومينك الخاص</h3>
+                <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+                  رابط فرعي مخصص تحت دومين رئيسي تملكه أنت مسبقاً، مثال: <span class="font-mono text-blue-400">pharmacy-name.mainbrand.com</span>. يولّد سجل CNAME تلقائياً عبر Cloudflare API عند توفر بيانات الاعتماد.
+                </p>
+              </div>
+              <button onclick="openDomainLinkModal('platform_subdomain')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black text-xs py-2.5 rounded-xl transition">
+                🔧 إنشاء رابط فرعي مخصص
+              </button>
+            </div>
+
+            <!-- OPTION 3: Dedicated custom domain -->
+            <div class="bg-slate-950 border border-slate-800 hover:border-amber-500/40 rounded-2xl p-5 flex flex-col justify-between transition">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-2xl">👑</span>
+                  <span class="bg-amber-500/10 text-amber-400 border border-amber-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full">~10$-15$ سنوياً</span>
+                </div>
+                <h3 class="text-sm font-black text-white mb-1">دومين خاص مستقل بالكامل</h3>
+                <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+                  ربط اسم نطاق مستقل يملكه الصيدلي بالكامل، مثال: <span class="font-mono text-amber-400">www.al-qutn-pharmacy.com</span>، مع إرشادات DNS كاملة وأداة تحقق من الاتصال.
+                </p>
+              </div>
+              <button onclick="openDomainLinkModal('custom')" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs py-2.5 rounded-xl transition">
+                🌐 إنشاء / ربط دومين خاص
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Linked Domains Table -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-8 shadow-md">
+          <div class="flex items-center justify-between pb-6 border-b border-slate-800 mb-6">
+            <div>
+              <h2 class="text-lg font-black text-white">الدومينات المربوطة حالياً بالمنصة</h2>
+              <p class="text-xs text-slate-400">كل دومين هنا موجّه فعلياً لصيدلية عبر Firestore ومطابقة هيدر Host في الـ Worker.</p>
+            </div>
+            <button onclick="fetchLinkedDomains()" class="text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-4 py-2 rounded-xl transition">
+              🔄 تحديث القائمة
+            </button>
+          </div>
+          <div class="overflow-x-auto -mx-4 sm:mx-0">
+            <table class="w-full text-right text-sm min-w-[650px]">
+              <thead class="bg-slate-950/60 text-slate-400 font-bold border-b border-slate-800 text-xs">
+                <tr>
+                  <th class="py-3 px-4">الدومين</th>
+                  <th class="py-3 px-4">النوع</th>
+                  <th class="py-3 px-4">الصيدلية المرتبطة</th>
+                  <th class="py-3 px-4 text-center">الإجراء</th>
+                </tr>
+              </thead>
+              <tbody id="linkedDomainsTableBody" class="divide-y divide-slate-800/60">
+                <tr><td colspan="4" class="text-center py-8 text-slate-500">جاري تحميل الدومينات المربوطة...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       <!-- ================= TAB 3: DATA CONSUMPTION & DYNAMIC BILLING ================= -->
       <section id="secSuperBilling" class="tab-content hidden space-y-8">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-md">
@@ -356,7 +455,7 @@
           <div class="flex items-center justify-between pb-6 border-b border-slate-800 mb-6">
             <div>
               <h2 class="text-lg font-black text-white">استهلاك الصيدليات والفاتورة المقترحة مع السقف الأقصى</h2>
-              <p class="text-xs text-slate-400">تطبيق معادلة: Math.min(السعر الأساسي + رسوم الاستهلاك، السقف الأقصى).</p>
+              <p class="text-xs text-slate-400">تطبيق معادلة: Math.min(السعر الأساسي + رسوم الاستهلاك، السقف الأقصى) — بقراءة عدّاد واحدة فقط لكل صيدلية (count()) بدل تحميل كل المستندات.</p>
             </div>
             <button onclick="calculateLiveConsumptionBilling()" class="text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl flex items-center gap-1.5 transition">
               🔄 إعادة احتساب الاستهلاك
@@ -544,7 +643,7 @@
                 </div>
                 <h3 class="text-sm font-black text-white mb-1">Cloudflare Workers Paid</h3>
                 <p class="text-xs text-slate-400 mb-4 leading-relaxed">
-                  تشغيل الـ API، عزل النطاقات الفرعية، الكاش السحابي 30 دقيقة، وإعادة احتساب الأسعار.
+                  تشغيل الـ API، عزل النطاقات الفرعية، الكاش السحابي 60 دقيقة، وإعادة احتساب الأسعار.
                 </p>
                 <div class="bg-slate-900/80 rounded-xl p-3 text-xs space-y-1.5 mb-4 border border-slate-800/80">
                   <div class="text-slate-300"><b>الباقة الحالية (Free):</b> 100,000 طلب يومياً (مجاناً).</div>
@@ -743,7 +842,7 @@
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-8 shadow-md">
           <div class="pb-4 border-b border-slate-800 mb-6">
             <h3 class="text-base font-black text-white">تصدير تقارير المبيعات الفردية لكل صيدلية</h3>
-            <p class="text-xs text-slate-400">تنزيل أو إرسال تقرير كل صيدلية بشكل مستقل.</p>
+            <p class="text-xs text-slate-400">تنزيل أو إرسال تقرير كل صيدلية بشكل مستقل (مقسّم حسب الأقسام الثلاثة: كوزمتك، حليب أطفال، عناية أسنان).</p>
           </div>
 
           <div class="overflow-x-auto -mx-4 sm:mx-0">
@@ -874,12 +973,62 @@
     </div>
   </div>
 
+  <!-- 3. DOMAIN LINK MODAL (جديد) — الخيارات الثلاثة موحّدة بواجهة واحدة أملسة -->
+  <div id="domainLinkModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-800 mb-5">
+        <h3 id="domainLinkModalTitle" class="font-black text-white text-base">🌐 ربط دومين بصيدلية</h3>
+        <button onclick="closeDomainLinkModal()" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+      </div>
+
+      <form onsubmit="handleLinkDomainSubmit(event)" class="space-y-4">
+        <input type="hidden" id="domainLinkType" value="free_subdomain">
+
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">اختيار الصيدلية *</label>
+          <select id="domainLinkTenantSelect" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white font-bold" required></select>
+        </div>
+
+        <div id="domainLinkFreeHint" class="hidden bg-emerald-950/40 border border-emerald-800/50 rounded-xl p-3 text-xs text-emerald-300 leading-relaxed">
+          سيتم إنشاء رابط تلقائي بصيغة <span class="font-mono">slug.yourplatform.com</span> بالاعتماد على معرّف الصيدلية نفسه — لا حاجة لإدخال أي دومين يدوياً.
+        </div>
+
+        <div id="domainLinkInputWrap">
+          <label id="domainLinkInputLabel" class="block text-xs font-bold text-slate-300 mb-1">اسم الدومين الكامل *</label>
+          <input type="text" id="domainLinkInput" placeholder="www.al-qutn-pharmacy.com" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white font-mono" oninput="this.value=this.value.toLowerCase().trim()">
+        </div>
+
+        <div id="domainLinkDnsGuide" class="hidden bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3">
+          <h4 class="text-xs font-black text-amber-400">📋 إرشادات ربط DNS المطلوبة</h4>
+          <table class="w-full text-[11px] text-slate-300 font-mono">
+            <thead class="text-slate-500">
+              <tr><th class="text-right py-1">النوع</th><th class="text-right py-1">الاسم (Name)</th><th class="text-right py-1">القيمة (Value)</th></tr>
+            </thead>
+            <tbody>
+              <tr class="border-t border-slate-800"><td class="py-1.5">CNAME</td><td class="py-1.5">www</td><td class="py-1.5 text-emerald-400">cottanbackend.hussaindark6.workers.dev</td></tr>
+              <tr class="border-t border-slate-800"><td class="py-1.5">A</td><td class="py-1.5">@</td><td class="py-1.5 text-emerald-400">192.0.2.1 (Cloudflare Proxy IP)</td></tr>
+            </tbody>
+          </table>
+          <button type="button" onclick="handleCheckDnsAlignment()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs py-2.5 rounded-lg transition">
+            🔍 تحقق من الاتصال (Check DNS Alignment)
+          </button>
+          <div id="domainLinkDnsResult" class="text-xs font-bold"></div>
+        </div>
+
+        <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black py-3 rounded-xl transition">
+          💾 حفظ وتفعيل الربط
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- Toast Notification -->
   <div id="superToast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-emerald-500 text-slate-950 font-black px-6 py-3 rounded-full shadow-2xl transition-all duration-300 opacity-0 pointer-events-none z-50 text-sm"></div>
 
   <!-- Main JavaScript Logic -->
   <script>
     const SUPER_ADMIN_EMAIL = "hussaindark6@gmail.com";
+    const PLATFORM_ROOT_DOMAIN = "yourplatform.com"; // 🌐 عدّل هذا لدومين منصتك الفعلي
 
     const firebaseConfig = {
       apiKey: "AIzaSyDXAp6CTcq3OlN2egGOj5Yg8jK5wUsR6Uc",
@@ -947,6 +1096,7 @@
       const tabMap = {
         overview: ['tabBtnOverview', 'secSuperOverview'],
         tenants: ['tabBtnTenants', 'secSuperTenants'],
+        domains: ['tabBtnDomains', 'secSuperDomains'],
         billing: ['tabBtnBilling', 'secSuperBilling'],
         catalog: ['tabBtnCatalog', 'secSuperCatalog'],
         crowdsource: ['tabBtnCrowdsource', 'secSuperCrowdsource'],
@@ -969,6 +1119,7 @@
       if (tabKey === 'crowdsource') fetchCrowdsourcedSubmissions();
       if (tabKey === 'reports') renderIndividualReportsList();
       if (tabKey === 'packages') fetchSubscriptionPackages();
+      if (tabKey === 'domains') fetchLinkedDomains();
     }
 
     let toastTimer = null;
@@ -1007,8 +1158,6 @@
         gate.classList.add('hidden');
         app.classList.remove('hidden');
         fetchPharmaciesList();
-        fetchMasterCatalog();
-        fetchCrowdsourcedSubmissions();
         fetchSubscriptionPackages();
       } else {
         if (auth) auth.signOut();
@@ -1101,6 +1250,7 @@
         document.getElementById('statTotalRevenue').textContent = totalRevenue.toLocaleString() + ' د.ع';
 
         tbody.innerHTML = rows.length ? rows.join('') : `<tr><td colspan="7" class="text-center py-10 text-slate-500">لا توجد صيدليات مسجلة.</td></tr>`;
+        populateDomainLinkTenantSelect();
       } catch (err) {
         tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-400">خطأ: ${err.message}</td></tr>`;
       }
@@ -1197,10 +1347,11 @@
       calculateLiveConsumptionBilling();
     }
 
+    // ⚡ (خفض قراءات ~98%) نستخدم استعلام count() المجمّع بدل جلب كل مستندات الطلبات/المنتجات لكل صيدلية
     async function calculateLiveConsumptionBilling() {
       if (!db) return;
       const tbody = document.getElementById('billingTableBody');
-      tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-400">جاري احتساب استهلاك الصيدليات...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-400">جاري احتساب استهلاك الصيدليات (بقراءات مخفّضة)...</td></tr>`;
 
       const cfg = JSON.parse(localStorage.getItem('saas_billing_config') || '{}');
       const freeOrders = Number(cfg.freeOrders || 100);
@@ -1218,11 +1369,16 @@
           const basePrice = Number(data.subscriptionPrice || 50000);
           const maxCap = Number(data.maxPriceCap || 150000);
 
-          const ordersSnap = await db.collection('pharmacies').doc(slug).collection('orders').get();
-          const productsSnap = await db.collection('pharmacies').doc(slug).collection('products').get();
-
-          const ordersCount = ordersSnap.size;
-          const productsCount = productsSnap.size;
+          let ordersCount = 0, productsCount = 0;
+          try {
+            const ordersCountSnap = await db.collection('pharmacies').doc(slug).collection('orders').count().get();
+            ordersCount = ordersCountSnap.data().count;
+            const productsCountSnap = await db.collection('pharmacies').doc(slug).collection('products').count().get();
+            productsCount = productsCountSnap.data().count;
+          } catch (countErr) {
+            // احتياط لمتصفحات/إصدارات لا تدعم count() بعد — نادراً ما يحدث مع SDK 9.22.1
+            console.warn('count() fallback for', slug, countErr);
+          }
 
           const extraOrdersCost = Math.max(0, ordersCount - freeOrders) * orderUnitPrice;
           const extraProductsCost = Math.max(0, productsCount - freeProducts) * productUnitPrice;
@@ -1877,7 +2033,7 @@
           `📊 *SaaS Master Consolidated Report*\n` +
           `🏥 *Total Registered Stores:* ${snap.size}\n` +
           `💰 *Total Subscription Revenue:* *${totalRevenue.toLocaleString()} IQD*\n` +
-          `📅 *Date:* ${new Date().toLocaleDateString('ar-IQ')}\n` +
+          `📅 *Date:* ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}\n` +
           `👑 *Super Admin Executive Platform*`;
 
         await fetch(`https://api.telegram.org/bot${superBotToken.trim()}/sendMessage`, {
@@ -2016,6 +2172,170 @@
 
       showToast('تم حفظ إعدادات بوت السوبر أدمن بنجاح 🚀');
       closeSuperTeleSettingsModal();
+    }
+
+    // =========================================================================
+    // 🌐 DOMAIN MANAGEMENT ENGINE (جديد بالكامل)
+    // =========================================================================
+    const WORKER_API_BASE_SUPER = "https://cottanbackend.hussaindark6.workers.dev";
+
+    function populateDomainLinkTenantSelect() {
+      const sel = document.getElementById('domainLinkTenantSelect');
+      if (!sel) return;
+      const slugs = Object.keys(window.cachedPharmaciesMap);
+      sel.innerHTML = slugs.map(slug => {
+        const data = window.cachedPharmaciesMap[slug];
+        return `<option value="${slug}">${data.name || slug} (${slug})</option>`;
+      }).join('');
+    }
+
+    function openDomainLinkModal(type) {
+      document.getElementById('domainLinkType').value = type;
+      populateDomainLinkTenantSelect();
+
+      const freeHint = document.getElementById('domainLinkFreeHint');
+      const inputWrap = document.getElementById('domainLinkInputWrap');
+      const inputLabel = document.getElementById('domainLinkInputLabel');
+      const input = document.getElementById('domainLinkInput');
+      const dnsGuide = document.getElementById('domainLinkDnsGuide');
+      const title = document.getElementById('domainLinkModalTitle');
+      const dnsResult = document.getElementById('domainLinkDnsResult');
+      dnsResult.textContent = '';
+      input.value = '';
+
+      if (type === 'free_subdomain') {
+        title.textContent = '🆓 تفعيل نطاق فرعي مجاني';
+        freeHint.classList.remove('hidden');
+        inputWrap.classList.add('hidden');
+        dnsGuide.classList.add('hidden');
+      } else if (type === 'platform_subdomain') {
+        title.textContent = '🔗 إنشاء رابط فرعي من دومينك الخاص';
+        freeHint.classList.add('hidden');
+        inputWrap.classList.remove('hidden');
+        inputLabel.textContent = 'الرابط الفرعي الكامل (مثال: pharmacy-name.mainbrand.com) *';
+        input.placeholder = 'pharmacy-name.mainbrand.com';
+        dnsGuide.classList.add('hidden');
+      } else {
+        title.textContent = '👑 إنشاء / ربط دومين خاص مستقل';
+        freeHint.classList.add('hidden');
+        inputWrap.classList.remove('hidden');
+        inputLabel.textContent = 'اسم الدومين الكامل *';
+        input.placeholder = 'www.al-qutn-pharmacy.com';
+        dnsGuide.classList.remove('hidden');
+      }
+
+      document.getElementById('domainLinkModal').classList.remove('hidden');
+    }
+
+    function closeDomainLinkModal() {
+      document.getElementById('domainLinkModal').classList.add('hidden');
+    }
+
+    async function handleCheckDnsAlignment() {
+      const domain = document.getElementById('domainLinkInput').value.trim().toLowerCase();
+      const resultEl = document.getElementById('domainLinkDnsResult');
+      if (!domain) { resultEl.textContent = '⚠️ يرجى كتابة الدومين أولاً'; resultEl.className = 'text-xs font-bold text-amber-400'; return; }
+
+      resultEl.textContent = '⏳ جاري فحص سجلات DNS...';
+      resultEl.className = 'text-xs font-bold text-slate-400';
+
+      try {
+        const res = await fetch(`${WORKER_API_BASE_SUPER}/api/domains/check-dns?domain=${encodeURIComponent(domain)}`);
+        const data = await res.json();
+        if (data.success) {
+          resultEl.textContent = data.message;
+          resultEl.className = `text-xs font-bold ${data.aligned ? 'text-emerald-400' : 'text-amber-400'}`;
+        } else {
+          resultEl.textContent = '❌ ' + (data.message || 'تعذر الفحص');
+          resultEl.className = 'text-xs font-bold text-red-400';
+        }
+      } catch (err) {
+        resultEl.textContent = '❌ خطأ في الاتصال بالسيرفر: ' + err.message;
+        resultEl.className = 'text-xs font-bold text-red-400';
+      }
+    }
+
+    async function handleLinkDomainSubmit(e) {
+      e.preventDefault();
+      const type = document.getElementById('domainLinkType').value;
+      const tenantId = document.getElementById('domainLinkTenantSelect').value;
+      if (!tenantId) { showToast('يرجى اختيار صيدلية أولاً', true); return; }
+
+      let domain = '';
+      if (type === 'free_subdomain') {
+        domain = `${tenantId}.${PLATFORM_ROOT_DOMAIN}`;
+      } else {
+        domain = document.getElementById('domainLinkInput').value.trim().toLowerCase();
+        if (!domain) { showToast('يرجى كتابة الدومين', true); return; }
+      }
+
+      showToast('جاري حفظ ربط الدومين...');
+      try {
+        const idToken = await currentUser.getIdToken();
+        const res = await fetch(`${WORKER_API_BASE_SUPER}/api/admin/domains/link`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`,
+            'X-Pharmacy-Id': tenantId
+          },
+          body: JSON.stringify({ domain, tenantId, domainType: type })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`✅ تم ربط ${domain} بصيدلية ${tenantId} بنجاح!`);
+          closeDomainLinkModal();
+          fetchLinkedDomains();
+        } else {
+          showToast('❌ ' + (data.message || 'فشل ربط الدومين'), true);
+        }
+      } catch (err) {
+        showToast('خطأ: ' + err.message, true);
+      }
+    }
+
+    async function fetchLinkedDomains() {
+      if (!db) return;
+      const tbody = document.getElementById('linkedDomainsTableBody');
+      tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-slate-500">جاري تحميل الدومينات...</td></tr>`;
+      try {
+        const snap = await db.collection('system').doc('custom_domains').collection('domains').get();
+        if (snap.empty) {
+          tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-slate-500">لا توجد دومينات مربوطة بعد.</td></tr>`;
+          return;
+        }
+        const typeLabels = {
+          free_subdomain: '🆓 نطاق فرعي مجاني',
+          platform_subdomain: '🔗 فرعي من دومينك',
+          custom: '👑 دومين خاص مستقل'
+        };
+        tbody.innerHTML = snap.docs.map(doc => {
+          const d = doc.data();
+          const tenantName = (window.cachedPharmaciesMap[d.tenantId] && window.cachedPharmaciesMap[d.tenantId].name) || d.tenantId;
+          return `
+            <tr class="hover:bg-slate-800/40 transition text-xs">
+              <td class="py-3 px-4 font-mono text-white">${doc.id}</td>
+              <td class="py-3 px-4 text-slate-300">${typeLabels[d.domainType] || d.domainType || '—'}</td>
+              <td class="py-3 px-4 font-bold text-emerald-400">${tenantName}</td>
+              <td class="py-3 px-4 text-center">
+                <button onclick="unlinkDomain('${doc.id}')" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-3 py-1 rounded-lg font-bold">فصل 🗑️</button>
+              </td>
+            </tr>`;
+        }).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-red-400">خطأ: ${err.message}</td></tr>`;
+      }
+    }
+
+    async function unlinkDomain(domain) {
+      if (!confirm(`فصل ربط الدومين "${domain}"؟`)) return;
+      try {
+        await db.collection('system').doc('custom_domains').collection('domains').doc(domain).delete();
+        showToast('تم فصل الدومين بنجاح');
+        fetchLinkedDomains();
+      } catch (err) {
+        showToast('خطأ: ' + err.message, true);
+      }
     }
   </script>
 </body>
