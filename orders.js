@@ -1,6 +1,6 @@
 /* ==========================================================
    SaaS Multi-Tenant Engine — js/orders.js
-   Version: 4.1.0 (Atomic Concurrency Protection & 80mm Receipts)
+   Version: 4.2.0 (costPrice Snapshot for Accurate Historical Profit Reports)
    ========================================================== */
 
 import { db, dbPaths, currentPharmacyId, WORKER_API_BASE } from './config.js';
@@ -55,10 +55,23 @@ export async function executeAtomicOrderCheckout(showToastFn) {
     const lineTotal = unitPrice * qty;
     calculatedSubtotal += lineTotal;
 
+    // 🌟 (جديد — لقطة سعر التكلفة لحساب صافي الربح بدقة تاريخياً)
+    // نأخذ costPrice من نسخة المنتج المخزّنة محلياً بالفعل (products، القادمة من كاش R2/
+    // Firestore realtime sync) — لا توجد هنا أي قراءة إضافية من Firebase، تماماً بما
+    // يتوافق مع قيد (Zero-Read) في واجهة الزبائن. تُحفظ هذه القيمة كجزء ثابت من مستند
+    // الطلب نفسه، فتبقى تقارير الأرباح صحيحة تاريخياً حتى لو غيّر الأدمن سعر التكلفة
+    // الحالي للمنتج لاحقاً من لوحة التحكم. البكجات ليس لها costPrice على مستوى الحزمة
+    // نفسها حالياً (تُترك null) لأن هامش ربح البكج يعتمد على تركيبته الداخلية من منتجات
+    // متعددة، وهذا خارج نطاق هذا الإصلاح.
+    const unitCostPrice = (!isBundle && item && item.costPrice !== undefined && item.costPrice !== null && item.costPrice !== '')
+      ? Number(item.costPrice)
+      : null;
+
     return {
       id: id,
       name: item ? (item.name || item.title) : 'منتج',
       unitPrice: unitPrice,
+      unitCostPrice: unitCostPrice,
       price: unitPrice,
       quantity: qty,
       lineTotal: lineTotal,
