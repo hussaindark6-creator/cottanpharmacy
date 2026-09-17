@@ -2190,6 +2190,12 @@ async function buildDetailedOrdersCSV() {
   };
 
   let totalCOD = 0, totalDelivery = 0, totalNetStore = 0;
+  // 🌟 (جديد — صافي الربح) نعتمد حصراً على unitCostPrice المحفوظة كلقطة داخل كل طلب وقت
+  // البيع (وليس سعر التكلفة الحالي للمنتج، الذي قد يتغيّر لاحقاً من لوحة التحكم فيُفسد دقة
+  // تقارير الأشهر السابقة). itemsMissingCost يُحصي عدد القطع المباعة التي لم يُحدَّد لها
+  // سعر تكلفة بعد، ليكون الرقم النهائي صريحاً بأنه "حد أدنى" للربح لا رقماً نهائياً دقيقاً
+  // 100% ما دام بعض المنتجات ناقصة سعر التكلفة.
+  let totalCostOfGoods = 0, itemsMissingCost = 0, itemsWithCost = 0;
 
   orders.forEach(o => {
     const orderTotal = Number(o.total || 0);
@@ -2198,6 +2204,17 @@ async function buildDetailedOrdersCSV() {
     totalCOD += orderTotal;
     totalDelivery += delFee;
     totalNetStore += netStore;
+
+    (o.items || []).forEach(it => {
+      if (it.isBundle) return; // هامش ربح البكجات غير محسوب حالياً (خارج نطاق هذا الإصلاح)
+      const qty = Number(it.quantity || 1);
+      if (it.unitCostPrice !== undefined && it.unitCostPrice !== null) {
+        totalCostOfGoods += Number(it.unitCostPrice) * qty;
+        itemsWithCost += qty;
+      } else {
+        itemsMissingCost += qty;
+      }
+    });
 
     const englishDate = formatOrderDateEnglish(o);
     const itemsByGroup = { cosmetics: [], baby_milk: [], oral_care: [] };
@@ -2240,8 +2257,13 @@ async function buildDetailedOrdersCSV() {
   csv += `"TOTAL SALES (IQD)","${totalCOD}"\n`;
   csv += `"TOTAL DELIVERY FEES (IQD)","${totalDelivery}"\n`;
   csv += `"NET STORE REVENUE (IQD, excl. delivery)","${totalNetStore}"\n`;
+  csv += `"TOTAL COST OF GOODS SOLD (IQD)","${totalCostOfGoods}"\n`;
+  csv += `"ESTIMATED NET PROFIT (IQD, excl. delivery)","${Math.max(0, totalNetStore - totalCostOfGoods)}"\n`;
+  if (itemsMissingCost > 0) {
+    csv += `"NOTE","${itemsMissingCost} sold unit(s) had no costPrice set — profit figure above is a minimum estimate, not exact"\n`;
+  }
 
-  return { csv, totalOrders: orders.length, totalRevenue: totalCOD, totalDelivery, totalNetStore };
+  return { csv, totalOrders: orders.length, totalRevenue: totalCOD, totalDelivery, totalNetStore, totalCostOfGoods, netProfit: Math.max(0, totalNetStore - totalCostOfGoods), itemsMissingCost };
 }
 
 async function exportOrdersToCSV() {
@@ -2265,6 +2287,29 @@ async function exportOrdersToCSV() {
 }
 
 // ================= 21. CLINICAL PRODUCTS CRUD, DIRECT UPLOAD & AUTO-CROWDSOURCING =================
+
+// 🌟 (جديد — حساب صافي الربح) حقل costPrice غير موجود إطلاقاً بنماذج المنتج الحالية.
+// بدل تعديل ملف admin.html يدوياً (مما يعني تعديل ملفين لإصلاح واحد)، نحقن الحقل تلقائياً
+// عند فتح أي من نموذجي إضافة/تعديل المنتج إذا لم يكن موجوداً أصلاً — بنفس أسلوب "الإصلاح
+// الذاتي" المستخدم سابقاً لنافذة التعديل السريع بالمتجر. هذا يضمن ظهور الحقل فوراً بمجرد
+// رفع هذا الملف وحده، بلا أي تنسيق إضافي مطلوب مع ملف HTML.
+function ensureCostPriceField(anchorInputId, costInputId) {
+  if (document.getElementById(costInputId)) return;
+  const anchorInput = document.getElementById(anchorInputId);
+  if (!anchorInput) return;
+  // نفترض أن حقل السعر القديم مغلّف بعنصر .form-field (نفس نمط باقي حقول هذا المشروع)
+  const anchorField = anchorInput.closest('.form-field') || anchorInput.parentElement;
+  if (!anchorField || !anchorField.parentElement) return;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'form-field';
+  wrap.innerHTML = `
+    <label>سعر التكلفة (اختياري — لحساب صافي الربح) 💰</label>
+    <input type="number" id="${costInputId}" min="0" step="0.01" placeholder="مثال: 3500">
+  `;
+  anchorField.parentElement.insertBefore(wrap, anchorField.nextSibling);
+}
+
 function toggleLowStockFilter() {
   isLowStockFilterActive = !isLowStockFilterActive;
   const btn = document.getElementById('btnFilterLowStock');
@@ -2311,11 +2356,14 @@ function openAdminQuickEditModal(id) {
 
   populateCategoryDropdowns();
 
+  ensureCostPriceField('quickEditProdOldPrice', 'quickEditProdCostPrice');
+
   document.getElementById('quickEditProdId').value = p.id;
   document.getElementById('quickEditProdName').value = p.name || '';
   document.getElementById('quickEditProdBrand').value = p.brand || '';
   document.getElementById('quickEditProdPrice').value = p.price || '';
   if (document.getElementById('quickEditProdOldPrice')) document.getElementById('quickEditProdOldPrice').value = p.oldPrice || '';
+  if (document.getElementById('quickEditProdCostPrice')) document.getElementById('quickEditProdCostPrice').value = (p.costPrice !== undefined && p.costPrice !== null) ? p.costPrice : '';
   if (document.getElementById('quickEditProdSize')) document.getElementById('quickEditProdSize').value = p.size || '';
   if (document.getElementById('quickEditProdStockQty')) document.getElementById('quickEditProdStockQty').value = (p.stockQuantity !== undefined ? p.stockQuantity : 10);
   if (document.getElementById('quickEditProdRating')) document.getElementById('quickEditProdRating').value = p.rating || '';
@@ -2358,6 +2406,8 @@ async function saveAdminQuickEdit() {
   const price = Number(document.getElementById('quickEditProdPrice').value);
   const oldPriceVal = document.getElementById('quickEditProdOldPrice') ? document.getElementById('quickEditProdOldPrice').value.trim() : '';
   const oldPrice = oldPriceVal ? Number(oldPriceVal) : null;
+  const costPriceVal = document.getElementById('quickEditProdCostPrice') ? document.getElementById('quickEditProdCostPrice').value.trim() : '';
+  const costPrice = costPriceVal ? Number(costPriceVal) : null;
   const size = document.getElementById('quickEditProdSize') ? document.getElementById('quickEditProdSize').value.trim() : 'عبوة قياسية';
   const stockQty = document.getElementById('quickEditProdStockQty') ? Number(document.getElementById('quickEditProdStockQty').value || 10) : 10;
   const category = document.getElementById('quickEditProdCat').value;
@@ -2381,6 +2431,7 @@ async function saveAdminQuickEdit() {
     brand: sanitizeText(brand),
     price,
     oldPrice,
+    costPrice,
     size,
     stockQuantity: stockQty,
     category,
@@ -2429,12 +2480,14 @@ function previewAdminProdImg(url) {
 
 function resetAdminProductForm() {
   if (!document.getElementById('adminProdDocId')) return;
+  ensureCostPriceField('adminProdOldPrice', 'adminProdCostPrice');
   document.getElementById('adminProdDocId').value = '';
   document.getElementById('adminProdName').value = '';
   document.getElementById('adminProdBrand').value = '';
   document.getElementById('adminProdSize').value = '';
   document.getElementById('adminProdPrice').value = '';
   document.getElementById('adminProdOldPrice').value = '';
+  if (document.getElementById('adminProdCostPrice')) document.getElementById('adminProdCostPrice').value = '';
   document.getElementById('adminProdImgUrl').value = '';
   document.getElementById('adminProdDesc').value = '';
   document.getElementById('adminProdIng').value = '';
@@ -2457,6 +2510,8 @@ async function handleAdminProductSave(e) {
   const price = Number(document.getElementById('adminProdPrice').value);
   const oldPriceVal = document.getElementById('adminProdOldPrice').value.trim();
   const oldPrice = oldPriceVal ? Number(oldPriceVal) : null;
+  const costPriceVal = document.getElementById('adminProdCostPrice') ? document.getElementById('adminProdCostPrice').value.trim() : '';
+  const costPrice = costPriceVal ? Number(costPriceVal) : null;
   const stockQty = document.getElementById('adminProdStockQty') ? Number(document.getElementById('adminProdStockQty').value || 10) : 10;
 
   if (!name || !brand || isNaN(price) || price <= 0) {
@@ -2473,6 +2528,7 @@ async function handleAdminProductSave(e) {
     stockQuantity: stockQty,
     price: price,
     oldPrice: oldPrice,
+    costPrice: costPrice,
     imageUrl: sanitizeUrl(document.getElementById('adminProdImgUrl').value.trim()),
     description: sanitizeText(document.getElementById('adminProdDesc').value.trim()),
     ingredients: sanitizeText(document.getElementById('adminProdIng').value.trim()),
