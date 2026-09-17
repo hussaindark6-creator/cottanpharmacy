@@ -1088,27 +1088,63 @@ header {
 /* ==========================================================
    PRODUCT BUNDLES
    ========================================================== */
+/* 🌟 (إصلاح — البكجات عمودية وتأخذ مساحة ضخمة على الموبايل) السبب: .bundle-grid كانت
+   Grid بعمود واحد على الموبايل (تكديس عمودي كامل الارتفاع) وعمودين فقط بدءاً من 640px.
+   الحل: سلايدر أفقي حقيقي (Flex + Scroll Snap) على الموبايل والآيباد معاً مع كارت أصغر،
+   وتُستبدل تلقائياً بشبكة عادية على شاشات الحاسوب الكبيرة (1024px فأعلى) حيث المساحة الرأسية
+   ليست مشكلة أصلاً. */
 .bundle-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  gap: 12px;
   margin: 14px 0;
+  padding: 2px 2px 8px;
+  scrollbar-width: none;
 }
 
-@media (min-width: 640px) {
-  .bundle-grid { grid-template-columns: repeat(2, 1fr); gap: 18px; }
+.bundle-grid::-webkit-scrollbar { display: none; }
+
+@media (min-width: 1024px) {
+  .bundle-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    overflow: visible;
+    scroll-snap-type: none;
+    gap: 18px;
+    padding: 0;
+  }
 }
 
 .bundle-card {
+  scroll-snap-align: start;
+  flex: 0 0 auto;
+  width: 76vw;
+  max-width: 230px;
   background: #fff;
   border: 1.5px solid var(--line);
   border-radius: var(--radius-lg);
-  padding: 16px;
+  padding: 12px;
   box-shadow: var(--shadow-soft);
   position: relative;
   display: flex;
   flex-direction: column;
   transition: all .25s ease;
+}
+
+@media (min-width: 480px) {
+  .bundle-card { width: 220px; }
+}
+
+@media (min-width: 1024px) {
+  .bundle-card {
+    width: auto;
+    max-width: none;
+    padding: 16px;
+  }
 }
 
 .bundle-card:hover {
@@ -1134,24 +1170,32 @@ header {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   background: var(--surface);
   border-radius: 14px;
-  padding: 12px;
+  padding: 10px;
   margin-bottom: 12px;
-  min-height: 120px;
+  min-height: 90px;
+}
+
+@media (min-width: 1024px) {
+  .bundle-thumb-row { gap: 8px; padding: 12px; min-height: 120px; }
 }
 
 .bundle-thumb-item {
-  width: 64px;
-  height: 64px;
-  border-radius: 10px;
+  width: 52px;
+  height: 52px;
+  border-radius: 9px;
   background: #fff;
   border: 1px solid var(--line);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
+}
+
+@media (min-width: 1024px) {
+  .bundle-thumb-item { width: 64px; height: 64px; border-radius: 10px; }
 }
 
 .bundle-thumb-item img {
@@ -2541,9 +2585,18 @@ header {
     margin: 0 auto;
     padding: 0;
   }
+  /* 🌟 (إصلاح جذري — تجمد الطباعة الحرارية) السبب الحقيقي: خاصية backdrop-filter: blur(4px)
+     الموروثة من قاعدة .receipt-modal-overlay العامة (المُعرَّفة أعلى الملف) لم تكن تُلغى هنا
+     إطلاقاً. عند الطباعة، يضطر محرك المتصفح لحساب تأثير الـ blur فوق كامل الصفحة قبل رسمها
+     كصورة للطباعة — وهذا خلل معروف في متصفحات Chromium يجعل نافذة الطباعة تتجمد لعشرات
+     الثواني أو أكثر من دقيقة كاملة. إلغاء الخاصية صراحة هنا يحل المشكلة نهائياً دون أي أثر
+     على شكل النافذة أثناء الاستخدام العادي (خارج وضع الطباعة).
+     */
   .receipt-modal-overlay {
     background: none !important;
     position: static !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
   }
   .receipt-modal-card {
     border: none !important;
