@@ -397,6 +397,213 @@ header {
 }
 
 /* ==========================================================
+   🧭 TOP HORIZONTAL TAB NAVIGATION (الرئيسية | أقسام | بكجات | العروض)
+   ========================================================== */
+.top-tab-nav {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 4px 2px 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--line);
+}
+
+.top-tab-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.top-tab {
+  flex-shrink: 0;
+  padding: 6px 2px 12px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-soft);
+  border-bottom: 2.5px solid transparent;
+  margin-bottom: -1px;
+  white-space: nowrap;
+  transition: color .2s, border-color .2s;
+}
+
+.top-tab.active {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ⭕ ممر الأقسام الدائري بالصفحة الرئيسية */
+.home-cat-circles-row {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding: 4px 2px 6px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.home-cat-circles-row::-webkit-scrollbar {
+  display: none;
+}
+
+.home-cat-circle {
+  flex: 0 0 auto;
+  width: 74px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: transform .2s ease;
+}
+
+.home-cat-circle:hover {
+  transform: translateY(-3px);
+}
+
+.home-cat-circle-img {
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.04);
+}
+
+.home-cat-circle-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.home-cat-circle-more {
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--accent);
+  background: var(--surface);
+}
+
+.home-cat-circle-lbl {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--ink);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 74px;
+}
+
+/* 🎠 زر الدعوة لاتخاذ إجراء داخل شرائح البنر الرئيسي */
+.hero-cta-btn {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 800;
+  font-size: 12.5px;
+  padding: 9px 20px;
+  border-radius: 999px;
+  width: fit-content;
+  margin-top: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  transition: transform .15s;
+}
+
+.hero-cta-btn:hover {
+  transform: translateY(-1px);
+}
+
+.hero-promo-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 900;
+  background: #fff;
+  color: var(--accent);
+  padding: 3px 10px;
+  border-radius: 999px;
+  width: fit-content;
+  border: 1px solid var(--line);
+  margin-bottom: 6px;
+}
+
+/* 🎁 بطاقتا العروض المزدوجتان المتجاورتان */
+.double-banner-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 6px 0 18px;
+}
+
+.double-banner-card {
+  position: relative;
+  border-radius: var(--radius-md);
+  padding: 16px;
+  min-height: 110px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform .2s ease, box-shadow .2s ease;
+  box-shadow: var(--shadow-soft);
+}
+
+.double-banner-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+.double-banner-bundles {
+  background: linear-gradient(135deg, #FCE7F3 0%, #FBCFE8 100%);
+  border: 1.5px solid #F9A8D4;
+}
+
+.double-banner-offers {
+  background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%);
+  border: 1.5px solid #93C5FD;
+}
+
+.double-banner-text h4 {
+  margin: 0 0 2px;
+  font-size: 15px;
+  font-weight: 900;
+  color: #1F2937;
+}
+
+.double-banner-text p {
+  margin: 0 0 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #4B5563;
+}
+
+.double-banner-btn {
+  display: inline-block;
+  background: rgba(255,255,255,0.85);
+  color: #1F2937;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 5px 12px;
+  border-radius: 999px;
+}
+
+.double-banner-icon {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 28px;
+  opacity: .5;
+}
+
+/* أزرار اختيار نوع الاستشارة (نافذة استشارة الصيدلي) */
+.consult-toggle-btn.active {
+  background: var(--accent) !important;
+  color: #fff !important;
+  border-color: var(--accent) !important;
+}
+
+/* ==========================================================
    SIDE MENU DRAWER
    ========================================================== */
 .menu-overlay { 
