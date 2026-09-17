@@ -1,6 +1,6 @@
 /* ==========================================================
    SaaS Multi-Tenant Engine — js/state.js
-   Version: 4.5.0 (Crash-Safe State & Protected Storage)
+   Version: 4.6.0 (Zero-Flash Hydration & Decoupled Fast-Path Persistence)
    ========================================================== */
 
 import { currentPharmacyId } from './config.js';
@@ -37,7 +37,6 @@ export let brandsData = {
 };
 
 export let categories = [];
-export let products = [];
 export let archivedProducts = [];
 export let bundles = [];
 export let notifications = [];
@@ -57,7 +56,10 @@ export let isLowStockFilterActive = false;
 export let previousViewBeforeProduct = 'home';
 export let previousScrollBeforeProduct = 0;
 
-export let pharmacyProfile = {
+// 🌟 (إصلاح #2 — وميض التصميم) القيم الافتراضية الثابتة كخط رجعة فقط لو ما فيه أي كاش محلي بعد
+// (أول زيارة على متصفح جديد تماماً). أي زيارة تالية تُحمَّل فوراً من آخر نسخة محفوظة محلياً،
+// فلا يظهر أبداً التصميم الوردي الافتراضي فوق تصميم الصيدلية الحقيقي المخصص.
+const DEFAULT_PHARMACY_PROFILE = {
   id: currentPharmacyId,
   name: 'صيدلية القطن',
   templateId: 'template_default',
@@ -83,12 +85,46 @@ export let pharmacyProfile = {
   promoCards: []
 };
 
+// 🌟 نفس منطق الحماية الآمنة (safeJSONParse) لكن مخصص لدمج الكاش مع الافتراضيات
+// حتى لو تغيّرت حقول جديدة بالتحديثات المستقبلية ولم تكن موجودة بالنسخة القديمة المحفوظة.
+function hydrateCachedProfile() {
+  const cached = safeJSONParse(getStorageKey('store_settings'), null);
+  if (cached && typeof cached === 'object') {
+    return { ...DEFAULT_PHARMACY_PROFILE, ...cached };
+  }
+  return DEFAULT_PHARMACY_PROFILE;
+}
+
+// 🌟 نفس الفكرة لكتالوج المنتجات: عرض آخر نسخة معروفة فوراً (لتفادي فراغ "لا توجد منتجات"
+// قبل وصول كاش R2)، ثم تُستبدَل تلقائياً بالنسخة الطازجة فور وصولها من main.js.
+export let products = safeJSONParse(getStorageKey('products_cache'), []);
+
+export let pharmacyProfile = hydrateCachedProfile();
+
+// 🌟 (إصلاح #3 — بطء الأزرار) الحفظ المحلي للكتالوج والبروفايل انتقل إلى داخل الـ setters
+// نفسها، فيحدث فقط لحظة تغيّر البيانات فعلياً (أي عند مزامنة فايربيس/كاش R2)، لا عند كل
+// ضغطة سلة أو مفضلة. هذا يمنع تجميد الواجهة الناتج عن إعادة تسلسل (JSON.stringify) لكامل
+// كتالوج المنتجات وبروفايل المتجر بشكل متكرر وغير ضروري.
 export function setPharmacyProfile(newProfile) {
   pharmacyProfile = { ...pharmacyProfile, ...newProfile };
+  try {
+    localStorage.setItem(getStorageKey('store_settings'), JSON.stringify(pharmacyProfile));
+  } catch (e) {
+    console.warn('Store settings cache save fallback:', e);
+  }
 }
 
 export function setBrandsData(newBrands) { brandsData = newBrands; }
-export function setProducts(newProds) { products = newProds; }
+
+export function setProducts(newProds) {
+  products = newProds;
+  try {
+    localStorage.setItem(getStorageKey('products_cache'), JSON.stringify(products));
+  } catch (e) {
+    console.warn('Products cache save fallback:', e);
+  }
+}
+
 export function setCategories(newCats) { categories = newCats; }
 export function setBundles(newBundles) { bundles = newBundles; }
 export function setArchivedProducts(newArchived) { archivedProducts = newArchived; }
@@ -128,13 +164,13 @@ export function getBrandColor(brandName) {
   return hashColor(brandName || 'Pharmacy');
 }
 
+// 🌟 (إصلاح #3) الآن تحفظ فقط البيانات الخفيفة وسريعة التغيّر (سلة/مفضلة/طلبات).
+// كتالوج المنتجات وبروفايل المتجر لهما مسار حفظ خاص بهما داخل setProducts/setPharmacyProfile.
 export function saveLocalState() {
   try {
     localStorage.setItem(getStorageKey('cart'), JSON.stringify(cart));
     localStorage.setItem(getStorageKey('wishlist'), JSON.stringify([...wishlist]));
     localStorage.setItem(getStorageKey('my_orders'), JSON.stringify(myOrders));
-    localStorage.setItem(getStorageKey('store_settings'), JSON.stringify(pharmacyProfile));
-    localStorage.setItem(getStorageKey('products_cache'), JSON.stringify(products));
   } catch (e) {
     console.warn("Storage save fallback:", e);
   }
