@@ -1,7 +1,8 @@
 /* ==========================================================
    SaaS Multi-Tenant Engine — js/main.js
-   Version: 6.0.1 (1-Hour R2 Cache w/ Correct Admin Toast Timing,
-                    Hero Slider Forced Custom Colors, Manual R2 Rebuild)
+   Version: 6.1.0 (Redirect-Based Google Auth for Multi-Tenant Domains,
+                    Self-Healing Quick-Edit Modal, Always-Visible Phone Login,
+                    1-Hour R2 Cache, Hero Slider Forced Custom Colors)
    ========================================================== */
 
 import {
@@ -809,10 +810,79 @@ function populateSfQuickEditCategories(selectedCatId) {
   ).join('');
 }
 
+// 🌟 (إصلاح جذري — نافذة التعديل السريع لا تفتح) السبب الحقيقي: عناصر النافذة
+// (#sfQuickEditModal وكل الحقول بداخلها) غير موجودة إطلاقاً بملف index.html، بينما تحاول
+// openAdminQuickEditModal الوصول لها مباشرة عبر getElementById(...).value — فيرمي المتصفح
+// خطأ "Cannot set properties of null" في أول سطر، وينهار تنفيذ الدالة بالكامل قبل أن تصل
+// أبداً لسطر إظهار النافذة (.classList.add('open')). الحل المعماري الأنسب الذي لا يتطلب أي
+// تعديل على ملف HTML منفصل: بناء عناصر النافذة ديناميكياً وحقنها في الصفحة تلقائياً عند أول
+// استخدام فقط (باستخدام كلاسات admin-quick-modal-overlay / admin-quick-card / form-field
+// الجاهزة والمُنسّقة أصلاً بملف style.css)، فتُصلح نفسها بنفسها بدون أي كسر لأي شيء آخر.
+function ensureQuickEditModalMarkup() {
+  if (document.getElementById('sfQuickEditModal')) return;
+
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+    <div class="admin-quick-modal-overlay" id="sfQuickEditModal">
+      <div class="admin-quick-card" style="max-width:460px; text-align:right; max-height:88vh; overflow-y:auto;">
+        <div class="consult-header" style="padding:0 0 12px; border-bottom:1px solid var(--line); margin-bottom:14px;">
+          <h4 style="margin:0; font-weight:900;">تعديل سريع للمنتج ✏️</h4>
+          <button type="button" onclick="window.App.closeSfQuickEditModal()" style="font-weight:900; font-size:16px;">✕</button>
+        </div>
+        <input type="hidden" id="sfQuickEditProdId">
+        <div class="form-field">
+          <label>اسم المنتج</label>
+          <input type="text" id="sfQuickEditProdName">
+        </div>
+        <div class="form-field">
+          <label>القسم</label>
+          <select id="sfQuickEditProdCat"></select>
+        </div>
+        <div class="form-field">
+          <label>الكمية بالمخزون</label>
+          <input type="number" id="sfQuickEditProdStockQty" min="0">
+        </div>
+        <div class="form-field">
+          <label>رابط صورة المنتج</label>
+          <input type="text" id="sfQuickEditProdImg">
+          <div id="sfQuickEditProdImgPreviewBox" style="display:none; margin-top:8px; justify-content:center;">
+            <img id="sfQuickEditProdImgPreviewEl" style="width:70px; height:70px; object-fit:cover; border-radius:12px; border:1px solid var(--line);">
+          </div>
+        </div>
+        <div class="form-field">
+          <label>الوصف</label>
+          <textarea id="sfQuickEditProdDesc" rows="2"></textarea>
+        </div>
+        <div class="form-field">
+          <label>المكونات</label>
+          <textarea id="sfQuickEditProdIng" rows="2"></textarea>
+        </div>
+        <div class="form-field">
+          <label>طريقة الاستخدام</label>
+          <textarea id="sfQuickEditProdUsage" rows="2"></textarea>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <div class="form-field" style="flex:1;">
+            <label>التقييم</label>
+            <input type="number" id="sfQuickEditProdRating" step="0.1" min="0" max="5">
+          </div>
+          <div class="form-field" style="flex:1;">
+            <label>عدد التقييمات</label>
+            <input type="number" id="sfQuickEditProdReviews" min="0">
+          </div>
+        </div>
+        <button type="button" class="auth-btn-google" style="margin-top:6px;" onclick="window.App.saveSfQuickEdit()">💾 حفظ التعديلات فورياً</button>
+      </div>
+    </div>`;
+  document.body.appendChild(wrap.firstElementChild);
+}
+
 function openAdminQuickEditModal(id) {
   if (!isCurrentUserAdmin(pharmacyProfile, currentStaffData)) return;
   const p = findProduct(id);
   if (!p) return;
+
+  ensureQuickEditModalMarkup();
 
   document.getElementById('sfQuickEditProdId').value = id;
   document.getElementById('sfQuickEditProdName').value = p.name || '';
@@ -990,7 +1060,10 @@ function updateAdminInterfaceState() {
   if (bnAdmin) bnAdmin.style.display = isAdmin ? 'flex' : 'none';
 }
 
-let accountAuthTab = 'google';
+// 🌟 (إصلاح — Phone Login UI) accountAuthTab يتحكم الآن فقط بالتبديل بين "دخول" و"تسجيل حساب"
+// ضمن نموذج الهاتف نفسه. زر Google لم يعد يُخفي نموذج الهاتف داخل تبويب منفصل — كلاهما
+// ظاهر دائماً في نفس الوقت، لأن إخفاء نموذج الهاتف خلف تبويب هو ما جعله يبدو "اختفى" من الواجهة.
+let accountAuthTab = 'phone-login';
 
 function setAccountAuthTab(tab) {
   accountAuthTab = tab;
@@ -1016,28 +1089,20 @@ function renderAccountView() {
     return;
   }
 
-  const tabsHtml = `
-    <div style="display:flex; gap:6px; margin-bottom:16px; background:var(--surface); padding:4px; border-radius:12px;">
-      <button type="button" onclick="window.App.setAccountAuthTab('google')" style="flex:1; padding:8px; border-radius:9px; font-weight:800; font-size:12.5px; background:${accountAuthTab === 'google' ? '#fff' : 'transparent'}; box-shadow:${accountAuthTab === 'google' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none'};">Google</button>
-      <button type="button" onclick="window.App.setAccountAuthTab('phone-login')" style="flex:1; padding:8px; border-radius:9px; font-weight:800; font-size:12.5px; background:${accountAuthTab !== 'google' ? '#fff' : 'transparent'}; box-shadow:${accountAuthTab !== 'google' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none'};">الاسم ورقم الهاتف</button>
-    </div>`;
-
-  if (accountAuthTab === 'google') {
-    container.innerHTML = `
-      <div class="account-card">
-        ${tabsHtml}
-        <h3>تسجيل الدخول المباشر</h3>
-        <p style="font-size:12.5px; color:var(--text-soft); margin:8px 0 16px;">سجلي الدخول بنقرة واحدة لحفظ منتجاتك ومتابعة طلباتكِ:</p>
-        <button class="auth-btn-google" onclick="window.App.signInWithGoogle()">دخول سريع عبر Google</button>
-      </div>`;
-    return;
-  }
-
   const isRegister = accountAuthTab === 'phone-register';
   container.innerHTML = `
     <div class="account-card">
-      ${tabsHtml}
-      <h3>${isRegister ? 'إنشاء حساب جديد' : 'تسجيل الدخول'}</h3>
+      <h3>تسجيل الدخول</h3>
+      <p style="font-size:12.5px; color:var(--text-soft); margin:8px 0 16px;">سجلي الدخول بنقرة واحدة لحفظ منتجاتك ومتابعة طلباتكِ:</p>
+      <button class="auth-btn-google" onclick="window.App.signInWithGoogle()">دخول سريع عبر Google</button>
+
+      <div style="display:flex; align-items:center; gap:10px; margin:18px 0;">
+        <div style="flex:1; height:1px; background:var(--line);"></div>
+        <span style="font-size:11.5px; color:var(--text-soft); font-weight:800;">أو بالاسم ورقم الهاتف</span>
+        <div style="flex:1; height:1px; background:var(--line);"></div>
+      </div>
+
+      <h3 style="font-size:14px;">${isRegister ? 'إنشاء حساب جديد' : 'تسجيل الدخول برقم الهاتف'}</h3>
       <div id="phoneAuthStatus" style="margin:8px 0; font-size:12px; font-weight:800;"></div>
       ${isRegister ? `
         <div class="form-field">
@@ -1137,6 +1202,17 @@ function explainAuthError(err) {
   }
 }
 
+// 🌟 (إصلاح جذري — Google Auth لا تكتمل الجلسة) السبب الحقيقي: signInWithPopup يعتمد على
+// إطار iframe مخفي مستضاف على authDomain الموحّد للمشروع (cottanpharmacy.firebaseapp.com)
+// لتمرير نتيجة الدخول للنافذة الأصلية عبر تخزين طرف-ثالث (Third-Party Storage). بما أن هذا
+// مشروع Multi-Tenant يعمل على نطاقات فرعية ودومينات مخصصة متعددة (مختلفة عن authDomain)،
+// تحظر المتصفحات الحديثة (Chrome/Safari) هذا التخزين الطرف-ثالث بشكل افتراضي. النتيجة
+// العملية: تُفتح نافذة جوجل، يختار الزبون حسابه، تُغلق النافذة بنجاح ظاهرياً... لكن الـ SDK
+// يعجز عن قراءة النتيجة من الإطار المخفي فيرفض الـ Promise برمز "auth/popup-closed-by-user"
+// (وهو رمز كان يُتجاهل عمداً بالكود القديم بوصفه إلغاءً من المستخدم!) فلا تكتمل الجلسة ولا
+// تُحفظ أبداً — تماماً كما وُصفت المشكلة. الحل المعماري السليم: الانتقال الكامل لآلية
+// signInWithRedirect، وهي تنقّل حقيقي على مستوى الصفحة (Top-Level Navigation) لا تحتاج أي
+// تواصل بين نافذتين ولا تتأثر بحجب التخزين الطرف-ثالث إطلاقاً.
 function signInWithGoogle() {
   if (!auth) {
     showToast('⚠️ تعذر الاتصال بخدمة تسجيل الدخول.');
@@ -1148,24 +1224,29 @@ function signInWithGoogle() {
   }
   const provider = new firebase.auth.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
-  auth.signInWithPopup(provider).then(result => {
-    if (result && result.user) {
-      showToast(`مرحباً ${result.user.displayName || ''} 🌸`);
-    }
-  }).catch(err => {
-    if (err && (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request')) return;
+
+  showToast('جاري تحويلك لتسجيل الدخول عبر Google... 🔄');
+  auth.signInWithRedirect(provider).catch(err => {
     showToast(explainAuthError(err));
   });
 }
 
+// 🌟 يُستدعى فور تحميل الصفحة بعد رجوع Google للموقع (Redirect). لازم تحديث الواجهة يدوياً
+// هنا أيضاً (لا الاعتماد فقط على onAuthStateChanged) لضمان ظهور رسالة الترحيب وتحديث
+// حالة الحساب فوراً بدون أي تأخير أو الحاجة لتفاعل إضافي من الزبون.
 function captureAuthRedirectResult() {
   if (!auth) return;
   auth.getRedirectResult().then(result => {
     if (result && result.user) {
       showToast(`مرحباً ${result.user.displayName || ''} 🌸`);
+      setCurrentUser(result.user);
+      updateUserHeaderProfile();
+      updateAdminInterfaceState();
+      renderAccountView();
+      renderCurrentActiveView();
     }
   }).catch(err => {
-    showToast(explainAuthError(err));
+    if (err && err.code) showToast(explainAuthError(err));
   });
 }
 
