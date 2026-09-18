@@ -1,8 +1,8 @@
 /* ==========================================================
    SaaS Multi-Tenant Engine — js/main.js
-   Version: 6.1.0 (Redirect-Based Google Auth for Multi-Tenant Domains,
-                    Self-Healing Quick-Edit Modal, Always-Visible Phone Login,
-                    1-Hour R2 Cache, Hero Slider Forced Custom Colors)
+   Version: 6.2.0 (Fast Edge-Cached Theme Fetch via /api/theme,
+                    Redirect-Based Google Auth, Self-Healing Quick-Edit Modal,
+                    Always-Visible Phone Login, 1-Hour R2 Catalog Cache)
    ========================================================== */
 
 import {
@@ -1342,6 +1342,29 @@ function announceCacheStatusToAdminIfNeeded() {
   }, 1000);
 }
 
+// 🌟 (جديد — حل جذري لوميض التصميم وتأخر تحديث شاشة التحميل) جلب سريع لإعدادات الثيم من
+// كاش R2/Cache API عبر /api/theme (نفس سرعة /api/catalog تماماً — عادة أقل من 150ms من
+// الحافة) بدل انتظار قراءة Firestore الحية الأبطأ نسبياً. يُستدعى فور الإقلاع، فوق الكاش
+// المحلي الفوري (state.js) القادم من الزيارة السابقة، ويُستبدل لاحقاً ببيانات Firestore
+// الحية الكاملة (onSnapshot) بمجرد وصولها — كل ذلك دون أي قراءة إضافية لحصة Firestore.
+async function fetchThemeFromR2() {
+  try {
+    const res = await fetch(`${WORKER_API_BASE}/api/theme?pharmacy=${encodeURIComponent(currentPharmacyId)}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && typeof data === 'object' && Object.keys(data).length > 0) {
+        setPharmacyProfile(data);
+        applyStoreSettings();
+        renderHeroSlider();
+        return true;
+      }
+    }
+  } catch (e) {
+    console.warn("Theme R2 fetch fallback to Firestore:", e);
+  }
+  return false;
+}
+
 function initFirestoreRealtimeSync() {
   if (!isFirebaseConfigured || !db) return;
 
@@ -1458,6 +1481,7 @@ async function bootstrapApp() {
   updateCartBadge();
   updateUserHeaderProfile();
   updateAdminInterfaceState();
+  fetchThemeFromR2(); // ⚡ لا ننتظرها (fire-and-forget) — تُحدِّث الواجهة أول ما تصل، عادة قبل استجابة Firestore بكثير
   initFirestoreRealtimeSync();
   checkUrlHashForProduct();
 
