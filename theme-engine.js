@@ -257,7 +257,7 @@ export function renderBundleCard(b) {
   }
 
   return `
-    <div class="bundle-card">
+    <div class="bundle-card" onclick="window.showView('bundles')" role="button" tabindex="0">
       <span class="bundle-savings-badge">${sanitizeText(b.savingsBadge || 'توفير فوري 💸')}</span>
       <div class="bundle-thumb-row" style="aspect-ratio:16/11; padding:10px;">
         ${cleanImg ? `<img src="${cleanImg}" style="width:100%; height:100%; object-fit:cover; border-radius:14px;">` : renderAutoCollage()}
@@ -274,7 +274,10 @@ export function renderBundleCard(b) {
           ${b.oldPrice ? `<span class="p-oldprice mono" style="margin-inline-start:6px;">${fmtPrice(b.oldPrice)}</span>` : ''}
         </div>
       </div>
-      <button class="add-cart-btn" onclick="window.App.addBundleToCart('${sanitizeText(b.id)}')">
+      <!-- 🌸 (إصلاح — النقر على الكارت لا يفعل شيئاً) event.stopPropagation() هنا ضروري
+           لمنع الضغط على "أضف للسلة" من تفعيل onclick الخاص بالكارت (الانتقال لقسم
+           البكجات) في نفس الوقت — الزر يبقى بوظيفته الخاصة فقط. -->
+      <button class="add-cart-btn" onclick="event.stopPropagation(); window.App.addBundleToCart('${sanitizeText(b.id)}')">
         🎁 أضف البكج كاملاً للسلة
       </button>
     </div>
