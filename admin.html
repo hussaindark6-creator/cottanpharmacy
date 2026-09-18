@@ -20,32 +20,238 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
+
+  <!-- 🌟 (جديد) أنماط بطاقة تسجيل دخول الأدمن بنفس طابع super-admin.html تماماً (خلفية
+       داكنة زجاجية slate-950، بطاقة slate-900 بحواف دائرية كبيرة، بشارة زمردية، زر Google
+       أبيض بالشعار الملوّن). ذاتية الاكتفاء بالكامل هنا ومعزولة بمعرّفات #adminAuthGateModal
+       و #subscriptionLockGate فقط، فلا تؤثر إطلاقاً على شكل باقي لوحة تحكم الأدمن الوردية
+       أسفلها بعد تسجيل الدخول. -->
+  <style>
+    #adminAuthGateModal {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(2, 6, 23, 0.97);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    #adminAuthGateModal .admin-gate-card {
+      background: #0F172A;
+      border: 1px solid #1E293B;
+      border-radius: 24px;
+      max-width: 400px;
+      width: 100%;
+      padding: 32px 28px;
+      text-align: center;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.55);
+      font-family: 'Cairo', sans-serif;
+    }
+    .admin-gate-icon-badge {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 18px;
+      border-radius: 18px;
+      background: rgba(16,185,129,0.1);
+      border: 1px solid rgba(16,185,129,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+    }
+    .admin-gate-title {
+      font-size: 21px;
+      font-weight: 900;
+      color: #fff;
+      margin: 0 0 8px;
+    }
+    .admin-gate-desc {
+      font-size: 13px;
+      color: #94A3B8;
+      margin: 0 0 22px;
+      line-height: 1.7;
+    }
+    .admin-gate-google-btn {
+      width: 100%;
+      background: #fff;
+      color: #0F172A;
+      font-weight: 800;
+      font-size: 14px;
+      padding: 14px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      border: none;
+      transition: transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    }
+    .admin-gate-google-btn:hover { box-shadow: 0 10px 24px rgba(0,0,0,0.35); }
+    .admin-gate-google-btn:active { transform: scale(0.96); }
+    .admin-gate-error {
+      margin-top: 14px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #F87171;
+      background: rgba(127,29,29,0.3);
+      border: 1px solid rgba(153,27,27,0.6);
+      padding: 10px 12px;
+      border-radius: 10px;
+      text-align: right;
+      line-height: 1.6;
+    }
+    .admin-gate-error.hidden { display: none; }
+    .admin-gate-back-link {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: #64748B;
+      margin-top: 16px;
+      text-decoration: none;
+    }
+    .admin-gate-back-link:hover { color: #94A3B8; }
+
+    /* ==========================================================
+       🌟 (جديد) إعادة تصميم كامل لوحة تحكم الأدمن بطابع super-admin.html الداكن
+       الاحترافي (خلفية slate-950، بطاقات slate-900، شريط جانبي، لمسة زمردية).
+       ==========================================================
+       الفكرة المعمارية: كل مكوّنات هذا المشروع (البطاقات، الحقول، الأزرار) مبنية أصلاً على
+       نظام متغيرات CSS موحّد في style.css (نفس النظام المستخدم لتبديل قوالب المتجر بين
+       الزبائن). لذا إعادة تعريف هذه المتغيرات هنا فقط (بدل إعادة كتابة كل صنف على حدة)
+       تعيد تلوين مُعظم لوحة التحكم تلقائياً بأمان تام، دون أي تعديل على script.js أو أي
+       معرّف/دالة موجودة — تغيير بصري خالص لا يكسر أي وظيفة.
+       ملاحظة صريحة: بعض العناصر القليلة جداً (كشريط تنبيه نقص المخزون الأصفر) لها ألوان
+       ثابتة يدوياً (Hardcoded) داخل HTML مباشرة لا تستجيب لمتغيرات CSS — عولجت أكبرها هنا،
+       والباقي (تفاصيل صغيرة) يحتاج تمريرة تالية مخصصة إن أردتِ تطابقاً بصرياً 100%.
+    */
+    :root, html {
+      color-scheme: dark;
+      --ink: #F1F5F9;
+      --text-soft: #94A3B8;
+      --paper: #020617;
+      --card: #0F172A;
+      --surface: #1E293B;
+      --surface-hover: #334155;
+      --line: #1E293B;
+      --rose: #10B981;
+      --rose-deep: #10B981;
+      --accent: #10B981;
+      --accent-dark: #059669;
+      --on-accent: #06281F;
+      --shadow-soft: 0 4px 20px rgba(0,0,0,0.35);
+      --shadow-hover: 0 10px 30px rgba(0,0,0,0.55);
+    }
+    html, body, header, .view, .wrap, main, #app {
+      background-color: #020617 !important;
+    }
+    body { color: var(--ink); }
+
+    /* ---------- الشريط الجانبي (يستبدل شريط التبويبات الأفقي على الشاشات الكبيرة) ---------- */
+    .admin-sidebar-brand {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 14px;
+      border-bottom: 1px solid #1E293B;
+      margin: 0 -12px 10px;
+    }
+    .admin-sidebar-brand-icon {
+      width: 38px; height: 38px; flex-shrink: 0;
+      background: rgba(16,185,129,0.12);
+      border: 1px solid rgba(16,185,129,0.3);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .admin-sidebar-brand h1 { font-size: 13px; font-weight: 900; color: #fff; margin: 0; line-height: 1.3; }
+    .admin-sidebar-brand p { font-size: 10px; color: #64748B; margin: 2px 0 0; }
+
+    .admin-tab-btn-v {
+      background: transparent !important;
+      color: #94A3B8 !important;
+      text-align: right;
+      border-radius: 10px !important;
+      transition: background .15s, color .15s;
+    }
+    .admin-tab-btn-v:hover { background: #1E293B !important; color: #fff !important; }
+    .admin-tab-btn-v.active {
+      background: #10B981 !important;
+      color: #022C22 !important;
+      box-shadow: 0 6px 16px rgba(16,185,129,0.25);
+    }
+
+    @media (min-width: 901px) {
+      .admin-sidebar-brand { display: flex; }
+      .admin-tabs-nav-view {
+        position: fixed;
+        top: 0; right: 0; bottom: 0;
+        width: 258px;
+        flex-direction: column;
+        align-items: stretch;
+        overflow-y: auto;
+        overflow-x: hidden;
+        background: #0F172A;
+        border-left: 1px solid #1E293B;
+        padding: 0 12px 20px;
+        margin: 0;
+        z-index: 40;
+      }
+      .wrap { margin-right: 258px; }
+      .admin-nav-header { padding-right: 258px; }
+      #adminFloatingAddBtn { left: 24px !important; right: auto !important; }
+    }
+
+    /* ---------- بطاقات وحقول عامة (تستفيد تلقائياً من متغيرات الألوان أعلاه) ---------- */
+    .admin-view-header {
+      background: linear-gradient(135deg, #0F172A 0%, #020617 100%) !important;
+      border-color: #1E293B !important;
+    }
+    .admin-cache-rebuild-bar { background: #0F172A !important; border-color: #1E293B !important; }
+    .form-field input, .form-field textarea, .form-field select {
+      background: #1E293B !important;
+      border-color: #334155 !important;
+      color: #F1F5F9 !important;
+    }
+    .form-field label { color: #94A3B8 !important; }
+  </style>
 </head>
 <body>
 
   <!-- ADMIN AUTHENTICATION GATE -->
+  <!-- 🌟 (إعادة تصميم — نفس طابع بطاقة تسجيل دخول السوبر أدمن) خلفية داكنة زجاجية، بطاقة
+       رمادية داكنة بحواف دائرية كبيرة، أيقونة بشارة زمردية، وزر Google بالشعار الملوّن
+       الرسمي (بدل الزر الأسود البسيط القديم)، بنفس الألوان والمقاسات المستخدمة حرفياً في
+       super-admin.html — لكن بأنماط CSS خاصة معزولة هنا (#adminAuthGateModal) فقط، بلا أي
+       اعتماد على Tailwind، حتى لا يتأثر شكل باقي لوحة تحكم الأدمن أسفلها بأي إعادة ضبط عام.
+  -->
   <div id="adminAuthGateModal">
     <div class="admin-gate-card">
-      <div style="font-size:48px; margin-bottom:12px;">🔒</div>
-      <h3 style="font-size:20px; font-weight:900; margin:0 0 8px; color:#111827;">لوحة تحكم الصيدلية محمية</h3>
-      <p style="font-size:13px; color:#6B7280; margin:0 0 20px; line-height:1.6;">هذا القسم مخصص فقط لمشرف الصيدلية المعتمد أو المشرف العام للمنصة. يرجى تسجيل الدخول للمتابعة:</p>
-      <button onclick="signInWithGoogle()" style="width:100%; background:#111827; color:#fff; padding:14px; border-radius:12px; font-weight:800; font-size:14px; margin-bottom:10px; cursor:pointer;">
+      <div class="admin-gate-icon-badge">🔒</div>
+      <h3 class="admin-gate-title">لوحة تحكم الصيدلية محمية</h3>
+      <p class="admin-gate-desc">هذا القسم مخصص فقط لمشرف الصيدلية المعتمد أو المشرف العام للمنصة. يرجى تسجيل الدخول للمتابعة:</p>
+      <button onclick="signInWithGoogle()" class="admin-gate-google-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
         تسجيل الدخول عبر Google
       </button>
-      <a href="index.html" class="admin-back-store-link" style="display:block; font-size:13px; font-weight:700; color:#6B7280; margin-top:8px;">← العودة للمتجر</a>
+      <div id="adminGateAuthError" class="admin-gate-error hidden"></div>
+      <a href="index.html" class="admin-gate-back-link">← العودة للمتجر</a>
     </div>
   </div>
 
   <!-- SUBSCRIPTION / SUSPENDED BLOCK GATE -->
-  <div id="subscriptionLockGate" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(17, 24, 39, 0.96); backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:20px;">
-    <div class="admin-gate-card" style="border:1.5px solid #EF4444; max-width:440px;">
-      <div style="font-size:48px; margin-bottom:12px;">⚠️</div>
-      <h3 id="lockGateTitle" style="font-size:20px; font-weight:900; margin:0 0 8px; color:#DC2626;">الاشتراك منتهي أو المتجر موقوف</h3>
-      <p id="lockGateDesc" style="font-size:13px; color:#6B7280; margin:0 0 20px; line-height:1.7;">
+  <div id="subscriptionLockGate" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(2, 6, 23, 0.96); backdrop-filter:blur(10px); align-items:center; justify-content:center; padding:20px;">
+    <div class="admin-gate-card" style="border-color:#7F1D1D; max-width:440px;">
+      <div class="admin-gate-icon-badge" style="background:rgba(239,68,68,0.1); border-color:rgba(239,68,68,0.3);">⚠️</div>
+      <h3 id="lockGateTitle" class="admin-gate-title" style="color:#F87171;">الاشتراك منتهي أو المتجر موقوف</h3>
+      <p id="lockGateDesc" class="admin-gate-desc">
         عذراً، انتهت فترة صلاحية اشتراك هذه الصيدلية أو تم تجميد المتجر مؤقتاً من قبل إدارة المنصة.<br>
-        يرجى التواصل مع المشرف العام (<b class="mono" style="color:#111827;">hussaindark6@gmail.com</b>) لتجديد الاشتراك وإعادة تفعيل لوحة التحكم.
+        يرجى التواصل مع المشرف العام (<b class="mono" style="color:#E2E8F0;">hussaindark6@gmail.com</b>) لتجديد الاشتراك وإعادة تفعيل لوحة التحكم.
       </p>
-      <a href="index.html" class="admin-back-btn" style="display:inline-flex; justify-content:center; width:100%; padding:12px; background:#111827;">
+      <a href="index.html" class="admin-gate-google-btn" style="background:#fff; color:#0F172A; text-decoration:none;">
         ← العودة لمتجر الصيدلية
       </a>
     </div>
@@ -106,6 +312,15 @@
 
     <!-- ADMIN TABS NAVIGATION (15 TABS) -->
     <div class="admin-tabs-nav-view">
+      <!-- 🌟 (جديد) رأس الشريط الجانبي — يظهر فقط على الشاشات الكبيرة حيث تتحول قائمة
+           التبويبات لشريط جانبي ثابت، بنفس فكرة بطاقة "Brand" في أعلى شريط السوبر أدمن -->
+      <div class="admin-sidebar-brand">
+        <div class="admin-sidebar-brand-icon">💊</div>
+        <div>
+          <h1>لوحة تحكم الصيدلية</h1>
+          <p>إدارة المتجر والمخزون</p>
+        </div>
+      </div>
       <button class="admin-tab-btn-v active" id="btnTabVStats" onclick="switchAdminSection('stats')">📊 الإحصائيات والأرباح</button>
       <button class="admin-tab-btn-v" id="btnTabVOrders" onclick="switchAdminSection('orders')">📦 إدارة الطلبات والشحن</button>
       <button class="admin-tab-btn-v" id="btnTabVImport" onclick="switchAdminSection('import')" style="background:#059669; color:#fff; font-weight:900;">⚡ استيراد من بنك المنتجات</button>
