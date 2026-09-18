@@ -57,9 +57,136 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <!-- 🌿 (جديد) خط "Amiri" الزخرفي المضاف بجانب Cairo — يُستخدم حصراً بعنوان شاشة التحميل
+       لإعطاء طابع "الصيدليات العتيقة" الفاخر المطلوب، دون المساس بخط الموقع الأساسي إطلاقاً. -->
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Amiri:wght@400;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="style.css">
+
+  <!-- 🌿 (جديد — تصميم شاشة التحميل ملء الشاشة بطابع "الصيدلية العضوية العتيقة")
+       أنماط ذاتية الاكتفاء بالكامل هنا (لا تعتمد على style.css)، لضمان ظهورها فوراً مع أول
+       Paint دون انتظار تحميل أي ملف خارجي إضافي. -->
+  <style>
+    #appLoadingOverlay {
+      background: var(--early-loader-bg, linear-gradient(160deg, #FDF2F6 0%, #FFF9FB 45%, #FBEAF1 100%));
+    }
+    .app-loader-bg-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+      display: none;
+    }
+    .app-loader-scrim {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background: linear-gradient(180deg, rgba(20,10,15,0.15) 0%, rgba(20,10,15,0.55) 100%);
+      opacity: 0;
+      transition: opacity .3s ease;
+    }
+    .app-loader-bg-img[data-loaded="1"] ~ .app-loader-scrim { opacity: 1; }
+    .app-loader-content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      padding: 0 28px;
+      text-align: center;
+    }
+    .app-loader-badge {
+      position: relative;
+      width: 116px;
+      height: 116px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 8px 30px rgba(232,93,138,0.22);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border: 3px solid #fff;
+    }
+    .app-loader-badge::before {
+      content: "";
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 2px solid var(--accent, #E85D8A);
+      opacity: .45;
+      animation: appLoaderPulse 2.2s ease-in-out infinite;
+    }
+    @keyframes appLoaderPulse {
+      0%   { transform: scale(0.92); opacity: .55; }
+      70%  { transform: scale(1.18); opacity: 0; }
+      100% { transform: scale(1.18); opacity: 0; }
+    }
+    .app-loader-title-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 6px;
+    }
+    .app-loader-vine {
+      width: 26px;
+      height: 26px;
+      color: var(--accent, #E85D8A);
+      opacity: .85;
+      flex-shrink: 0;
+    }
+    .app-loader-vine.is-right { transform: scaleX(-1); }
+    #loaderTitleText {
+      font-family: 'Amiri', 'Cairo', serif;
+      font-weight: 700;
+      font-size: 19px;
+      letter-spacing: .3px;
+      background: var(--app-loader-title-color, #7A3B4E);
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+    .app-loader-bg-img[data-loaded="1"] ~ .app-loader-content #loaderTitleText {
+      color: #fff;
+      background: none;
+      -webkit-background-clip: unset;
+      background-clip: unset;
+      text-shadow: 0 2px 10px rgba(0,0,0,.35);
+    }
+    #loaderSubText { font-family: 'Cairo', sans-serif; }
+    .app-loader-bg-img[data-loaded="1"] ~ .app-loader-content #loaderSubText { color: #fff; opacity: .9; text-shadow: 0 1px 6px rgba(0,0,0,.35); }
+    .app-loader-progress-track {
+      width: 150px;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.08);
+      overflow: hidden;
+      margin-top: 2px;
+    }
+    .app-loader-bg-img[data-loaded="1"] ~ .app-loader-content .app-loader-progress-track { background: rgba(255,255,255,0.3); }
+    #loaderProgressBar {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: var(--accent, #E85D8A);
+      transition: width .35s ease;
+    }
+    .app-loader-bg-img[data-loaded="1"] ~ .app-loader-content #loaderProgressBar { background: #fff; }
+    #loaderPercentText {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--text-soft, #9D6274);
+      margin-top: 2px;
+    }
+    .app-loader-bg-img[data-loaded="1"] ~ .app-loader-content #loaderPercentText { color: #fff; opacity: .85; }
+    @media (prefers-reduced-motion: reduce) {
+      .app-loader-badge::before { animation: none; }
+    }
+  </style>
 
   <!-- Firebase SDKs (Compat v9.22.1) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -74,9 +201,20 @@
       var overlay = document.getElementById('appLoadingOverlay');
       if (overlay && s) {
         if (s.loaderBgColor) overlay.style.background = s.loaderBgColor;
+
+        // 🌟 (جديد) صورة شاشة التحميل التي يرفعها الأدمن تتمدد الآن لتغطي كامل الشاشة
+        // (100vw × 100vh) بدل الاقتصار على الدائرة الصغيرة، بينما تعرض الدائرة شعار
+        // الصيدلية (logoUrl) كختم صغير في المنتصف فوق الصورة الكبيرة.
+        var bgImg = document.getElementById('loaderBgImage');
+        if (bgImg && s.loaderImgUrl) {
+          bgImg.src = s.loaderImgUrl;
+          bgImg.onload = function () { bgImg.style.display = 'block'; bgImg.setAttribute('data-loaded', '1'); };
+        }
+
         var img = document.getElementById('loaderPhotoImg');
-        var targetImg = s.loaderImgUrl || s.logoUrl || s.bannerImgUrl;
-        if (img && targetImg) img.src = targetImg;
+        var badgeImgTarget = s.logoUrl || (!s.loaderImgUrl ? s.bannerImgUrl : '');
+        if (img && badgeImgTarget) img.src = badgeImgTarget;
+
         var wrap = document.getElementById('loaderCircleWrap');
         if (wrap && s.loaderCircleSize) { wrap.style.width = s.loaderCircleSize + 'px'; wrap.style.height = s.loaderCircleSize + 'px'; }
         var title = document.getElementById('loaderTitleText');
@@ -84,9 +222,26 @@
         var sub = document.getElementById('loaderSubText');
         if (sub && s.loaderSubText) sub.textContent = s.loaderSubText;
       }
+
+      // 🌟 (جديد — إكمال ميزة كانت ناقصة) شريط تقدم وهمي سلس يمنح إحساساً بتحميل حقيقي
+      // بدل ظهور دائري فقط بلا أي مؤشر تقدم. main.js يستخدم هذين العنصرين ويوقف
+      // window.__loaderInterval تلقائياً عند اكتمال التحميل الفعلي — هذا فقط يبدأ الحركة.
+      var bar = document.getElementById('loaderProgressBar');
+      var pct = document.getElementById('loaderPercentText');
+      var fakeProgress = 0;
+      if (bar && pct) {
+        window.__loaderInterval = setInterval(function () {
+          fakeProgress += (90 - fakeProgress) * 0.12 + 0.4;
+          if (fakeProgress > 90) fakeProgress = 90;
+          bar.style.width = fakeProgress.toFixed(0) + '%';
+          pct.textContent = fakeProgress.toFixed(0) + '%';
+        }, 220);
+      }
+
       // 🛡️ صمام أمان: إن تعذر تحميل script.js أو تعطلت الشبكة، لا تبقى شاشة التحميل عالقة للأبد
       setTimeout(function () {
         if (overlay && !overlay.dataset.hidden) {
+          if (window.__loaderInterval) clearInterval(window.__loaderInterval);
           overlay.style.opacity = '0';
           setTimeout(function () { overlay.remove(); }, 400);
         }
@@ -96,14 +251,42 @@
 </head>
 <body>
 
-  <!-- ================= شاشة التحميل الأولية ================= -->
-  <div id="appLoadingOverlay" style="position:fixed; inset:0; z-index:99999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; background:linear-gradient(160deg, #FDF2F6 0%, #FFF9FB 45%, #FBEAF1 100%); transition:opacity .4s ease;">
-    <div id="loaderCircleWrap" style="width:120px; height:120px; border-radius:50%; background:#fff; box-shadow:0 8px 30px rgba(232,93,138,0.18); display:flex; align-items:center; justify-content:center; overflow:hidden; border:3px solid #fff;">
-      <img id="loaderPhotoImg" src="" alt="" style="width:100%; height:100%; object-fit:cover; display:none;" onload="this.style.display='block'; this.previousElementSibling && (this.previousElementSibling.style.display='none');">
-      <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#E85D8A" stroke-width="1.6"><circle cx="12" cy="8" r="3.4"/><circle cx="7.5" cy="10.5" r="3.4"/><circle cx="16.5" cy="10.5" r="3.4"/><path d="M12 14v8"/></svg>
+  <!-- ================= شاشة التحميل الأولية (ملء الشاشة + طابع صيدلية عضوية عتيقة) ================= -->
+  <div id="appLoadingOverlay" style="position:fixed; inset:0; z-index:99999; display:flex; align-items:center; justify-content:center; overflow:hidden; transition:opacity .4s ease;">
+    <img id="loaderBgImage" class="app-loader-bg-img" src="" alt="">
+    <div class="app-loader-scrim"></div>
+
+    <!-- 🌿 زخرفة نباتية عضوية (أغصان وأوراق ملتفة) — تُرسم بـ SVG خفيف الوزن، بلا أي صور خارجية -->
+    <svg class="app-loader-vine" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="position:absolute; top:8%; right:6%; width:64px; height:64px; opacity:.35; z-index:1;">
+      <path d="M4 20c3-6 2-11 8-14M12 6c2 2 1 5 4 6M16 12c1 2 3 2 4 4" stroke-linecap="round"/>
+      <circle cx="8" cy="9" r="1.4" fill="currentColor" stroke="none"/>
+      <circle cx="14" cy="7" r="1.1" fill="currentColor" stroke="none"/>
+      <circle cx="19" cy="15" r="1.2" fill="currentColor" stroke="none"/>
+    </svg>
+    <svg class="app-loader-vine is-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" style="position:absolute; bottom:10%; left:5%; width:56px; height:56px; opacity:.3; z-index:1;">
+      <path d="M4 20c3-6 2-11 8-14M12 6c2 2 1 5 4 6M16 12c1 2 3 2 4 4" stroke-linecap="round"/>
+      <circle cx="8" cy="9" r="1.4" fill="currentColor" stroke="none"/>
+      <circle cx="14" cy="7" r="1.1" fill="currentColor" stroke="none"/>
+    </svg>
+
+    <div class="app-loader-content">
+      <div id="loaderCircleWrap" class="app-loader-badge">
+        <img id="loaderPhotoImg" src="" alt="" style="width:100%; height:100%; object-fit:cover; display:none;" onload="this.style.display='block'; this.previousElementSibling && (this.previousElementSibling.style.display='none');">
+        <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#E85D8A" stroke-width="1.6"><circle cx="12" cy="8" r="3.4"/><circle cx="7.5" cy="10.5" r="3.4"/><circle cx="16.5" cy="10.5" r="3.4"/><path d="M12 14v8"/></svg>
+      </div>
+
+      <div class="app-loader-title-wrap">
+        <svg class="app-loader-vine" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 21c0-6 3-9 7-11M12 10c1.5 1 1 3.5 3 4.5" stroke-linecap="round"/><circle cx="12" cy="21" r="1" fill="currentColor" stroke="none"/></svg>
+        <div id="loaderTitleText">جاري تحميل الموقع</div>
+        <svg class="app-loader-vine is-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 21c0-6 3-9 7-11M12 10c1.5 1 1 3.5 3 4.5" stroke-linecap="round"/><circle cx="12" cy="21" r="1" fill="currentColor" stroke="none"/></svg>
+      </div>
+      <div id="loaderSubText">انتظر لحظة من فضلك ..</div>
+
+      <div class="app-loader-progress-track">
+        <div id="loaderProgressBar"></div>
+      </div>
+      <div id="loaderPercentText">0%</div>
     </div>
-    <div id="loaderTitleText" style="font-weight:900; font-size:15px; color:#E85D8A;">جاري تحميل الموقع</div>
-    <div id="loaderSubText" style="font-size:12px; color:#9D6274; font-weight:700;">انتظر لحظة من فضلك ..</div>
   </div>
 
   <!-- ================= شاشة تجميد المتجر (اشتراك منتهي / موقوف) ================= -->
