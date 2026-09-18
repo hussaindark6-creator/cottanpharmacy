@@ -1,8 +1,8 @@
 /* ==========================================================
    SaaS Multi-Tenant Engine — js/main.js
-   Version: 6.2.0 (Fast Edge-Cached Theme Fetch via /api/theme,
-                    Redirect-Based Google Auth, Self-Healing Quick-Edit Modal,
-                    Always-Visible Phone Login, 1-Hour R2 Catalog Cache)
+   Version: 6.3.0 (Race-Proof Home/Categories/Bundles Rendering,
+                    Loader Waits for All Core Data Before Hiding,
+                    Fast Edge-Cached Theme Fetch, Redirect-Based Google Auth)
    ========================================================== */
 
 import {
@@ -1372,7 +1372,7 @@ function initFirestoreRealtimeSync() {
     setPharmacyProfile(data);
     if (data.brandsData) setBrandsData({ ...brandsData, ...data.brandsData });
     applyStoreSettings();
-    renderHome();
+    renderCurrentActiveView();
   }
 
   const pharmacyDocPromise = dbPaths.pharmacyDoc().get({ source: 'server' }).then(doc => {
@@ -1383,12 +1383,22 @@ function initFirestoreRealtimeSync() {
     if (doc.exists) applyPharmacyDocData(doc.data());
   }, console.warn);
 
-  dbPaths.categoriesCol().get({ source: 'server' }).then(snap => {
+  // 🌟 (إصلاح جذري — "الأقسام/البكجات ما تظهر إلا بعد الرجوع للصفحة") السبب الحقيقي: كل
+  // مستمع بيانات (بروفايل الصيدلية، الأقسام، البكجات) كان يستدعي دالة رسم "خاصة به" فقط
+  // (renderHome أو renderModernCategories)، دون أي تنسيق بين الاثنين. لو وصلت بيانات
+  // البروفايل بعد وصول الأقسام/البكجات (وهذا متوقع جداً — كل قراءة شبكة تصل بترتيب مختلف
+  // كل مرة)، كان renderHome() القديم يعيد رسم قسم البكجات فقط باستخدام بيانات تلك اللحظة،
+  // بينما لا شيء يعيد رسم الأقسام على الإطلاق إلا عند تبديل العرض يدوياً — فتبقى فارغة حتى
+  // يغادر الزائر الصفحة ويعود إليها (وعندها تكون البيانات قد وصلت فعلاً بالذاكرة). الحل:
+  // كل مستمع الآن يستدعي renderCurrentActiveView() بعد تحديث حالته الخاصة — فأياً كان
+  // العرض الحالي (رئيسية/أقسام/بكجات)، يُعاد رسمه بأحدث نسخة من كل البيانات المتوفرة في
+  // الذاكرة في تلك اللحظة، بغضّ النظر عن ترتيب وصول الشبكة.
+  const categoriesPromise = dbPaths.categoriesCol().get({ source: 'server' }).then(snap => {
     if (!snap.empty) {
       const list = [];
       snap.forEach(d => list.push({ id: d.id, ...d.data() }));
       setCategories(list);
-      renderModernCategories();
+      renderCurrentActiveView();
     }
   }).catch(() => {});
 
@@ -1397,17 +1407,17 @@ function initFirestoreRealtimeSync() {
       const list = [];
       snap.forEach(d => list.push({ id: d.id, ...d.data() }));
       setCategories(list);
-      renderModernCategories();
+      renderCurrentActiveView();
     }
   }, console.warn);
 
-  dbPaths.bundlesCol().get({ source: 'server' }).then(snap => {
+  const bundlesPromise = dbPaths.bundlesCol().get({ source: 'server' }).then(snap => {
     if (!snap.empty) {
       const list = [];
       snap.forEach(d => list.push({ id: d.id, ...d.data() }));
       setBundles(list);
       renderHomeBundles();
-      renderAllBundles();
+      renderCurrentActiveView();
     }
   }).catch(() => {});
 
@@ -1417,7 +1427,7 @@ function initFirestoreRealtimeSync() {
       snap.forEach(d => list.push({ id: d.id, ...d.data() }));
       setBundles(list);
       renderHomeBundles();
-      renderAllBundles();
+      renderCurrentActiveView();
     }
   }, console.warn);
 
@@ -1437,9 +1447,9 @@ function initFirestoreRealtimeSync() {
   }
 
   // 1. جلب الكتالوج من كاش R2 السريع أولاً (متاح لجميع الزوار — لا يكشف onSnapshot اللحظي)
-  fetchCatalogFromR2().then(success => {
+  const catalogPromise = fetchCatalogFromR2().then(success => {
     if (!success) {
-      dbPaths.productsCol().get({ source: 'server' }).then(applyProductsSnapshot).catch(() => {});
+      return dbPaths.productsCol().get({ source: 'server' }).then(applyProductsSnapshot).catch(() => {});
     }
   });
 
@@ -1452,7 +1462,15 @@ function initFirestoreRealtimeSync() {
     dbPaths.productsCol().onSnapshot(applyProductsSnapshot, console.warn);
   }
 
-  Promise.all([pharmacyDocPromise]).finally(hideAppLoadingOverlay);
+  // 🌟 (إصلاح جذري — "الموقع يظهر بشكله القديم ثم يتحدّث") شاشة التحميل كانت تُخفى فور
+  // استجابة بروفايل الصيدلية فقط، حتى لو لم تصل بعد بيانات الأقسام/البكجات/الكتالوج —
+  // فيرى الزائر الصفحة "فارغة جزئياً" مباشرة بعد اختفاء شاشة التحميل، ثم تمتلئ تدريجياً
+  // أمام عينيه (وهو بالضبط الإحساس الذي وُصف بأنه "غير احترافي"). الآن تنتظر شاشة
+  // التحميل اكتمال كل البيانات الأساسية الأربع معاً قبل أن تختفي، فيظهر الموقع دفعة واحدة
+  // بشكله النهائي الكامل. لا يوجد أي تأخير اصطناعي مُضاف هنا — فقط انتظار حقيقي لما هو
+  // ضروري أصلاً، مع بقاء صمام الأمان (6 ثوانٍ كحد أقصى في index.html) كخط دفاع أخير إن
+  // تعطلت الشبكة تماماً.
+  Promise.allSettled([pharmacyDocPromise, categoriesPromise, bundlesPromise, catalogPromise]).finally(hideAppLoadingOverlay);
 }
 
 function hideAppLoadingOverlay() {
