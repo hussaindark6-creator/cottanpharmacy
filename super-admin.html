@@ -1028,7 +1028,14 @@
   <!-- Main JavaScript Logic -->
   <script>
     const SUPER_ADMIN_EMAIL = "hussaindark6@gmail.com";
-    const PLATFORM_ROOT_DOMAIN = "yourplatform.com"; // 🌐 عدّل هذا لدومين منصتك الفعلي
+    // 🌟 (إصلاح — PLATFORM_ROOT_DOMAIN لم يكن يُفعَّل أبداً) كانت هذه قيمة نائبة ثابتة
+    // ("yourplatform.com") مكتوبة يدوياً هنا، لا تعكس دومين المنصة الحقيقي أبداً ما لم
+    // يُعدِّلها أحد يدوياً بكل نشر جديد لهذا الملف. المصدر الوحيد للحقيقة الآن هو متغير
+    // البيئة PLATFORM_ROOT_DOMAIN المُعرَّف فعلياً على الووركر (worker.js)، ويُجلب تلقائياً
+    // من نقطة النهاية /api/admin/platform-config فور تسجيل دخول السوبر أدمن (انظر
+    // loadPlatformConfig() أدناه واستدعاءها داخل checkSuperAdminAccess).
+    let PLATFORM_ROOT_DOMAIN = "";
+    let cloudflareAutoDnsReady = false;
 
     const firebaseConfig = {
       apiKey: "AIzaSyDXAp6CTcq3OlN2egGOj5Yg8jK5wUsR6Uc",
@@ -1159,6 +1166,7 @@
         app.classList.remove('hidden');
         fetchPharmaciesList();
         fetchSubscriptionPackages();
+        loadPlatformConfig();
       } else {
         if (auth) auth.signOut();
         gate.classList.remove('hidden');
@@ -2179,6 +2187,28 @@
     // =========================================================================
     const WORKER_API_BASE_SUPER = "https://cottanbackend.hussaindark6.workers.dev";
 
+    // 🌟 (جديد) يُستدعى مرة واحدة بعد تسجيل دخول السوبر أدمن. يجلب PLATFORM_ROOT_DOMAIN
+    // الحقيقي من متغيرات بيئة الووركر بدل القيمة النائبة الثابتة القديمة، ويعرض تحذيراً
+    // واضحاً بدل فشل صامت لاحق إن لم يكن مُعرَّفاً بعد على السيرفر.
+    async function loadPlatformConfig() {
+      try {
+        const idToken = await currentUser.getIdToken();
+        const res = await fetch(`${WORKER_API_BASE_SUPER}/api/admin/platform-config`, {
+          headers: { 'Authorization': `Bearer ${idToken}` }
+        });
+        const data = await res.json();
+        if (data.success) {
+          PLATFORM_ROOT_DOMAIN = data.platformRootDomain || "";
+          cloudflareAutoDnsReady = !!data.cloudflareAutoDnsReady;
+          if (!PLATFORM_ROOT_DOMAIN) {
+            showToast('⚠️ لم يُعرَّف دومين المنصة الجذري (PLATFORM_ROOT_DOMAIN) على الووركر بعد — خاصية "النطاق الفرعي المجاني" لن تعمل حتى تضيفيه من إعدادات Cloudflare Workers.', true);
+          }
+        }
+      } catch (err) {
+        console.warn('تعذر جلب إعدادات المنصة من الووركر:', err);
+      }
+    }
+
     function populateDomainLinkTenantSelect() {
       const sel = document.getElementById('domainLinkTenantSelect');
       if (!sel) return;
@@ -2204,7 +2234,11 @@
       input.value = '';
 
       if (type === 'free_subdomain') {
-        title.textContent = '🆓 تفعيل نطاق فرعي مجاني';
+        if (!PLATFORM_ROOT_DOMAIN) {
+          showToast('⚠️ لا يمكن إنشاء نطاق فرعي مجاني: دومين المنصة الجذري غير مُفعَّل بعد على السيرفر. أضيفي PLATFORM_ROOT_DOMAIN من إعدادات الووركر أولاً.', true);
+          return;
+        }
+        title.textContent = `🆓 تفعيل نطاق فرعي مجاني (على ${PLATFORM_ROOT_DOMAIN})`;
         freeHint.classList.remove('hidden');
         inputWrap.classList.add('hidden');
         dnsGuide.classList.add('hidden');
@@ -2215,6 +2249,10 @@
         inputLabel.textContent = 'الرابط الفرعي الكامل (مثال: pharmacy-name.mainbrand.com) *';
         input.placeholder = 'pharmacy-name.mainbrand.com';
         dnsGuide.classList.add('hidden');
+        if (!cloudflareAutoDnsReady) {
+          dnsResult.textContent = 'ℹ️ الربط التلقائي لسجل DNS غير مُفعَّل على السيرفر حالياً (CLOUDFLARE_API_TOKEN/CLOUDFLARE_ZONE_ID) — سيلزم إضافة السجل يدوياً بعد الحفظ.';
+          dnsResult.className = 'text-xs font-bold text-amber-400';
+        }
       } else {
         title.textContent = '👑 إنشاء / ربط دومين خاص مستقل';
         freeHint.classList.add('hidden');
@@ -2284,8 +2322,20 @@
         const data = await res.json();
         if (data.success) {
           showToast(`✅ تم ربط ${domain} بصيدلية ${tenantId} بنجاح!`);
-          closeDomainLinkModal();
+          // 🌟 (إصلاح — "توقف" إنشاء CNAME تلقائياً) نعرض الآن dnsMessage الصريحة القادمة
+          // من الووركر (نجاح، أو فشل مع السبب، أو "دومين خارجي لا يمكن ربطه تلقائياً")
+          // بدل صمت تام كان يجعل الأمر يبدو متوقفاً بلا تفسير.
+          if (data.dnsMessage) {
+            const dnsResult = document.getElementById('domainLinkDnsResult');
+            if (dnsResult) {
+              dnsResult.textContent = data.dnsMessage;
+              dnsResult.className = `text-xs font-bold ${data.dnsAutoLinked ? 'text-emerald-400' : 'text-amber-400'}`;
+            }
+          }
           fetchLinkedDomains();
+          if (type !== 'platform_subdomain' || data.dnsAutoLinked) {
+            closeDomainLinkModal();
+          }
         } else {
           showToast('❌ ' + (data.message || 'فشل ربط الدومين'), true);
         }
