@@ -242,10 +242,16 @@ function updateR2CatalogItem(productId, updates) {
     body: JSON.stringify({ productId: String(productId), updates })
   }).then(res => {
     if (!res || !res.success) {
-      // احتياط: إن فشل التحديث السريع لأي سبب (أول مرة لا يوجد ملف كتالوج بعد)، نلجأ لإعادة البناء الكاملة
+      // 🛡️ (إصلاح — "السعر لا يتحدّث للزبون") كان هذا الفشل صامتاً تماماً؛ الآن يظهر تحذير
+      // صريح للأدمن إن تعذّر تحديث كاش R2 فعلياً (مثلاً: سلة R2 غير مربوطة بالووركر)، بدل
+      // أن يعتقد الأدمن أن كل شيء تم بنجاح بينما الزبون سيستمر برؤية السعر القديم.
+      showToast('⚠️ تم حفظ التعديل، لكن تعذّر تحديث كاش المتجر فوراً — سيُعاد بناؤه تلقائياً الآن.');
       triggerR2CatalogRebuild();
     }
-  }).catch(() => triggerR2CatalogRebuild());
+  }).catch(() => {
+    showToast('⚠️ تعذر الاتصال بالووركر لتحديث كاش المتجر — سيُعاد بناؤه عند المحاولة التالية.');
+    triggerR2CatalogRebuild();
+  });
 }
 
 // 🗑️ حذف صورة يتيمة من Cloudflare R2 (تُستدعى عند الحذف النهائي لمنتج أو استبدال صورته بأخرى)
@@ -2349,47 +2355,64 @@ async function quickToggleStock(id) {
   showToast(newStock ? 'تم التعيين: متوفر 🟢' : 'تم التعيين: نفذت الكمية 🔴');
 }
 
+// 🛡️ (إصلاح — "زر التعديل المباشر لا يعمل") لم أجد عبر المراجعة الساكنة للكود خللاً مؤكداً
+// يمنع فتح هذه النافذة (كل عناصرها موجودة فعلياً بالـ HTML)، لكن أي خطأ غير متوقع (تعارض
+// إضافة مستقبلية، بيانات منتج ناقصة بشكل غير معتاد...) كان سيفشل بصمت تام دون أي أثر مرئي
+// للأدمن — فيبدو الزر "لا يعمل" دون أي تفسير. التغليف بـ try/catch هنا يضمن ظهور رسالة
+// خطأ صريحة بدل الصمت أياً كان السبب الفعلي، مما يجعل أي عطل مستقبلي قابلاً للتشخيص فوراً.
 function openAdminQuickEditModal(id) {
   if (!assertAdmin()) return;
-  const p = findProduct(id) || archivedProducts.find(x => String(x.id) === String(id));
-  if (!p) return;
+  try {
+    const p = findProduct(id) || archivedProducts.find(x => String(x.id) === String(id));
+    if (!p) {
+      showToast('⚠️ تعذر العثور على هذا المنتج (قد يكون حُذف أو أُرشف).');
+      return;
+    }
 
-  populateCategoryDropdowns();
+    populateCategoryDropdowns();
 
-  ensureCostPriceField('quickEditProdOldPrice', 'quickEditProdCostPrice');
+    ensureCostPriceField('quickEditProdOldPrice', 'quickEditProdCostPrice');
 
-  document.getElementById('quickEditProdId').value = p.id;
-  document.getElementById('quickEditProdName').value = p.name || '';
-  document.getElementById('quickEditProdBrand').value = p.brand || '';
-  document.getElementById('quickEditProdPrice').value = p.price || '';
-  if (document.getElementById('quickEditProdOldPrice')) document.getElementById('quickEditProdOldPrice').value = p.oldPrice || '';
-  if (document.getElementById('quickEditProdCostPrice')) document.getElementById('quickEditProdCostPrice').value = (p.costPrice !== undefined && p.costPrice !== null) ? p.costPrice : '';
-  if (document.getElementById('quickEditProdSize')) document.getElementById('quickEditProdSize').value = p.size || '';
-  if (document.getElementById('quickEditProdStockQty')) document.getElementById('quickEditProdStockQty').value = (p.stockQuantity !== undefined ? p.stockQuantity : 10);
-  if (document.getElementById('quickEditProdRating')) document.getElementById('quickEditProdRating').value = p.rating || '';
-  if (document.getElementById('quickEditProdReviews')) document.getElementById('quickEditProdReviews').value = p.reviews || 0;
-  document.getElementById('quickEditProdCat').value = p.category || (categories[0] ? categories[0].id : 'face');
-  document.getElementById('quickEditProdType').value = p.type || 'bottle';
-  
-  const imgUrlInp = document.getElementById('quickEditProdImg');
-  const imgPreviewEl = document.getElementById('quickEditProdImgPreviewEl');
-  const imgPreviewBox = document.getElementById('quickEditProdImgPreviewBox');
-  if (imgUrlInp) imgUrlInp.value = p.imageUrl || '';
-  if (p.imageUrl && imgPreviewEl && imgPreviewBox) {
-    imgPreviewEl.src = p.imageUrl;
-    imgPreviewBox.style.display = 'flex';
-  } else if (imgPreviewBox) {
-    imgPreviewBox.style.display = 'none';
+    document.getElementById('quickEditProdId').value = p.id;
+    document.getElementById('quickEditProdName').value = p.name || '';
+    document.getElementById('quickEditProdBrand').value = p.brand || '';
+    document.getElementById('quickEditProdPrice').value = p.price || '';
+    if (document.getElementById('quickEditProdOldPrice')) document.getElementById('quickEditProdOldPrice').value = p.oldPrice || '';
+    if (document.getElementById('quickEditProdCostPrice')) document.getElementById('quickEditProdCostPrice').value = (p.costPrice !== undefined && p.costPrice !== null) ? p.costPrice : '';
+    if (document.getElementById('quickEditProdSize')) document.getElementById('quickEditProdSize').value = p.size || '';
+    if (document.getElementById('quickEditProdStockQty')) document.getElementById('quickEditProdStockQty').value = (p.stockQuantity !== undefined ? p.stockQuantity : 10);
+    if (document.getElementById('quickEditProdRating')) document.getElementById('quickEditProdRating').value = p.rating || '';
+    if (document.getElementById('quickEditProdReviews')) document.getElementById('quickEditProdReviews').value = p.reviews || 0;
+    if (document.getElementById('quickEditProdCat')) document.getElementById('quickEditProdCat').value = p.category || (categories[0] ? categories[0].id : 'face');
+    if (document.getElementById('quickEditProdType')) document.getElementById('quickEditProdType').value = p.type || 'bottle';
+
+    const imgUrlInp = document.getElementById('quickEditProdImg');
+    const imgPreviewEl = document.getElementById('quickEditProdImgPreviewEl');
+    const imgPreviewBox = document.getElementById('quickEditProdImgPreviewBox');
+    if (imgUrlInp) imgUrlInp.value = p.imageUrl || '';
+    if (p.imageUrl && imgPreviewEl && imgPreviewBox) {
+      imgPreviewEl.src = p.imageUrl;
+      imgPreviewBox.style.display = 'flex';
+    } else if (imgPreviewBox) {
+      imgPreviewBox.style.display = 'none';
+    }
+
+    if (document.getElementById('quickEditProdDesc')) document.getElementById('quickEditProdDesc').value = p.description || '';
+    if (document.getElementById('quickEditProdIng')) document.getElementById('quickEditProdIng').value = p.ingredients || p.medicalIndications || '';
+    if (document.getElementById('quickEditProdUsage')) document.getElementById('quickEditProdUsage').value = p.usage || '';
+    if (document.getElementById('quickEditProdInStock')) document.getElementById('quickEditProdInStock').checked = (p.inStock !== false);
+    if (document.getElementById('quickEditProdIsOffer')) document.getElementById('quickEditProdIsOffer').checked = !!p.isSpecialOffer;
+
+    const modal = document.getElementById('adminQuickEditModal');
+    if (modal) {
+      modal.classList.add('open');
+    } else {
+      showToast('⚠️ خطأ داخلي: نافذة التعديل غير موجودة بالصفحة (adminQuickEditModal).');
+    }
+  } catch (err) {
+    console.error('openAdminQuickEditModal crashed:', err);
+    showToast('⚠️ تعذر فتح نافذة التعديل: ' + err.message);
   }
-
-  if (document.getElementById('quickEditProdDesc')) document.getElementById('quickEditProdDesc').value = p.description || '';
-  if (document.getElementById('quickEditProdIng')) document.getElementById('quickEditProdIng').value = p.ingredients || p.medicalIndications || '';
-  if (document.getElementById('quickEditProdUsage')) document.getElementById('quickEditProdUsage').value = p.usage || '';
-  if (document.getElementById('quickEditProdInStock')) document.getElementById('quickEditProdInStock').checked = (p.inStock !== false);
-  if (document.getElementById('quickEditProdIsOffer')) document.getElementById('quickEditProdIsOffer').checked = !!p.isSpecialOffer;
-
-  const modal = document.getElementById('adminQuickEditModal');
-  if (modal) modal.classList.add('open');
 }
 
 function closeAdminQuickEditModal() {
