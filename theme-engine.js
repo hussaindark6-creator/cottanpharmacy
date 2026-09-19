@@ -270,13 +270,17 @@ export function renderBundleCard(b) {
       </div>
       <div class="bundle-price-box">
         <div>
-          <span class="p-price mono" style="font-size:17px; color:var(--rose-deep);">${fmtPrice(b.price)}</span>
-          ${b.oldPrice ? `<span class="p-oldprice mono" style="margin-inline-start:6px;">${fmtPrice(b.oldPrice)}</span>` : ''}
+          <span class="p-price mono" style="font-size:13px; color:var(--rose-deep);">${fmtPrice(b.price)}</span>
+          ${b.oldPrice ? `<span class="p-oldprice mono" style="margin-inline-start:4px; font-size:10px;">${fmtPrice(b.oldPrice)}</span>` : ''}
         </div>
       </div>
+      <!-- 🌸 (جديد) شارة "المزيد" — تظهر فقط بالكارت المصغّر (مخفية تلقائياً بالشبكة
+           الكبيرة عبر style.css)، توضّح أن الضغط على الكارت يفتح كل التفاصيل بقسم البكجات. -->
+      <div class="bundle-more-hint">المزيد ←</div>
       <!-- 🌸 (إصلاح — النقر على الكارت لا يفعل شيئاً) event.stopPropagation() هنا ضروري
            لمنع الضغط على "أضف للسلة" من تفعيل onclick الخاص بالكارت (الانتقال لقسم
-           البكجات) في نفس الوقت — الزر يبقى بوظيفته الخاصة فقط. -->
+           البكجات) في نفس الوقت — الزر يبقى بوظيفته الخاصة فقط. يظهر فقط بالشبكة الكبيرة.
+      -->
       <button class="add-cart-btn" onclick="event.stopPropagation(); window.App.addBundleToCart('${sanitizeText(b.id)}')">
         🎁 أضف البكج كاملاً للسلة
       </button>
