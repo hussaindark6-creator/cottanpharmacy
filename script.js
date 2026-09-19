@@ -4100,6 +4100,11 @@ function hideAppLoadingOverlay() {
   const overlay = document.getElementById('appLoadingOverlay');
   if (!overlay || overlay.dataset.hidden) return;
   overlay.dataset.hidden = '1';
+  if (window.__loaderInterval) clearInterval(window.__loaderInterval);
+  const bar = document.getElementById('loaderProgressBar');
+  const pct = document.getElementById('loaderPercentText');
+  if (bar) bar.style.width = '100%';
+  if (pct) pct.textContent = '100%';
   setTimeout(() => {
     overlay.style.opacity = '0';
     overlay.style.pointerEvents = 'none';
@@ -4211,8 +4216,15 @@ function applyStoreSettings() {
 }
 
 // ================= 31. FIRESTORE REALTIME SYNC (FIX #1: ADMIN-ONLY LIVE PRICE SYNC) =================
+// 🌟 (إصلاح جذري — شاشة تحميل الأدمن لا تنتظر شيئاً فعلياً) الدالة السابقة كانت تُطلق كل
+// اتصالات Firestore اللحظية (onSnapshot) دون أي طريقة لمعرفة متى وصلت أول دفعة بيانات
+// فعلية من كل مصدر — فكان استدعاء hideAppLoadingOverlay() يحدث فوراً في نفس اللحظة (قبل
+// وصول أي بيانات حقيقية بوقت طويل)، فيرى المشرف الواجهة بشكلها الافتراضي/الفارغ للحظات ثم
+// تمتلئ تدريجياً أمام عينيه. الآن تُعيد هذه الدالة وعداً (Promise) واحداً يكتمل فقط بعد
+// وصول أول دفعة فعلية من: بروفايل الصيدلية + الأقسام + البكجات + الكتالوج معاً — يستخدمه
+// استدعاء الإقلاع أدناه مع حد أدنى زمني حقيقي قبل إخفاء الشاشة.
 function initFirestoreSync() {
-  if (!isFirebaseConfigured || !db) return;
+  if (!isFirebaseConfigured || !db) return Promise.resolve();
 
   const cachedProds = localStorage.getItem(getStorageKey('products_cache'));
   if (cachedProds) {
@@ -4222,43 +4234,55 @@ function initFirestoreSync() {
     } catch (e) {}
   }
 
-  dbPaths.pharmacyDoc().onSnapshot(doc => {
-    if (doc.exists) {
-      pharmacyProfile = { ...pharmacyProfile, ...doc.data() };
-      if (pharmacyProfile.brandsData) brandsData = { ...brandsData, ...pharmacyProfile.brandsData };
-      saveLocalState();
-      applyStoreSettings();
-      renderPromoCardsListAdmin();
-      renderBrandStrip();
-      checkStorefrontSubscriptionLock();
-      checkAdminSubscriptionLock();
-      const navTitleEl = document.getElementById('adminNavTitle');
-      if (navTitleEl) navTitleEl.textContent = `لوحة تحكم ${pharmacyProfile.name || 'الصيدلية'}`;
-    }
-  }, err => console.warn(err));
+  const pharmacyDocPromise = new Promise(resolve => {
+    let resolved = false;
+    dbPaths.pharmacyDoc().onSnapshot(doc => {
+      if (doc.exists) {
+        pharmacyProfile = { ...pharmacyProfile, ...doc.data() };
+        if (pharmacyProfile.brandsData) brandsData = { ...brandsData, ...pharmacyProfile.brandsData };
+        saveLocalState();
+        applyStoreSettings();
+        renderPromoCardsListAdmin();
+        renderBrandStrip();
+        checkStorefrontSubscriptionLock();
+        checkAdminSubscriptionLock();
+        const navTitleEl = document.getElementById('adminNavTitle');
+        if (navTitleEl) navTitleEl.textContent = `لوحة تحكم ${pharmacyProfile.name || 'الصيدلية'}`;
+      }
+      if (!resolved) { resolved = true; resolve(); }
+    }, err => { console.warn(err); if (!resolved) { resolved = true; resolve(); } });
+  });
 
-  dbPaths.categoriesCol().onSnapshot(snap => {
-    if (!snap.empty) {
-      const loaded = [];
-      snap.forEach(d => loaded.push({ id: d.id, ...d.data() }));
-      categories = loaded;
-      renderModernCategories();
-      renderAdminCategoriesList();
-      populateCategoryDropdowns();
-      updateDiscountTargetOptions();
-      populateBundleFilterDropdowns();
-      populateOfferFilterDropdowns();
-    }
-  }, err => console.warn(err));
+  const categoriesPromise = new Promise(resolve => {
+    let resolved = false;
+    dbPaths.categoriesCol().onSnapshot(snap => {
+      if (!snap.empty) {
+        const loaded = [];
+        snap.forEach(d => loaded.push({ id: d.id, ...d.data() }));
+        categories = loaded;
+        renderModernCategories();
+        renderAdminCategoriesList();
+        populateCategoryDropdowns();
+        updateDiscountTargetOptions();
+        populateBundleFilterDropdowns();
+        populateOfferFilterDropdowns();
+      }
+      if (!resolved) { resolved = true; resolve(); }
+    }, err => { console.warn(err); if (!resolved) { resolved = true; resolve(); } });
+  });
 
-  dbPaths.bundlesCol().onSnapshot(snap => {
-    if (!snap.empty) {
-      const loaded = [];
-      snap.forEach(d => loaded.push({ id: d.id, ...d.data() }));
-      bundles = loaded;
-      renderAdminBundlesList();
-    }
-  }, err => console.warn(err));
+  const bundlesPromise = new Promise(resolve => {
+    let resolved = false;
+    dbPaths.bundlesCol().onSnapshot(snap => {
+      if (!snap.empty) {
+        const loaded = [];
+        snap.forEach(d => loaded.push({ id: d.id, ...d.data() }));
+        bundles = loaded;
+        renderAdminBundlesList();
+      }
+      if (!resolved) { resolved = true; resolve(); }
+    }, err => { console.warn(err); if (!resolved) { resolved = true; resolve(); } });
+  });
 
   // 🛡️ (إصلاح حرج - عزل الأسعار عن الزبائن) script.js يخدم كلاً من index.html (الزبائن) و
   // admin.html (الإدارة) معاً، لذا فتح onSnapshot على المنتجات هنا بلا شرط كان يعني تسريب اتصال
@@ -4286,10 +4310,10 @@ function initFirestoreSync() {
     }
   }
 
-  fetchCatalogFromR2().then(success => {
+  const catalogPromise = fetchCatalogFromR2().then(success => {
     if (!success) {
       // احتياط: إن تعذر جلب كاش R2 (سيرفر غير مهيأ)، نجلب لقطة واحدة غير حية من Firestore بدل فتح اتصال دائم
-      dbPaths.productsCol().get().then(applyProductsSnapshot).catch(err => console.warn(err));
+      return dbPaths.productsCol().get().then(applyProductsSnapshot).catch(err => console.warn(err));
     }
   });
 
@@ -4300,6 +4324,8 @@ function initFirestoreSync() {
 
   listenToNotifications();
   recordRealVisit();
+
+  return Promise.allSettled([pharmacyDocPromise, categoriesPromise, bundlesPromise, catalogPromise]);
 }
 
 // 🌟 جلب كتالوج المنتجات من كاش Cloudflare R2 السريع (متاح لجميع الزوار بأمان، بلا اتصال حي)
@@ -4833,13 +4859,24 @@ window.addEventListener('DOMContentLoaded', async () => {
   updateCartBadge();
   renderAccountView();
   updateUserHeaderProfile();
-  initFirestoreSync();
   checkAndShowWelcomeModal();
   checkUrlHashForProduct();
 
   await loadDynamicTheme(pharmacyProfile.templateId);
   renderCurrentActiveView();
-  hideAppLoadingOverlay(); // 🌸 إخفاء شاشة التحميل الأولية بسلاسة بعد اكتمال أول عملية رسم للواجهة
+
+  // 🌟 (إصلاح جذري — "لا تظهر شاشة التحميل لمدة كافية وتظهر الواجهة القديمة") بدل إخفاء
+  // الشاشة فوراً بلا أي انتظار حقيقي (كما كان الحال سابقاً)، تنتظر الآن أمرين معاً دائماً:
+  // (أ) مرور 6 ثوانٍ كاملة كحد أدنى — بطلبك تحديداً، و(ب) اكتمال بيانات initFirestoreSync
+  // الأربع فعلياً (البروفايل + الأقسام + البكجات + الكتالوج). فإن وصلت البيانات أسرع، تبقى
+  // الشاشة حتى تكتمل الـ6 ثوانٍ بالضبط ليظهر الموقع بشكله النهائي الكامل فور الاختفاء
+  // مباشرة، بلا أي وميض متبقٍ. لا توجد هنا أي قراءة أو طلب شبكة إضافي — فقط توقيت محلي
+  // بحت (setTimeout) لا علاقة له بالكاش أو القراءات إطلاقاً.
+  const MIN_LOADER_DISPLAY_MS = 6000;
+  const minDisplayPromise = new Promise(resolve => setTimeout(resolve, MIN_LOADER_DISPLAY_MS));
+  const dataReadyPromise = initFirestoreSync();
+
+  Promise.all([minDisplayPromise, dataReadyPromise]).finally(hideAppLoadingOverlay);
 
   window.addEventListener('hashchange', checkUrlHashForProduct);
 
