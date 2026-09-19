@@ -1,9 +1,10 @@
 /* ==========================================================
    SaaS Multi-Tenant Engine — js/orders.js
-   Version: 4.2.0 (costPrice Snapshot for Accurate Historical Profit Reports)
+   Version: 5.0.0 (Security Fix: Server-Authoritative Order Creation —
+                    No More Direct Client Writes to Firestore)
    ========================================================== */
 
-import { db, dbPaths, currentPharmacyId, WORKER_API_BASE } from './config.js';
+import { currentPharmacyId, WORKER_API_BASE } from './config.js';
 import { 
   cart, findProduct, findBundle, pharmacyProfile, 
   appliedPromo, deliveryMethod, myOrders, fmtPrice, 
@@ -11,7 +12,14 @@ import {
 } from './state.js';
 import { lockAction, sanitizeText } from './security.js';
 
-// تأكيد الطلب مع خصم المخزون الذري في Firestore
+// 🛡️🔒 (إصلاح أمني جذري — تلاعب بالسعر) الكود القديم كان يكتب الطلب مباشرة من متصفح
+// الزبون إلى Firestore بالسعر الذي يحسبه المتصفح نفسه محلياً — أي زبون بخبرة تقنية بسيطة
+// (أدوات المطوّر) يستطيع تعديل القيمة الإجمالية المُرسَلة قبل الكتابة وقبولها دون رفض،
+// لأن قاعدة الحماية كانت تتحقق فقط أن total رقم موجب، لا أنه يطابق السعر الحقيقي.
+// الحل الجذري: توقّف الكتابة المباشرة لـ Firestore هنا نهائياً. الطلب الآن يُنشأ حصراً عبر
+// مسار /api/orders بالووركر، الذي يُعيد احتساب كل الأسعار من مصدرها الحقيقي (Firestore عبر
+// Admin SDK) ويكتب الطلب ويخصم المخزون ضمن معاملة ذرية واحدة لا يمكن للعميل رؤيتها أو
+// التلاعب بها إطلاقاً. (يتطلب هذا أيضاً تحديث firestore.rules لمنع كتابة العميل المباشرة).
 export async function executeAtomicOrderCheckout(showToastFn) {
   if (!lockAction('confirmOrder', 2500, showToastFn)) return;
 
@@ -46,149 +54,75 @@ export async function executeAtomicOrderCheckout(showToastFn) {
 
   localStorage.setItem('saas_customer_saved_profile', JSON.stringify({ name, phone, address }));
 
-  let calculatedSubtotal = 0;
-  const itemsPayload = ids.map(id => {
+  // هذه القيم "تقديرية" فقط لعرضها فوراً أثناء الانتظار — القيم الحقيقية النهائية تأتي من
+  // استجابة الووركر أدناه بعد إعادة الاحتساب من المصدر الحقيقي، وهي وحدها ما يُحفظ فعلياً.
+  const itemsPayloadForServer = ids.map(id => {
     const isBundle = id.startsWith('bundle_');
     const item = isBundle ? findBundle(id.replace('bundle_', '')) : findProduct(id);
-    const unitPrice = item ? Number(item.price || 0) : 0;
-    const qty = Number(cart[id] || 1);
-    const lineTotal = unitPrice * qty;
-    calculatedSubtotal += lineTotal;
-
-    // 🌟 (جديد — لقطة سعر التكلفة لحساب صافي الربح بدقة تاريخياً)
-    // نأخذ costPrice من نسخة المنتج المخزّنة محلياً بالفعل (products، القادمة من كاش R2/
-    // Firestore realtime sync) — لا توجد هنا أي قراءة إضافية من Firebase، تماماً بما
-    // يتوافق مع قيد (Zero-Read) في واجهة الزبائن. تُحفظ هذه القيمة كجزء ثابت من مستند
-    // الطلب نفسه، فتبقى تقارير الأرباح صحيحة تاريخياً حتى لو غيّر الأدمن سعر التكلفة
-    // الحالي للمنتج لاحقاً من لوحة التحكم. البكجات ليس لها costPrice على مستوى الحزمة
-    // نفسها حالياً (تُترك null) لأن هامش ربح البكج يعتمد على تركيبته الداخلية من منتجات
-    // متعددة، وهذا خارج نطاق هذا الإصلاح.
-    const unitCostPrice = (!isBundle && item && item.costPrice !== undefined && item.costPrice !== null && item.costPrice !== '')
-      ? Number(item.costPrice)
-      : null;
-
     return {
       id: id,
       name: item ? (item.name || item.title) : 'منتج',
-      unitPrice: unitPrice,
-      unitCostPrice: unitCostPrice,
-      price: unitPrice,
-      quantity: qty,
-      lineTotal: lineTotal,
+      price: item ? Number(item.price || 0) : 0,
+      quantity: Number(cart[id] || 1),
       isBundle: isBundle
     };
   });
 
-  const deliveryFee = (deliveryMethod === 'express') 
-    ? (Number(pharmacyProfile.deliveryFeeExpress) || 8000) 
-    : (Number(pharmacyProfile.deliveryFeeStandard) || 4000);
+  let serverResult;
+  try {
+    const res = await fetch(`${WORKER_API_BASE}/api/orders`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Pharmacy-Id': currentPharmacyId
+      },
+      body: JSON.stringify({
+        customerName: name,
+        customerPhone: phone,
+        customerAddress: address,
+        deliveryMethod: deliveryMethod,
+        items: itemsPayloadForServer,
+        promoCode: appliedPromo ? appliedPromo.code : null,
+        userId: currentUser ? currentUser.uid : null
+      })
+    });
+    serverResult = await res.json();
+  } catch (err) {
+    console.error('Order network error:', err);
+    if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = 'تأكيد الطلب'; }
+    showToastFn('⚠️ تعذر الاتصال بالسيرفر لتأكيد الطلب. تحققي من اتصال الإنترنت وحاولي مجدداً.');
+    return;
+  }
 
-  const discountAmount = appliedPromo ? Number(appliedPromo.discountAmount || 0) : 0;
-  const grandTotal = Math.max(0, calculatedSubtotal - discountAmount) + deliveryFee;
-  const orderPrefix = (pharmacyProfile.name || 'ORD').substring(0, 4).toUpperCase();
-  const orderId = `${orderPrefix}-${Math.floor(100000 + Math.random() * 900000)}`;
+  if (!serverResult || !serverResult.success) {
+    if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = 'تأكيد الطلب'; }
+    showToastFn((serverResult && serverResult.message) || '⚠️ تعذر إتمام الطلب. حاولي مجدداً.');
+    return;
+  }
 
-  const newOrderObj = {
-    id: orderId,
-    pharmacyId: currentPharmacyId,
-    userId: currentUser ? currentUser.uid : null,
+  // ✅ الطلب مُثبَّت فعلياً بفايرستور من طرف السيرفر بنجاح — نبني الآن الكائن المحلي حصراً
+  // من بيانات السيرفر الموثوقة (لا من حسابات المتصفح المحلية) لعرضه وإرساله للواتساب.
+  const order = serverResult.order;
+  const orderId = serverResult.orderId;
+  const grandTotal = serverResult.verifiedTotal;
+  const verifiedItems = serverResult.verifiedItems || [];
+  const calculatedSubtotal = order ? Number(order.subtotal || 0) : 0;
+  const deliveryFee = order ? Number(order.deliveryFee || 0) : 0;
+  const discountAmount = order ? Number(order.discountAmount || 0) : 0;
+
+  const newOrderObj = order ? { ...order } : {
+    id: orderId, pharmacyId: currentPharmacyId, userId: currentUser ? currentUser.uid : null,
     date: new Date().toLocaleDateString('ar-IQ', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
-    name,
-    phone,
-    address,
-    deliveryMethod,
-    items: itemsPayload,
-    subtotal: calculatedSubtotal,
-    deliveryFee: deliveryFee,
-    discountAmount: discountAmount,
-    promoCode: appliedPromo ? appliedPromo.code : null,
-    total: grandTotal,
+    name, phone, address, deliveryMethod, items: verifiedItems, subtotal: calculatedSubtotal,
+    deliveryFee, discountAmount, promoCode: appliedPromo ? appliedPromo.code : null, total: grandTotal,
     status: 'قيد المعالجة والتجهيز 🚚'
   };
-
-  // 🛡️ معالجة المخزون بحركة ذرية Transaction لمنع البيع الزائد (Anti-Overselling)
-  if (db) {
-    try {
-      await db.runTransaction(async (transaction) => {
-        // 1. قراءة المخزون الحالي والتأكد من توفره
-        const productReads = [];
-        for (const it of itemsPayload) {
-          if (!it.isBundle) {
-            const pRef = dbPaths.productsCol().doc(String(it.id));
-            productReads.push({ ref: pRef, item: it });
-          }
-        }
-
-        const readSnapshots = await Promise.all(productReads.map(p => transaction.get(p.ref)));
-
-        for (let i = 0; i < readSnapshots.length; i++) {
-          const snap = readSnapshots[i];
-          const it = productReads[i].item;
-          if (snap.exists) {
-            const pData = snap.data();
-            const currentStock = pData.stockQuantity !== undefined ? Number(pData.stockQuantity) : 999;
-            if (currentStock < it.quantity) {
-              throw new Error(`عذراً، نفدت كمية المنتج (${pData.name})، المتوفر بالمخزن (${currentStock}) قطعة فقط.`);
-            }
-          }
-        }
-
-        // 2. كتابة الطلب وخصم المخزون داخل نفس الحركة الذرية
-        const orderRef = dbPaths.ordersCol().doc(orderId);
-        transaction.set(orderRef, {
-          ...newOrderObj,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        for (let i = 0; i < readSnapshots.length; i++) {
-          const snap = readSnapshots[i];
-          const it = productReads[i].item;
-          if (snap.exists) {
-            const pData = snap.data();
-            const currentStock = pData.stockQuantity !== undefined ? Number(pData.stockQuantity) : 999;
-            const newStock = Math.max(0, currentStock - it.quantity);
-            transaction.update(productReads[i].ref, {
-              stockQuantity: newStock,
-              inStock: newStock > 0,
-              orderCount: firebase.firestore.FieldValue.increment(it.quantity)
-            });
-          }
-        }
-      });
-    } catch (err) {
-      if (confirmBtn) {
-        confirmBtn.disabled = false;
-        confirmBtn.textContent = 'تأكيد الطلب';
-      }
-      console.error('Checkout transaction failed. Code:', err.code, '| Message:', err.message, '| Full error:', err);
-
-      // 🔎 خطوة تشخيصية مباشرة: نحاول كتابة الطلب بمفرده (بدون Transaction وبدون تحديث مخزون)
-      // لنعرف بالضبط هل المشكلة بكتابة الطلب نفسه أو بتحديث المخزون
-      try {
-        await dbPaths.ordersCol().doc(`DIAG-${orderId}`).set({
-          ...newOrderObj,
-          id: `DIAG-${orderId}`,
-          isDiagnosticTest: true,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        console.error('🔎 تشخيص: كتابة الطلب بمفردها نجحت! المشكلة إذن بتحديث مخزون المنتج تحديداً.');
-        showToastFn(`⚠️ فشل تحديث المخزون تحديداً (${err.code || 'permission-denied'}) — الطلب نفسه ينكتب زين. راجع قاعدة تحديث "products".`);
-      } catch (diagErr) {
-        console.error('🔎 تشخيص: حتى كتابة الطلب بمفرده فشلت. Code:', diagErr.code, diagErr.message);
-        showToastFn(`⚠️ فشلت كتابة الطلب نفسه (${diagErr.code || 'permission-denied'}) — المشكلة بقاعدة "orders" وليس بالمخزون.`);
-      }
-      return;
-    }
-  }
 
   myOrders.unshift(newOrderObj);
   saveLocalState();
 
-  // إرسال الفاتورة لتليجرام الصيدلية
-  dispatchOrderToTelegram(newOrderObj);
-
-  // إعداد رسالة الواتساب الرسمية بدون روابط GPS
-  const lines = itemsPayload.map(item => `• ${item.isBundle ? '🎁 [بكج توفير] ' : ''}${item.name} (${fmtPrice(item.unitPrice)} × ${item.quantity} قطع) = ${fmtPrice(item.lineTotal)}`);
+  // إعداد رسالة الواتساب الرسمية بدون روابط GPS — بالأسعار الموثوقة القادمة من السيرفر
+  const lines = verifiedItems.map(item => `• ${item.isBundle ? '🎁 [بكج توفير] ' : ''}${item.name} (${fmtPrice(item.unitPrice)} × ${item.quantity} قطع) = ${fmtPrice(item.lineTotal)}`);
   const deliveryLabel = deliveryMethod === 'express' ? `سريع (${fmtPrice(deliveryFee)})` : `عادي (${fmtPrice(deliveryFee)})`;
   const promoInfo = appliedPromo ? `🎟️ *كود الخصم:* ${appliedPromo.code} (-${fmtPrice(discountAmount)})\n` : '';
 
@@ -232,29 +166,8 @@ export async function executeAtomicOrderCheckout(showToastFn) {
   }
 }
 
-// إرسال الطلب لتيليجرام الصيدلية عبر الووركر
-async function dispatchOrderToTelegram(orderObj) {
-  try {
-    await fetch(`${WORKER_API_BASE}/api/orders`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Pharmacy-Id': currentPharmacyId
-      },
-      body: JSON.stringify({
-        customerName: orderObj.name,
-        customerPhone: orderObj.phone,
-        customerAddress: orderObj.address,
-        deliveryMethod: orderObj.deliveryMethod,
-        items: orderObj.items,
-        promoCode: orderObj.promoCode,
-        discountAmount: orderObj.discountAmount
-      })
-    });
-  } catch (err) {
-    console.warn("Direct Telegram dispatch warning:", err);
-  }
-}
+// 🗑️ (حُذفت) دالة dispatchOrderToTelegram المنفصلة لم تعد لازمة — الووركر يرسل إشعار
+// تيليجرام الآن ضمن نفس استدعاء /api/orders الآمن الوحيد أعلاه مباشرة بعد تثبيت الطلب.
 
 // فتح نافذة الوصل الحراري 80mm للطباعة
 export function openReceiptModal(orderId) {
