@@ -217,6 +217,31 @@
       color: #F1F5F9 !important;
     }
     .form-field label { color: #94A3B8 !important; }
+
+    /* 🌟 (إكمال التلوين المتبقي) قاعدة شاملة تُغطي عشرات حقول الإدخال/القوائم المنسدلة
+       المكتوبة بخلفية بيضاء يدوياً مباشرة داخل HTML (style="background:#fff") في كل أنحاء
+       الملف (نماذج المنتجات، الإعدادات، استيراد الكتالوج المركزي...). بما أن الأنماط هنا
+       بمثابة !important، فهي تتغلب على أي تنسيق مضمّن (Inline) قديم تلقائياً بلا الحاجة
+       لتعديل كل سطر من مئات الأسطر يدوياً — تغطية شاملة وآمنة دفعة واحدة. */
+    input[type="text"], input[type="number"], input[type="tel"],
+    input[type="password"], input[type="email"], input[type="search"],
+    input[type="url"], input[type="file"], select, textarea {
+      background: #1E293B !important;
+      color: #F1F5F9 !important;
+      border-color: #334155 !important;
+    }
+    input[type="file"] { color: #94A3B8 !important; }
+    input::placeholder, textarea::placeholder { color: #64748B !important; }
+    select option { background: #1E293B; color: #F1F5F9; }
+
+    /* 🌟 بطاقات فرعية رمادية فاتحة متكررة (معاينات الإعدادات، الحقول الفرعية) — مطابقة
+       مباشرة لنص الخاصية المضمّنة نفسها، فتُعاد تلوينها دون الحاجة لتعديل كل سطر يدوياً. */
+    [style*="background:#F9FAFB"], [style*="background: #F9FAFB"],
+    [style*="background:#F8FAFC"], [style*="background: #F8FAFC"],
+    [style*="background:#F3F4F6"], [style*="background: #F3F4F6"] {
+      background: #1E293B !important;
+      border-color: #334155 !important;
+    }
   </style>
 </head>
 <body>
