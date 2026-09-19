@@ -1,8 +1,8 @@
 /* ==========================================================
    SaaS Multi-Tenant Engine — js/main.js
-   Version: 6.3.0 (Race-Proof Home/Categories/Bundles Rendering,
-                    Loader Waits for All Core Data Before Hiding,
-                    Fast Edge-Cached Theme Fetch, Redirect-Based Google Auth)
+   Version: 6.4.0 (Guaranteed 5s Loader Window, Race-Proof Home/Categories/
+                    Bundles Rendering, Fast Edge-Cached Theme Fetch,
+                    Redirect-Based Google Auth)
    ========================================================== */
 
 import {
@@ -1470,7 +1470,22 @@ function initFirestoreRealtimeSync() {
   // بشكله النهائي الكامل. لا يوجد أي تأخير اصطناعي مُضاف هنا — فقط انتظار حقيقي لما هو
   // ضروري أصلاً، مع بقاء صمام الأمان (6 ثوانٍ كحد أقصى في index.html) كخط دفاع أخير إن
   // تعطلت الشبكة تماماً.
-  Promise.allSettled([pharmacyDocPromise, categoriesPromise, bundlesPromise, catalogPromise]).finally(hideAppLoadingOverlay);
+  // 🌟 (إصلاح — "اريد واجهة التحميل تضهر لمدة خمس ثواني بالضبط") بدل إخفاء شاشة التحميل
+  // فور اكتمال البيانات (وقد يكون هذا أسرع أو أبطأ من 5 ثوانٍ حسب سرعة الشبكة)، أصبحت
+  // الآن تنتظر أمرين معاً دائماً: (أ) مرور 5 ثوانٍ كاملة كحد أدنى، و(ب) اكتمال كل البيانات
+  // الأساسية (البروفايل + الأقسام + البكجات + الكتالوج) فعلياً. فإن وصلت البيانات خلال
+  // 3 ثوانٍ مثلاً، تبقى الشاشة ظاهرة حتى تكتمل الـ 5 ثوانٍ بالضبط ليرى الزائر التصميم
+  // النهائي المكتمل فور اختفائها مباشرة دون أي وميض إضافي. وإن تأخرت الشبكة أكثر من ذلك،
+  // تنتظر شاشة التحميل حتى اكتمال البيانات فعلياً (لا تُخفى ناقصة) مع بقاء صمام الأمان
+  // (10 ثوانٍ كحد أقصى مطلق في index.html) كخط دفاع أخير عند انقطاع الشبكة كلياً. لا يوجد
+  // هنا أي قراءة أو طلب شبكة إضافي — فقط توقيت محلي بحت (setTimeout).
+  const MIN_LOADER_DISPLAY_MS = 5000;
+  const minDisplayPromise = new Promise(resolve => setTimeout(resolve, MIN_LOADER_DISPLAY_MS));
+
+  Promise.all([
+    minDisplayPromise,
+    Promise.allSettled([pharmacyDocPromise, categoriesPromise, bundlesPromise, catalogPromise])
+  ]).finally(hideAppLoadingOverlay);
 }
 
 function hideAppLoadingOverlay() {
