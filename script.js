@@ -4540,32 +4540,72 @@ function renderAccountView() {
   }
 }
 
+// 🌟 (إصلاح جذري مؤكَّد بلقطة شاشة فعلية) الخطأ "Unable to process request due to missing
+// initial state" يحدث على صفحة authDomain نفسها (xxx.firebaseapp.com) قبل أن تعود أصلاً
+// لموقعنا — أي أن signInWithRedirect ينهار في منتصف الطريق، فلا تصل الجلسة أبداً ولا تصل
+// حتى أي رسالة خطأ لكودنا لنعالجها (لأن الصفحة عالقة على دومين Firebase نفسه). هذا خلل
+// معروف في Safari تحديداً بسبب سياسة عزل التخزين (Storage Partitioning) بين دومين الموقع
+// ودومين authDomain المختلف عنه. الحل: العودة لاستخدام signInWithPopup كطريقة أساسية —
+// فهي لا تحتاج التنقل الكامل عبر الصفحة ولا الاعتماد على sessionStorage الباقي بعد إعادة
+// تحميل كاملة، فتنجو من هذا الانهيار تحديداً. مع عرض أي نتيجة (نجاح أو فشل) صراحة دوماً في
+// صندوق الخطأ بالبطاقة (#adminGateAuthError) — لا صمت بعد الآن مهما كانت النتيجة.
+function showAdminGateError(msg) {
+  const box = document.getElementById('adminGateAuthError');
+  if (box) { box.textContent = msg; box.classList.remove('hidden'); }
+  showToast(msg);
+}
+function clearAdminGateError() {
+  const box = document.getElementById('adminGateAuthError');
+  if (box) { box.textContent = ''; box.classList.add('hidden'); }
+}
+
 async function signInWithGoogle() {
   if (!auth) {
-    showToast('خدمة تسجيل الدخول غير مهيأة');
+    showAdminGateError('⚠️ خدمة تسجيل الدخول غير مهيأة (تحقق من إعدادات Firebase).');
     return;
   }
 
   if (isInAppBrowser()) {
     const modal = document.getElementById('iabModal');
     if (modal) modal.classList.add('open');
-    else alert('لتسجيل الدخول بأمان عبر Google، يرجى فتح الموقع في متصفح خارجي.');
+    else showAdminGateError('⚠️ لتسجيل الدخول بأمان عبر Google، افتحي الرابط من متصفح خارجي (Safari/Chrome) وليس من داخل تطبيق آخر.');
     return;
   }
 
+  clearAdminGateError();
   try {
-    showToast('جاري التحويل إلى Google...');
     const provider = new firebase.auth.GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
-    await auth.signInWithRedirect(provider);
+    const result = await auth.signInWithPopup(provider);
+    if (result && result.user) {
+      currentUser = result.user;
+      await verifyStaffPermissions(currentUser);
+      showToast(`أهلاً بكِ ${sanitizeText(currentUser.displayName || '')} 🌸`);
+      updateUserHeaderProfile();
+      renderAccountView();
+      updateAdminInterfaceState();
+      announceCacheStatusToAdminIfNeeded();
+    }
   } catch (error) {
-    console.error("Sign-in Trigger Error:", error);
-    showToast(`⚠️ تعذر بدء الدخول: ${error.message}`);
+    console.error("Google Sign-In Error:", error);
+    if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+      // إغلاق النافذة المنبثقة يدوياً من قبل المستخدم — ليس خطأً حقيقياً، لا داعي لإظهار رسالة
+      return;
+    }
+    if (error.code === 'auth/unauthorized-domain') {
+      showAdminGateError('⚠️ دومين الموقع الحالي غير مُدرَج ضمن "Authorized domains" بإعدادات Firebase Authentication. أضيفيه من Firebase Console.');
+    } else if (error.code === 'auth/popup-blocked') {
+      showAdminGateError('⚠️ المتصفح حجب النافذة المنبثقة. فعّلي السماح بالنوافذ المنبثقة لهذا الموقع ثم أعيدي المحاولة.');
+    } else if (error.message && /missing initial state|storage-partitioned/i.test(error.message)) {
+      showAdminGateError('⚠️ هذا المتصفح يحجب التخزين المؤقت اللازم لتسجيل الدخول (شائع بمتصفحات مدمجة أو إعدادات خصوصية صارمة). جربي متصفح Chrome، أو تأكدي أن "منع تتبع مواقع الويب عبر المواقع" غير مفعّل بإعدادات Safari لهذا الموقع تحديداً.');
+    } else {
+      showAdminGateError('⚠️ تعذر تسجيل الدخول: ' + (error.message || error.code || 'خطأ غير معروف'));
+    }
   }
 }
 
-// 🌟 (إصلاح #1) يعرض إشعار حالة كاش R2 (HIT/MISS) للمشرف فقط، بعد ثانية واحدة من التأكد الفعلي
-// من تسجيل دخوله عبر onAuthStateChanged — بدلاً من فحصه قبل معرفة هوية المستخدم (كان يفشل صامتاً).
+// 🌟 يبقى هذا كخط دفاع ثانوي فقط: لو نجح المتصفح فعلاً بإكمال تدفّق Redirect في حالات
+// نادرة (بعض المتصفحات لا تعاني من مشكلة storage-partitioning)، تُستقبل نتيجته هنا أيضاً.
 function announceCacheStatusToAdminIfNeeded() {
   if (!lastCatalogCacheStatus) return;
   if (!isCurrentUserAdmin()) return;
@@ -4590,9 +4630,9 @@ if (isFirebaseConfigured && auth) {
     .catch((error) => {
       console.error("Google Auth Redirect Error:", error);
       if (error.code === 'auth/unauthorized-domain') {
-        showToast('⚠️ يرجى إضافة دومين الموقع في Firebase Authorized Domains');
+        showAdminGateError('⚠️ يرجى إضافة دومين الموقع في Firebase Authorized Domains');
       } else if (error.code && error.code !== 'auth/popup-closed-by-user') {
-        showToast('تعذر تسجيل الدخول (' + (error.message || error.code) + ')');
+        showAdminGateError('تعذر تسجيل الدخول (' + (error.message || error.code) + ')');
       }
     });
 
