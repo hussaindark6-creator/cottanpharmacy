@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="color-scheme" content="light">
-  <meta name="theme-color" content="#111827">
+  <meta name="theme-color" content="#F8FAFC">
   <title>لوحة تحكم المشرف | إدارة الصيدلية</title>
 
   <!-- Google Fonts -->
@@ -48,14 +48,14 @@
       display: flex !important;
     }
     #adminAuthGateModal .admin-gate-card {
-      background: #0F172A;
-      border: 1px solid #1E293B;
+      background: #fff;
+      border: 1px solid #E5E7EB;
       border-radius: 24px;
       max-width: 400px;
       width: 100%;
       padding: 32px 28px;
       text-align: center;
-      box-shadow: 0 25px 60px rgba(0,0,0,0.55);
+      box-shadow: 0 25px 60px rgba(0,0,0,0.18);
       font-family: 'Cairo', sans-serif;
     }
     .admin-gate-icon-badge {
@@ -73,19 +73,19 @@
     .admin-gate-title {
       font-size: 21px;
       font-weight: 900;
-      color: #fff;
+      color: #111827;
       margin: 0 0 8px;
     }
     .admin-gate-desc {
       font-size: 13px;
-      color: #94A3B8;
+      color: #6B7280;
       margin: 0 0 22px;
       line-height: 1.7;
     }
     .admin-gate-google-btn {
       width: 100%;
-      background: #fff;
-      color: #0F172A;
+      background: #111827;
+      color: #fff;
       font-weight: 800;
       font-size: 14px;
       padding: 14px;
@@ -97,17 +97,17 @@
       cursor: pointer;
       border: none;
       transition: transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     }
-    .admin-gate-google-btn:hover { box-shadow: 0 10px 24px rgba(0,0,0,0.35); }
+    .admin-gate-google-btn:hover { box-shadow: 0 10px 24px rgba(0,0,0,0.22); }
     .admin-gate-google-btn:active { transform: scale(0.96); }
     .admin-gate-error {
       margin-top: 14px;
       font-size: 12px;
       font-weight: 700;
-      color: #F87171;
-      background: rgba(127,29,29,0.3);
-      border: 1px solid rgba(153,27,27,0.6);
+      color: #B91C1C;
+      background: #FEF2F2;
+      border: 1px solid #FCA5A5;
       padding: 10px 12px;
       border-radius: 10px;
       text-align: right;
@@ -118,44 +118,37 @@
       display: block;
       font-size: 13px;
       font-weight: 700;
-      color: #64748B;
+      color: #6B7280;
       margin-top: 16px;
       text-decoration: none;
     }
-    .admin-gate-back-link:hover { color: #94A3B8; }
+    .admin-gate-back-link:hover { color: #374151; }
 
     /* ==========================================================
-       🌟 (جديد) إعادة تصميم كامل لوحة تحكم الأدمن بطابع super-admin.html الداكن
-       الاحترافي (خلفية slate-950، بطاقات slate-900، شريط جانبي، لمسة زمردية).
+       🌟 (بطلبك — رجّعناها أبيض بدل الأسود) نفس ترتيب super-admin.html تماماً (شريط
+       جانبي ثابت لا يُحمَّل كل التبويبات دفعة واحدة)، لكن بألوان فاتحة بيضاء بدل الداكنة،
+       مع الإبقاء على لمسة اللون الزمردي للتمييز البصري عن متجر الزبائن الوردي.
        ==========================================================
-       الفكرة المعمارية: كل مكوّنات هذا المشروع (البطاقات، الحقول، الأزرار) مبنية أصلاً على
-       نظام متغيرات CSS موحّد في style.css (نفس النظام المستخدم لتبديل قوالب المتجر بين
-       الزبائن). لذا إعادة تعريف هذه المتغيرات هنا فقط (بدل إعادة كتابة كل صنف على حدة)
-       تعيد تلوين مُعظم لوحة التحكم تلقائياً بأمان تام، دون أي تعديل على script.js أو أي
-       معرّف/دالة موجودة — تغيير بصري خالص لا يكسر أي وظيفة.
-       ملاحظة صريحة: بعض العناصر القليلة جداً (كشريط تنبيه نقص المخزون الأصفر) لها ألوان
-       ثابتة يدوياً (Hardcoded) داخل HTML مباشرة لا تستجيب لمتغيرات CSS — عولجت أكبرها هنا،
-       والباقي (تفاصيل صغيرة) يحتاج تمريرة تالية مخصصة إن أردتِ تطابقاً بصرياً 100%.
     */
     :root, html {
-      color-scheme: dark;
-      --ink: #F1F5F9;
-      --text-soft: #94A3B8;
-      --paper: #020617;
-      --card: #0F172A;
-      --surface: #1E293B;
-      --surface-hover: #334155;
-      --line: #1E293B;
+      color-scheme: light;
+      --ink: #1F2937;
+      --text-soft: #6B7280;
+      --paper: #F8FAFC;
+      --card: #FFFFFF;
+      --surface: #F1F5F9;
+      --surface-hover: #E2E8F0;
+      --line: #E5E7EB;
       --rose: #10B981;
-      --rose-deep: #10B981;
+      --rose-deep: #059669;
       --accent: #10B981;
       --accent-dark: #059669;
-      --on-accent: #06281F;
-      --shadow-soft: 0 4px 20px rgba(0,0,0,0.35);
-      --shadow-hover: 0 10px 30px rgba(0,0,0,0.55);
+      --on-accent: #FFFFFF;
+      --shadow-soft: 0 4px 20px rgba(0,0,0,0.06);
+      --shadow-hover: 0 10px 30px rgba(0,0,0,0.1);
     }
     html, body, header, .view, .wrap, main, #app {
-      background-color: #020617 !important;
+      background-color: #F8FAFC !important;
     }
     body { color: var(--ink); }
 
@@ -165,34 +158,36 @@
       align-items: center;
       gap: 10px;
       padding: 16px 14px;
-      border-bottom: 1px solid #1E293B;
+      border-bottom: 1px solid #E5E7EB;
       margin: 0 -12px 10px;
     }
     .admin-sidebar-brand-icon {
       width: 38px; height: 38px; flex-shrink: 0;
-      background: rgba(16,185,129,0.12);
+      background: rgba(16,185,129,0.1);
       border: 1px solid rgba(16,185,129,0.3);
       border-radius: 10px;
       display: flex; align-items: center; justify-content: center;
       font-size: 18px;
     }
-    .admin-sidebar-brand h1 { font-size: 13px; font-weight: 900; color: #fff; margin: 0; line-height: 1.3; }
-    .admin-sidebar-brand p { font-size: 10px; color: #64748B; margin: 2px 0 0; }
+    .admin-sidebar-brand h1 { font-size: 13px; font-weight: 900; color: #111827; margin: 0; line-height: 1.3; }
+    .admin-sidebar-brand p { font-size: 10px; color: #6B7280; margin: 2px 0 0; }
 
     .admin-tab-btn-v {
       background: transparent !important;
-      color: #94A3B8 !important;
+      color: #4B5563 !important;
       text-align: right;
       border-radius: 10px !important;
       transition: background .15s, color .15s;
     }
-    .admin-tab-btn-v:hover { background: #1E293B !important; color: #fff !important; }
+    .admin-tab-btn-v:hover { background: #F1F5F9 !important; color: #111827 !important; }
     .admin-tab-btn-v.active {
       background: #10B981 !important;
-      color: #022C22 !important;
+      color: #fff !important;
       box-shadow: 0 6px 16px rgba(16,185,129,0.25);
     }
 
+    /* 🌟 (نفس الترتيب، ألوان فاتحة فقط) الشريط الجانبي الثابت لا يزال يعرض تبويباً واحداً
+       فقط في كل مرة (لا تُحمَّل كل الأقسام الخمسة عشر دفعة واحدة) — هذا ما طلبتِه أصلاً. */
     @media (min-width: 901px) {
       .admin-sidebar-brand { display: flex; }
       .admin-tabs-nav-view {
@@ -203,11 +198,12 @@
         align-items: stretch;
         overflow-y: auto;
         overflow-x: hidden;
-        background: #0F172A;
-        border-left: 1px solid #1E293B;
+        background: #fff;
+        border-left: 1px solid #E5E7EB;
         padding: 0 12px 20px;
         margin: 0;
         z-index: 40;
+        box-shadow: 2px 0 12px rgba(0,0,0,0.03);
       }
       .wrap { margin-right: 258px; }
       .admin-nav-header { padding-right: 258px; }
@@ -216,40 +212,42 @@
 
     /* ---------- بطاقات وحقول عامة (تستفيد تلقائياً من متغيرات الألوان أعلاه) ---------- */
     .admin-view-header {
-      background: linear-gradient(135deg, #0F172A 0%, #020617 100%) !important;
-      border-color: #1E293B !important;
+      background: linear-gradient(135deg, #FFFFFF 0%, #F1F5F9 100%) !important;
+      border-color: #E5E7EB !important;
+      color: #111827 !important;
     }
-    .admin-cache-rebuild-bar { background: #0F172A !important; border-color: #1E293B !important; }
+    .admin-cache-rebuild-bar { background: #fff !important; border-color: #E5E7EB !important; }
     .form-field input, .form-field textarea, .form-field select {
-      background: #1E293B !important;
-      border-color: #334155 !important;
-      color: #F1F5F9 !important;
+      background: #fff !important;
+      border-color: #E5E7EB !important;
+      color: #1F2937 !important;
     }
-    .form-field label { color: #94A3B8 !important; }
+    .form-field label { color: #6B7280 !important; }
 
-    /* 🌟 (إكمال التلوين المتبقي) قاعدة شاملة تُغطي عشرات حقول الإدخال/القوائم المنسدلة
-       المكتوبة بخلفية بيضاء يدوياً مباشرة داخل HTML (style="background:#fff") في كل أنحاء
-       الملف (نماذج المنتجات، الإعدادات، استيراد الكتالوج المركزي...). بما أن الأنماط هنا
-       بمثابة !important، فهي تتغلب على أي تنسيق مضمّن (Inline) قديم تلقائياً بلا الحاجة
-       لتعديل كل سطر من مئات الأسطر يدوياً — تغطية شاملة وآمنة دفعة واحدة. */
     input[type="text"], input[type="number"], input[type="tel"],
     input[type="password"], input[type="email"], input[type="search"],
     input[type="url"], input[type="file"], select, textarea {
-      background: #1E293B !important;
-      color: #F1F5F9 !important;
-      border-color: #334155 !important;
+      background: #fff !important;
+      color: #1F2937 !important;
+      border-color: #E5E7EB !important;
     }
-    input[type="file"] { color: #94A3B8 !important; }
-    input::placeholder, textarea::placeholder { color: #64748B !important; }
-    select option { background: #1E293B; color: #F1F5F9; }
+    input[type="file"] { color: #6B7280 !important; }
+    input::placeholder, textarea::placeholder { color: #9CA3AF !important; }
+    select option { background: #fff; color: #1F2937; }
 
-    /* 🌟 بطاقات فرعية رمادية فاتحة متكررة (معاينات الإعدادات، الحقول الفرعية) — مطابقة
-       مباشرة لنص الخاصية المضمّنة نفسها، فتُعاد تلوينها دون الحاجة لتعديل كل سطر يدوياً. */
-    [style*="background:#F9FAFB"], [style*="background: #F9FAFB"],
-    [style*="background:#F8FAFC"], [style*="background: #F8FAFC"],
-    [style*="background:#F3F4F6"], [style*="background: #F3F4F6"] {
-      background: #1E293B !important;
-      border-color: #334155 !important;
+    /* 🌟 (إصلاح — الطباعة الحرارية تخرج سوداء بالكامل) السبب: الثيم الداكن السابق كان يجعل
+       نص الإيصال أبيضاً على خلفية شفافة/داكنة؛ عند الطباعة الفعلية (التي تتجاهل الخلفيات
+       الملوّنة افتراضياً)، يظهر النص الأبيض غير مرئي أو كتلاً داكنة بدل نص مقروء. الآن —
+       بعودة الثيم للأبيض أصلاً — يُحل هذا تلقائياً، لكن نضيف تثبيتاً صريحاً هنا لضمان طباعة
+       أسود على أبيض دائماً بغضّ النظر عن أي متغيرات ثيم مستقبلية.
+    */
+    @media print {
+      .receipt-modal-card, .receipt-modal-card * {
+        color: #000 !important;
+        background: #fff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
     }
   </style>
 </head>
@@ -263,18 +261,18 @@
        نفسها بملف script.js في الخطوة التالية مباشرة (لضمان انتظار بيانات لوحة التحكم فعلياً،
        تماماً كما طُبِّق سابقاً بنجاح على index.html). هذا الملف يضمن الحد الأدنى المطلق: ألا
        تبقى الشاشة عالقة للأبد (صمام أمان 12 ثانية) حتى لو تعطّل تحميل script.js تماماً. -->
-  <div id="appLoadingOverlay" style="position:fixed; inset:0; z-index:99999; display:flex; align-items:center; justify-content:center; overflow:hidden; background:linear-gradient(160deg, #0F172A 0%, #020617 100%); transition:opacity .4s ease;">
+  <div id="appLoadingOverlay" style="position:fixed; inset:0; z-index:99999; display:flex; align-items:center; justify-content:center; overflow:hidden; background:linear-gradient(160deg, #FFFFFF 0%, #F1F5F9 100%); transition:opacity .4s ease;">
     <div style="position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; gap:14px; padding:0 28px; text-align:center;">
-      <div id="loaderCircleWrap" style="position:relative; width:92px; height:92px; border-radius:50%; background:#0F172A; border:1px solid #1E293B; box-shadow:0 8px 30px rgba(16,185,129,0.15); display:flex; align-items:center; justify-content:center; overflow:hidden;">
+      <div id="loaderCircleWrap" style="position:relative; width:92px; height:92px; border-radius:50%; background:#fff; border:1px solid #E5E7EB; box-shadow:0 8px 30px rgba(16,185,129,0.12); display:flex; align-items:center; justify-content:center; overflow:hidden;">
         <img id="loaderPhotoImg" src="" alt="" style="width:100%; height:100%; object-fit:cover; display:none;" onload="this.style.display='block';">
         <span style="font-size:34px;">💊</span>
       </div>
-      <div id="loaderTitleText" style="font-family:'Cairo', sans-serif; font-weight:900; font-size:16px; color:#fff;">جاري تحميل لوحة التحكم</div>
-      <div id="loaderSubText" style="font-family:'Cairo', sans-serif; font-size:12px; color:#94A3B8; font-weight:700;">انتظري لحظة من فضلك ..</div>
-      <div style="width:150px; height:4px; border-radius:999px; background:rgba(255,255,255,0.12); overflow:hidden; margin-top:2px;">
+      <div id="loaderTitleText" style="font-family:'Cairo', sans-serif; font-weight:900; font-size:16px; color:#111827;">جاري تحميل لوحة التحكم</div>
+      <div id="loaderSubText" style="font-family:'Cairo', sans-serif; font-size:12px; color:#6B7280; font-weight:700;">انتظري لحظة من فضلك ..</div>
+      <div style="width:150px; height:4px; border-radius:999px; background:#E5E7EB; overflow:hidden; margin-top:2px;">
         <div id="loaderProgressBar" style="height:100%; width:0%; border-radius:999px; background:#10B981; transition:width .35s ease;"></div>
       </div>
-      <div id="loaderPercentText" style="font-family:'IBM Plex Mono', monospace; font-size:10.5px; font-weight:600; color:#64748B; margin-top:2px;">0%</div>
+      <div id="loaderPercentText" style="font-family:'IBM Plex Mono', monospace; font-size:10.5px; font-weight:600; color:#9CA3AF; margin-top:2px;">0%</div>
     </div>
   </div>
 
@@ -1157,36 +1155,22 @@
           </div>
         </fieldset>
 
-        <!-- 🌸 تخصيص واجهة شاشة التحميل الأولية المباشرة (App Loading Screen Customizer) -->
+        <!-- 🌸 (بُسِّط بطلبك) تخصيص واجهة شاشة التحميل الأولية — صورة ونصوص فقط الآن. حُذف
+             حجم الدائرة ولون الخلفية لأن التصميم الجديد لشاشة التحميل (صورة ملء الشاشة بلا
+             دائرة ولا تغبيش) لم يعد يستخدم هذين الإعدادين إطلاقاً. -->
         <fieldset class="admin-fieldset" style="border:1.5px solid #E85D8A; background:#FFFBFD;">
           <legend style="color:var(--rose-deep); font-weight:900;">🌸 تخصيص واجهة شاشة التحميل الأولية (App Loading Screen)</legend>
           <p style="font-size:12px; color:var(--text-soft); margin-top:-4px; margin-bottom:12px;">
-            تعديل كامل لشاشة التحميل التي تظهر للزبائن عند فتح الموقع (الخلفية، الصورة، الحجم، والنصوص):
+            الصورة تظهر ملء الشاشة بالكامل للزبون عند فتح الموقع، مع العنوان والنص أسفلها مباشرة:
           </p>
           
           <div class="form-field">
-            <label>صورة شاشة التحميل (اختيار مباشر من المعرض / الكاميرا)</label>
+            <label>صورة شاشة التحميل (ملء الشاشة — اختيار مباشر من المعرض / الكاميرا)</label>
             <input type="file" accept="image/*" onchange="uploadDirectImageFile(this, 'adminLoaderImgInput', 'adminLoaderImgPreviewEl', 'adminLoaderImgPreviewBox')" style="width:100%; padding:8px; border:1.5px dashed var(--line); border-radius:12px; background:#fff; font-size:12px;">
             <input type="hidden" id="adminLoaderImgInput" value="">
             <div id="adminLoaderImgPreviewBox" style="margin-top:8px; display:none; align-items:center; gap:10px;">
-              <img id="adminLoaderImgPreviewEl" src="" style="height:60px; width:60px; object-fit:cover; border-radius:50%; border:1.5px solid var(--line);" alt="Loader Preview">
+              <img id="adminLoaderImgPreviewEl" src="" style="height:60px; width:60px; object-fit:cover; border-radius:12px; border:1.5px solid var(--line);" alt="Loader Preview">
               <span style="font-size:11px; color:#16A34A; font-weight:800;">✅ تم تحديث صورة التحميل</span>
-            </div>
-          </div>
-
-          <div style="display:flex; gap:10px;">
-            <div class="form-field" style="flex:1;">
-              <label>حجم دائرة صورة التحميل (بالبكسل: 80 - 220)</label>
-              <input type="number" id="adminLoaderCircleSize" placeholder="150" min="80" max="220" value="150">
-            </div>
-            <div class="form-field" style="flex:1;">
-              <!-- 🌟 (إصلاح #4) منتقي ألوان مرئي حقيقي باللمس بجانب الحقل النصي المتقدم (بدون فقدان ميزة التدرجات) -->
-              <label>لون خلفية شاشة التحميل (منتقي مرئي أو تدرج CSS مخصص)</label>
-              <div style="display:flex; gap:8px; align-items:center;">
-                <input type="color" id="adminLoaderBgColorPicker" value="#FDF2F6" oninput="syncLoaderBgColorFromPicker()" style="width:50px; height:42px; padding:2px; cursor:pointer; border-radius:10px; border:1px solid var(--line); flex-shrink:0;">
-                <input type="text" id="adminLoaderBgColor" placeholder="linear-gradient(160deg, #FDF2F6 0%, #FBEAF1 100%)" value="linear-gradient(160deg, #FDF2F6 0%, #FFF9FB 45%, #FBEAF1 100%)" style="flex:1;">
-              </div>
-              <p style="font-size:10.5px; color:var(--text-soft); margin-top:4px;">لمسة سريعة على المنتقي الدائري لاختيار لون صلب، أو عدّلي الحقل النصي مباشرة لتدرج CSS متقدم.</p>
             </div>
           </div>
 
@@ -1914,16 +1898,9 @@
           if (document.getElementById('adminPharmacistTitleInput')) document.getElementById('adminPharmacistTitleInput').value = p.pharmacistCtaTitle || '';
           if (document.getElementById('adminPharmacistDescInput')) document.getElementById('adminPharmacistDescInput').value = p.pharmacistCtaDesc || '';
           
-          // 🌸 ملء إعدادات واجهة شاشة التحميل الأولية
-          if (document.getElementById('adminLoaderCircleSize')) document.getElementById('adminLoaderCircleSize').value = p.loaderCircleSize || 150;
+          // 🌸 (بُسِّط) ملء إعدادات واجهة شاشة التحميل الأولية — صورة ونصوص فقط
           if (document.getElementById('adminLoaderTitleInput')) document.getElementById('adminLoaderTitleInput').value = p.loaderTitle || 'جاري تحميل الموقع';
           if (document.getElementById('adminLoaderSubInput')) document.getElementById('adminLoaderSubInput').value = p.loaderSubText || 'انتظر لحظة من فضلك ..';
-          const loaderBgVal = p.loaderBgColor || 'linear-gradient(160deg, #FDF2F6 0%, #FFF9FB 45%, #FBEAF1 100%)';
-          if (document.getElementById('adminLoaderBgColor')) document.getElementById('adminLoaderBgColor').value = loaderBgVal;
-          // 🌟 (إصلاح #4) إن كانت القيمة المحفوظة لوناً صلباً بسيطاً (hex) نُزامن منتقي الألوان المرئي معها أيضاً
-          if (document.getElementById('adminLoaderBgColorPicker') && /^#[0-9A-Fa-f]{6}$/.test(loaderBgVal.trim())) {
-            document.getElementById('adminLoaderBgColorPicker').value = loaderBgVal.trim();
-          }
           if (p.loaderImgUrl) {
             document.getElementById('adminLoaderImgInput').value = p.loaderImgUrl;
             document.getElementById('adminLoaderImgPreviewEl').src = p.loaderImgUrl;
@@ -1968,12 +1945,15 @@
       const pharmacistCtaTitle = document.getElementById('adminPharmacistTitleInput').value.trim();
       const pharmacistCtaDesc = document.getElementById('adminPharmacistDescInput').value.trim();
 
-      // إعدادات شاشة التحميل المخصصة — (إصلاح #4) تُقرأ من الحقل النصي المتزامن مع منتقي الألوان المرئي
+      // إعدادات شاشة التحميل المخصصة — (بُسِّطت) صورة وعنوان ونص فقط الآن
       const loaderImgUrl = sanitizeUrl(document.getElementById('adminLoaderImgInput')?.value.trim() || '');
-      const loaderCircleSize = Number(document.getElementById('adminLoaderCircleSize')?.value || 150);
       const loaderTitle = document.getElementById('adminLoaderTitleInput')?.value.trim() || 'جاري تحميل الموقع';
       const loaderSubText = document.getElementById('adminLoaderSubInput')?.value.trim() || 'انتظر لحظة من فضلك ..';
-      const loaderBgColor = document.getElementById('adminLoaderBgColor')?.value.trim() || 'linear-gradient(160deg, #FDF2F6 0%, #FFF9FB 45%, #FBEAF1 100%)';
+
+      // 🗑️ (بطلبك — "احذف الصورة القديمة حتى ما تظهر بالخطأ") نأخذ الصورة القديمة من
+      // النسخة المتزامنة بالذاكرة (pharmacyProfile، محدَّثة أصلاً عبر onSnapshot — صفر
+      // قراءات إضافية)، ونحذفها فعلياً من R2 بعد نجاح الحفظ إن اختلفت عن الصورة الجديدة.
+      const oldLoaderImgUrl = pharmacyProfile ? pharmacyProfile.loaderImgUrl : null;
 
       try {
         await dbPaths.pharmacyDoc().set({
@@ -1994,12 +1974,16 @@
           pharmacistCtaTitle: sanitizeText(pharmacistCtaTitle),
           pharmacistCtaDesc: sanitizeText(pharmacistCtaDesc),
           loaderImgUrl,
-          loaderCircleSize,
           loaderTitle: sanitizeText(loaderTitle),
           loaderSubText: sanitizeText(loaderSubText),
-          loaderBgColor: sanitizeText(loaderBgColor),
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
+
+        // 🗑️ حذف صورة شاشة التحميل القديمة فعلياً من R2 إن استُبدلت بأخرى جديدة، حتى لا
+        // تبقى محفوظة (وقد تظهر بالخطأ لاحقاً لو أُعيد استخدام رابطها بأي شكل).
+        if (oldLoaderImgUrl && loaderImgUrl && oldLoaderImgUrl !== loaderImgUrl) {
+          deleteOrphanImageFromR2(oldLoaderImgUrl);
+        }
 
         showToast('تم حفظ وتطبيق الهوية وشاشة التحميل سحابياً! ✨');
       } catch (err) {
