@@ -263,9 +263,13 @@
         </div>
 
         <!-- 👤 أيقونة القائمة (تظهر على اليمين بصرياً) — ثلاث خطوط بدل شكل الشخص، بطلب المستخدم -->
+        <!-- 🌟 (إصلاح — عدم توازن حجم الأيقونتين) الغلاف الدائري الإضافي (26px بخلفية) كان
+             يُصغّر الأيقونة الفعلية بصرياً مقارنة بأيقونة السلة المجاورة (22px مباشرة بلا أي
+             غلاف). الآن الأيقونتان بنفس الحجم (22px) ونفس أسلوب العرض تماماً — لا فرق بينهما
+             سوى الشكل نفسه، تناسقاً واحترافية كاملَين. -->
         <button class="icon-btn" onclick="openMenu()" aria-label="القائمة">
-          <span id="userChipAvatarWrap" style="width:26px; height:26px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:var(--surface);">
-            <svg id="userChipAvatar" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+          <span id="userChipAvatarWrap" style="width:22px; height:22px; display:flex; align-items:center; justify-content:center;">
+            <svg id="userChipAvatar" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
           </span>
           <span id="notifBadge" class="badge-count" style="display:none;">0</span>
         </button>
