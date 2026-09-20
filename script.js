@@ -2466,22 +2466,44 @@ async function saveAdminQuickEdit() {
     inStock: inStock && stockQty > 0,
     isSpecialOffer,
     rating,
-    reviews,
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    reviews
   };
 
-  if (db) {
+  const saveBtn = document.querySelector('#adminQuickEditModal .admin-btn-save');
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '⏳ جاري الحفظ...'; }
+
+  // 🛡️ (إصلاح — "لا يمكنني تعديل المنتجات") الكتابة لفايرستور هنا لم تكن مغلّفة بمعالجة
+  // أخطاء إطلاقاً — أي فشل (صلاحيات، اتصال، معرّف غير صالح) كان يفشل بصمت تام (Unhandled
+  // Promise Rejection مرئية فقط بكونسول المتصفح)، فتبقى النافذة مفتوحة بلا أي تفسير،
+  // ويبدو الأمر تماماً وكأن "التعديل لا يُحفظ إطلاقاً". الآن أي فشل يظهر كرسالة صريحة.
+  try {
+    if (!db) throw new Error('لا يوجد اتصال بقاعدة البيانات');
     const existingProd = findProduct(id);
     const oldImageUrl = existingProd ? existingProd.imageUrl : null;
-    await dbPaths.productsCol().doc(String(id)).set(updates, { merge: true });
+
+    await dbPaths.productsCol().doc(String(id)).set(
+      { ...updates, updatedAt: firebase.firestore.FieldValue.serverTimestamp() },
+      { merge: true }
+    );
+
+    // 🐛 (إصلاح إضافي) updates كان يُرسَل لتحديث كاش R2 وهو يحتوي على FieldValue.serverTimestamp()
+    // (كائن خاص بـ Firestore SDK لا يُسلسَل بشكل صحيح عبر JSON.stringify) — الآن نرسل نسخة
+    // نظيفة من البيانات الفعلية فقط (بلا أي كائن FieldValue) لضمان وصول كل الحقول بشكل سليم.
     updateR2CatalogItem(id, updates);
+
     // 🗑️ إذا تم استبدال صورة المنتج بأخرى جديدة، نحذف الصورة القديمة اليتيمة من R2 تلقائياً
     if (oldImageUrl && imageUrl && oldImageUrl !== imageUrl) {
       deleteOrphanImageFromR2(oldImageUrl);
     }
+
+    closeAdminQuickEditModal();
+    showToast('تم تحديث تفاصيل الصنف فورياً ✓');
+  } catch (err) {
+    console.error('saveAdminQuickEdit failed:', err);
+    showToast('⚠️ تعذر حفظ التعديل: ' + (err.message || 'خطأ غير معروف') + ' — يرجى إعادة المحاولة.');
+  } finally {
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 حفظ التعديلات سحابياً'; }
   }
-  closeAdminQuickEditModal();
-  showToast('تم تحديث تفاصيل الصنف فورياً ✓');
 }
 
 function openAdminQuickAddModal() {
