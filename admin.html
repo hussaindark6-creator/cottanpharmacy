@@ -1866,13 +1866,6 @@
       renderColorSwatchGrid();
     }
 
-    // 🌟 (إصلاح #4) مزامنة منتقي ألوان خلفية شاشة التحميل المرئي مع الحقل النصي المتقدم
-    function syncLoaderBgColorFromPicker() {
-      const picker = document.getElementById('adminLoaderBgColorPicker');
-      const textField = document.getElementById('adminLoaderBgColor');
-      if (picker && textField) textField.value = picker.value;
-    }
-
     document.addEventListener('DOMContentLoaded', renderColorSwatchGrid);
 
     // 🌸 قراءة إعدادات الصيدلية وشاشة التحميل المخصصة
