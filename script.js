@@ -4949,3 +4949,33 @@ window.scanForUncategorizedOrTestProducts = scanForUncategorizedOrTestProducts;
 window.toggleCleanupSelection = toggleCleanupSelection;
 window.cleanupArchiveSelected = cleanupArchiveSelected;
 window.cleanupPermanentDeleteSelected = cleanupPermanentDeleteSelected;
+
+// 🎯🔒 (الإصلاح الجذري الفعلي — تعديل المنتجات لا يعمل إطلاقاً) السبب الحقيقي المكتشف الآن
+// بتتبع مسار الكود الفعلي: renderProductGrid() هنا يُفوّض رسم كل بطاقة منتج لنفس محرك
+// القوالب المشترك (theme-engine.js) المستخدم بـ main.js (index.html). قالب البطاقة هناك
+// يستدعي كل أزرار الأدمن حرفياً عبر window.App.openAdminQuickEditModal(...)،
+// window.App.quickEditPrice(...)، window.App.quickToggleStock(...)،
+// window.App.archiveProductConfirm(...)، window.App.addBundleToCart(...)، إلخ — لكن كائن
+// النطاق "window.App" هذا **لم يكن مُعرَّفاً إطلاقاً في admin.html** (هو موجود فقط بنهاية
+// main.js الخاص بـ index.html). النتيجة: كل ضغطة على أي زر من هذه الأزرار داخل لوحة الأدمن
+// كانت تنهار فوراً بخطأ "Cannot read properties of undefined (reading 'openAdminQuickEditModal')"
+// في كونسول المتصفح فقط (غير مرئي للمستخدم إطلاقاً) — فتبدو الأزرار "لا تعمل" تماماً كما
+// وُصفت المشكلة. هذا يُفسّر أيضاً مشكلة "السعر لا يتحدّث للزبون": بما أن زر تعديل السعر لم
+// يكن يعمل من الأساس، فالسعر في قاعدة البيانات نفسها لم يكن يتغيّر إطلاقاً — لا علاقة
+// للمشكلة بالكاش على الأرجح، بل بعدم وصول أي تعديل لقاعدة البيانات من الأساس.
+// الحل: تعريف window.App هنا أيضاً، بنفس أسماء الدوال المستخدمة فعلياً في هذا الملف (كلها
+// موجودة مسبقاً كدوال عامة، لم يكن ناقصاً سوى تجميعها بهذا الكائن).
+window.App = {
+  openAdminQuickEditModal,
+  quickEditPrice,
+  quickToggleStock,
+  archiveProductConfirm,
+  addBundleToCart,
+  addToCart,
+  toggleWishlist,
+  openProduct,
+  openCategory,
+  selectProductVariantCard,
+  showView
+};
+window.showView = showView;
