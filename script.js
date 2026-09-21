@@ -1,4 +1,4 @@
-/* ==========================================================
+o/* ==========================================================
    SaaS Multi-Tenant Pharmacy Engine — script.js
    Version: 6.0.0 (Master Enterprise Edition - Zero Omission)
    ========================================================== */
@@ -2336,11 +2336,15 @@ async function quickEditPrice(id, currentPrice) {
     showToast('يرجى إدخال سعر صحيح أكبر من صفر');
     return;
   }
-  if (db) {
+  try {
+    if (!db) throw new Error('لا يوجد اتصال بقاعدة البيانات');
     await dbPaths.productsCol().doc(String(id)).set({ price: newPrice }, { merge: true });
     updateR2CatalogItem(id, { price: newPrice });
+    showToast('تم تحديث السعر ومسح الكاش فورياً ✓');
+  } catch (err) {
+    console.error('quickEditPrice failed:', err);
+    showToast('⚠️ تعذر تحديث السعر: ' + err.message);
   }
-  showToast('تم تحديث السعر ومسح الكاش فورياً ✓');
 }
 
 async function quickToggleStock(id) {
@@ -2348,11 +2352,15 @@ async function quickToggleStock(id) {
   const p = findProduct(id);
   if (!p) return;
   const newStock = (p.inStock === false) ? true : false;
-  if (db) {
+  try {
+    if (!db) throw new Error('لا يوجد اتصال بقاعدة البيانات');
     await dbPaths.productsCol().doc(String(id)).set({ inStock: newStock }, { merge: true });
     updateR2CatalogItem(id, { inStock: newStock });
+    showToast(newStock ? 'تم التعيين: متوفر 🟢' : 'تم التعيين: نفذت الكمية 🔴');
+  } catch (err) {
+    console.error('quickToggleStock failed:', err);
+    showToast('⚠️ تعذر تحديث حالة المخزون: ' + err.message);
   }
-  showToast(newStock ? 'تم التعيين: متوفر 🟢' : 'تم التعيين: نفذت الكمية 🔴');
 }
 
 // 🛡️ (إصلاح — "زر التعديل المباشر لا يعمل") لم أجد عبر المراجعة الساكنة للكود خللاً مؤكداً
@@ -2360,6 +2368,56 @@ async function quickToggleStock(id) {
 // إضافة مستقبلية، بيانات منتج ناقصة بشكل غير معتاد...) كان سيفشل بصمت تام دون أي أثر مرئي
 // للأدمن — فيبدو الزر "لا يعمل" دون أي تفسير. التغليف بـ try/catch هنا يضمن ظهور رسالة
 // خطأ صريحة بدل الصمت أياً كان السبب الفعلي، مما يجعل أي عطل مستقبلي قابلاً للتشخيص فوراً.
+// 🎯🛡️ (الإصلاح الجذري المؤكَّد بلقطة الشاشة) اتضح أن هذه الدالة (المُصدَّرة عبر window.App
+// بالإصلاح السابق) قد تُستدعى فعلياً من صفحة لا تحتوي عناصر هذه النافذة إطلاقاً (كما ظهر
+// حرفياً برسالة الخطأ بالصورة المرسلة). بدل الاعتماد على افتراض أن هذه العناصر موجودة
+// دائماً بالصفحة، أصبحت الدالة الآن "ذاتية الإصلاح": تبني نافذة التعديل الكاملة ديناميكياً
+// بنفسها عند أول استخدام إن لم تكن موجودة أصلاً — بنفس الأسلوب المطبَّق مسبقاً بنجاح على
+// نافذة التعديل السريع بواجهة الزبون. هذا يضمن عمل الزر بشكل صحيح ودائم بغضّ النظر عن أي
+// التباس مستقبلي حول أي صفحة تستدعيه فعلياً.
+function ensureAdminQuickEditModalMarkup() {
+  if (document.getElementById('adminQuickEditModal')) return;
+
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+    <div class="admin-quick-modal-overlay" id="adminQuickEditModal">
+      <div class="admin-quick-card" style="max-width:480px; text-align:right; max-height:88vh; overflow-y:auto;">
+        <div class="consult-header" style="padding:0 0 12px; border-bottom:1px solid var(--line); margin-bottom:14px; display:flex; align-items:center; justify-content:space-between;">
+          <h4 style="margin:0; font-weight:900;">تعديل المنتج ✏️</h4>
+          <button type="button" onclick="closeAdminQuickEditModal()" style="font-weight:900; font-size:16px;">✕</button>
+        </div>
+        <input type="hidden" id="quickEditProdId">
+        <div class="form-field"><label>اسم المنتج</label><input type="text" id="quickEditProdName"></div>
+        <div class="form-field"><label>الماركة</label><input type="text" id="quickEditProdBrand"></div>
+        <div style="display:flex; gap:10px;">
+          <div class="form-field" style="flex:1;"><label>السعر</label><input type="number" id="quickEditProdPrice" min="0"></div>
+          <div class="form-field" style="flex:1;"><label>السعر قبل الخصم</label><input type="number" id="quickEditProdOldPrice" min="0"></div>
+        </div>
+        <div class="form-field"><label>القسم</label><select id="quickEditProdCat"></select></div>
+        <div class="form-field"><label>الحجم/الوصف القصير</label><input type="text" id="quickEditProdSize"></div>
+        <div style="display:flex; gap:10px;">
+          <div class="form-field" style="flex:1;"><label>الكمية بالمخزون</label><input type="number" id="quickEditProdStockQty" min="0"></div>
+          <div class="form-field" style="flex:1;"><label>التقييم</label><input type="number" id="quickEditProdRating" step="0.1" min="0" max="5"></div>
+        </div>
+        <div class="form-field"><label>عدد التقييمات</label><input type="number" id="quickEditProdReviews" min="0"></div>
+        <div class="form-field">
+          <label>رابط صورة المنتج</label>
+          <input type="text" id="quickEditProdImg">
+          <div id="quickEditProdImgPreviewBox" style="display:none; margin-top:8px; justify-content:center;">
+            <img id="quickEditProdImgPreviewEl" style="width:70px; height:70px; object-fit:cover; border-radius:12px; border:1px solid var(--line);">
+          </div>
+        </div>
+        <div class="form-field"><label>الوصف</label><textarea id="quickEditProdDesc" rows="2"></textarea></div>
+        <div class="form-field"><label>المكونات</label><textarea id="quickEditProdIng" rows="2"></textarea></div>
+        <div class="form-field"><label>طريقة الاستخدام</label><textarea id="quickEditProdUsage" rows="2"></textarea></div>
+        <label style="display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:8px;"><input type="checkbox" id="quickEditProdInStock"> متوفر بالمخزون</label>
+        <label style="display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:14px;"><input type="checkbox" id="quickEditProdIsOffer"> عرض خاص</label>
+        <button type="button" class="admin-btn-save" onclick="saveAdminQuickEdit()">💾 حفظ التعديلات سحابياً</button>
+      </div>
+    </div>`;
+  document.body.appendChild(wrap.firstElementChild);
+}
+
 function openAdminQuickEditModal(id) {
   if (!assertAdmin()) return;
   try {
@@ -2369,6 +2427,7 @@ function openAdminQuickEditModal(id) {
       return;
     }
 
+    ensureAdminQuickEditModalMarkup();
     populateCategoryDropdowns();
 
     ensureCostPriceField('quickEditProdOldPrice', 'quickEditProdCostPrice');
