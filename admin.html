@@ -370,8 +370,11 @@
       <p id="adminWelcomeDesc">مرحباً بك — إدارة متكاملة للطلبات، الموظفين، المنتجات، والاشتراكات.</p>
     </div>
 
-    <!-- ⚡ (إصلاح #1) زر توليد وحبس كتالوج R2 السحابي يدوياً بنقرة واحدة -->
-    <div class="admin-cache-rebuild-bar">
+    <!-- ⚡ (أُخفي بطلب المستخدم) زر توليد وحبس كتالوج R2 السحابي يدوياً — التحديث التلقائي
+         عند حفظ أي منتج (updateR2CatalogItem/triggerR2CatalogRebuild) يكفي عملياً، ولم يعد
+         هذا الزر اليدوي ضرورياً بالواجهة (وكان يظهر أحياناً برسالة خطأ مربكة). الدالة نفسها
+         (manualRebuildR2Catalog) بقيت كما هي بالكود دون حذف، فقط أُخفي الزر من الواجهة. -->
+    <div class="admin-cache-rebuild-bar" style="display:none;">
       <button type="button" onclick="manualRebuildR2Catalog()" id="btnManualRebuildCache" class="admin-cache-rebuild-btn">
         ⚡ توليد وحبس كتالوج R2 السحابي الآن
       </button>
