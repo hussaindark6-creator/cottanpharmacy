@@ -424,22 +424,51 @@
 
     <!-- 1. REAL ANALYTICS SECTION -->
     <div id="adminSecStats">
-      <div class="admin-stat-grid-v">
-        <div class="admin-stat-card-v">
+      <div class="dash-section-label">📅 أداء اليوم</div>
+      <div class="admin-stat-grid-v dash-grid-today">
+        <div class="admin-stat-card-v dash-card-revenue">
+          <div class="dash-card-icon">💰</div>
           <div class="num mono" id="statDailyRevenue">0 د.ع</div>
-          <div class="lbl">💰 مبيعات اليوم الفعلية</div>
+          <div class="lbl">مبيعات اليوم</div>
+        </div>
+        <div class="admin-stat-card-v dash-card-profit">
+          <div class="dash-card-icon">📈</div>
+          <div class="num mono" id="statDailyProfit">0 د.ع</div>
+          <div class="lbl">صافي ربح اليوم</div>
         </div>
         <div class="admin-stat-card-v">
-          <div class="num mono" id="statMonthlyRevenue">0 د.ع</div>
-          <div class="lbl">📅 مبيعات هذا الشهر</div>
+          <div class="dash-card-icon">📦</div>
+          <div class="num mono" id="statDailyOrders">0</div>
+          <div class="lbl">طلبات اليوم</div>
         </div>
         <div class="admin-stat-card-v">
+          <div class="dash-card-icon">👁️</div>
           <div class="num mono" id="statDailyVisits">0</div>
-          <div class="lbl">👁️ زيارات اليوم الحقيقية</div>
+          <div class="lbl">زيارات اليوم</div>
+        </div>
+      </div>
+
+      <div class="dash-section-label" style="margin-top:20px;">🗓️ أداء هذا الشهر <span style="font-weight:600; font-size:11px; color:var(--text-soft);">(يتجدد تلقائياً أول كل شهر)</span></div>
+      <div class="admin-stat-grid-v dash-grid-month">
+        <div class="admin-stat-card-v dash-card-revenue">
+          <div class="dash-card-icon">💵</div>
+          <div class="num mono" id="statMonthlyRevenue">0 د.ع</div>
+          <div class="lbl">مبيعات الشهر</div>
+        </div>
+        <div class="admin-stat-card-v dash-card-profit">
+          <div class="dash-card-icon">📊</div>
+          <div class="num mono" id="statMonthlyProfit">0 د.ع</div>
+          <div class="lbl">صافي ربح الشهر</div>
         </div>
         <div class="admin-stat-card-v">
+          <div class="dash-card-icon">🧾</div>
+          <div class="num mono" id="statMonthlyOrders">0</div>
+          <div class="lbl">طلبات الشهر</div>
+        </div>
+        <div class="admin-stat-card-v">
+          <div class="dash-card-icon">🗂️</div>
           <div class="num mono" id="statTotalOrdersV">0</div>
-          <div class="lbl">📦 إجمالي الطلبات المسجلة</div>
+          <div class="lbl">إجمالي الطلبات كلها</div>
         </div>
       </div>
 
@@ -452,13 +481,8 @@
       </div>
 
       <div class="admin-rank-list">
-        <div class="admin-chart-title"><span>🔥 أكثر 5 منتجات طلباً وبيعاً</span></div>
+        <div class="admin-chart-title"><span>🏆 الأكثر مبيعاً</span></div>
         <div id="adminTopOrderedList"></div>
-      </div>
-
-      <div class="admin-rank-list">
-        <div class="admin-chart-title"><span>👁️ أكثر 5 منتجات مشاهدة ودخولاً</span></div>
-        <div id="adminTopViewedList"></div>
       </div>
     </div>
 
@@ -489,8 +513,8 @@
             </select>
           </div>
           <div style="display:flex; gap:8px; align-items:flex-end; margin-top:4px;">
-            <button type="button" onclick="exportOrdersToCSV()" style="background:#16A34A; color:#fff; font-weight:800; font-size:12px; padding:9px 14px; border-radius:10px; display:inline-flex; align-items:center; gap:6px;">
-              📊 تنزيل Excel / CSV
+            <button type="button" id="btnExportCsvReport" onclick="exportOrdersToCSV()" style="background:#16A34A; color:#fff; font-weight:800; font-size:12px; padding:9px 14px; border-radius:10px; display:inline-flex; align-items:center; gap:6px;">
+              📊 تنزيل Excel / CSV (تقرير مالي)
             </button>
             <button type="button" onclick="fetchAdminOrdersList()" style="background:#2563EB; color:#fff; font-weight:800; font-size:12px; padding:9px 12px; border-radius:10px;">
               🔄 تحديث
@@ -624,11 +648,11 @@
           <div style="display:flex; gap:10px;">
             <div class="form-field" style="flex:1;">
               <label>السعر الحالي (د.ع) *</label>
-              <input type="number" id="adminProdPrice" placeholder="25000" required min="500">
+              <input type="number" class="price-input-lg" id="adminProdPrice" placeholder="25000" required min="500">
             </div>
             <div class="form-field" style="flex:1;">
               <label>السعر قبل الخصم (اختياري)</label>
-              <input type="number" id="adminProdOldPrice" placeholder="30000" min="0">
+              <input type="number" class="price-input-lg" id="adminProdOldPrice" placeholder="30000" min="0">
             </div>
           </div>
 
@@ -1308,11 +1332,11 @@
         <div style="display:flex; gap:10px;">
           <div class="form-field" style="flex:1;">
             <label>سعر البيع الحالي (د.ع) *</label>
-            <input type="number" id="quickEditProdPrice" required>
+            <input type="number" class="price-input-lg" id="quickEditProdPrice" required>
           </div>
           <div class="form-field" style="flex:1;">
             <label>السعر قبل الخصم (اختياري)</label>
-            <input type="number" id="quickEditProdOldPrice">
+            <input type="number" class="price-input-lg" id="quickEditProdOldPrice">
           </div>
         </div>
 
