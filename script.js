@@ -413,6 +413,11 @@ let totalOrdersCount = 0;
 let todayVisitsCount = 0;
 let todayRevenue = 0;
 let monthlyRevenue = 0;
+// 📊 (البند 10) متغيرات لوحة التحكم الجديدة — صافي الربح وعدد الطلبات اليومي/الشهري
+let todayProfit = 0;
+let monthlyProfit = 0;
+let todayOrdersCount = 0;
+let monthlyOrdersCount = 0;
 let weeklyVisitsData = [];
 
 let pharmacyProfile = {
@@ -651,6 +656,8 @@ function checkLowStockAlerts() {
 }
 
 // ================= 10. TENANT TELEGRAM DISPATCHER =================
+// ⚠️ (لم تعد مستخدَمة) الووركر أصبح يرسل إشعار تيليجرام تلقائياً من داخل /api/orders نفسه
+// بعد تثبيت الطلب بأمان — أُبقيت الدالة معرَّفة فقط تفادياً لأي استدعاء خارجي محتمل لها.
 async function sendOrderToPharmacyTelegram(orderObj) {
   const teleConfig = pharmacyProfile.telegramConfig;
   if (!teleConfig || !teleConfig.botToken || !teleConfig.chatId || teleConfig.enabled === false) {
@@ -699,6 +706,16 @@ async function sendOrderToPharmacyTelegram(orderObj) {
 }
 
 // ================= 11. CONFIRM ORDER =================
+// 🛡️🔒 (إصلاح أمني/وظيفي جذري — الطلبات كانت معطّلة فعلياً) هذه الدالة كانت تكتب الطلب
+// مباشرة من المتصفح إلى Firestore بسعر يحسبه العميل نفسه محلياً (ثغرة تلاعب بالسعر)، وبعد
+// تحديث firestore.rules (allow create: if false على orders) أصبحت هذه الكتابة المباشرة
+// تُرفض دائماً من Firestore — أي أن تأكيد الطلب توقف عن العمل فعلياً بالكامل رغم عدم ظهور
+// أي خطأ واضح للزبون (كانت الأخطاء تُبتلع بصمت داخل catch ثم يتابع الكود وكأن شيئاً لم
+// يحدث، فيظهر "نجاح" وهمي بلا طلب مكتوب فعلياً في قاعدة البيانات).
+// الحل الجذري: أصبح هذا المسار الآن يستدعي حصراً /api/orders على الووركر، الذي يعيد
+// احتساب كل الأسعار من مصدرها الحقيقي عبر Admin SDK ضمن معاملة Firestore ذرية واحدة
+// (تحقق من السعر الحقيقي + خصم المخزون + كتابة الطلب معاً)، ويرسل إشعار تيليجرام تلقائياً
+// بنفسه — فلا حاجة لأي كتابة مباشرة أو استدعاء تيليجرام منفصل من المتصفح بعد الآن.
 async function confirmOrder() {
   if (!lockAction('confirmOrder', 2500)) return;
 
@@ -721,85 +738,80 @@ async function confirmOrder() {
   const confirmBtn = document.getElementById('confirmOrderBtn');
   if (confirmBtn) {
     confirmBtn.disabled = true;
-    confirmBtn.textContent = 'جاري تأكيد الطلب...';
+    confirmBtn.textContent = 'جاري التحقق من المخزون وتأكيد الطلب... ⏳';
   }
 
   localStorage.setItem('saas_customer_saved_profile', JSON.stringify({ name, phone, address }));
 
-  let calculatedSubtotal = 0;
-  const itemsPayload = ids.map(id => {
+  // هذه القيم "تقديرية" فقط لبناء طلب الإرسال — القيم الحقيقية النهائية المعتمدة تأتي
+  // حصراً من استجابة الووركر أدناه بعد إعادة الاحتساب من المصدر الحقيقي.
+  const itemsPayloadForServer = ids.map(id => {
     const isBundle = id.startsWith('bundle_');
     const item = isBundle ? findBundle(id.replace('bundle_', '')) : findProduct(id);
-    const unitPrice = item ? Number(item.price || 0) : 0;
-    const qty = Number(cart[id] || 1);
-    const lineTotal = unitPrice * qty;
-    calculatedSubtotal += lineTotal;
-
     return {
       id: id,
       name: item ? (item.name || item.title) : 'منتج',
-      unitPrice: unitPrice,
-      price: unitPrice,
-      quantity: qty,
-      lineTotal: lineTotal,
+      price: item ? Number(item.price || 0) : 0,
+      quantity: Number(cart[id] || 1),
       isBundle: isBundle
     };
   });
 
-  const deliveryFee = (deliveryMethod === 'express') 
-    ? (Number(pharmacyProfile.deliveryFeeExpress) || 8000) 
-    : (Number(pharmacyProfile.deliveryFeeStandard) || 4000);
+  let serverResult;
+  try {
+    const res = await fetch(`${WORKER_API_BASE}/api/orders`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Pharmacy-Id': currentPharmacyId
+      },
+      body: JSON.stringify({
+        customerName: name,
+        customerPhone: phone,
+        customerAddress: address,
+        deliveryMethod: deliveryMethod,
+        items: itemsPayloadForServer,
+        promoCode: appliedPromo ? appliedPromo.code : null,
+        userId: (typeof currentUser !== 'undefined' && currentUser) ? currentUser.uid : null
+      })
+    });
+    serverResult = await res.json();
+  } catch (err) {
+    console.error('Order network error:', err);
+    if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = 'تأكيد الطلب'; }
+    showToast('⚠️ تعذر الاتصال بالسيرفر لتأكيد الطلب. تحققي من اتصال الإنترنت وحاولي مجدداً.');
+    return;
+  }
 
-  const discountAmount = appliedPromo ? Number(appliedPromo.discountAmount || 0) : 0;
-  const grandTotal = Math.max(0, calculatedSubtotal - discountAmount) + deliveryFee;
-  const orderPrefix = (pharmacyProfile.name || 'ORD').substring(0, 4).toUpperCase();
-  const orderId = `${orderPrefix}-${Math.floor(100000 + Math.random() * 900000)}`;
+  if (!serverResult || !serverResult.success) {
+    if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = 'تأكيد الطلب'; }
+    showToast((serverResult && serverResult.message) || '⚠️ تعذر إتمام الطلب. حاولي مجدداً.');
+    return;
+  }
 
-  const newOrderObj = {
-    id: orderId,
-    pharmacyId: currentPharmacyId,
-    // 🔵 (تحديث): اعتماد اللغة الإنجليزية للتواريخ والأشهر في كامل الوصولات والتقارير المطبوعة
+  // ✅ الطلب مُثبَّت فعلياً بفايرستور من طرف السيرفر بنجاح — نبني الكائن المحلي حصراً من
+  // بيانات السيرفر الموثوقة (لا من حسابات المتصفح المحلية) لعرضه وإرساله للواتساب.
+  const order = serverResult.order;
+  const orderId = serverResult.orderId;
+  const grandTotal = serverResult.verifiedTotal;
+  const verifiedItems = serverResult.verifiedItems || [];
+  const calculatedSubtotal = order ? Number(order.subtotal || 0) : 0;
+  const deliveryFee = order ? Number(order.deliveryFee || 0) : 0;
+  const discountAmount = order ? Number(order.discountAmount || 0) : 0;
+
+  const newOrderObj = order ? { ...order } : {
+    id: orderId, pharmacyId: currentPharmacyId,
+    userId: (typeof currentUser !== 'undefined' && currentUser) ? currentUser.uid : null,
     date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
-    name,
-    phone,
-    address,
-    deliveryMethod,
-    items: itemsPayload,
-    subtotal: calculatedSubtotal,
-    deliveryFee: deliveryFee,
-    discountAmount: discountAmount,
-    promoCode: appliedPromo ? appliedPromo.code : null,
-    total: grandTotal,
+    name, phone, address, deliveryMethod, items: verifiedItems, subtotal: calculatedSubtotal,
+    deliveryFee, discountAmount, promoCode: appliedPromo ? appliedPromo.code : null, total: grandTotal,
     status: 'قيد المعالجة والتجهيز 🚚'
   };
 
   myOrders.unshift(newOrderObj);
   saveLocalState();
 
-  if (db) {
-    try {
-      await dbPaths.ordersCol().doc(orderId).set({
-        ...newOrderObj,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-
-      itemsPayload.forEach(it => {
-        if (!it.isBundle && it.id) {
-          const prodRef = dbPaths.productsCol().doc(String(it.id));
-          prodRef.update({
-            orderCount: firebase.firestore.FieldValue.increment(Number(it.quantity || 1)),
-            stockQuantity: firebase.firestore.FieldValue.increment(-Number(it.quantity || 1))
-          }).catch(console.warn);
-        }
-      });
-    } catch (e) {
-      console.warn("Firestore order write error:", e);
-    }
-  }
-
-  sendOrderToPharmacyTelegram(newOrderObj);
-
-  const lines = itemsPayload.map(item => `• ${item.isBundle ? '🎁 [بكج توفير] ' : ''}${item.name} (${fmtPrice(item.unitPrice)} × ${item.quantity} قطع) = ${fmtPrice(item.lineTotal)}`);
+  const lines = verifiedItems.map(item => `• ${item.isBundle ? '🎁 [بكج توفير] ' : ''}${item.name} (${fmtPrice(item.unitPrice)} × ${item.quantity} قطع) = ${fmtPrice(item.lineTotal)}`);
   const deliveryLabel = deliveryMethod === 'express' ? `سريع (${fmtPrice(deliveryFee)})` : `عادي (${fmtPrice(deliveryFee)})`;
   const promoInfo = appliedPromo ? `🎟️ *كود الخصم المطبق:* ${appliedPromo.code} (-${fmtPrice(discountAmount)})\n` : '';
 
@@ -1810,7 +1822,7 @@ async function fetchRealAnalytics() {
     const todayStr = new Date().toISOString().split('T')[0];
     const currentMonthStr = todayStr.substring(0, 7);
 
-    let dRev = 0, mRev = 0;
+    let dRev = 0, mRev = 0, dProfit = 0, mProfit = 0, dOrders = 0, mOrders = 0;
     const ordersSnap = await dbPaths.ordersCol().get();
     totalOrdersCount = Math.max(ordersSnap.size, myOrders.length);
 
@@ -1820,18 +1832,32 @@ async function fetchRealAnalytics() {
       const o = doc.data();
       const oTotal = Number(o.total || o.verifiedTotal || 0);
       const oDate = o.createdAt && o.createdAt.toDate ? o.createdAt.toDate().toISOString() : (o.date || '');
-      if (oDate.startsWith(todayStr)) dRev += oTotal;
-      if (oDate.startsWith(currentMonthStr)) mRev += oTotal;
+      const isToday = oDate.startsWith(todayStr);
+      const isThisMonth = oDate.startsWith(currentMonthStr);
+      if (isToday) { dRev += oTotal; dOrders++; }
+      if (isThisMonth) { mRev += oTotal; mOrders++; }
 
+      // 📊 (البند 10) صافي الربح اليومي/الشهري — يُحتسب من unitCostPrice المحفوظة كلقطة
+      // داخل كل عنصر طلب وقت الشراء الفعلي (وليس السعر الحالي بالمخزون، تفادياً لتحريف
+      // الأرباح التاريخية عند تغيّر أسعار التكلفة لاحقاً). البنود بلا تكلفة مسجّلة لا تُحتسب.
       (o.items || []).forEach(it => {
         if (it && it.id) {
           productSalesMap[it.id] = (productSalesMap[it.id] || 0) + Number(it.quantity || 1);
+        }
+        if (it && it.unitCostPrice !== undefined && it.unitCostPrice !== null) {
+          const lineProfit = (Number(it.unitPrice || 0) - Number(it.unitCostPrice || 0)) * Number(it.quantity || 1);
+          if (isToday) dProfit += lineProfit;
+          if (isThisMonth) mProfit += lineProfit;
         }
       });
     });
 
     todayRevenue = dRev;
     monthlyRevenue = mRev;
+    todayProfit = dProfit;
+    monthlyProfit = mProfit;
+    todayOrdersCount = dOrders;
+    monthlyOrdersCount = mOrders;
 
     products.forEach(p => {
       if (productSalesMap[p.id]) {
@@ -1871,11 +1897,19 @@ function renderRealAnalyticsView() {
   const statMonthlyRev = document.getElementById('statMonthlyRevenue');
   const statVisits = document.getElementById('statDailyVisits');
   const statOrders = document.getElementById('statTotalOrdersV');
+  const statDailyProfitEl = document.getElementById('statDailyProfit');
+  const statMonthlyProfitEl = document.getElementById('statMonthlyProfit');
+  const statDailyOrdersEl = document.getElementById('statDailyOrders');
+  const statMonthlyOrdersEl = document.getElementById('statMonthlyOrders');
 
   if (statDailyRev) statDailyRev.textContent = fmtPrice(todayRevenue);
   if (statMonthlyRev) statMonthlyRev.textContent = fmtPrice(monthlyRevenue);
   if (statVisits) statVisits.textContent = todayVisitsCount;
   if (statOrders) statOrders.textContent = totalOrdersCount;
+  if (statDailyProfitEl) statDailyProfitEl.textContent = fmtPrice(todayProfit);
+  if (statMonthlyProfitEl) statMonthlyProfitEl.textContent = fmtPrice(monthlyProfit);
+  if (statDailyOrdersEl) statDailyOrdersEl.textContent = todayOrdersCount;
+  if (statMonthlyOrdersEl) statMonthlyOrdersEl.textContent = monthlyOrdersCount;
 
   const chartContainer = document.getElementById('adminRealChartBars');
   if (chartContainer && weeklyVisitsData.length > 0) {
@@ -1897,29 +1931,26 @@ function renderRealAnalyticsView() {
       .sort((a, b) => (Number(b.orderCount) || 0) - (Number(a.orderCount) || 0))
       .slice(0, 5);
 
-    topOrdersEl.innerHTML = topOrdered.length === 0 ? `<div class="no-results" style="padding:20px 0;">لا توجد مبيعات مسجلة حتى الآن.</div>` : 
-      topOrdered.map((p, idx) => `
-        <div class="admin-rank-item">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span class="admin-rank-badge">${idx + 1}</span>
-            <span style="font-weight:700;">${sanitizeText(p.name)} (${sanitizeText(p.brand)})</span>
-          </div>
-          <span class="mono" style="font-weight:800; color:var(--accent);">${p.orderCount} طلب شراء</span>
-        </div>`).join('');
-  }
+    // 🏆 (البند 10) قسم "الأكثر مبيعاً" بشكل احترافي أكثر — ميداليات ذهبية/فضية/برونزية
+    // للمراكز الثلاثة الأولى، وشريط تقدّم نسبي يقارن كل منتج بأعلى مبيعات مسجّلة.
+    const medalIcons = ['🥇', '🥈', '🥉'];
+    const maxOrderCount = topOrdered.length ? Math.max(...topOrdered.map(p => Number(p.orderCount) || 0), 1) : 1;
 
-  const topViewsEl = document.getElementById('adminTopViewedList');
-  if (topViewsEl) {
-    const topViewed = products.filter(p => (p.views || 0) > 0 && p.isDeleted !== true).sort((a,b) => (b.views || 0) - (a.views || 0)).slice(0, 5);
-    topViewsEl.innerHTML = topViewed.length === 0 ? `<div class="no-results" style="padding:20px 0;">لا توجد مشاهدات مسجلة اليوم بعد.</div>` : 
-      topViewed.map((p, idx) => `
-        <div class="admin-rank-item">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span class="admin-rank-badge">${idx + 1}</span>
-            <span style="font-weight:700;">${sanitizeText(p.name)}</span>
+    topOrdersEl.innerHTML = topOrdered.length === 0 ? `<div class="no-results" style="padding:20px 0;">لا توجد مبيعات مسجلة حتى الآن.</div>` : 
+      topOrdered.map((p, idx) => {
+        const pct = Math.round(((Number(p.orderCount) || 0) / maxOrderCount) * 100);
+        return `
+        <div class="admin-rank-item admin-rank-item-pro">
+          <div class="admin-rank-item-top">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="admin-rank-badge admin-rank-badge-pro">${medalIcons[idx] || (idx + 1)}</span>
+              <span style="font-weight:800;">${sanitizeText(p.name)} <span style="font-weight:600; color:var(--text-soft); font-size:11.5px;">(${sanitizeText(p.brand || '')})</span></span>
+            </div>
+            <span class="mono" style="font-weight:900; color:var(--accent);">${p.orderCount} مبيعة</span>
           </div>
-          <span class="mono" style="font-weight:800; color:#4B5563;">${p.views} مشاهدة</span>
-        </div>`).join('');
+          <div class="admin-rank-bar-track"><div class="admin-rank-bar-fill" style="width:${pct}%;"></div></div>
+        </div>`;
+      }).join('');
   }
 }
 
@@ -2272,8 +2303,11 @@ async function buildDetailedOrdersCSV() {
   return { csv, totalOrders: orders.length, totalRevenue: totalCOD, totalDelivery, totalNetStore, totalCostOfGoods, netProfit: Math.max(0, totalNetStore - totalCostOfGoods), itemsMissingCost };
 }
 
+// 🔒 (إصلاح #9 — التقارير حصراً للمشرف العام) كانت متاحة لأي مشرف صيدلية (assertAdmin
+// فقط)، بينما التقرير المالي يحتوي بيانات حساسة (التكلفة، صافي الربح). أصبحت الآن مقيَّدة
+// بـ isSuperAdmin() حصراً، والزر نفسه يُخفى عن المشرف العادي في الواجهة (admin.html).
 async function exportOrdersToCSV() {
-  if (!assertAdmin()) return;
+  if (!isSuperAdmin()) { showToast('⚠️ التقارير المالية متاحة حصراً للمشرف العام للمنصة'); return; }
   showToast('جاري تصدير وتحميل ملف المبيعات المقسّم حسب الأقسام...');
   try {
     const report = await buildDetailedOrdersCSV();
@@ -2311,7 +2345,7 @@ function ensureCostPriceField(anchorInputId, costInputId) {
   wrap.className = 'form-field';
   wrap.innerHTML = `
     <label>سعر التكلفة (اختياري — لحساب صافي الربح) 💰</label>
-    <input type="number" id="${costInputId}" min="0" step="0.01" placeholder="مثال: 3500">
+    <input type="number" class="price-input-lg" id="${costInputId}" min="0" step="0.01" placeholder="مثال: 3500">
   `;
   anchorField.parentElement.insertBefore(wrap, anchorField.nextSibling);
 }
@@ -3371,7 +3405,15 @@ function renderBrandStrip() {
 }
 
 function renderOffers() {
-  const discounted = products.filter(p => (p.oldPrice || p.isSpecialOffer) && p.isDeleted !== true);
+  // 🌟 (إصلاح #3) "العروض" يجب أن تعرض حصراً منتجات عليها خصم فعلي وقائم فعلاً — أي أن
+  // سعرها الحالي أقل من السعر قبل الخصم (oldPrice > price)، وليس أي منتج فقط وُضع له
+  // سعر قديم في الماضي أو فُعِّل عليه مربع "عرض خاص" بلا فرق سعر حقيقي حالياً. هذا يمنع
+  // ظهور منتجات في صفحة العروض بلا أي خصم ظاهر فعلياً (شارة الخصم كانت تختفي بصمت).
+  const discounted = products.filter(p =>
+    p.isDeleted !== true &&
+    Number(p.oldPrice) > 0 &&
+    Number(p.oldPrice) > Number(p.price)
+  );
   const countEl = document.getElementById('offersCount');
   if (countEl) countEl.textContent = discounted.length + ' عرض';
   renderProductGrid('offersGrid', discounted);
@@ -4648,7 +4690,7 @@ function renderAccountView() {
           <div class="user-avatar"><img src="${cleanPhoto || 'https://imgdb.io/i/EQ4D9ag.png'}"></div>
           <div class="user-info">
             <h3>${sanitizeText(currentUser.displayName || currentUser.email)} ${isAdmin ? '⭐ (مشرف الصيدلية)' : ''}</h3>
-            <p>${sanitizeText(currentUser.email || '')}</p>
+            <p>${sanitizeText(currentUser.email || currentUser.phoneNumber || '')}</p>
             <div class="sync-indicator"><span class="sync-dot"></span><span>البيانات متزامنة مع ${sanitizeText(pharmacyProfile.name || 'الصيدلية')}</span></div>
           </div>
         </div>
@@ -4661,12 +4703,157 @@ function renderAccountView() {
       <div class="account-card">
         <div style="font-size:38px; margin-bottom:8px;">🌸</div>
         <h3 style="font-size:17px; font-weight:900; margin:0 0 6px;">مرحباً بك في ${sanitizeText(pharmacyProfile.name || 'الصيدلية')}</h3>
-        <p style="font-size:12.5px; color:var(--text-soft); margin:0 0 20px;">سجلي الدخول بنقرة واحدة لحفظ منتجاتك المفضلة ومتابعة طلباتكِ:</p>
+        <p style="font-size:12.5px; color:var(--text-soft); margin:0 0 16px;">سجلي الدخول لحفظ منتجاتك المفضلة ومتابعة طلباتكِ:</p>
+
+        <div class="phone-auth-tabs">
+          <button type="button" class="phone-auth-tab active" id="phoneAuthTabLogin" onclick="switchPhoneAuthTab('login')">تسجيل الدخول</button>
+          <button type="button" class="phone-auth-tab" id="phoneAuthTabRegister" onclick="switchPhoneAuthTab('register')">حساب جديد</button>
+        </div>
+
+        <div id="phoneAuthErrorBox" class="phone-auth-error hidden"></div>
+
+        <div id="phoneAuthFormLogin">
+          <div class="form-field" style="text-align:right;">
+            <label>رقم الهاتف</label>
+            <input type="tel" id="phoneLoginPhone" placeholder="07xxxxxxxxx" inputmode="numeric">
+          </div>
+          <div class="form-field" style="text-align:right;">
+            <label>كلمة المرور (رمز سري من 4 إلى 6 أرقام)</label>
+            <input type="password" id="phoneLoginPin" placeholder="••••" inputmode="numeric" maxlength="6">
+          </div>
+          <button class="auth-btn-google" style="background:var(--accent); color:#fff; border:none; margin-bottom:10px;" onclick="loginWithPhone()">تسجيل الدخول</button>
+        </div>
+
+        <div id="phoneAuthFormRegister" class="hidden">
+          <div class="form-field" style="text-align:right;">
+            <label>الاسم الكامل</label>
+            <input type="text" id="phoneRegisterName" placeholder="اسمكِ الكامل">
+          </div>
+          <div class="form-field" style="text-align:right;">
+            <label>رقم الهاتف</label>
+            <input type="tel" id="phoneRegisterPhone" placeholder="07xxxxxxxxx" inputmode="numeric">
+          </div>
+          <div class="form-field" style="text-align:right;">
+            <label>كلمة المرور (رمز سري من 4 إلى 6 أرقام)</label>
+            <input type="password" id="phoneRegisterPin" placeholder="••••" inputmode="numeric" maxlength="6">
+          </div>
+          <button class="auth-btn-google" style="background:var(--accent); color:#fff; border:none; margin-bottom:10px;" onclick="registerWithPhone()">إنشاء الحساب</button>
+        </div>
+
+        <div class="auth-divider"><span>أو</span></div>
+
         <button class="auth-btn-google" onclick="signInWithGoogle()">
           <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-          تسجيل الدخول المباشر عبر Google
+          المتابعة عبر Google
         </button>
       </div>`;
+  }
+}
+
+// 🔐 (جديد — البند 6) تبويب التبديل بين "تسجيل الدخول" و"حساب جديد" لنموذج الهاتف/كلمة المرور
+function switchPhoneAuthTab(mode) {
+  const loginForm = document.getElementById('phoneAuthFormLogin');
+  const registerForm = document.getElementById('phoneAuthFormRegister');
+  const tabLogin = document.getElementById('phoneAuthTabLogin');
+  const tabRegister = document.getElementById('phoneAuthTabRegister');
+  const errBox = document.getElementById('phoneAuthErrorBox');
+  if (errBox) { errBox.classList.add('hidden'); errBox.textContent = ''; }
+  if (!loginForm || !registerForm) return;
+  if (mode === 'register') {
+    loginForm.classList.add('hidden');
+    registerForm.classList.remove('hidden');
+    if (tabLogin) tabLogin.classList.remove('active');
+    if (tabRegister) tabRegister.classList.add('active');
+  } else {
+    registerForm.classList.add('hidden');
+    loginForm.classList.remove('hidden');
+    if (tabRegister) tabRegister.classList.remove('active');
+    if (tabLogin) tabLogin.classList.add('active');
+  }
+}
+
+function showPhoneAuthError(msg) {
+  const box = document.getElementById('phoneAuthErrorBox');
+  if (box) { box.textContent = msg; box.classList.remove('hidden'); }
+  showToast(msg);
+}
+
+// 🔐 (جديد — البند 6) تسجيل حساب جديد بالاسم + رقم الهاتف + كلمة مرور (رمز سري)، عبر
+// /api/auth/phone-register الموجود مسبقاً بالووركر (Admin SDK)، ثم إتمام الدخول الفعلي على
+// المتصفح بتوكن Firebase المخصّص (Custom Token) المُعاد من السيرفر — نفس آلية Google تماماً
+// من ناحية إكمال الجلسة (verifyStaffPermissions + renderAccountView) بعد نجاح التوثيق.
+async function registerWithPhone() {
+  if (!auth) { showPhoneAuthError('⚠️ خدمة تسجيل الدخول غير مهيأة.'); return; }
+  const name = (document.getElementById('phoneRegisterName').value || '').trim();
+  const phone = (document.getElementById('phoneRegisterPhone').value || '').trim();
+  const pin = (document.getElementById('phoneRegisterPin').value || '').trim();
+
+  if (!name || phone.length < 8) { showPhoneAuthError('يرجى إدخال اسم ورقم هاتف صحيحين'); return; }
+  if (!/^\d{4,6}$/.test(pin)) { showPhoneAuthError('كلمة المرور يجب أن تكون من 4 إلى 6 أرقام'); return; }
+
+  const btn = document.querySelector('#phoneAuthFormRegister .auth-btn-google');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ جاري إنشاء الحساب...'; }
+
+  try {
+    const res = await fetch(`${WORKER_API_BASE}/api/auth/phone-register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Pharmacy-Id': currentPharmacyId },
+      body: JSON.stringify({ name, phone, pin })
+    });
+    const data = await res.json();
+    if (!data.success) { showPhoneAuthError(data.message || '⚠️ تعذر إنشاء الحساب'); return; }
+
+    const result = await auth.signInWithCustomToken(data.token);
+    currentUser = result.user;
+    try { await currentUser.updateProfile({ displayName: name }); } catch (e) { /* غير حرج */ }
+    await verifyStaffPermissions(currentUser);
+    showToast(`أهلاً بكِ ${sanitizeText(name)} 🌸`);
+    updateUserHeaderProfile();
+    renderAccountView();
+    updateAdminInterfaceState();
+  } catch (err) {
+    console.error('Phone register error:', err);
+    showPhoneAuthError('⚠️ تعذر إنشاء الحساب: ' + (err.message || 'خطأ غير معروف'));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'إنشاء الحساب'; }
+  }
+}
+
+// 🔐 (جديد — البند 6) تسجيل الدخول برقم الهاتف + كلمة المرور، عبر /api/auth/phone-login
+async function loginWithPhone() {
+  if (!auth) { showPhoneAuthError('⚠️ خدمة تسجيل الدخول غير مهيأة.'); return; }
+  const phone = (document.getElementById('phoneLoginPhone').value || '').trim();
+  const pin = (document.getElementById('phoneLoginPin').value || '').trim();
+
+  if (phone.length < 8 || !pin) { showPhoneAuthError('يرجى تعبئة رقم الهاتف وكلمة المرور'); return; }
+
+  const btn = document.querySelector('#phoneAuthFormLogin .auth-btn-google');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ جاري تسجيل الدخول...'; }
+
+  try {
+    const res = await fetch(`${WORKER_API_BASE}/api/auth/phone-login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Pharmacy-Id': currentPharmacyId },
+      body: JSON.stringify({ phone, pin })
+    });
+    const data = await res.json();
+    if (!data.success) { showPhoneAuthError(data.message || '⚠️ تعذر تسجيل الدخول'); return; }
+
+    const result = await auth.signInWithCustomToken(data.token);
+    currentUser = result.user;
+    if (data.name && !currentUser.displayName) {
+      try { await currentUser.updateProfile({ displayName: data.name }); } catch (e) { /* غير حرج */ }
+    }
+    await verifyStaffPermissions(currentUser);
+    showToast(`أهلاً بعودتكِ ${sanitizeText(data.name || '')} 🌸`);
+    updateUserHeaderProfile();
+    renderAccountView();
+    updateAdminInterfaceState();
+  } catch (err) {
+    console.error('Phone login error:', err);
+    showPhoneAuthError('⚠️ تعذر تسجيل الدخول: ' + (err.message || 'خطأ غير معروف'));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'تسجيل الدخول'; }
   }
 }
 
@@ -4840,6 +5027,12 @@ function updateAdminInterfaceState() {
     if (isAdmin) adminGate.classList.remove('locked');
     else adminGate.classList.add('locked');
   }
+
+  // 🔒 (إصلاح #9) زر التقرير المالي (Excel/CSV) يُخفى تماماً عن أي مشرف عادي — يظهر
+  // حصراً للمشرف العام للمنصة (isSuperAdmin)، تماشياً مع القيد المطبَّق أيضاً داخل
+  // exportOrdersToCSV() نفسها (دفاع مزدوج: طبقة واجهة + طبقة منطق).
+  const exportReportBtn = document.getElementById('btnExportCsvReport');
+  if (exportReportBtn) exportReportBtn.style.display = isSuperAdmin() ? 'inline-flex' : 'none';
 }
 
 // ================= 34. SHARE & CONSULTATION =================
@@ -4969,14 +5162,15 @@ window.addEventListener('DOMContentLoaded', async () => {
   await loadDynamicTheme(pharmacyProfile.templateId);
   renderCurrentActiveView();
 
-  // 🌟 (إصلاح جذري — "لا تظهر شاشة التحميل لمدة كافية وتظهر الواجهة القديمة") بدل إخفاء
-  // الشاشة فوراً بلا أي انتظار حقيقي (كما كان الحال سابقاً)، تنتظر الآن أمرين معاً دائماً:
-  // (أ) مرور 6 ثوانٍ كاملة كحد أدنى — بطلبك تحديداً، و(ب) اكتمال بيانات initFirestoreSync
+  // 🌟 (تحديث — مدة شاشة التحميل مضبوطة على 3 ثوانٍ بالضبط بطلب صريح) تنتظر الآن أمرين
+  // معاً دائماً: (أ) مرور 3 ثوانٍ كاملة كحد أدنى، و(ب) اكتمال بيانات initFirestoreSync
   // الأربع فعلياً (البروفايل + الأقسام + البكجات + الكتالوج). فإن وصلت البيانات أسرع، تبقى
-  // الشاشة حتى تكتمل الـ6 ثوانٍ بالضبط ليظهر الموقع بشكله النهائي الكامل فور الاختفاء
-  // مباشرة، بلا أي وميض متبقٍ. لا توجد هنا أي قراءة أو طلب شبكة إضافي — فقط توقيت محلي
-  // بحت (setTimeout) لا علاقة له بالكاش أو القراءات إطلاقاً.
-  const MIN_LOADER_DISPLAY_MS = 6000;
+  // الشاشة حتى تكتمل الـ3 ثوانٍ بالضبط، وإن تأخرت البيانات (شبكة بطيئة) تبقى الشاشة حتى
+  // اكتمال البيانات الفعلي كي لا تظهر بيانات قديمة أو ناقصة — هذا الملف يخدم كلا الصفحتين
+  // index.html وadmin.html لأنهما يحمّلان script.js نفسه ويتشاركان نفس عنصر appLoadingOverlay،
+  // فهذا التعديل الواحد يضبط مدة الشاشتين معاً. لا توجد هنا أي قراءة أو طلب شبكة إضافي —
+  // فقط توقيت محلي بحت (setTimeout) لا علاقة له بالكاش أو القراءات إطلاقاً.
+  const MIN_LOADER_DISPLAY_MS = 3000;
   const minDisplayPromise = new Promise(resolve => setTimeout(resolve, MIN_LOADER_DISPLAY_MS));
   const dataReadyPromise = initFirestoreSync();
 
