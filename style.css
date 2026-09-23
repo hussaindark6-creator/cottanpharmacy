@@ -260,6 +260,17 @@ header {
   transform: scale(0.86); 
 }
 
+/* ☰ (تعديل #4) أيقونة القائمة الجانبية — ثلاث خطوط واضحة وكبيرة تملأ الزر الدائري
+   بشكل احترافي، بدل الخطوط الصغيرة السابقة التي كانت تبدو ضائعة داخل الدائرة. */
+.icon-btn-menu {
+  width: 44px;
+  height: 44px;
+}
+.icon-btn-menu svg {
+  width: 24px;
+  height: 24px;
+}
+
 .logo-block { 
   display: flex; 
   align-items: center; 
@@ -2411,6 +2422,23 @@ header {
   border-color: var(--accent); 
 }
 
+/* 💰 (إصلاح #7) حقول السعر الحالي والسعر قبل الخصم كانت صغيرة جداً على شاشات الموبايل
+   بلوحة التحكم — صعبة القراءة والتعديل بإصبع. تكبير واضح للخط والحشو مع لون وسماكة بارزين
+   حتى تصير أرقام السعر مريحة للعين وسهلة التعديل بضغطة واحدة. */
+.price-input-lg {
+  font-size: 20px !important;
+  font-weight: 900 !important;
+  padding: 16px 16px !important;
+  min-height: 54px !important;
+  letter-spacing: 0.3px;
+}
+@media (max-width: 640px) {
+  .price-input-lg {
+    font-size: 22px !important;
+    min-height: 58px !important;
+  }
+}
+
 .delivery-options { 
   display: flex; 
   gap: 10px; 
@@ -2498,6 +2526,62 @@ header {
   align-items: center; 
   justify-content: center; 
   gap: 12px; 
+}
+
+/* 🔐 (جديد — البند 6) أدوات مساعدة عامة (كانت .hidden تُستخدم بجافاسكربت بلا أي تعريف
+   CSS عام يشمل index.html، فتُبقي العنصر ظاهراً رغم الكلاس — الآن أصبح تعريفاً عاماً). */
+.hidden { display: none !important; }
+
+.phone-auth-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  background: var(--surface-hover, #F3F4F6);
+  padding: 5px;
+  border-radius: 14px;
+}
+.phone-auth-tab {
+  flex: 1;
+  padding: 10px 8px;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--text-soft);
+  background: transparent;
+  border: none;
+}
+.phone-auth-tab.active {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.phone-auth-error {
+  background: #FEF2F2;
+  color: #B91C1C;
+  border: 1px solid #FECACA;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 12.5px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0;
+  color: var(--text-soft);
+  font-size: 12px;
+  font-weight: 700;
+}
+.auth-divider::before, .auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line, #E5E7EB);
 }
 
 /* ==========================================================
@@ -2896,6 +2980,41 @@ header {
 .admin-rank-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
 .admin-rank-item:last-child { border-bottom: none; }
 .admin-rank-badge { width: 22px; height: 22px; border-radius: 50%; background: var(--surface); color: var(--accent); font-weight: 800; font-size: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+/* ================= 📊 (البند 10) لوحة تحكم احترافية جديدة ================= */
+.dash-section-label {
+  font-size: 13.5px;
+  font-weight: 900;
+  color: var(--ink);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dash-card-icon {
+  font-size: 20px;
+  margin-bottom: 6px;
+  opacity: 0.9;
+}
+
+.dash-card-revenue {
+  background: linear-gradient(155deg, #FFF7ED 0%, #FFFFFF 65%);
+  border-color: #FDBA74 !important;
+}
+.dash-card-revenue .num { color: #C2410C; }
+
+.dash-card-profit {
+  background: linear-gradient(155deg, #ECFDF5 0%, #FFFFFF 65%);
+  border-color: #6EE7B7 !important;
+}
+.dash-card-profit .num { color: #047857; }
+
+.admin-rank-item-pro { display: block; padding: 12px 0; }
+.admin-rank-item-pro .admin-rank-item-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.admin-rank-badge-pro { width: 26px; height: 26px; font-size: 14px; background: transparent; }
+.admin-rank-bar-track { width: 100%; height: 6px; border-radius: 999px; background: var(--surface); overflow: hidden; }
+.admin-rank-bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), #FBBF24); transition: width .4s ease; }
 
 .admin-order-manage-card { background: #fff; border: 1.5px solid var(--line); border-radius: var(--radius-md); padding: 16px; margin-bottom: 14px; box-shadow: var(--shadow-soft); text-align: right; }
 .admin-order-status-select { padding: 6px 12px; border-radius: 999px; font-weight: 800; font-size: 12px; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); outline: none; cursor: pointer; }
