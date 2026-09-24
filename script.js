@@ -1304,11 +1304,64 @@ function openReceiptModal(orderId) {
 
   const modal = document.getElementById('thermalReceiptModal');
   if (modal) modal.classList.add('open');
+
+  // 🖨️📤 (إصلاح — "الطباعة تفتح نافذة الطباعة مباشرة بدل المشاركة") نحفظ بيانات الطلب
+  // الحالي هنا كي تستخدمها shareOrPrintReceipt() لبناء نص الوصل ومشاركته عبر واجهة
+  // المشاركة الأصلية للجهاز (تحتوي خيار "طباعة" ضمنها على iOS، وتطبيقات المشاركة على
+  // أندرويد) بدل فتح نافذة طباعة المتصفح مباشرة.
+  window.__currentReceiptOrder = { order: ord, itemsSubtotal, delFee, discountVal, exactGrandTotal };
 }
 
 function closeReceiptModal() {
   const modal = document.getElementById('thermalReceiptModal');
   if (modal) modal.classList.remove('open');
+}
+
+// 🖨️📤 (إصلاح — البند: زر الطباعة يجب أن يفتح واجهة المشاركة فوراً وليس نافذة الطباعة
+// مباشرة) نبني نص الوصل كاملاً من بيانات الطلب المحفوظة، ثم نستدعي واجهة المشاركة
+// الأصلية للجهاز (Web Share API) — وهي بالضبط الواجهة التي يختار منها المستخدم "طباعة"
+// على iOS، أو يشارك الوصل مباشرة لأي تطبيق (واتساب مثلاً) على أندرويد. إن كان المتصفح لا
+// يدعم واجهة المشاركة إطلاقاً (بعض متصفحات الحاسوب)، نعود تلقائياً لنافذة الطباعة العادية
+// كحل احتياطي وحيد حتى لا يتعطل الزر كلياً.
+async function shareOrPrintReceipt() {
+  const data = window.__currentReceiptOrder;
+  if (!data) { window.print(); return; }
+
+  const { order, delFee, discountVal, exactGrandTotal } = data;
+  const itemsText = (order.items || []).map(it => {
+    const unitPrice = Number(it.price || it.unitPrice || 0);
+    const qty = Number(it.quantity || 1);
+    const itemTotal = Number(it.lineTotal) || (unitPrice * qty);
+    return `${it.isBundle ? '🎁 ' : ''}${it.name} × ${qty} = ${fmtPrice(itemTotal)}`;
+  }).join('\n');
+
+  const receiptText =
+    `🌸 ${pharmacyProfile.name || 'الصيدلية'}\n` +
+    `━━━━━━━━━━━━━━\n` +
+    `رقم الوصل: #${order.id}\n` +
+    `التاريخ: ${order.date || ''}\n` +
+    `العميل: ${order.name || ''}\n` +
+    `الهاتف: ${order.phone || ''}\n` +
+    `العنوان: ${order.address || ''}\n` +
+    `━━━━━━━━━━━━━━\n` +
+    `${itemsText}\n` +
+    `━━━━━━━━━━━━━━\n` +
+    `أجرة التوصيل: ${fmtPrice(delFee)}\n` +
+    (discountVal > 0 ? `الخصم: -${fmtPrice(discountVal)}\n` : '') +
+    `المجموع الكلي: ${fmtPrice(exactGrandTotal)}\n` +
+    `شكراً لتسوقكم معنا 🌸`;
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: `وصل الطلب #${order.id}`, text: receiptText });
+      return;
+    } catch (err) {
+      // المستخدم ألغى المشاركة أو فشلت — لا داعي لأي إجراء إضافي، فقط لا نفتح الطباعة تلقائياً
+      if (err && err.name === 'AbortError') return;
+    }
+  }
+  // احتياط وحيد: متصفح لا يدعم واجهة المشاركة إطلاقاً (غالباً حاسوب مكتبي)
+  window.print();
 }
 
 // ================= 15. REAL RATINGS ENGINE & AUTOFILL =================
@@ -1821,6 +1874,10 @@ async function fetchRealAnalytics() {
   try {
     const todayStr = new Date().toISOString().split('T')[0];
     const currentMonthStr = todayStr.substring(0, 7);
+    // 📊 (جديد — إعادة تعيين إحصائيات المبيعات) لا نحذف أي طلب فعلي من قاعدة البيانات؛
+    // فقط نتجاهل أي طلب تم قبل لحظة "إعادة التعيين" عند حساب أرقام لوحة التحكم، بينما تبقى
+    // كل الطلبات والتقارير التفصيلية سليمة كما هي. هذا أأمن بكثير من حذف بيانات حقيقية.
+    const resetAtMs = pharmacyProfile.salesStatsResetAt ? new Date(pharmacyProfile.salesStatsResetAt).getTime() : 0;
 
     let dRev = 0, mRev = 0, dProfit = 0, mProfit = 0, dOrders = 0, mOrders = 0;
     const ordersSnap = await dbPaths.ordersCol().get();
@@ -1832,6 +1889,8 @@ async function fetchRealAnalytics() {
       const o = doc.data();
       const oTotal = Number(o.total || o.verifiedTotal || 0);
       const oDate = o.createdAt && o.createdAt.toDate ? o.createdAt.toDate().toISOString() : (o.date || '');
+      const oTimeMs = o.createdAt && o.createdAt.toDate ? o.createdAt.toDate().getTime() : (oDate ? new Date(oDate).getTime() : 0);
+      if (resetAtMs && oTimeMs && oTimeMs < resetAtMs) return; // 🔄 استُبعد لأنه قبل نقطة إعادة التعيين
       const isToday = oDate.startsWith(todayStr);
       const isThisMonth = oDate.startsWith(currentMonthStr);
       if (isToday) { dRev += oTotal; dOrders++; }
@@ -1892,6 +1951,24 @@ async function fetchRealAnalytics() {
   } catch (e) { console.warn(e); }
 }
 
+// 🔄 (جديد — إعادة تعيين إحصائيات المبيعات من لوحة التحكم) لا تحذف أي طلب فعلي؛ فقط تسجّل
+// "نقطة بداية" جديدة (salesStatsResetAt) بمستند الصيدلية، وتستبعد fetchRealAnalytics أي طلب
+// أقدم منها عند حساب أرقام اليوم/الشهر — بيانات الطلبات والتقارير المالية تبقى سليمة بالكامل.
+async function resetSalesStats() {
+  if (!isSuperAdmin() && !isCurrentUserAdmin()) { showToast('⚠️ هذه الميزة متاحة للمشرفين فقط'); return; }
+  if (!confirm('سيتم تصفير أرقام المبيعات المعروضة بلوحة التحكم (اليوم/الشهر) والبدء من جديد اعتباراً من الآن. الطلبات الفعلية والتقارير المالية لن تتأثر أو تُحذف. هل تريدين المتابعة؟')) return;
+
+  try {
+    const nowIso = new Date().toISOString();
+    if (db) await dbPaths.pharmacyDoc().set({ salesStatsResetAt: nowIso }, { merge: true });
+    pharmacyProfile.salesStatsResetAt = nowIso;
+    showToast('✅ تم تصفير إحصائيات المبيعات — البدء من جديد الآن.');
+    fetchRealAnalytics();
+  } catch (err) {
+    showToast('⚠️ تعذر تصفير الإحصائيات: ' + err.message);
+  }
+}
+
 function renderRealAnalyticsView() {
   const statDailyRev = document.getElementById('statDailyRevenue');
   const statMonthlyRev = document.getElementById('statMonthlyRevenue');
@@ -1901,6 +1978,12 @@ function renderRealAnalyticsView() {
   const statMonthlyProfitEl = document.getElementById('statMonthlyProfit');
   const statDailyOrdersEl = document.getElementById('statDailyOrders');
   const statMonthlyOrdersEl = document.getElementById('statMonthlyOrders');
+  const resetInfoEl = document.getElementById('salesResetInfo');
+  if (resetInfoEl) {
+    resetInfoEl.textContent = pharmacyProfile.salesStatsResetAt
+      ? `آخر تصفير: ${new Date(pharmacyProfile.salesStatsResetAt).toLocaleDateString('ar-IQ', { year: 'numeric', month: 'short', day: 'numeric' })}`
+      : '';
+  }
 
   if (statDailyRev) statDailyRev.textContent = fmtPrice(todayRevenue);
   if (statMonthlyRev) statMonthlyRev.textContent = fmtPrice(monthlyRevenue);
@@ -4627,7 +4710,12 @@ async function fetchAuditLogs() {
 let lastCatalogCacheStatus = null;
 
 function updateUserHeaderProfile() {
-  const chipAvatar = document.getElementById('userChipAvatar');
+  // 🔧 (إصلاح — أيقونة الهمبرغر تختفي) هذه الدالة كانت تستبدل innerHTML الخاص بأيقونة
+  // القائمة العلوية (☰) بصورة المستخدم/حرف الاسم الأول أو أيقونة دخول صغيرة 16px، فتُلغي
+  // شكل الهمبرغر الكبير الواضح المطلوب بالكامل عند كل تحميل صفحة أو تسجيل دخول/خروج. زر
+  // القائمة يجب أن يبقى ثابتاً كأيقونة ☰ دائماً بغض النظر عن حالة تسجيل الدخول — عرض صورة
+  // أو حرف المستخدم موجود أصلاً داخل قائمة الدرج نفسها (menu-link الخاص بـ"حسابي"), فلا
+  // داعي لتكرارها فوق الزر وتخريب شكله.
   const chipName = document.getElementById('userChipName');
   const logoutBtn = document.getElementById('userHeaderLogoutBtn');
   const bnAccountLbl = document.getElementById('bnAccountLbl');
@@ -4638,19 +4726,10 @@ function updateUserHeaderProfile() {
     if (chipName) chipName.textContent = firstName;
     if (bnAccountLbl) bnAccountLbl.textContent = firstName;
     if (logoutBtn) logoutBtn.style.display = 'flex';
-    const cleanPhoto = sanitizeUrl(currentUser.photoURL);
-    if (chipAvatar) {
-      chipAvatar.innerHTML = cleanPhoto 
-        ? `<img src="${cleanPhoto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` 
-        : `<span style="font-size:12px; font-weight:900; color:var(--accent, #E85D8A);">${firstName.charAt(0).toUpperCase()}</span>`;
-    }
   } else {
     if (chipName) chipName.textContent = 'دخول';
     if (bnAccountLbl) bnAccountLbl.textContent = 'حسابي';
     if (logoutBtn) logoutBtn.style.display = 'none';
-    if (chipAvatar) {
-      chipAvatar.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;display:block;"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg>`;
-    }
   }
 }
 
