@@ -424,7 +424,13 @@
 
     <!-- 1. REAL ANALYTICS SECTION -->
     <div id="adminSecStats">
-      <div class="dash-section-label">📅 أداء اليوم</div>
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:4px;">
+        <div class="dash-section-label" style="margin-bottom:0;">📅 أداء اليوم</div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span id="salesResetInfo" style="font-size:10.5px; color:var(--text-soft); font-weight:700;"></span>
+          <button type="button" onclick="resetSalesStats()" style="background:#FEF2F2; color:#B91C1C; font-weight:800; font-size:11px; padding:7px 12px; border-radius:10px;">🔄 تصفير المبيعات</button>
+        </div>
+      </div>
       <div class="admin-stat-grid-v dash-grid-today">
         <div class="admin-stat-card-v dash-card-revenue">
           <div class="dash-card-icon">💰</div>
@@ -654,6 +660,14 @@
               <label>السعر قبل الخصم (اختياري)</label>
               <input type="number" class="price-input-lg" id="adminProdOldPrice" placeholder="30000" min="0">
             </div>
+          </div>
+
+          <!-- 💰 (إصلاح — حقل سعر التكلفة كان يُضاف فقط عبر JS عند أول حفظ أو ضغط "إلغاء"،
+               فلا يظهر إطلاقاً لأدمن يفتح "إضافة منتج جديد" لأول مرة من صفحة محمّلة حديثاً.
+               أصبح الآن جزءاً ثابتاً من النموذج نفسه فيظهر دائماً بلا أي شرط. -->
+          <div class="form-field">
+            <label>سعر التكلفة (اختياري — لحساب صافي الربح) 💰</label>
+            <input type="number" class="price-input-lg" id="adminProdCostPrice" min="0" step="0.01" placeholder="مثال: 3500">
           </div>
 
           <div class="form-field">
@@ -1340,6 +1354,12 @@
           </div>
         </div>
 
+        <!-- 💰 (إصلاح) حقل ثابت بالنموذج نفسه بدل الاعتماد على حقن JS وحده -->
+        <div class="form-field">
+          <label>سعر التكلفة (اختياري — لحساب صافي الربح) 💰</label>
+          <input type="number" class="price-input-lg" id="quickEditProdCostPrice" min="0" step="0.01" placeholder="مثال: 3500">
+        </div>
+
         <div style="display:flex; gap:10px;">
           <div class="form-field" style="flex:1;">
             <label>الحجم / العبوة</label>
@@ -1457,7 +1477,7 @@
       </div>
 
       <div class="no-print" style="display:flex; gap:8px; margin-top:14px;">
-        <button type="button" onclick="window.print()" class="admin-btn-save" style="margin:0; background:#10B981;">🖨️ طباعة الوصل الحراري</button>
+        <button type="button" onclick="shareOrPrintReceipt()" class="admin-btn-save" style="margin:0; background:#10B981;">🖨️ طباعة / مشاركة الوصل</button>
         <button type="button" onclick="closeReceiptModal()" style="padding:10px; font-weight:800; color:var(--text-soft);">إغلاق</button>
       </div>
     </div>
