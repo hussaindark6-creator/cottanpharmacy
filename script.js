@@ -1317,51 +1317,138 @@ function closeReceiptModal() {
   if (modal) modal.classList.remove('open');
 }
 
-// 🖨️📤 (إصلاح — البند: زر الطباعة يجب أن يفتح واجهة المشاركة فوراً وليس نافذة الطباعة
-// مباشرة) نبني نص الوصل كاملاً من بيانات الطلب المحفوظة، ثم نستدعي واجهة المشاركة
-// الأصلية للجهاز (Web Share API) — وهي بالضبط الواجهة التي يختار منها المستخدم "طباعة"
-// على iOS، أو يشارك الوصل مباشرة لأي تطبيق (واتساب مثلاً) على أندرويد. إن كان المتصفح لا
-// يدعم واجهة المشاركة إطلاقاً (بعض متصفحات الحاسوب)، نعود تلقائياً لنافذة الطباعة العادية
-// كحل احتياطي وحيد حتى لا يتعطل الزر كلياً.
+// 🖨️📤 (إصلاح جذري) السبب الحقيقي لعدم ظهور خيار "طباعة" بواجهة المشاركة: مشاركة نص عادي
+// (text) عبر Web Share API لا تُفعِّل خيار الطباعة إطلاقاً على iOS — خيار الطباعة يظهر فقط
+// عند مشاركة صورة أو ملف PDF/مستند حقيقي. الحل: نرسم الوصل كصورة PNG فعلية عبر Canvas
+// (بلا أي مكتبة خارجية)، ثم نشاركها كملف — فتظهر "طباعة" ضمن واجهة المشاركة تلقائياً لأنها
+// صورة قابلة للطباعة فعلياً، مع بقاء فتح واجهة المشاركة فورياً كما هو مطلوب.
 async function shareOrPrintReceipt() {
   const data = window.__currentReceiptOrder;
   if (!data) { window.print(); return; }
 
   const { order, delFee, discountVal, exactGrandTotal } = data;
-  const itemsText = (order.items || []).map(it => {
-    const unitPrice = Number(it.price || it.unitPrice || 0);
-    const qty = Number(it.quantity || 1);
-    const itemTotal = Number(it.lineTotal) || (unitPrice * qty);
-    return `${it.isBundle ? '🎁 ' : ''}${it.name} × ${qty} = ${fmtPrice(itemTotal)}`;
-  }).join('\n');
 
-  const receiptText =
-    `🌸 ${pharmacyProfile.name || 'الصيدلية'}\n` +
-    `━━━━━━━━━━━━━━\n` +
-    `رقم الوصل: #${order.id}\n` +
-    `التاريخ: ${order.date || ''}\n` +
-    `العميل: ${order.name || ''}\n` +
-    `الهاتف: ${order.phone || ''}\n` +
-    `العنوان: ${order.address || ''}\n` +
-    `━━━━━━━━━━━━━━\n` +
-    `${itemsText}\n` +
-    `━━━━━━━━━━━━━━\n` +
-    `أجرة التوصيل: ${fmtPrice(delFee)}\n` +
-    (discountVal > 0 ? `الخصم: -${fmtPrice(discountVal)}\n` : '') +
-    `المجموع الكلي: ${fmtPrice(exactGrandTotal)}\n` +
-    `شكراً لتسوقكم معنا 🌸`;
+  try {
+    const blob = await buildReceiptImageBlob(order, delFee, discountVal, exactGrandTotal);
+    const file = new File([blob], `receipt-${order.id}.png`, { type: 'image/png' });
 
-  if (navigator.share) {
-    try {
-      await navigator.share({ title: `وصل الطلب #${order.id}`, text: receiptText });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: `وصل الطلب #${order.id}` });
       return;
-    } catch (err) {
-      // المستخدم ألغى المشاركة أو فشلت — لا داعي لأي إجراء إضافي، فقط لا نفتح الطباعة تلقائياً
-      if (err && err.name === 'AbortError') return;
     }
+    if (navigator.share) {
+      // بعض المتصفحات تدعم navigator.share لكن بلا ملفات — نشارك رابط الصورة كحل وسيط
+      const imgUrl = URL.createObjectURL(blob);
+      await navigator.share({ title: `وصل الطلب #${order.id}`, text: `وصل الطلب #${order.id}`, url: imgUrl });
+      return;
+    }
+  } catch (err) {
+    if (err && err.name === 'AbortError') return; // المستخدم ألغى المشاركة بنفسه
+    console.warn('Receipt share failed, falling back to print:', err);
   }
-  // احتياط وحيد: متصفح لا يدعم واجهة المشاركة إطلاقاً (غالباً حاسوب مكتبي)
+  // احتياط وحيد: متصفح لا يدعم المشاركة أو فشلت الصورة (غالباً حاسوب مكتبي)
   window.print();
+}
+
+// 🖼️ يبني صورة PNG للوصل عبر Canvas مباشرة (بلا مكتبات خارجية) بترتيب RTL صحيح
+function buildReceiptImageBlob(order, delFee, discountVal, exactGrandTotal) {
+  return new Promise((resolve, reject) => {
+    try {
+      const scale = 2;
+      const width = 380;
+      const padX = 20;
+      const lineH = 26;
+      const items = order.items || [];
+
+      let y = 0;
+      y += 40; // اسم الصيدلية
+      y += 20; // خط فاصل
+      y += lineH * 5; // رقم الوصل + التاريخ + العميل + الهاتف + العنوان
+      y += 20; // خط فاصل
+      y += lineH * Math.max(items.length, 1);
+      y += 20; // خط فاصل
+      y += lineH * (2 + (discountVal > 0 ? 1 : 0));
+      y += 50; // تذييل
+      const height = y + 30;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width * scale;
+      canvas.height = height * scale;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(scale, scale);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, width, height);
+      ctx.direction = 'rtl';
+      ctx.textAlign = 'right';
+      ctx.fillStyle = '#1a1a1a';
+
+      let cy = 30;
+      ctx.font = '900 18px Tahoma, Arial';
+      ctx.fillText(pharmacyProfile.name || 'الصيدلية', width - padX, cy);
+      cy += 20;
+
+      const dashedLine = () => {
+        ctx.save();
+        ctx.setLineDash([4, 3]);
+        ctx.strokeStyle = '#aaa';
+        ctx.beginPath();
+        ctx.moveTo(padX, cy);
+        ctx.lineTo(width - padX, cy);
+        ctx.stroke();
+        ctx.restore();
+        cy += 20;
+      };
+      dashedLine();
+
+      ctx.font = '700 13px Tahoma, Arial';
+      const infoLines = [
+        `رقم الوصل: #${order.id}`,
+        `التاريخ: ${order.date || ''}`,
+        `العميل: ${order.name || ''}`,
+        `الهاتف: ${order.phone || ''}`,
+        `العنوان: ${order.address || ''}`
+      ];
+      infoLines.forEach(line => { ctx.fillText(line, width - padX, cy); cy += lineH; });
+
+      dashedLine();
+
+      ctx.font = '700 13px Tahoma, Arial';
+      if (items.length === 0) {
+        ctx.fillText('لا توجد عناصر', width - padX, cy); cy += lineH;
+      } else {
+        items.forEach(it => {
+          const unitPrice = Number(it.price || it.unitPrice || 0);
+          const qty = Number(it.quantity || 1);
+          const itemTotal = Number(it.lineTotal) || (unitPrice * qty);
+          const line = `${it.isBundle ? '🎁 ' : ''}${it.name} × ${qty} = ${fmtPrice(itemTotal)}`;
+          ctx.fillText(line, width - padX, cy);
+          cy += lineH;
+        });
+      }
+
+      dashedLine();
+
+      ctx.font = '700 13px Tahoma, Arial';
+      ctx.fillText(`أجرة التوصيل: ${fmtPrice(delFee)}`, width - padX, cy); cy += lineH;
+      if (discountVal > 0) {
+        ctx.fillStyle = '#B91C1C';
+        ctx.fillText(`الخصم: -${fmtPrice(discountVal)}`, width - padX, cy); cy += lineH;
+        ctx.fillStyle = '#1a1a1a';
+      }
+      ctx.font = '900 16px Tahoma, Arial';
+      ctx.fillText(`المجموع الكلي: ${fmtPrice(exactGrandTotal)}`, width - padX, cy); cy += 30;
+
+      ctx.font = '700 12px Tahoma, Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('شكراً لتسوقكم معنا 🌸', width / 2, cy);
+
+      canvas.toBlob(blob => {
+        if (blob) resolve(blob); else reject(new Error('تعذر إنشاء صورة الوصل'));
+      }, 'image/png');
+    } catch (err) {
+      reject(err);
+    }
+  });
 }
 
 // ================= 15. REAL RATINGS ENGINE & AUTOFILL =================
@@ -3511,6 +3598,56 @@ function addBundleToCart(bundleId) {
   showToast('تمت إضافة البكج كاملاً للسلة! 🎁');
 }
 
+// 🎁 (جديد) نافذة تفاصيل البكج — تفتح عند الضغط على بطاقة البكج نفسها (وليس فقط زر
+// الإضافة)، وتعرض كل منتج داخل البكج بصورته الحقيقية واسمه وماركته، مع زر إضافة للسلة.
+function openBundleDetail(bundleId) {
+  const b = findBundle(bundleId);
+  if (!b) return;
+
+  const linkedProducts = (b.productIds || []).map(id => findProduct(id)).filter(Boolean);
+
+  const titleEl = document.getElementById('bundleDetailTitle');
+  const descEl = document.getElementById('bundleDetailDesc');
+  const listEl = document.getElementById('bundleDetailProductsList');
+  const priceEl = document.getElementById('bundleDetailPrice');
+  const oldPriceEl = document.getElementById('bundleDetailOldPrice');
+  const addBtn = document.getElementById('bundleDetailAddBtn');
+  const badgeEl = document.getElementById('bundleDetailBadge');
+
+  if (titleEl) titleEl.textContent = '🎁 ' + (b.title || '');
+  if (descEl) descEl.textContent = b.description || '';
+  if (badgeEl) badgeEl.textContent = b.savingsBadge || 'بكج توفير 🎁';
+  if (priceEl) priceEl.textContent = fmtPrice(b.price);
+  if (oldPriceEl) oldPriceEl.textContent = b.oldPrice ? fmtPrice(b.oldPrice) : '';
+  if (addBtn) addBtn.setAttribute('onclick', `addBundleToCart('${sanitizeText(b.id)}'); closeBundleDetail();`);
+
+  if (listEl) {
+    listEl.innerHTML = linkedProducts.length === 0
+      ? `<div class="no-results" style="padding:10px 0;">لا توجد تفاصيل منتجات مضافة لهذا البكج بعد.</div>`
+      : linkedProducts.map(p => {
+          const pImg = sanitizeUrl(p.imageUrl);
+          return `
+            <div style="display:flex; align-items:center; gap:10px; padding:8px; border:1.5px solid var(--line); border-radius:14px;">
+              <div style="width:48px; height:48px; flex-shrink:0; border-radius:10px; overflow:hidden; background:var(--surface); display:flex; align-items:center; justify-content:center;">
+                ${pImg ? `<img src="${pImg}" alt="${sanitizeText(p.name)}" style="width:100%; height:100%; object-fit:cover;">` : (icons[p.type] || icons.bottle)(getBrandColor(p.brand))}
+              </div>
+              <div style="flex:1; min-width:0;">
+                <div style="font-weight:800; font-size:13px;">${sanitizeText(p.name)}</div>
+                <div style="font-size:11px; color:var(--text-soft);">${sanitizeText(p.brand || '')}${p.size ? ' · ' + sanitizeText(p.size) : ''}</div>
+              </div>
+            </div>`;
+        }).join('');
+  }
+
+  const modal = document.getElementById('bundleDetailModal');
+  if (modal) modal.classList.add('open');
+}
+
+function closeBundleDetail() {
+  const modal = document.getElementById('bundleDetailModal');
+  if (modal) modal.classList.remove('open');
+}
+
 function renderBundleCardHtml(b) {
   const cleanImg = sanitizeUrl(b.imageUrl);
   const linkedProducts = (b.productIds || []).map(id => findProduct(id)).filter(Boolean);
@@ -3524,7 +3661,7 @@ function renderBundleCardHtml(b) {
   }).join('');
 
   return `
-    <div class="bundle-card">
+    <div class="bundle-card" onclick="openBundleDetail('${sanitizeText(b.id)}')" style="cursor:pointer;">
       ${b.savingsBadge ? `<span class="bundle-savings-badge">${sanitizeText(b.savingsBadge)}</span>` : ''}
       <div class="bundle-thumb-row">
         ${cleanImg ? `<img src="${cleanImg}" alt="${sanitizeText(b.title)}" style="width:100%; height:100%; object-fit:cover; border-radius:12px;">` : (thumbsHtml || icons.bottle('var(--accent)'))}
@@ -3539,7 +3676,7 @@ function renderBundleCardHtml(b) {
         <span class="pd-price mono" style="font-size:19px;">${fmtPrice(b.price)}</span>
         ${b.oldPrice ? `<span class="p-oldprice mono">${fmtPrice(b.oldPrice)}</span>` : ''}
       </div>
-      <button class="add-cart-btn" onclick="addBundleToCart('${sanitizeText(b.id)}')">أضف البكج كاملاً للسلة 🎁</button>
+      <button class="add-cart-btn" onclick="event.stopPropagation(); addBundleToCart('${sanitizeText(b.id)}')">أضف البكج كاملاً للسلة 🎁</button>
     </div>`;
 }
 
