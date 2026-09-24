@@ -628,6 +628,32 @@
     </div>
   </div>
 
+  <!-- 🎁 (جديد) نافذة تفاصيل البكج — تعرض كل منتج داخل البكج بصورته واسمه، مع إمكانية
+       إضافة البكج كاملاً للسلة من داخل النافذة أيضاً -->
+  <div class="consult-modal-overlay" id="bundleDetailModal">
+    <div class="consult-modal-card" style="background:#fff; border-radius:var(--radius-lg); max-width:460px; width:100%; max-height:88vh; overflow-y:auto; border:1.5px solid var(--line);">
+      <div class="consult-header">
+        <div>
+          <span class="consult-badge-pill" id="bundleDetailBadge">بكج توفير 🎁</span>
+          <h3 style="margin:2px 0 0; font-weight:900; font-size:16px;" id="bundleDetailTitle">تفاصيل البكج</h3>
+        </div>
+        <button class="icon-btn" onclick="closeBundleDetail()">✕</button>
+      </div>
+      <div style="padding:16px;">
+        <p id="bundleDetailDesc" style="font-size:13px; color:var(--text-soft); margin:0 0 14px;"></p>
+        <div style="font-weight:900; font-size:13px; margin-bottom:10px;">📦 المنتجات المشمولة بهذا البكج:</div>
+        <div id="bundleDetailProductsList" style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;"></div>
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-top:1.5px dashed var(--line);">
+          <div>
+            <span class="pd-price mono" id="bundleDetailPrice" style="font-size:20px;"></span>
+            <span class="p-oldprice mono" id="bundleDetailOldPrice" style="margin-inline-start:8px;"></span>
+          </div>
+        </div>
+        <button class="consult-submit-btn" id="bundleDetailAddBtn" onclick="">أضف البكج كاملاً للسلة 🎁</button>
+      </div>
+    </div>
+  </div>
+
   <!-- NOTIFICATIONS MODAL -->
   <div class="notif-modal-overlay" id="notifModal">
     <div class="notif-modal-card" style="background:#fff; border-radius:var(--radius-lg); max-width:420px; width:100%; max-height:80vh; display:flex; flex-direction:column; border:1.5px solid var(--line);">
