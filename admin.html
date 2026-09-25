@@ -651,15 +651,15 @@
               </select>
             </div>
           </div>
-          <div style="display:flex; gap:10px;">
-            <div class="form-field" style="flex:1;">
-              <label>السعر الحالي (د.ع) *</label>
-              <input type="number" class="price-input-lg" id="adminProdPrice" placeholder="25000" required min="500">
-            </div>
-            <div class="form-field" style="flex:1;">
-              <label>السعر قبل الخصم (اختياري)</label>
-              <input type="number" class="price-input-lg" id="adminProdOldPrice" placeholder="30000" min="0">
-            </div>
+          <!-- 💰 (إصلاح — الحقول كانت ضيقة على الهاتف رغم تكبير الخط) صار كل حقل بصف
+               مستقل بعرض كامل بدل التجاور بصف واحد، ليتسع الرقم كاملاً بوضوح على الهاتف. -->
+          <div class="form-field">
+            <label>السعر الحالي — بعد الخصم إن وُجد (د.ع) *</label>
+            <input type="number" class="price-input-lg" id="adminProdPrice" placeholder="25000" required min="500">
+          </div>
+          <div class="form-field">
+            <label>السعر قبل الخصم (اختياري — للمقارنة فقط)</label>
+            <input type="number" class="price-input-lg" id="adminProdOldPrice" placeholder="30000" min="0">
           </div>
 
           <!-- 💰 (إصلاح — حقل سعر التكلفة كان يُضاف فقط عبر JS عند أول حفظ أو ضغط "إلغاء"،
@@ -1343,15 +1343,15 @@
           </div>
         </div>
 
-        <div style="display:flex; gap:10px;">
-          <div class="form-field" style="flex:1;">
-            <label>سعر البيع الحالي (د.ع) *</label>
-            <input type="number" class="price-input-lg" id="quickEditProdPrice" required>
-          </div>
-          <div class="form-field" style="flex:1;">
-            <label>السعر قبل الخصم (اختياري)</label>
-            <input type="number" class="price-input-lg" id="quickEditProdOldPrice">
-          </div>
+        <!-- 💰 (إصلاح — الحقول كانت ضيقة على الهاتف رغم تكبير الخط) صار كل حقل بصف مستقل
+             بعرض كامل بدل التجاور بصف واحد، ليتسع الرقم كاملاً بوضوح على أي شاشة هاتف. -->
+        <div class="form-field">
+          <label>السعر الحالي — بعد الخصم إن وُجد (د.ع) *</label>
+          <input type="number" class="price-input-lg" id="quickEditProdPrice" required>
+        </div>
+        <div class="form-field">
+          <label>السعر قبل الخصم (اختياري — للمقارنة فقط)</label>
+          <input type="number" class="price-input-lg" id="quickEditProdOldPrice">
         </div>
 
         <!-- 💰 (إصلاح) حقل ثابت بالنموذج نفسه بدل الاعتماد على حقن JS وحده -->
@@ -2034,6 +2034,26 @@
     window.addEventListener('DOMContentLoaded', () => {
       loadPharmacyDesignAndSecrets();
       fetchTenantMasterCatalog();
+
+      // 🔗 (إصلاح جذري) إن جاء الأدمن من زر "تعديل ✏️" بمنتج وهو يتصفح متجر الزبائن، نفتح
+      // نافذة تعديل ذلك المنتج تلقائياً هنا فور اكتمال تحميل بيانات المنتجات — هذه النافذة
+      // الكاملة الصحيحة الوحيدة بالموقع (بدل أي نسخة بديلة ناقصة).
+      const urlParams = new URLSearchParams(window.location.search);
+      const editId = urlParams.get('editProduct');
+      if (editId) {
+        let attempts = 0;
+        const waitForProducts = setInterval(() => {
+          attempts++;
+          if ((typeof products !== 'undefined' && products.length > 0) || attempts > 40) {
+            clearInterval(waitForProducts);
+            switchAdminSection('products');
+            if (typeof openAdminQuickEditModal === 'function') openAdminQuickEditModal(editId);
+            // تنظيف الرابط من المعرّف بعد الفتح حتى لا تُفتح النافذة مجدداً عند إعادة التحميل
+            const cleanUrl = window.location.pathname + window.location.search.replace(/[&?]editProduct=[^&]+/, '');
+            window.history.replaceState({}, '', cleanUrl);
+          }
+        }, 250);
+      }
     });
   </script>
 </body>
