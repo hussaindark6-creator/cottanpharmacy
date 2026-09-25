@@ -435,7 +435,7 @@
         <div class="admin-stat-card-v dash-card-revenue">
           <div class="dash-card-icon">💰</div>
           <div class="num mono" id="statDailyRevenue">0 د.ع</div>
-          <div class="lbl">مبيعات اليوم</div>
+          <div class="lbl">مبيعات اليوم <span class="dash-delta-badge" id="statDailyRevDelta" style="display:none;"></span></div>
         </div>
         <div class="admin-stat-card-v dash-card-profit">
           <div class="dash-card-icon">📈</div>
@@ -446,6 +446,11 @@
           <div class="dash-card-icon">📦</div>
           <div class="num mono" id="statDailyOrders">0</div>
           <div class="lbl">طلبات اليوم</div>
+        </div>
+        <div class="admin-stat-card-v">
+          <div class="dash-card-icon">🧮</div>
+          <div class="num mono" id="statAovDaily">0 د.ع</div>
+          <div class="lbl">متوسط قيمة الطلب</div>
         </div>
         <div class="admin-stat-card-v">
           <div class="dash-card-icon">👁️</div>
@@ -459,7 +464,7 @@
         <div class="admin-stat-card-v dash-card-revenue">
           <div class="dash-card-icon">💵</div>
           <div class="num mono" id="statMonthlyRevenue">0 د.ع</div>
-          <div class="lbl">مبيعات الشهر</div>
+          <div class="lbl">مبيعات الشهر <span class="dash-delta-badge" id="statMonthlyRevDelta" style="display:none;"></span></div>
         </div>
         <div class="admin-stat-card-v dash-card-profit">
           <div class="dash-card-icon">📊</div>
@@ -470,6 +475,11 @@
           <div class="dash-card-icon">🧾</div>
           <div class="num mono" id="statMonthlyOrders">0</div>
           <div class="lbl">طلبات الشهر</div>
+        </div>
+        <div class="admin-stat-card-v">
+          <div class="dash-card-icon">🧮</div>
+          <div class="num mono" id="statAovMonthly">0 د.ع</div>
+          <div class="lbl">متوسط قيمة الطلب</div>
         </div>
         <div class="admin-stat-card-v">
           <div class="dash-card-icon">🗂️</div>
@@ -484,6 +494,11 @@
           <span style="font-size:11px; font-weight:700; color:var(--accent);">محدث تلقائياً من السيرفر</span>
         </div>
         <div class="chart-bars-row" id="adminRealChartBars"></div>
+      </div>
+
+      <div class="admin-rank-list">
+        <div class="admin-chart-title"><span>🗂️ أداء الأقسام هذا الشهر (حسب المبيعات)</span></div>
+        <div id="adminCategoryPerfList"></div>
       </div>
 
       <div class="admin-rank-list">
@@ -2034,26 +2049,6 @@
     window.addEventListener('DOMContentLoaded', () => {
       loadPharmacyDesignAndSecrets();
       fetchTenantMasterCatalog();
-
-      // 🔗 (إصلاح جذري) إن جاء الأدمن من زر "تعديل ✏️" بمنتج وهو يتصفح متجر الزبائن، نفتح
-      // نافذة تعديل ذلك المنتج تلقائياً هنا فور اكتمال تحميل بيانات المنتجات — هذه النافذة
-      // الكاملة الصحيحة الوحيدة بالموقع (بدل أي نسخة بديلة ناقصة).
-      const urlParams = new URLSearchParams(window.location.search);
-      const editId = urlParams.get('editProduct');
-      if (editId) {
-        let attempts = 0;
-        const waitForProducts = setInterval(() => {
-          attempts++;
-          if ((typeof products !== 'undefined' && products.length > 0) || attempts > 40) {
-            clearInterval(waitForProducts);
-            switchAdminSection('products');
-            if (typeof openAdminQuickEditModal === 'function') openAdminQuickEditModal(editId);
-            // تنظيف الرابط من المعرّف بعد الفتح حتى لا تُفتح النافذة مجدداً عند إعادة التحميل
-            const cleanUrl = window.location.pathname + window.location.search.replace(/[&?]editProduct=[^&]+/, '');
-            window.history.replaceState({}, '', cleanUrl);
-          }
-        }, 250);
-      }
     });
   </script>
 </body>
