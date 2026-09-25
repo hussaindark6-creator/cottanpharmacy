@@ -2964,7 +2964,7 @@ header {
 }
 
 .admin-stat-grid-v { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
-@media (min-width: 640px) { .admin-stat-grid-v { grid-template-columns: repeat(4, 1fr); gap: 16px; } }
+@media (min-width: 640px) { .admin-stat-grid-v { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; } }
 .admin-stat-card-v { background: #FFFFFF; border: 1.5px solid var(--line); border-radius: var(--radius-md); padding: 16px 14px; text-align: center; box-shadow: var(--shadow-soft); }
 .admin-stat-card-v .num { font-size: 22px; font-weight: 900; color: var(--rose-deep); }
 .admin-stat-card-v .lbl { font-size: 12px; font-weight: 700; color: var(--text-soft); margin-top: 2px; }
@@ -2996,6 +2996,17 @@ header {
   font-size: 20px;
   margin-bottom: 6px;
   opacity: 0.9;
+}
+
+/* 📊 (إعادة بناء الداشبورد) شارة نسبة التغيّر ▲▼ مقابل الفترة السابقة */
+.dash-delta-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 1px 6px;
+  border-radius: 999px;
+  margin-inline-start: 4px;
 }
 
 .dash-card-revenue {
