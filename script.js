@@ -2579,51 +2579,34 @@ async function quickToggleStock(id) {
 // بنفسها عند أول استخدام إن لم تكن موجودة أصلاً — بنفس الأسلوب المطبَّق مسبقاً بنجاح على
 // نافذة التعديل السريع بواجهة الزبون. هذا يضمن عمل الزر بشكل صحيح ودائم بغضّ النظر عن أي
 // التباس مستقبلي حول أي صفحة تستدعيه فعلياً.
+// 🛡️🐛 (إصلاح جذري — السبب الحقيقي وراء كل مشاكل "تعديل السعر" المتكررة) هذه الدالة كانت
+// تُنشئ نسخة ثانية مختلفة تماماً بالجافاسكربت من نافذة "تعديل المنتج" عند الضغط على زر
+// "تعديل ✏️" أثناء تصفح المتجر (index.html) كأدمن — لأن النافذة الأصلية الكاملة موجودة فقط
+// بملف admin.html. هذه النسخة المكررة: (أ) كانت تفتقد حقل quickEditProdType بالكامل، مما
+// يجعل saveAdminQuickEdit() ينهار فوراً بخطأ صامت (Cannot read properties of null) قبل حتى
+// الوصول لأي معالجة أخطاء — فيبدو زر "حفظ" وكأنه "لا يعمل إطلاقاً" دون أي رسالة. (ب) كانت
+// تحقن حقل سعر التكلفة داخل نفس صف السعر/السعر قبل الخصم فيتزاحم الثلاثة بصف واحد ضيق —
+// تماماً الخلل المتكرر بالسعر الذي بدا وكأنه "لا يُحل" رغم إصلاحه مراراً بملف admin.html
+// (لأن الإصلاحات كانت تطال النافذة الصحيحة فقط، وهذه النافذة المكررة المنسية لم تتأثر
+// إطلاقاً). الحل الجذري: حذف هذه النسخة المكررة نهائياً، والاعتماد حصراً على النافذة
+// الكاملة الصحيحة بملف admin.html دائماً — عبر التوجيه التلقائي إليها.
 function ensureAdminQuickEditModalMarkup() {
-  if (document.getElementById('adminQuickEditModal')) return;
-
-  const wrap = document.createElement('div');
-  wrap.innerHTML = `
-    <div class="admin-quick-modal-overlay" id="adminQuickEditModal">
-      <div class="admin-quick-card" style="max-width:480px; text-align:right; max-height:88vh; overflow-y:auto;">
-        <div class="consult-header" style="padding:0 0 12px; border-bottom:1px solid var(--line); margin-bottom:14px; display:flex; align-items:center; justify-content:space-between;">
-          <h4 style="margin:0; font-weight:900;">تعديل المنتج ✏️</h4>
-          <button type="button" onclick="closeAdminQuickEditModal()" style="font-weight:900; font-size:16px;">✕</button>
-        </div>
-        <input type="hidden" id="quickEditProdId">
-        <div class="form-field"><label>اسم المنتج</label><input type="text" id="quickEditProdName"></div>
-        <div class="form-field"><label>الماركة</label><input type="text" id="quickEditProdBrand"></div>
-        <div style="display:flex; gap:10px;">
-          <div class="form-field" style="flex:1;"><label>السعر</label><input type="number" id="quickEditProdPrice" min="0"></div>
-          <div class="form-field" style="flex:1;"><label>السعر قبل الخصم</label><input type="number" id="quickEditProdOldPrice" min="0"></div>
-        </div>
-        <div class="form-field"><label>القسم</label><select id="quickEditProdCat"></select></div>
-        <div class="form-field"><label>الحجم/الوصف القصير</label><input type="text" id="quickEditProdSize"></div>
-        <div style="display:flex; gap:10px;">
-          <div class="form-field" style="flex:1;"><label>الكمية بالمخزون</label><input type="number" id="quickEditProdStockQty" min="0"></div>
-          <div class="form-field" style="flex:1;"><label>التقييم</label><input type="number" id="quickEditProdRating" step="0.1" min="0" max="5"></div>
-        </div>
-        <div class="form-field"><label>عدد التقييمات</label><input type="number" id="quickEditProdReviews" min="0"></div>
-        <div class="form-field">
-          <label>رابط صورة المنتج</label>
-          <input type="text" id="quickEditProdImg">
-          <div id="quickEditProdImgPreviewBox" style="display:none; margin-top:8px; justify-content:center;">
-            <img id="quickEditProdImgPreviewEl" style="width:70px; height:70px; object-fit:cover; border-radius:12px; border:1px solid var(--line);">
-          </div>
-        </div>
-        <div class="form-field"><label>الوصف</label><textarea id="quickEditProdDesc" rows="2"></textarea></div>
-        <div class="form-field"><label>المكونات</label><textarea id="quickEditProdIng" rows="2"></textarea></div>
-        <div class="form-field"><label>طريقة الاستخدام</label><textarea id="quickEditProdUsage" rows="2"></textarea></div>
-        <label style="display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:8px;"><input type="checkbox" id="quickEditProdInStock"> متوفر بالمخزون</label>
-        <label style="display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:14px;"><input type="checkbox" id="quickEditProdIsOffer"> عرض خاص</label>
-        <button type="button" class="admin-btn-save" onclick="saveAdminQuickEdit()">💾 حفظ التعديلات سحابياً</button>
-      </div>
-    </div>`;
-  document.body.appendChild(wrap.firstElementChild);
+  // لم تعد تُنشئ أي نسخة مكررة — النافذة الوحيدة المعتمدة موجودة بملف admin.html فقط.
+  return;
 }
 
 function openAdminQuickEditModal(id) {
   if (!assertAdmin()) return;
+
+  // 🛡️ إن لم تكن نافذة التعديل الكاملة موجودة بهذه الصفحة (كوننا نتصفح index.html كأدمن
+  // مثلاً)، نوجَّه مباشرة لصفحة admin.html مع تمرير معرّف المنتج، فتفتح النافذة الصحيحة
+  // تلقائياً هناك فور التحميل — بدل إنشاء نسخة بديلة ناقصة ومختلفة.
+  if (!document.getElementById('adminQuickEditModal')) {
+    const base = getTenantUrl('admin.html');
+    window.location.href = base + '&editProduct=' + encodeURIComponent(id);
+    return;
+  }
+
   try {
     const p = findProduct(id) || archivedProducts.find(x => String(x.id) === String(id));
     if (!p) {
@@ -2696,9 +2679,9 @@ async function saveAdminQuickEdit() {
   const costPrice = costPriceVal ? Number(costPriceVal) : null;
   const size = document.getElementById('quickEditProdSize') ? document.getElementById('quickEditProdSize').value.trim() : 'عبوة قياسية';
   const stockQty = document.getElementById('quickEditProdStockQty') ? Number(document.getElementById('quickEditProdStockQty').value || 10) : 10;
-  const category = document.getElementById('quickEditProdCat').value;
-  const type = document.getElementById('quickEditProdType').value;
-  const imageUrl = sanitizeUrl(document.getElementById('quickEditProdImg').value.trim());
+  const category = document.getElementById('quickEditProdCat') ? document.getElementById('quickEditProdCat').value : '';
+  const type = document.getElementById('quickEditProdType') ? document.getElementById('quickEditProdType').value : 'bottle';
+  const imageUrl = document.getElementById('quickEditProdImg') ? sanitizeUrl(document.getElementById('quickEditProdImg').value.trim()) : '';
   const description = document.getElementById('quickEditProdDesc') ? sanitizeText(document.getElementById('quickEditProdDesc').value.trim()) : '';
   const ingredients = document.getElementById('quickEditProdIng') ? sanitizeText(document.getElementById('quickEditProdIng').value.trim()) : '';
   const usage = document.getElementById('quickEditProdUsage') ? sanitizeText(document.getElementById('quickEditProdUsage').value.trim()) : '';
@@ -2749,6 +2732,10 @@ async function saveAdminQuickEdit() {
       { merge: true }
     );
 
+    // 🔄 تحديث النسخة المحلية بالذاكرة فوراً (products array) كي يعكس renderCurrentActiveView
+    // السعر الجديد مباشرة بلا انتظار مزامنة onSnapshot أو إعادة تحميل الصفحة يدوياً.
+    if (existingProd) Object.assign(existingProd, updates);
+
     // 🐛 (إصلاح إضافي) updates كان يُرسَل لتحديث كاش R2 وهو يحتوي على FieldValue.serverTimestamp()
     // (كائن خاص بـ Firestore SDK لا يُسلسَل بشكل صحيح عبر JSON.stringify) — الآن نرسل نسخة
     // نظيفة من البيانات الفعلية فقط (بلا أي كائن FieldValue) لضمان وصول كل الحقول بشكل سليم.
@@ -2761,6 +2748,9 @@ async function saveAdminQuickEdit() {
 
     closeAdminQuickEditModal();
     showToast('تم تحديث تفاصيل الصنف فورياً ✓');
+    // 🔄 (إصلاح) تحديث فوري لبطاقة المنتج المعروضة أمام الأدمن بنفس اللحظة (كان يبقى
+    // السعر القديم ظاهراً على الشاشة حتى يُعاد تحميل الصفحة يدوياً، فيبدو وكأن الحفظ فشل).
+    if (typeof renderCurrentActiveView === 'function') renderCurrentActiveView();
   } catch (err) {
     console.error('saveAdminQuickEdit failed:', err);
     showToast('⚠️ تعذر حفظ التعديل: ' + (err.message || 'خطأ غير معروف') + ' — يرجى إعادة المحاولة.');
