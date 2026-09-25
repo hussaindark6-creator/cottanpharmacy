@@ -418,6 +418,12 @@ let todayProfit = 0;
 let monthlyProfit = 0;
 let todayOrdersCount = 0;
 let monthlyOrdersCount = 0;
+// 📊 (إعادة بناء الداشبورد) متغيرات المقارنة والتقرير الاحترافي الجديدة
+let yesterdayRevenue = 0;
+let lastMonthRevenue = 0;
+let avgOrderValueToday = 0;
+let avgOrderValueMonth = 0;
+let topCategoriesThisMonth = [];
 let weeklyVisitsData = [];
 
 let pharmacyProfile = {
@@ -1966,7 +1972,19 @@ async function fetchRealAnalytics() {
     // كل الطلبات والتقارير التفصيلية سليمة كما هي. هذا أأمن بكثير من حذف بيانات حقيقية.
     const resetAtMs = pharmacyProfile.salesStatsResetAt ? new Date(pharmacyProfile.salesStatsResetAt).getTime() : 0;
 
+    // 📊 (إعادة بناء الداشبورد — تقرير احترافي) نحسب أيضاً أمس والشهر الماضي للمقارنة
+    // (نسبة التغيّر ▲▼)، ومتوسط قيمة الطلب، ومبيعات كل قسم هذا الشهر — كل هذا من نفس
+    // مسح الطلبات الواحد، بلا أي قراءة إضافية من Firestore.
+    const yesterdayDate = new Date();
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+    const yesterdayStr = yesterdayDate.toISOString().split('T')[0];
+    const lastMonthDate = new Date();
+    lastMonthDate.setMonth(lastMonthDate.getMonth() - 1);
+    const lastMonthStr = lastMonthDate.toISOString().substring(0, 7);
+
     let dRev = 0, mRev = 0, dProfit = 0, mProfit = 0, dOrders = 0, mOrders = 0;
+    let yRev = 0, lmRev = 0;
+    const categoryRevMap = {};
     const ordersSnap = await dbPaths.ordersCol().get();
     totalOrdersCount = Math.max(ordersSnap.size, myOrders.length);
 
@@ -1980,8 +1998,20 @@ async function fetchRealAnalytics() {
       if (resetAtMs && oTimeMs && oTimeMs < resetAtMs) return; // 🔄 استُبعد لأنه قبل نقطة إعادة التعيين
       const isToday = oDate.startsWith(todayStr);
       const isThisMonth = oDate.startsWith(currentMonthStr);
+      const isYesterday = oDate.startsWith(yesterdayStr);
+      const isLastMonth = oDate.startsWith(lastMonthStr);
       if (isToday) { dRev += oTotal; dOrders++; }
-      if (isThisMonth) { mRev += oTotal; mOrders++; }
+      if (isThisMonth) {
+        mRev += oTotal; mOrders++;
+        (o.items || []).forEach(it => {
+          const prod = it && it.id ? findProduct(it.id) : null;
+          const catLabel = prod ? (categories.find(c => c.id === prod.category)?.label || prod.category || 'غير مصنف') : (it.isBundle ? '🎁 بكجات' : 'غير مصنف');
+          const lineRev = Number(it.lineTotal) || (Number(it.unitPrice || 0) * Number(it.quantity || 1));
+          categoryRevMap[catLabel] = (categoryRevMap[catLabel] || 0) + lineRev;
+        });
+      }
+      if (isYesterday) yRev += oTotal;
+      if (isLastMonth) lmRev += oTotal;
 
       // 📊 (البند 10) صافي الربح اليومي/الشهري — يُحتسب من unitCostPrice المحفوظة كلقطة
       // داخل كل عنصر طلب وقت الشراء الفعلي (وليس السعر الحالي بالمخزون، تفادياً لتحريف
@@ -2004,6 +2034,14 @@ async function fetchRealAnalytics() {
     monthlyProfit = mProfit;
     todayOrdersCount = dOrders;
     monthlyOrdersCount = mOrders;
+    yesterdayRevenue = yRev;
+    lastMonthRevenue = lmRev;
+    avgOrderValueToday = dOrders > 0 ? Math.round(dRev / dOrders) : 0;
+    avgOrderValueMonth = mOrders > 0 ? Math.round(mRev / mOrders) : 0;
+    topCategoriesThisMonth = Object.entries(categoryRevMap)
+      .map(([label, rev]) => ({ label, rev }))
+      .sort((a, b) => b.rev - a.rev)
+      .slice(0, 5);
 
     products.forEach(p => {
       if (productSalesMap[p.id]) {
@@ -2080,6 +2118,46 @@ function renderRealAnalyticsView() {
   if (statMonthlyProfitEl) statMonthlyProfitEl.textContent = fmtPrice(monthlyProfit);
   if (statDailyOrdersEl) statDailyOrdersEl.textContent = todayOrdersCount;
   if (statMonthlyOrdersEl) statMonthlyOrdersEl.textContent = monthlyOrdersCount;
+
+  // 📈📉 (إعادة بناء الداشبورد) شارات المقارنة — نسبة تغيّر مبيعات اليوم عن أمس، والشهر
+  // الحالي عن الشهر الماضي، بلون أخضر للارتفاع وأحمر للانخفاض.
+  const renderDeltaBadge = (elId, current, previous) => {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    if (!previous || previous <= 0) { el.textContent = ''; el.style.display = 'none'; return; }
+    const pct = Math.round(((current - previous) / previous) * 100);
+    const isUp = pct >= 0;
+    el.style.display = 'inline-flex';
+    el.style.color = isUp ? '#059669' : '#DC2626';
+    el.style.background = isUp ? '#ECFDF5' : '#FEF2F2';
+    el.textContent = `${isUp ? '▲' : '▼'} ${Math.abs(pct)}%`;
+  };
+  renderDeltaBadge('statDailyRevDelta', todayRevenue, yesterdayRevenue);
+  renderDeltaBadge('statMonthlyRevDelta', monthlyRevenue, lastMonthRevenue);
+
+  const aovDailyEl = document.getElementById('statAovDaily');
+  const aovMonthlyEl = document.getElementById('statAovMonthly');
+  if (aovDailyEl) aovDailyEl.textContent = fmtPrice(avgOrderValueToday);
+  if (aovMonthlyEl) aovMonthlyEl.textContent = fmtPrice(avgOrderValueMonth);
+
+  // 🗂️ (إعادة بناء الداشبورد) أداء الأقسام هذا الشهر — أي أقسام تحقق أعلى مبيعات فعلياً
+  const catPerfEl = document.getElementById('adminCategoryPerfList');
+  if (catPerfEl) {
+    const maxCatRev = topCategoriesThisMonth.length ? Math.max(...topCategoriesThisMonth.map(c => c.rev), 1) : 1;
+    catPerfEl.innerHTML = topCategoriesThisMonth.length === 0
+      ? `<div class="no-results" style="padding:16px 0;">لا توجد مبيعات مصنّفة هذا الشهر بعد.</div>`
+      : topCategoriesThisMonth.map(c => {
+          const pct = Math.round((c.rev / maxCatRev) * 100);
+          return `
+            <div class="admin-rank-item-pro">
+              <div class="admin-rank-item-top">
+                <span style="font-weight:800;">${sanitizeText(c.label)}</span>
+                <span class="mono" style="font-weight:900; color:var(--accent);">${fmtPrice(c.rev)}</span>
+              </div>
+              <div class="admin-rank-bar-track"><div class="admin-rank-bar-fill" style="width:${pct}%;"></div></div>
+            </div>`;
+        }).join('');
+  }
 
   const chartContainer = document.getElementById('adminRealChartBars');
   if (chartContainer && weeklyVisitsData.length > 0) {
@@ -2577,35 +2655,131 @@ async function quickToggleStock(id) {
 // حرفياً برسالة الخطأ بالصورة المرسلة). بدل الاعتماد على افتراض أن هذه العناصر موجودة
 // دائماً بالصفحة، أصبحت الدالة الآن "ذاتية الإصلاح": تبني نافذة التعديل الكاملة ديناميكياً
 // بنفسها عند أول استخدام إن لم تكن موجودة أصلاً — بنفس الأسلوب المطبَّق مسبقاً بنجاح على
-// نافذة التعديل السريع بواجهة الزبون. هذا يضمن عمل الزر بشكل صحيح ودائم بغضّ النظر عن أي
-// التباس مستقبلي حول أي صفحة تستدعيه فعلياً.
-// 🛡️🐛 (إصلاح جذري — السبب الحقيقي وراء كل مشاكل "تعديل السعر" المتكررة) هذه الدالة كانت
-// تُنشئ نسخة ثانية مختلفة تماماً بالجافاسكربت من نافذة "تعديل المنتج" عند الضغط على زر
-// "تعديل ✏️" أثناء تصفح المتجر (index.html) كأدمن — لأن النافذة الأصلية الكاملة موجودة فقط
-// بملف admin.html. هذه النسخة المكررة: (أ) كانت تفتقد حقل quickEditProdType بالكامل، مما
-// يجعل saveAdminQuickEdit() ينهار فوراً بخطأ صامت (Cannot read properties of null) قبل حتى
-// الوصول لأي معالجة أخطاء — فيبدو زر "حفظ" وكأنه "لا يعمل إطلاقاً" دون أي رسالة. (ب) كانت
-// تحقن حقل سعر التكلفة داخل نفس صف السعر/السعر قبل الخصم فيتزاحم الثلاثة بصف واحد ضيق —
-// تماماً الخلل المتكرر بالسعر الذي بدا وكأنه "لا يُحل" رغم إصلاحه مراراً بملف admin.html
-// (لأن الإصلاحات كانت تطال النافذة الصحيحة فقط، وهذه النافذة المكررة المنسية لم تتأثر
-// إطلاقاً). الحل الجذري: حذف هذه النسخة المكررة نهائياً، والاعتماد حصراً على النافذة
-// الكاملة الصحيحة بملف admin.html دائماً — عبر التوجيه التلقائي إليها.
+// 🛡️🐛 (إصلاح جذري — التعديل المباشر من الصفحة الرئيسية) بطلب صريح: التعديل السريع على
+// السعر والتفاصيل يجب أن يعمل مباشرة من الصفحة الرئيسية (index.html) بحساب الأدمن، بلا أي
+// توجيه لصفحة أخرى. المشكلة سابقاً أن هذه الدالة كانت تُنشئ نسخة ناقصة مختلفة عن نافذة
+// admin.html الكاملة (تفتقد حقل النوع Type، وتُزاحم حقول السعر بصف واحد) — فتنهار عملية
+// الحفظ بصمت. الحل: هذه النسخة الآن كاملة ومطابقة تماماً لنافذة admin.html حقلاً بحقل (بما
+// فيها نوع العبوة وحقول السعر المنفصلة بصفوف كاملة العرض)، فتعمل باستقلالية وموثوقية على
+// أي صفحة تفتقد النافذة الثابتة، دون أي حاجة للتنقل خارج الصفحة الحالية.
 function ensureAdminQuickEditModalMarkup() {
-  // لم تعد تُنشئ أي نسخة مكررة — النافذة الوحيدة المعتمدة موجودة بملف admin.html فقط.
-  return;
+  if (document.getElementById('adminQuickEditModal')) return;
+
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `
+    <div class="admin-quick-modal-overlay" id="adminQuickEditModal">
+      <div class="admin-quick-card" style="max-width: 620px; max-height: 90vh; overflow-y: auto;">
+        <div class="consult-header">
+          <h3 style="color:#111827; font-weight:900;">✏️ تعديل تفاصيل الصنف بالكامل</h3>
+          <button class="icon-btn" onclick="closeAdminQuickEditModal()">✕</button>
+        </div>
+        <div style="padding:18px; text-align:right;">
+          <input type="hidden" id="quickEditProdId">
+
+          <div class="form-field">
+            <label>اسم المنتج الكامل *</label>
+            <input type="text" id="quickEditProdName" required>
+          </div>
+
+          <div style="display:flex; gap:10px;">
+            <div class="form-field" style="flex:1;">
+              <label>الماركة / الشركة *</label>
+              <input type="text" id="quickEditProdBrand" required>
+            </div>
+            <div class="form-field" style="flex:1;">
+              <label>القسم / التصنيف *</label>
+              <select id="quickEditProdCat" required></select>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label>السعر الحالي — بعد الخصم إن وُجد (د.ع) *</label>
+            <input type="number" class="price-input-lg" id="quickEditProdPrice" required>
+          </div>
+          <div class="form-field">
+            <label>السعر قبل الخصم (اختياري — للمقارنة فقط)</label>
+            <input type="number" class="price-input-lg" id="quickEditProdOldPrice">
+          </div>
+          <div class="form-field">
+            <label>سعر التكلفة (اختياري — لحساب صافي الربح) 💰</label>
+            <input type="number" class="price-input-lg" id="quickEditProdCostPrice" min="0" step="0.01" placeholder="مثال: 3500">
+          </div>
+
+          <div style="display:flex; gap:10px;">
+            <div class="form-field" style="flex:1;">
+              <label>الحجم / العبوة</label>
+              <input type="text" id="quickEditProdSize" placeholder="236 مل">
+            </div>
+            <div class="form-field" style="flex:1;">
+              <label>الكمية بالمخزن *</label>
+              <input type="number" id="quickEditProdStockQty" placeholder="10" min="0" required>
+            </div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <div class="form-field" style="flex:1;">
+              <label>⭐ التقييم (من 1 إلى 5)</label>
+              <input type="number" id="quickEditProdRating" placeholder="4.8" min="1" max="5" step="0.1">
+            </div>
+            <div class="form-field" style="flex:1;">
+              <label>عدد التقييمات المعروضة</label>
+              <input type="number" id="quickEditProdReviews" placeholder="0" min="0">
+            </div>
+            <div class="form-field" style="flex:1;">
+              <label>نوع العبوة (الأيقونة)</label>
+              <select id="quickEditProdType">
+                <option value="bottle">زجاجة (Bottle)</option>
+                <option value="jar">مرطبان (Jar)</option>
+                <option value="tube">أنبوب (Tube)</option>
+                <option value="spray">بخاخ (Spray)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label>تغيير صورة الصنف (من المعرض مباشرة)</label>
+            <input type="file" accept="image/*" onchange="uploadDirectImageFile(this, 'quickEditProdImg', 'quickEditProdImgPreviewEl', 'quickEditProdImgPreviewBox')" style="width:100%; padding:8px; border:1.5px dashed var(--line); border-radius:12px; background:#fff; font-size:12px;">
+            <input type="hidden" id="quickEditProdImg" value="">
+            <div id="quickEditProdImgPreviewBox" style="margin-top:8px; display:none; align-items:center; gap:10px;">
+              <img id="quickEditProdImgPreviewEl" src="" style="height:70px; width:70px; object-fit:cover; border-radius:10px; border:1px solid var(--line);" alt="Edit Preview">
+              <span style="font-size:11px; color:#16A34A; font-weight:800;">✅ تم تحديث الصورة</span>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label>الوصف المفصل والفوائد الطبية</label>
+            <textarea id="quickEditProdDesc" rows="3" placeholder="تفاصيل المنتج والفوائد..."></textarea>
+          </div>
+
+          <div style="display:flex; gap:10px;">
+            <div class="form-field" style="flex:1;">
+              <label>المكونات الفعالة والتركيبة (Ingredients)</label>
+              <input type="text" id="quickEditProdIng" placeholder="Hyaluronic Acid, Ceramides...">
+            </div>
+            <div class="form-field" style="flex:1;">
+              <label>طريقة الاستخدام والإرشادات (Usage)</label>
+              <input type="text" id="quickEditProdUsage" placeholder="يوضع صباحاً ومساءً...">
+            </div>
+          </div>
+
+          <div class="admin-toggle-switch">
+            <span>متوفر في المخزون (In Stock)</span>
+            <input type="checkbox" id="quickEditProdInStock" style="width:20px; height:20px; cursor:pointer;">
+          </div>
+
+          <div class="admin-toggle-switch">
+            <span>تفعيل كعرض خاص (Special Offer)</span>
+            <input type="checkbox" id="quickEditProdIsOffer" style="width:20px; height:20px; cursor:pointer;">
+          </div>
+
+          <button class="admin-btn-save" onclick="saveAdminQuickEdit()">💾 حفظ التعديلات سحابياً</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(wrap.firstElementChild);
 }
 
 function openAdminQuickEditModal(id) {
   if (!assertAdmin()) return;
-
-  // 🛡️ إن لم تكن نافذة التعديل الكاملة موجودة بهذه الصفحة (كوننا نتصفح index.html كأدمن
-  // مثلاً)، نوجَّه مباشرة لصفحة admin.html مع تمرير معرّف المنتج، فتفتح النافذة الصحيحة
-  // تلقائياً هناك فور التحميل — بدل إنشاء نسخة بديلة ناقصة ومختلفة.
-  if (!document.getElementById('adminQuickEditModal')) {
-    const base = getTenantUrl('admin.html');
-    window.location.href = base + '&editProduct=' + encodeURIComponent(id);
-    return;
-  }
 
   try {
     const p = findProduct(id) || archivedProducts.find(x => String(x.id) === String(id));
