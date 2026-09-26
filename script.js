@@ -4715,6 +4715,7 @@ function initFirestoreSync() {
         renderBrandStrip();
         checkStorefrontSubscriptionLock();
         checkAdminSubscriptionLock();
+        checkAndRefreshCatalogIfStale();
         const navTitleEl = document.getElementById('adminNavTitle');
         if (navTitleEl) navTitleEl.textContent = `لوحة تحكم ${pharmacyProfile.name || 'الصيدلية'}`;
       }
@@ -4799,9 +4800,14 @@ function initFirestoreSync() {
 
 // 🌟 جلب كتالوج المنتجات من كاش Cloudflare R2 السريع (متاح لجميع الزوار بأمان، بلا اتصال حي)
 // (المتغير lastCatalogCacheStatus معرّف لاحقاً بقسم "GOOGLE AUTH" ويُستخدم هنا أيضاً)
-async function fetchCatalogFromR2() {
+// 🛡️ (إصلاح جذري نهائي — ضمان وصول آخر سعر للزبون دائماً) forceBust: عند تمرير true، يُضاف
+// معامل فريد لرابط الطلب فيصبح مفتاح كاش مختلف كلياً بنظر Cloudflare — يتجاوز أي نسخة
+// مخزَّنة سابقاً على الحافة بصرف النظر عن نجاح أو فشل أي عملية مسح كاش سابقة من الأدمن.
+async function fetchCatalogFromR2(forceBust = false) {
   try {
-    const res = await fetch(`${WORKER_API_BASE}/api/catalog?pharmacy=${encodeURIComponent(currentPharmacyId)}`, {
+    let url = `${WORKER_API_BASE}/api/catalog?pharmacy=${encodeURIComponent(currentPharmacyId)}`;
+    if (forceBust) url += `&_fresh=${Date.now()}`;
+    const res = await fetch(url, {
       headers: { 'X-Pharmacy-Id': currentPharmacyId }
     });
     if (res.ok) {
@@ -4826,6 +4832,27 @@ async function fetchCatalogFromR2() {
     console.warn('R2 catalog fetch fallback to Firestore:', e);
   }
   return false;
+}
+
+// 🛡️ (إصلاح جذري نهائي — "السعر ما يتحدث عند الزبائن") يقارن آخر طابع زمني لتحديث الكتالوج
+// (pharmacyProfile.catalogUpdatedAt، يُكتب من الووركر عند كل تعديل سعر/منتج) بآخر نسخة رآها
+// هذا المتصفح تحديداً (محفوظة محلياً). إن اختلفا، يُعاد جلب الكتالوج فوراً بمعامل تخطّي كاش
+// صريح — فيصل السعر الصحيح الحقيقي حتى لو تعذّر مسح كاش الحافة من طرف الأدمن لأي سبب. هذا
+// يعمل بصمت وبخلفية الصفحة، دون أي تأخير على التحميل الأولي السريع للموقع.
+function checkAndRefreshCatalogIfStale() {
+  try {
+    const serverVersionRaw = pharmacyProfile.catalogUpdatedAt;
+    if (!serverVersionRaw) return; // لا يوجد بعد أي تعديل مسجَّل — لا داعي لأي فحص
+    const serverVersion = (serverVersionRaw.seconds !== undefined) ? String(serverVersionRaw.seconds) : String(serverVersionRaw);
+    const localKey = getStorageKey('catalog_version');
+    const localVersion = localStorage.getItem(localKey);
+
+    if (localVersion === serverVersion) return; // نفس النسخة المرئية أصلاً — لا حاجة لإعادة الجلب
+
+    fetchCatalogFromR2(true).then(() => {
+      localStorage.setItem(localKey, serverVersion);
+    });
+  } catch (e) { /* غير حرج — التحميل العادي سيستمر بلا هذا التحسين فقط */ }
 }
 
 // ================= 32. NOTIFICATIONS & BROADCAST =================
