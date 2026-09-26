@@ -661,56 +661,6 @@ function checkLowStockAlerts() {
   }
 }
 
-// ================= 10. TENANT TELEGRAM DISPATCHER =================
-// ⚠️ (لم تعد مستخدَمة) الووركر أصبح يرسل إشعار تيليجرام تلقائياً من داخل /api/orders نفسه
-// بعد تثبيت الطلب بأمان — أُبقيت الدالة معرَّفة فقط تفادياً لأي استدعاء خارجي محتمل لها.
-async function sendOrderToPharmacyTelegram(orderObj) {
-  const teleConfig = pharmacyProfile.telegramConfig;
-  if (!teleConfig || !teleConfig.botToken || !teleConfig.chatId || teleConfig.enabled === false) {
-    return;
-  }
-
-  try {
-    const itemsLines = (orderObj.items || []).map(it => 
-      `• ${it.isBundle ? '🎁 [بكج] ' : ''}*${it.name}* (${fmtPrice(it.unitPrice)} × ${it.quantity}) = \`${fmtPrice(it.lineTotal)}\``
-    ).join('\n');
-
-    const promoInfo = orderObj.discountAmount > 0 ? `🎟️ *الخصم:* \`-${fmtPrice(orderObj.discountAmount)}\` (${orderObj.promoCode || 'كود'})\n` : '';
-
-    const message = 
-      `🛍️ *طلب جديد - ${pharmacyProfile.name || 'الصيدلية'}*\n` +
-      `━━━━━━━━━━━━━━━━━━━\n` +
-      `📋 *رقم الفاتورة:* \`#${orderObj.id}\`\n` +
-      `📅 *التاريخ:* ${orderObj.date}\n\n` +
-      `👤 *اسم الزبون:* *${orderObj.name}*\n` +
-      `📞 *رقم الهاتف:* \`${orderObj.phone}\`\n` +
-      `📍 *العنوان:* ${orderObj.address}\n` +
-      `🛵 *نوع التوصيل:* ${orderObj.deliveryMethod === 'express' ? 'سريع' : 'عادي'}\n\n` +
-      `📦 *المنتجات المطلوبة:*\n${itemsLines}\n\n` +
-      `━━━━━━━━━━━━━━━━━━━\n` +
-      `💵 *المجموع الفرعي:* \`${fmtPrice(orderObj.subtotal)}\`\n` +
-      `${promoInfo}` +
-      `🚚 *أجرة التوصيل:* ${fmtPrice(orderObj.deliveryFee)}\n` +
-      `💰 *المجموع النهائي للدفع:* *${fmtPrice(orderObj.total)}*\n` +
-      `━━━━━━━━━━━━━━━━━━━\n` +
-      `✨ *تم استلام الطلب من المتجر الإلكتروني* 🌸`;
-
-    const teleUrl = `https://api.telegram.org/bot${teleConfig.botToken.trim()}/sendMessage`;
-
-    await fetch(teleUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: teleConfig.chatId.trim(),
-        text: message,
-        parse_mode: "Markdown"
-      })
-    });
-  } catch (err) {
-    console.warn("Direct Telegram dispatch warning:", err);
-  }
-}
-
 // ================= 11. CONFIRM ORDER =================
 // 🛡️🔒 (إصلاح أمني/وظيفي جذري — الطلبات كانت معطّلة فعلياً) هذه الدالة كانت تكتب الطلب
 // مباشرة من المتصفح إلى Firestore بسعر يحسبه العميل نفسه محلياً (ثغرة تلاعب بالسعر)، وبعد
@@ -2460,6 +2410,20 @@ const REPORT_GROUP_LABELS = {
   oral_care: 'Oral & Dental Care (قسم عناية الأسنان)'
 };
 
+// 🛡️🔒 (إصلاح أمني — CSV/Formula Injection) اسم الزبون ورقم هاتفه يُكتبان من قبل الزبون
+// نفسه عند الطلب بلا أي قيد، ثم يُدرجان هنا مباشرة داخل ملف CSV يفتحه الأدمن لاحقاً ببرنامج
+// جداول بيانات (Excel/Sheets). لو بدأ الاسم بأحد الرموز =+-@ أو بحرف تبويب، تفسّره أغلب
+// برامج الجداول كصيغة (Formula) قابلة للتنفيذ بدل نص عادي — وهي ثغرة معروفة (CSV/Formula
+// Injection) قد تُستخدم لفتح روابط خبيثة أو تسريب بيانات من ملف الأدمن. الحل القياسي:
+// إضافة علامة اقتباس أحادية ' في بداية أي قيمة تبدأ بأحد هذه الرموز، فتُجبر البرامج على
+// معاملتها كنص صرف بدل صيغة، مع مضاعفة أي علامات اقتباس مزدوجة داخل القيمة كما كان يحدث
+// سابقاً لحقل itemsFormatted فقط (والآن يُطبَّق على كل حقل نصي قادم من الزبون بلا استثناء).
+function csvSafeField(val) {
+  let s = String(val == null ? '' : val).replace(/"/g, '""');
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+  return s;
+}
+
 async function buildDetailedOrdersCSV() {
   let orders = window.adminLastOrdersList || [];
   if (orders.length === 0 && db) {
@@ -2517,7 +2481,7 @@ async function buildDetailedOrdersCSV() {
       groups[group].totalSales += groupSubtotal;
       const itemsFormatted = itemsInGroup.map(it => `${it.name} (x${it.quantity})`).join(' + ');
       groups[group].rows.push(
-        `"${o.id}","${englishDate}","${o.name || ''}","${o.phone || ''}","${itemsFormatted.replace(/"/g, '""')}","${groupSubtotal}"`
+        `"${csvSafeField(o.id)}","${englishDate}","${csvSafeField(o.name || '')}","${csvSafeField(o.phone || '')}","${csvSafeField(itemsFormatted)}","${groupSubtotal}"`
       );
     });
   });
@@ -2575,28 +2539,6 @@ async function exportOrdersToCSV() {
 }
 
 // ================= 21. CLINICAL PRODUCTS CRUD, DIRECT UPLOAD & AUTO-CROWDSOURCING =================
-
-// 🌟 (جديد — حساب صافي الربح) حقل costPrice غير موجود إطلاقاً بنماذج المنتج الحالية.
-// بدل تعديل ملف admin.html يدوياً (مما يعني تعديل ملفين لإصلاح واحد)، نحقن الحقل تلقائياً
-// عند فتح أي من نموذجي إضافة/تعديل المنتج إذا لم يكن موجوداً أصلاً — بنفس أسلوب "الإصلاح
-// الذاتي" المستخدم سابقاً لنافذة التعديل السريع بالمتجر. هذا يضمن ظهور الحقل فوراً بمجرد
-// رفع هذا الملف وحده، بلا أي تنسيق إضافي مطلوب مع ملف HTML.
-function ensureCostPriceField(anchorInputId, costInputId) {
-  if (document.getElementById(costInputId)) return;
-  const anchorInput = document.getElementById(anchorInputId);
-  if (!anchorInput) return;
-  // نفترض أن حقل السعر القديم مغلّف بعنصر .form-field (نفس نمط باقي حقول هذا المشروع)
-  const anchorField = anchorInput.closest('.form-field') || anchorInput.parentElement;
-  if (!anchorField || !anchorField.parentElement) return;
-
-  const wrap = document.createElement('div');
-  wrap.className = 'form-field';
-  wrap.innerHTML = `
-    <label>سعر التكلفة (اختياري — لحساب صافي الربح) 💰</label>
-    <input type="number" class="price-input-lg" id="${costInputId}" min="0" step="0.01" placeholder="مثال: 3500">
-  `;
-  anchorField.parentElement.insertBefore(wrap, anchorField.nextSibling);
-}
 
 function toggleLowStockFilter() {
   isLowStockFilterActive = !isLowStockFilterActive;
@@ -2791,8 +2733,6 @@ function openAdminQuickEditModal(id) {
     ensureAdminQuickEditModalMarkup();
     populateCategoryDropdowns();
 
-    ensureCostPriceField('quickEditProdOldPrice', 'quickEditProdCostPrice');
-
     document.getElementById('quickEditProdId').value = p.id;
     document.getElementById('quickEditProdName').value = p.name || '';
     document.getElementById('quickEditProdBrand').value = p.brand || '';
@@ -2952,7 +2892,6 @@ function previewAdminProdImg(url) {
 
 function resetAdminProductForm() {
   if (!document.getElementById('adminProdDocId')) return;
-  ensureCostPriceField('adminProdOldPrice', 'adminProdCostPrice');
   document.getElementById('adminProdDocId').value = '';
   document.getElementById('adminProdName').value = '';
   document.getElementById('adminProdBrand').value = '';
