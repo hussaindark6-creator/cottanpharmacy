@@ -206,14 +206,26 @@ async function apiFetch(endpoint, options = {}) {
     ...(options.headers || {})
   };
 
+  // 🛡️🐛 (إصلاح جذري — السبب الحقيقي وراء "غير مصرح: يرجى تسجيل الدخول أولاً") كان الكود
+  // يستخدم user.getIdToken() بلا إجبار على التحديث — وهذا أحياناً يرجع توكن مخزَّن محلياً
+  // بمتصفح قد يكون قارب على الانتهاء أو غير صالح لأي سبب (مثلاً التبويب بقي خاملاً لفترة).
+  // getIdToken(true) يجبر Firebase على جلب توكن جديد فعلياً من سيرفراته في كل استدعاء،
+  // فيضمن أن كل طلب لمسارات /api/admin/* يصل بتوكن صالح دائماً — هذا بالضبط ما كان يفشل
+  // بصمت ويمنع تحديث كاش R2 (وبالتالي السعر) للزبائن رغم نجاح الحفظ بفايرستور نفسه.
   const user = auth ? auth.currentUser : currentUser;
   if (user) {
     try {
-      const token = await user.getIdToken();
+      const token = await user.getIdToken(true);
       headers["Authorization"] = `Bearer ${token}`;
     } catch (e) {
       console.warn("Could not get ID token:", e);
+      // 🛡️ (إصلاح) هذا الفشل كان صامتاً تماماً — الطلب كان يكمل بلا Authorization header
+      // إطلاقاً، فيرفضه السيرفر لاحقاً بخطأ "غير مصرح" بلا أي تفسير مفهوم للأدمن. الآن
+      // نوقف الطلب فوراً برسالة واضحة بدل إرساله للفشل لاحقاً بصمت.
+      return { success: false, message: '⚠️ تعذّر التحقق من هويتك — يرجى تسجيل الخروج والدخول مجدداً ثم إعادة المحاولة.' };
     }
+  } else {
+    console.warn('apiFetch: لا يوجد مستخدم مسجَّل دخول حالياً (auth.currentUser فارغ) — سيُرسَل الطلب بلا توثيق.');
   }
 
   try {
