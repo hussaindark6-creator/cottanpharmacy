@@ -229,9 +229,54 @@ async function apiFetch(endpoint, options = {}) {
 function triggerR2CatalogRebuild() {
   apiFetch('/api/admin/catalog/rebuild', { method: 'POST' })
     .then(res => {
-      if (res && res.success) console.log("R2 catalog rebuilt successfully:", res.totalProducts);
+      if (res && res.success) {
+        console.log("R2 catalog rebuilt successfully:", res.totalProducts);
+      } else {
+        // 🛡️ (إصلاح — كانت هذي الحالة صامتة تماماً) لو فشل إعادة البناء الاحتياطي نفسه
+        // (مثلاً سلة R2 غير مربوطة إطلاقاً)، يجب أن يظهر هذا للأدمن صراحة، لا أن يختفي.
+        showToast('⚠️ فشلت إعادة بناء كتالوج المتجر: ' + ((res && res.message) || 'خطأ غير معروف'));
+      }
     })
-    .catch(err => console.warn("R2 catalog rebuild notice:", err));
+    .catch(err => showToast('⚠️ تعذر الاتصال بالووركر لإعادة بناء الكتالوج: ' + err.message));
+}
+
+// 🩺 (جديد) أداة تشخيص فورية — تستدعي /api/admin/catalog/diagnose وتعرض النتيجة بوضوح،
+// بدل الحاجة لفتح رابط بالمتصفح يدوياً أو استخدام أدوات المطوّر.
+async function runCatalogDiagnosis() {
+  const idInput = document.getElementById('diagnoseProductIdInput');
+  const box = document.getElementById('diagnoseResultBox');
+  if (!idInput || !box) return;
+  const productId = idInput.value.trim();
+
+  box.style.display = 'block';
+  box.innerHTML = '⏳ جاري الفحص...';
+
+  try {
+    const res = await apiFetch(`/api/admin/catalog/diagnose?productId=${encodeURIComponent(productId)}`, { method: 'GET' });
+    if (!res || !res.success) {
+      box.innerHTML = `⚠️ فشل الفحص: ${sanitizeText((res && res.message) || 'خطأ غير معروف')}`;
+      return;
+    }
+
+    const rows = [
+      ['سلة R2 (MY_BUCKET) مربوطة؟', res.myBucketBound ? '✅ نعم' : '❌ لا — هذا سبب المشكلة إن كان لا'],
+      ['بيانات اعتماد Admin SDK مضبوطة؟', res.firebaseServiceAccountConfigured ? '✅ نعم' : '❌ لا'],
+    ];
+    if (productId) {
+      rows.push(
+        ['السعر الحقيقي بفايرستور', sanitizeText(String(res.priceInFirestore))],
+        ['السعر المخزَّن بملف R2', sanitizeText(String(res.priceInR2Catalog))],
+        ['السعر بالنسخة المخزَّنة حالياً على حافة Cloudflare', sanitizeText(String(res.priceInEdgeCacheRightNow))],
+        ['آخر طابع تحديث كاش مسجَّل', sanitizeText(String(res.catalogUpdatedAtSignal))]
+      );
+    } else {
+      rows.push(['ملاحظة', 'أدخلي معرّف منتج بالحقل أعلاه لفحص قيمة سعره بكل طبقة على حدة']);
+    }
+
+    box.innerHTML = rows.map(([label, val]) => `<div><b>${label}:</b> <span class="mono">${val}</span></div>`).join('');
+  } catch (err) {
+    box.innerHTML = `⚠️ خطأ بالاتصال: ${sanitizeText(err.message)}`;
+  }
 }
 
 // ⚡ تحديث سريع بـ 0 قراءات من Firestore: يعدّل صنفاً واحداً مباشرة داخل ملف الكتالوج المخزّن في
