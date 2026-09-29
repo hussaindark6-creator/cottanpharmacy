@@ -2605,6 +2605,13 @@ function toggleLowStockFilter() {
     btn.style.color = isLowStockFilterActive ? '#fff' : '#B45309';
     btn.textContent = isLowStockFilterActive ? '✕ إلغاء فلتر النواقص' : '⚠️ عرض المنتجات النافذة فقط';
   }
+  // 🔄 (إصلاح — بعد نقل كل التعديل حصراً لشبكة الأدمن الجديدة) هذا الفلتر يتحكم الآن
+  // بحقل التصفية بالشبكة الجديدة مباشرة بدل الشبكة القديمة المزالة من واجهة الزبون.
+  const gridStockFilter = document.getElementById('adminProductGridStockFilter');
+  if (gridStockFilter) {
+    gridStockFilter.value = isLowStockFilterActive ? 'out' : 'all';
+    if (typeof renderAdminProductManagementGrid === 'function') renderAdminProductManagementGrid();
+  }
   renderCurrentActiveView();
 }
 
@@ -2621,6 +2628,9 @@ async function quickEditPrice(id, currentPrice) {
     if (!db) throw new Error('لا يوجد اتصال بقاعدة البيانات');
     await dbPaths.productsCol().doc(String(id)).set({ price: newPrice }, { merge: true });
     updateR2CatalogItem(id, { price: newPrice });
+    const p = findProduct(id);
+    if (p) p.price = newPrice; // 🔄 تحديث فوري بالشبكة المعروضة بلوحة التحكم
+    renderAdminProductManagementGrid();
     showToast('تم تحديث السعر ومسح الكاش فورياً ✓');
   } catch (err) {
     console.error('quickEditPrice failed:', err);
@@ -2637,11 +2647,75 @@ async function quickToggleStock(id) {
     if (!db) throw new Error('لا يوجد اتصال بقاعدة البيانات');
     await dbPaths.productsCol().doc(String(id)).set({ inStock: newStock }, { merge: true });
     updateR2CatalogItem(id, { inStock: newStock });
+    p.inStock = newStock; // 🔄 تحديث فوري بالشبكة المعروضة بلوحة التحكم
+    renderAdminProductManagementGrid();
     showToast(newStock ? 'تم التعيين: متوفر 🟢' : 'تم التعيين: نفذت الكمية 🔴');
   } catch (err) {
     console.error('quickToggleStock failed:', err);
     showToast('⚠️ تعذر تحديث حالة المخزون: ' + err.message);
   }
+}
+
+// 🗂️ (جديد) شبكة إدارة المنتجات المباشرة — المكان الوحيد المعتمد لتعديل السعر/التوفر/
+// التفاصيل، بدل الأزرار المدمجة سابقاً بواجهة الزبون. تُبنى بالكامل من products[] المحمّلة
+// أصلاً بالذاكرة (نفس بيانات المتجر) — صفر قراءات إضافية من Firestore عند فتح هذا التبويب.
+let adminProductGridActiveCat = 'all';
+
+function renderAdminProductCategoryTabs() {
+  const wrap = document.getElementById('adminProductGridCatTabs');
+  if (!wrap) return;
+  const tabs = [{ id: 'all', label: '🌟 الكل' }, ...categories.map(c => ({ id: c.id, label: sanitizeText(c.label) }))];
+  wrap.innerHTML = tabs.map(t => `
+    <button type="button" class="admin-prod-cat-tab ${adminProductGridActiveCat === t.id ? 'active' : ''}" onclick="adminProductGridActiveCat='${sanitizeText(t.id)}'; renderAdminProductCategoryTabs(); renderAdminProductManagementGrid();">${t.label}</button>
+  `).join('');
+}
+
+function renderAdminProductManagementGrid() {
+  const grid = document.getElementById('adminProductManagementGrid');
+  const countEl = document.getElementById('adminProductGridCount');
+  if (!grid) return;
+
+  const q = (document.getElementById('adminProductGridSearch')?.value || '').trim().toLowerCase();
+  const stockFilter = document.getElementById('adminProductGridStockFilter')?.value || 'all';
+
+  let list = products.filter(p => p.isDeleted !== true);
+  if (adminProductGridActiveCat !== 'all') list = list.filter(p => p.category === adminProductGridActiveCat);
+  if (stockFilter === 'in') list = list.filter(p => p.inStock !== false);
+  if (stockFilter === 'out') list = list.filter(p => p.inStock === false);
+  if (q) {
+    list = list.filter(p =>
+      (p.name || '').toLowerCase().includes(q) ||
+      (p.brand || '').toLowerCase().includes(q) ||
+      (p.barcode || '').toLowerCase().includes(q)
+    );
+  }
+
+  if (countEl) countEl.textContent = list.length;
+
+  if (list.length === 0) {
+    grid.innerHTML = `<div class="no-results" style="grid-column:1/-1; padding:24px 0;">لا توجد منتجات مطابقة.</div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(p => {
+    const img = sanitizeUrl(p.imageUrl);
+    const inStock = p.inStock !== false;
+    return `
+      <div class="admin-prod-card">
+        <span class="admin-prod-stock-badge" style="background:${inStock ? '#22C55E' : '#EF4444'};" title="${inStock ? 'متوفر' : 'غير متوفر'}"></span>
+        <div class="admin-prod-card-img">
+          ${img ? `<img src="${img}" alt="${sanitizeText(p.name)}" loading="lazy">` : '📦'}
+        </div>
+        <div class="admin-prod-card-name">${sanitizeText(p.name)}</div>
+        <div class="admin-prod-card-brand">${sanitizeText(p.brand || '')}${p.size ? ' · ' + sanitizeText(p.size) : ''}</div>
+        <div class="admin-prod-card-price mono">${fmtPrice(p.price)}</div>
+        <div class="admin-prod-card-actions">
+          <button type="button" onclick="quickEditPrice('${sanitizeText(p.id)}', ${Number(p.price) || 0})" style="background:#FEF3C7; color:#92400E;">💰 سعر</button>
+          <button type="button" onclick="quickToggleStock('${sanitizeText(p.id)}')" style="background:${inStock ? '#FEE2E2' : '#DCFCE7'}; color:${inStock ? '#991B1B' : '#15803D'};">${inStock ? '🔴 إخفاء' : '🟢 توفير'}</button>
+          <button type="button" onclick="openAdminQuickEditModal('${sanitizeText(p.id)}')" style="background:var(--surface); color:var(--ink);">✏️ تعديل</button>
+        </div>
+      </div>`;
+  }).join('');
 }
 
 // 🛡️ (إصلاح — "زر التعديل المباشر لا يعمل") لم أجد عبر المراجعة الساكنة للكود خللاً مؤكداً
@@ -2922,6 +2996,7 @@ async function saveAdminQuickEdit() {
     // 🔄 (إصلاح) تحديث فوري لبطاقة المنتج المعروضة أمام الأدمن بنفس اللحظة (كان يبقى
     // السعر القديم ظاهراً على الشاشة حتى يُعاد تحميل الصفحة يدوياً، فيبدو وكأن الحفظ فشل).
     if (typeof renderCurrentActiveView === 'function') renderCurrentActiveView();
+    if (typeof renderAdminProductManagementGrid === 'function') renderAdminProductManagementGrid();
   } catch (err) {
     console.error('saveAdminQuickEdit failed:', err);
     showToast('⚠️ تعذر حفظ التعديل: ' + (err.message || 'خطأ غير معروف') + ' — يرجى إعادة المحاولة.');
@@ -3256,7 +3331,11 @@ function switchAdminSection(sec) {
   if (sec === 'stats') fetchRealAnalytics();
   if (sec === 'orders') fetchAdminOrdersList();
   if (sec === 'import' && typeof fetchTenantMasterCatalog === 'function') fetchTenantMasterCatalog();
-  if (sec === 'products') { populateCategoryDropdowns(); }
+  if (sec === 'products') {
+    populateCategoryDropdowns();
+    renderAdminProductCategoryTabs();
+    renderAdminProductManagementGrid();
+  }
   if (sec === 'coupons') fetchAdminCoupons();
   if (sec === 'bundles') {
     populateBundleFilterDropdowns();
@@ -3504,7 +3583,7 @@ function renderListing() {
   const titles = {
     category: (categories.find(c => c.id === listingValue) || {}).label,
     search: `نتائج البحث عن: "${listingValue}"`,
-    bestsellers: 'الأكثر مبيعاً 🔥',
+    bestsellers: 'المنتجات المتوفرة',
     promo_offer: `عروض: ${window.__currentPromoTitle || 'المنتجات المشمولة بالعرض'}`
   };
   titleEl.textContent = titles[listingMode] || 'المنتجات';
@@ -3522,7 +3601,7 @@ function renderListing() {
       return nameNorm.includes(qNorm) || brandNorm.includes(qNorm) || descNorm.includes(qNorm) || ingNorm.includes(qNorm);
     });
   } else if (listingMode === 'bestsellers') {
-    list = list.sort((a, b) => (Number(b.orderCount) || 0) - (Number(a.orderCount) || 0));
+    list = list.filter(p => p.inStock !== false);
   } else if (listingMode === 'promo_offer') {
     const allowedSet = new Set((listingValue || []).map(String));
     list = list.filter(p => allowedSet.has(String(p.id)));
@@ -3597,6 +3676,16 @@ function renderHeroCarousel() {
   }).join('');
 
   track.innerHTML = mainSlideHtml + promoSlidesHtml;
+
+  // 🛡️🐛 (إصلاح — الشريحة الأولى (اسم الصيدلية) لا تظهر أولاً عند الدخول) بالرغم من أن
+  // شريحة اسم الصيدلية تُبنى دائماً أولاً بترتيب DOM هنا فوق (mainSlideHtml قبل
+  // promoSlidesHtml)، فمكان التمرير الأفقي الابتدائي (scrollLeft) بحاوية RTL يختلف سلوكه
+  // فعلياً بين المتصفحات (بعضها يبدأ من site الشريحة الأخيرة بدل الأولى في سياق RTL) — وهذا
+  // بالضبط ما يجعل آخر شريحة عروض مضافة تظهر أولاً أحياناً بدل شريحة اسم الصيدلية. الحل:
+  // تصفير موضع التمرير صراحة على الشريحة الأولى (فهرس 0) فور بناء الشرائح، بلا انتظار أي
+  // سلوك تلقائي من المتصفح قد يختلف.
+  requestAnimationFrame(() => { track.scrollLeft = 0; });
+  currentHeroSlideIndex = 0;
 
   const totalSlides = 1 + promoCards.length;
   if (dotsWrap) {
@@ -3690,8 +3779,10 @@ function renderHomeProductGrid() {
   
   let list = products.filter(p => p.isDeleted !== true);
   if (homeActiveBrand === 'all') {
-    title.textContent = 'الأكثر مبيعاً 🔥';
-    list = list.sort((a, b) => (Number(b.orderCount) || 0) - (Number(a.orderCount) || 0));
+    // 🔄 (تحديث بطلب صريح) استُبدل قسم "الأكثر مبيعاً 🔥" بـ"المنتجات المتوفرة" — يعرض
+    // المنتجات المتوفرة بالمخزون حالياً بدل ترتيبها حسب عدد المبيعات.
+    title.textContent = 'المنتجات المتوفرة';
+    list = list.filter(p => p.inStock !== false);
   } else {
     title.textContent = 'منتجات ' + homeActiveBrand;
     list = list.filter(p => p.brand === homeActiveBrand);
@@ -3980,8 +4071,6 @@ function renderProductGrid(targetId, list, emptyMsg) {
     return;
   }
   
-  const isAdmin = isCurrentUserAdmin();
-
   el.innerHTML = displayList.map(p => {
     if (activeThemeModule && typeof activeThemeModule.renderProductCard === 'function') {
       try {
@@ -4026,14 +4115,6 @@ function renderProductGrid(targetId, list, emptyMsg) {
         <button class="add-cart-btn" style="${!inStock ? 'opacity:0.6; pointer-events:none;' : ''}" onclick="event.stopPropagation(); addToCart('${sanitizeText(p.id)}')">
           ${inStock ? 'أضف إلى السلة' : 'غير متوفر'}
         </button>
-
-        ${isAdmin ? `
-          <div class="admin-card-actions" onclick="event.stopPropagation()">
-            <button type="button" class="btn-admin-stock ${inStock ? 'is-in' : 'is-out'}" onclick="quickToggleStock('${sanitizeText(p.id)}')">${inStock ? 'متوفر 🟢' : 'نافذ 🔴'}</button>
-            <button type="button" class="btn-admin-price" onclick="quickEditPrice('${sanitizeText(p.id)}', ${p.price})">السعر 💰</button>
-            <button type="button" class="btn-admin-edit" onclick="openAdminQuickEditModal('${sanitizeText(p.id)}')">تعديل ✏️</button>
-            <button type="button" class="btn-admin-del" onclick="archiveProductConfirm('${sanitizeText(p.id)}', '${sanitizeText(p.name)}')">🗑️</button>
-          </div>` : ''}
       </div>`;
   }).join('');
 }
@@ -4833,7 +4914,10 @@ function initFirestoreSync() {
       renderCurrentActiveView();
       renderModernCategories();
       checkLowStockAlerts();
-      if (isCurrentUserAdmin()) fetchRealAnalytics();
+      if (isCurrentUserAdmin()) {
+        fetchRealAnalytics();
+        if (typeof renderAdminProductManagementGrid === 'function') renderAdminProductManagementGrid();
+      }
     }
   }
 
@@ -4882,6 +4966,7 @@ async function fetchCatalogFromR2(forceBust = false) {
         renderCurrentActiveView();
         renderModernCategories();
         checkLowStockAlerts();
+        if (typeof renderAdminProductManagementGrid === 'function') renderAdminProductManagementGrid();
         return true;
       }
     }
