@@ -588,6 +588,24 @@
     <!-- 4. PRODUCT MANAGEMENT SECTION -->
     <div id="adminSecProducts" style="display:none;">
 
+      <!-- 🗂️ (جديد — التعديل المباشر حصراً من هنا) شبكة منظمة لكل منتجات الصيدلية: تبويبات
+           أقسام + بحث، وكل منتج ببطاقة فيها صورته وسعره مع أزرار تعديل سريعة (سعر، توفر،
+           تعديل كامل، حذف). تُعرض من نفس قائمة المنتجات المحمّلة أصلاً بالذاكرة — صفر قراءات
+           إضافية من Firestore، فقط عرض جديد لنفس البيانات. -->
+      <div class="admin-fieldset">
+        <legend>🗂️ كل منتجات الصيدلية (<span id="adminProductGridCount">0</span>)</legend>
+        <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+          <input type="text" id="adminProductGridSearch" oninput="renderAdminProductManagementGrid()" placeholder="🔍 ابحثي باسم المنتج أو الماركة أو الباركود..." style="flex:2; min-width:220px; padding:10px 14px; border:1.5px solid var(--line); border-radius:12px; font-size:13px;">
+          <select id="adminProductGridStockFilter" onchange="renderAdminProductManagementGrid()" style="padding:10px 12px; border:1.5px solid var(--line); border-radius:12px; font-size:12.5px; font-weight:700;">
+            <option value="all">كل الحالات</option>
+            <option value="in">متوفر فقط 🟢</option>
+            <option value="out">غير متوفر فقط 🔴</option>
+          </select>
+        </div>
+        <div id="adminProductGridCatTabs" style="display:flex; gap:6px; overflow-x:auto; padding-bottom:6px; margin-bottom:14px;"></div>
+        <div id="adminProductManagementGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(155px, 1fr)); gap:12px;"></div>
+      </div>
+
       <!-- 🩺 (جديد) أداة تشخيص فورية لمشكلة "السعر لا يتحدث للزبون" — تكشف بالضبط أين
            يختلف السعر: بفايرستور، بملف R2، أو بكاش Cloudflare الحالي، بدل التخمين. -->
       <div class="admin-fieldset" style="border-color:#93C5FD; background:#EFF6FF;">
@@ -1762,20 +1780,20 @@
     }
 
     async function fetchTenantMasterCatalog() {
-      if (!isFirebaseConfigured || !db) return;
       const grid = document.getElementById('tenantMasterCatalogGrid');
       const badge = document.getElementById('masterCatalogCountBadge');
       if (!grid) return;
 
       grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:30px; color:#047857; font-weight:800;">جاري جلب بيانات بنك المنتجات المركزي...</div>`;
 
+      // 🆕 (إصلاح — تقليل القراءات) بدل قراءة كل مجموعة بنك المنتجات من Firestore مباشرة
+      // (تكلفة قراءات عالية تتكرر بكل مرة تفتح فيها أي صيدلية هذا التبويب)، نقرأ الآن من
+      // نسخة مخزَّنة على كاش Cloudflare عبر الووركر (/api/master-catalog) — صفر قراءات
+      // فايرستور هنا إطلاقاً، وتتحدث النسخة المخزَّنة فقط لما يضيف السوبر أدمن شيئاً فعلياً.
       try {
-        const snap = await db.collection('system').doc('master_catalog').collection('products').get();
-        cachedMasterCatalog = [];
-
-        snap.forEach(doc => {
-          cachedMasterCatalog.push({ id: doc.id, ...doc.data() });
-        });
+        const res = await fetch(`${WORKER_API_BASE}/api/master-catalog`);
+        cachedMasterCatalog = res.ok ? await res.json() : [];
+        if (!Array.isArray(cachedMasterCatalog)) cachedMasterCatalog = [];
 
         if (badge) badge.textContent = `${cachedMasterCatalog.length} صنف متاح`;
 
