@@ -1556,6 +1556,9 @@
         window.selectedMasterItemIds.clear();
         updateSelectedMasterCount();
         fetchMasterCatalog();
+        // 🆕 حذف جماعي = يبني الكاش بالكامل مرة واحدة فقط بعد اكتمال كل الدفعات (أسرع
+        // وأبسط من محاولة إزالة كل صنف من ملف R2 على حدة لعدد كبير كهذا).
+        superApiFetch('/api/admin/master-catalog/rebuild', { method: 'POST' });
       } catch (err) {
         showToast('خطأ: ' + err.message, true);
       }
@@ -1567,6 +1570,12 @@
         await db.collection('system').doc('master_catalog').collection('products').doc(id).delete();
         showToast('تم حذف الصنف');
         fetchMasterCatalog();
+        // 🆕 حذف صنف واحد = إزالته مباشرة من ملف R2 المخزَّن (قراءة واحدة + كتابة واحدة)
+        // بلا أي قراءة لكامل المجموعة — أرخص بكثير من إعادة بناء الملف كاملاً.
+        superApiFetch('/api/admin/master-catalog/delete-item', {
+          method: 'POST',
+          body: JSON.stringify({ productId: id })
+        });
       } catch (e) {
         showToast('خطأ: ' + e.message, true);
       }
@@ -1639,6 +1648,10 @@
         showToast(`🎉 تم استيراد (${items.length}) صنف بنجاح!`);
         setTimeout(() => progressBox.classList.add('hidden'), 2000);
         fetchMasterCatalog();
+        // 🆕 رفع جماعي = إعادة بناء الكاش بالكامل مرة واحدة بعد اكتمال كل الدفعات (أسرع
+        // من تحديث ملف R2 لكل صنف من مئات الأصناف على حدة).
+        statusText.textContent = 'جاري تحديث كاش المتجر...';
+        superApiFetch('/api/admin/master-catalog/rebuild', { method: 'POST' });
       } catch (err) {
         showToast('خطأ بالرفع: ' + err.message, true);
         progressBox.classList.add('hidden');
@@ -1733,6 +1746,12 @@
         showToast('🎉 تم اعتماد الصنف في الكتالوج المركزي!');
         fetchCrowdsourcedSubmissions();
         fetchMasterCatalog();
+        // 🆕 اعتماد صنف واحد = إضافته مباشرة لملف R2 المخزَّن (قراءة واحدة + كتابة واحدة)
+        // بلا أي قراءة لكامل مجموعة البنك — هذا بالضبط "الإضافة الجديدة فقط" المطلوبة.
+        superApiFetch('/api/admin/master-catalog/upsert-item', {
+          method: 'POST',
+          body: JSON.stringify({ productId: docId, data: { ...p, id: docId, crowdsourcedBy: subData.sourcePharmacyId || 'pharmacy' } })
+        });
       } catch (err) {
         showToast('خطأ: ' + err.message, true);
       }
@@ -2186,6 +2205,26 @@
     // 🌐 DOMAIN MANAGEMENT ENGINE (جديد بالكامل)
     // =========================================================================
     const WORKER_API_BASE_SUPER = "https://cottanbackend.hussaindark6.workers.dev";
+
+    // 🆕 دالة موحّدة لاستدعاء مسارات /api/admin/* بالووركر — تجبر تحديث توكن الهوية دائماً
+    // (getIdToken(true)) بدل نسخة مخزَّنة محلياً قد تكون قاربت الانتهاء، وهو بالضبط السبب
+    // الجذري الذي كان يفشّل تحديثات مشابهة بلوحة تحكم الصيدليات سابقاً.
+    async function superApiFetch(endpoint, options = {}) {
+      try {
+        const idToken = currentUser ? await currentUser.getIdToken(true) : null;
+        const res = await fetch(`${WORKER_API_BASE_SUPER}${endpoint}`, {
+          ...options,
+          headers: {
+            'Content-Type': 'application/json',
+            ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {}),
+            ...(options.headers || {})
+          }
+        });
+        return await res.json();
+      } catch (err) {
+        return { success: false, message: err.message };
+      }
+    }
 
     // 🌟 (جديد) يُستدعى مرة واحدة بعد تسجيل دخول السوبر أدمن. يجلب PLATFORM_ROOT_DOMAIN
     // الحقيقي من متغيرات بيئة الووركر بدل القيمة النائبة الثابتة القديمة، ويعرض تحذيراً
