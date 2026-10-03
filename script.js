@@ -69,17 +69,22 @@ function patchTenantLinks() {
 }
 
 // ================= 2. FIREBASE CONFIGURATION =================
-const WORKER_API_BASE = "https://cottanbackend.hussaindark6.workers.dev";
-const SUPER_ADMIN_EMAIL = "hussaindark6@gmail.com";
+// 🌟 (الخطوة 2 — متغيرات بيئة حقيقية) القيم بين __مزدوج__ تُستبدَل فعلياً وقت البناء بقيم
+// ملف .env عبر إعداد "define" بـvite.config.js. التعبير "typeof X !== 'undefined' ? X : fallback"
+// آمن تماماً: لو شُغِّل هذا الملف خارج Vite بلا أي استبدال (نادراً، كفحص يدوي مثلاً)، فحص
+// typeof على معرّف غير معرَّف أصلاً لا يرمي خطأ إطلاقاً، ويرجع 'undefined' بأمان، فتُستخدم
+// القيمة الاحتياطية المطابقة للقيمة الأصلية تماماً — صفر خطر بأي سيناريو.
+const WORKER_API_BASE = typeof __WORKER_API_BASE__ !== 'undefined' && __WORKER_API_BASE__ ? __WORKER_API_BASE__ : "https://cottanbackend.hussaindark6.workers.dev";
+const SUPER_ADMIN_EMAIL = typeof __SUPER_ADMIN_EMAIL__ !== 'undefined' && __SUPER_ADMIN_EMAIL__ ? __SUPER_ADMIN_EMAIL__ : "hussaindark6@gmail.com";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDXAp6CTcq3OlN2egGOj5Yg8jK5wUsR6Uc",
-  authDomain: "cottanpharmacy.firebaseapp.com",
-  projectId: "cottanpharmacy",
-  storageBucket: "cottanpharmacy.firebasestorage.app",
-  messagingSenderId: "163407198551",
-  appId: "1:163407198551:web:1c397d23733101456a6612",
-  measurementId: "G-QC29GK2MDW"
+  apiKey: typeof __FIREBASE_API_KEY__ !== 'undefined' && __FIREBASE_API_KEY__ ? __FIREBASE_API_KEY__ : "AIzaSyDXAp6CTcq3OlN2egGOj5Yg8jK5wUsR6Uc",
+  authDomain: typeof __FIREBASE_AUTH_DOMAIN__ !== 'undefined' && __FIREBASE_AUTH_DOMAIN__ ? __FIREBASE_AUTH_DOMAIN__ : "cottanpharmacy.firebaseapp.com",
+  projectId: typeof __FIREBASE_PROJECT_ID__ !== 'undefined' && __FIREBASE_PROJECT_ID__ ? __FIREBASE_PROJECT_ID__ : "cottanpharmacy",
+  storageBucket: typeof __FIREBASE_STORAGE_BUCKET__ !== 'undefined' && __FIREBASE_STORAGE_BUCKET__ ? __FIREBASE_STORAGE_BUCKET__ : "cottanpharmacy.firebasestorage.app",
+  messagingSenderId: typeof __FIREBASE_MESSAGING_SENDER_ID__ !== 'undefined' && __FIREBASE_MESSAGING_SENDER_ID__ ? __FIREBASE_MESSAGING_SENDER_ID__ : "163407198551",
+  appId: typeof __FIREBASE_APP_ID__ !== 'undefined' && __FIREBASE_APP_ID__ ? __FIREBASE_APP_ID__ : "1:163407198551:web:1c397d23733101456a6612",
+  measurementId: typeof __FIREBASE_MEASUREMENT_ID__ !== 'undefined' && __FIREBASE_MEASUREMENT_ID__ ? __FIREBASE_MEASUREMENT_ID__ : "G-QC29GK2MDW"
 };
 
 let auth = null, db = null, currentUser = null, isFirebaseConfigured = false;
