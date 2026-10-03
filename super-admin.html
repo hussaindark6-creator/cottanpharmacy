@@ -1027,7 +1027,7 @@
 
   <!-- Main JavaScript Logic -->
   <script>
-    const SUPER_ADMIN_EMAIL = "hussaindark6@gmail.com";
+    const SUPER_ADMIN_EMAIL = typeof __SUPER_ADMIN_EMAIL__ !== 'undefined' && __SUPER_ADMIN_EMAIL__ ? __SUPER_ADMIN_EMAIL__ : "hussaindark6@gmail.com";
     // 🌟 (إصلاح — PLATFORM_ROOT_DOMAIN لم يكن يُفعَّل أبداً) كانت هذه قيمة نائبة ثابتة
     // ("yourplatform.com") مكتوبة يدوياً هنا، لا تعكس دومين المنصة الحقيقي أبداً ما لم
     // يُعدِّلها أحد يدوياً بكل نشر جديد لهذا الملف. المصدر الوحيد للحقيقة الآن هو متغير
@@ -1038,13 +1038,13 @@
     let cloudflareAutoDnsReady = false;
 
     const firebaseConfig = {
-      apiKey: "AIzaSyDXAp6CTcq3OlN2egGOj5Yg8jK5wUsR6Uc",
-      authDomain: "cottanpharmacy.firebaseapp.com",
-      projectId: "cottanpharmacy",
-      storageBucket: "cottanpharmacy.firebasestorage.app",
-      messagingSenderId: "163407198551",
-      appId: "1:163407198551:web:1c397d23733101456a6612",
-      measurementId: "G-QC29GK2MDW"
+      apiKey: typeof __FIREBASE_API_KEY__ !== 'undefined' && __FIREBASE_API_KEY__ ? __FIREBASE_API_KEY__ : "AIzaSyDXAp6CTcq3OlN2egGOj5Yg8jK5wUsR6Uc",
+      authDomain: typeof __FIREBASE_AUTH_DOMAIN__ !== 'undefined' && __FIREBASE_AUTH_DOMAIN__ ? __FIREBASE_AUTH_DOMAIN__ : "cottanpharmacy.firebaseapp.com",
+      projectId: typeof __FIREBASE_PROJECT_ID__ !== 'undefined' && __FIREBASE_PROJECT_ID__ ? __FIREBASE_PROJECT_ID__ : "cottanpharmacy",
+      storageBucket: typeof __FIREBASE_STORAGE_BUCKET__ !== 'undefined' && __FIREBASE_STORAGE_BUCKET__ ? __FIREBASE_STORAGE_BUCKET__ : "cottanpharmacy.firebasestorage.app",
+      messagingSenderId: typeof __FIREBASE_MESSAGING_SENDER_ID__ !== 'undefined' && __FIREBASE_MESSAGING_SENDER_ID__ ? __FIREBASE_MESSAGING_SENDER_ID__ : "163407198551",
+      appId: typeof __FIREBASE_APP_ID__ !== 'undefined' && __FIREBASE_APP_ID__ ? __FIREBASE_APP_ID__ : "1:163407198551:web:1c397d23733101456a6612",
+      measurementId: typeof __FIREBASE_MEASUREMENT_ID__ !== 'undefined' && __FIREBASE_MEASUREMENT_ID__ ? __FIREBASE_MEASUREMENT_ID__ : "G-QC29GK2MDW"
     };
 
     let auth = null, db = null, currentUser = null;
@@ -2204,7 +2204,7 @@
     // =========================================================================
     // 🌐 DOMAIN MANAGEMENT ENGINE (جديد بالكامل)
     // =========================================================================
-    const WORKER_API_BASE_SUPER = "https://cottanbackend.hussaindark6.workers.dev";
+    const WORKER_API_BASE_SUPER = typeof __WORKER_API_BASE__ !== 'undefined' && __WORKER_API_BASE__ ? __WORKER_API_BASE__ : "https://cottanbackend.hussaindark6.workers.dev";
 
     // 🆕 دالة موحّدة لاستدعاء مسارات /api/admin/* بالووركر — تجبر تحديث توكن الهوية دائماً
     // (getIdToken(true)) بدل نسخة مخزَّنة محلياً قد تكون قاربت الانتهاء، وهو بالضبط السبب
