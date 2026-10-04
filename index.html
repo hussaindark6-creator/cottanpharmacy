@@ -152,10 +152,9 @@
   </style>
 
   <!-- Firebase SDKs (Compat v9.22.1) -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 
   <script>
     // 🌸 حقن الصورة/العنوان/الحجم فوراً في شاشة التحميل بمجرد توفر عنصرها بالـ DOM (بلا انتظار script.js بالكامل)
@@ -506,7 +505,6 @@
         </button>
       </div>
       <h1 class="pd-name" id="pdName"></h1>
-      <div class="pd-rating" id="pdRating"></div>
       <div class="pd-price-row" id="pdPriceRow"></div>
       <div class="pd-stock" id="pdStock"></div>
 
@@ -514,24 +512,10 @@
         <div class="pd-tab active" onclick="switchPdTab('desc')">الوصف</div>
         <div class="pd-tab" onclick="switchPdTab('ing')">المكونات</div>
         <div class="pd-tab" onclick="switchPdTab('use')">الاستخدام</div>
-        <div class="pd-tab" onclick="switchPdTab('reviews')">التقييمات</div>
       </div>
       <div class="pd-tab-content active" id="pdTabDesc"></div>
       <div class="pd-tab-content" id="pdTabIng"></div>
       <div class="pd-tab-content" id="pdTabUse"></div>
-      <div class="pd-tab-content" id="pdTabReviews">
-        <div class="star-rating-box">
-          <div style="font-weight:800; font-size:13.5px; margin-bottom:6px;">قيّمي هذا المنتج</div>
-          <div class="star-rating-row">
-            <span class="star-btn" onclick="rateProductInstant(1)">★</span>
-            <span class="star-btn" onclick="rateProductInstant(2)">★</span>
-            <span class="star-btn" onclick="rateProductInstant(3)">★</span>
-            <span class="star-btn" onclick="rateProductInstant(4)">★</span>
-            <span class="star-btn" onclick="rateProductInstant(5)">★</span>
-          </div>
-          <div id="instantRatingMsg" style="font-size:12px; color:var(--accent); font-weight:800;"></div>
-        </div>
-      </div>
 
       <div class="pd-qty-row">
         <div class="pd-qty-stepper">
@@ -695,6 +679,10 @@
   <div class="toast" id="toast"></div>
 
   <!-- Main JavaScript -->
-  <script src="script.js"></script>
+  <!-- 🆕 المرحلة 3: كود الأدمن لم يعد يُحمَّل للزبائن. هذا المحمِّل الصغير يجلب admin-panel.js عند الحاجة لحساب الأدمن فقط. يجب أن يسبق script.js -->
+  <script defer src="admin-stubs.js"></script>
+  <!-- 🆕 كود واجهة الزبون (السلة/الطلبات/العرض) في ملف مستقل — يجب أن يسبق script.js -->
+  <script defer src="storefront.js"></script>
+  <script defer src="script.js"></script>
 </body>
 </html>
