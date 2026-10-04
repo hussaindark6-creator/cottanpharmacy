@@ -19,7 +19,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
 
   <!-- 🌟 (جديد) أنماط بطاقة تسجيل دخول الأدمن بنفس طابع super-admin.html تماماً (خلفية
        داكنة زجاجية slate-950، بطاقة slate-900 بحواف دائرية كبيرة، بشارة زمردية، زر Google
@@ -452,11 +451,6 @@
           <div class="num mono" id="statAovDaily">0 د.ع</div>
           <div class="lbl">متوسط قيمة الطلب</div>
         </div>
-        <div class="admin-stat-card-v">
-          <div class="dash-card-icon">👁️</div>
-          <div class="num mono" id="statDailyVisits">0</div>
-          <div class="lbl">زيارات اليوم</div>
-        </div>
       </div>
 
       <div class="dash-section-label" style="margin-top:20px;">🗓️ أداء هذا الشهر <span style="font-weight:600; font-size:11px; color:var(--text-soft);">(يتجدد تلقائياً أول كل شهر)</span></div>
@@ -486,14 +480,6 @@
           <div class="num mono" id="statTotalOrdersV">0</div>
           <div class="lbl">إجمالي الطلبات كلها</div>
         </div>
-      </div>
-
-      <div class="admin-chart-wrap">
-        <div class="admin-chart-title">
-          <span>📈 الزيارات اليومية الحقيقية (آخر 7 أيام)</span>
-          <span style="font-size:11px; font-weight:700; color:var(--accent);">محدث تلقائياً من السيرفر</span>
-        </div>
-        <div class="chart-bars-row" id="adminRealChartBars"></div>
       </div>
 
       <div class="admin-rank-list">
@@ -679,14 +665,6 @@
             <div class="form-field" style="flex:1;">
               <label>عدد القطع بالمخزن *</label>
               <input type="number" id="adminProdStockQty" placeholder="10" value="10" min="0" required>
-            </div>
-            <div class="form-field" style="flex:1;">
-              <label>⭐ التقييم (من 1 إلى 5)</label>
-              <input type="number" id="adminProdRating" placeholder="4.8" min="1" max="5" step="0.1">
-            </div>
-            <div class="form-field" style="flex:1;">
-              <label>عدد التقييمات المعروضة</label>
-              <input type="number" id="adminProdReviews" placeholder="0" min="0" value="0">
             </div>
             <div class="form-field" style="flex:1;">
               <label>نوع العبوة (الأيقونة) *</label>
@@ -1419,14 +1397,6 @@
         </div>
         <div style="display:flex; gap:10px;">
           <div class="form-field" style="flex:1;">
-            <label>⭐ التقييم (من 1 إلى 5)</label>
-            <input type="number" id="quickEditProdRating" placeholder="4.8" min="1" max="5" step="0.1">
-          </div>
-          <div class="form-field" style="flex:1;">
-            <label>عدد التقييمات المعروضة</label>
-            <input type="number" id="quickEditProdReviews" placeholder="0" min="0">
-          </div>
-          <div class="form-field" style="flex:1;">
             <label>نوع العبوة (الأيقونة)</label>
             <select id="quickEditProdType">
               <option value="bottle">زجاجة (Bottle)</option>
@@ -1560,6 +1530,10 @@
   <div class="toast no-print" id="toast"></div>
 
   <!-- Main JavaScript File -->
+  <!-- 🆕 المرحلة 3: كود الأدمن في ملف مستقل. يجب أن يسبق script.js (الذي يعرّف window.App ويشير لدوال الأدمن) -->
+  <!-- 🆕 بدائل فارغة لدوال واجهة الزبون (لوحة الأدمن لا تحمّل storefront.js) — يجب أن تسبق script.js -->
+  <script src="storefront-stubs.js"></script>
+  <script src="admin-panel.js"></script>
   <script src="script.js"></script>
 
   <!-- Complete Inline Admin Script Logic -->
@@ -1791,7 +1765,8 @@
       // نسخة مخزَّنة على كاش Cloudflare عبر الووركر (/api/master-catalog) — صفر قراءات
       // فايرستور هنا إطلاقاً، وتتحدث النسخة المخزَّنة فقط لما يضيف السوبر أدمن شيئاً فعلياً.
       try {
-        const res = await fetch(`${WORKER_API_BASE}/api/master-catalog`);
+        // cache:'no-cache' = يعيد التحقق دائماً بالـETag (304 بلا جسم إن لم يتغيّر) → أي تعديل للسوبر أدمن يظهر فوراً
+        const res = await fetch(`${WORKER_API_BASE}/api/master-catalog`, { cache: 'no-cache' });
         cachedMasterCatalog = res.ok ? await res.json() : [];
         if (!Array.isArray(cachedMasterCatalog)) cachedMasterCatalog = [];
 
@@ -1904,9 +1879,6 @@
             inStock: stockQty > 0,
             isDeleted: false,
             isSpecialOffer: false,
-            rating: 0,
-            reviews: 0,
-            views: 0,
             orderCount: 0,
             importedAt: firebase.firestore.FieldValue.serverTimestamp(),
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -2065,6 +2037,7 @@
           loaderSubText: sanitizeText(loaderSubText),
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
+        refreshStorefrontCache(); // 🛍️ لقطة المتجر للزوار (الاسم، الشعار، التوصيل، البنر...)
 
         // 🗑️ حذف صورة شاشة التحميل القديمة فعلياً من R2 إن استُبدلت بأخرى جديدة، حتى لا
         // تبقى محفوظة (وقد تظهر بالخطأ لاحقاً لو أُعيد استخدام رابطها بأي شكل).
