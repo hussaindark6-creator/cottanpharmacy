@@ -1,254 +1,232 @@
 #!/usr/bin/env node
 /* ==========================================================
    فحص آلي شامل لمشروع الصيدلية — يشتغل قبل كل رفع للموقع
-   الاستخدام: حطي هذا الملف بنفس مجلد كل ملفات المشروع
-   (جنب Index.html و Admin.html و main.js...) وشغّلي:
+   الاستخدام (من مجلد المشروع):   npm test      أو      node run-tests.cjs
 
-       node run-tests.js
-
-   يحتاج Node.js مثبت على جهازك (nodejs.org) — أي نسخة حديثة تكفي.
+   نسخة محدّثة لبنية المشروع الحالية (Vite + سكربتات كلاسيكية مقسّمة):
+     index.html  : admin-stubs.js → storefront.js → script.js   (+ admin-panel.js كسولاً للأدمن)
+     admin.html  : storefront-stubs.js → admin-panel.js → script.js
+   (الامتداد .cjs ضروري لأن package.json فيه "type": "module".)
    ========================================================== */
-
 const fs = require('fs');
 const path = require('path');
+const vm = require('vm');
 const { execSync } = require('child_process');
-const os = require('os');
 
 const ROOT = __dirname;
-let passCount = 0;
-let failCount = 0;
-let warnCount = 0;
+let passCount = 0, failCount = 0, warnCount = 0;
 const failures = [];
+const pass = (m) => { passCount++; console.log(`  ✅ ${m}`); };
+const fail = (m) => { failCount++; failures.push(m); console.log(`  ❌ ${m}`); };
+const warn = (m) => { warnCount++; console.log(`  ⚠️  ${m}`); };
+const section = (t) => console.log(`\n=== ${t} ===`);
+const read = (n) => { const p = path.join(ROOT, n); return fs.existsSync(p) ? fs.readFileSync(p, 'utf8') : null; };
 
-function pass(msg) { passCount++; console.log(`  ✅ ${msg}`); }
-function fail(msg) { failCount++; failures.push(msg); console.log(`  ❌ ${msg}`); }
-function warn(msg) { warnCount++; console.log(`  ⚠️  ${msg}`); }
-function section(title) { console.log(`\n=== ${title} ===`); }
+const CLASSIC = ['script.js', 'storefront.js', 'storefront-stubs.js', 'admin-panel.js', 'admin-stubs.js'];
+const PAGES = {
+  'index.html': { loads: ['admin-stubs.js', 'storefront.js', 'script.js'], lazy: ['admin-panel.js'] },
+  'admin.html': { loads: ['storefront-stubs.js', 'admin-panel.js', 'script.js'], lazy: [] },
+};
 
-function readFile(name) {
-  const p = path.join(ROOT, name);
-  if (!fs.existsSync(p)) return null;
-  return fs.readFileSync(p, 'utf8');
+// ---------- أدوات مساعدة ----------
+const declsOf = (js) => [...js.matchAll(/^(?:async\s+)?function\s*\*?\s*([A-Za-z_$][\w$]*)\s*\(/gm)].map(m => m[1]);
+const declsOfInline = (js) => [...js.matchAll(/^[ \t]*(?:async\s+)?function\s*\*?\s*([A-Za-z_$][\w$]*)\s*\(/gm)].map(m => m[1]);
+const stubNamesOf = (js) => {            // أسماء داخل مصفوفات ADMIN_FUNCTION_NAMES / NOOP_FUNCTION_NAMES
+  const m = js.match(/(?:ADMIN|NOOP)_FUNCTION_NAMES\s*=\s*\[([\s\S]*?)\]/);
+  return m ? [...m[1].matchAll(/"([^"]+)"/g)].map(x => x[1]) : [];
+};
+const inlineScripts = (html) => [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map(m => m[1]);
+const stripComments = (js) => js.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"`\\])\/\/[^\n]*/g, '$1');
+
+// ===================================================================
+section('1. فحص صحة أكواد الجافاسكربت (Syntax)');
+// ===================================================================
+for (const f of CLASSIC) {
+  const c = read(f);
+  if (c === null) { fail(`${f}: الملف غير موجود!`); continue; }
+  try { new vm.Script(c, { filename: f }); pass(`${f}: صيغة صحيحة (سكربت كلاسيكي)`); }
+  catch (e) { fail(`${f}: خطأ صيغة — ${e.message}`); }
+}
+for (const f of ['index.html', 'admin.html', 'super-admin.html']) {
+  const c = read(f);
+  if (c === null) { warn(`${f}: غير موجود (تجاهلته)`); continue; }
+  const scripts = inlineScripts(c).filter(s => s.trim());
+  scripts.forEach((s, i) => {
+    try { new vm.Script(s, { filename: `${f}#inline${i + 1}` }); pass(`${f}: السكربت الداخلي #${i + 1} (${s.split('\n').length} سطر) صيغته صحيحة`); }
+    catch (e) { fail(`${f}: خطأ صيغة بالسكربت الداخلي #${i + 1} — ${e.message}`); }
+  });
+}
+const workerCandidates = ['worker.js', 'Worker.js', '../worker.js', '../Worker.js', '../backend/worker.js'];
+const workerFile = workerCandidates.find(c => read(c) !== null);
+if (!workerFile) warn('worker.js: غير موجود بجانب المشروع (الباكند منفصل) — تجاهلته. ضعيه بالمجلد لفحصه.');
+else {
+  try { execSync('node --input-type=module --check', { input: read(workerFile), stdio: ['pipe', 'pipe', 'pipe'] }); pass(`${workerFile}: صيغة صحيحة (ES Module)`); }
+  catch (e) { fail(`${workerFile}: خطأ صيغة — ${(e.stderr || e.stdout).toString().split('\n')[0]}`); }
 }
 
 // ===================================================================
-// 1. فحص صحة أكواد الجافاسكربت (Syntax)
+section('2. فحص وسوم <script src> وترتيب التحميل');
 // ===================================================================
-section('1. فحص صحة الأكواد (Syntax)');
-
-const jsModuleFiles = ['config.js', 'state.js', 'security.js', 'search.js', 'theme-presets.js', 'theme-engine.js', 'orders.js', 'upload.js', 'main.js', 'Worker.js'];
-const jsClassicFiles = ['script.js'];
-const tmpDir = os.tmpdir();
-
-// ⚠️ ملاحظة مهمة: node --check file.js لا يتحقق بشكل صحيح من صيغة ES Module
-// (import/export) لملف بامتداد .js عادي — لازم نستخدم --input-type=module
-// عبر stdin، وإلا ملفات فيها أخطاء صياغة تمر "بنجاح" بدون أي تحذير!
-for (const f of jsModuleFiles) {
-  const content = readFile(f);
-  if (content === null) { warn(`${f}: الملف غير موجود بهذا المجلد (تجاهلته)`); continue; }
-  try {
-    execSync('node --input-type=module --check', { input: content, stdio: ['pipe', 'pipe', 'pipe'] });
-    pass(`${f}: صيغة صحيحة (ES Module)`);
-  } catch (e) {
-    fail(`${f}: خطأ صيغة — ${(e.stderr || e.stdout).toString().split('\n')[0]}`);
-  }
-}
-
-for (const f of jsClassicFiles) {
-  const content = readFile(f);
-  if (content === null) { warn(`${f}: الملف غير موجود بهذا المجلد (تجاهلته)`); continue; }
-  const tmpPath = path.join(tmpDir, `__test_${Date.now()}.js`);
-  fs.writeFileSync(tmpPath, content);
-  try {
-    execSync(`node --check "${tmpPath}"`, { stdio: 'pipe' });
-    pass(`${f}: صيغة صحيحة`);
-  } catch (e) {
-    fail(`${f}: خطأ صيغة — ${(e.stderr || e.stdout).toString().split('\n')[0]}`);
-  } finally {
-    fs.unlinkSync(tmpPath);
-  }
-}
-
-// فحص السكربتات المدمجة داخل ملفات HTML (Admin.html, super-admin1.html)
-const htmlWithInlineScripts = ['Admin.html', 'super-admin1.html'];
-for (const f of htmlWithInlineScripts) {
-  const content = readFile(f);
-  if (content === null) { warn(`${f}: الملف غير موجود بهذا المجلد (تجاهلته)`); continue; }
-  const scripts = [...content.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
-  if (scripts.length === 0) { warn(`${f}: ما لقيت أي <script> بدون src بداخله`); continue; }
-  const mainScript = scripts.sort((a, b) => b.length - a.length)[0]; // أكبر سكربت غالباً هو المنطق الرئيسي
-  const tmpPath = path.join(tmpDir, `__test_${Date.now()}.js`);
-  fs.writeFileSync(tmpPath, mainScript);
-  try {
-    execSync(`node --check "${tmpPath}"`, { stdio: 'pipe' });
-    pass(`${f}: السكربت الداخلي الرئيسي صيغته صحيحة`);
-  } catch (e) {
-    fail(`${f}: خطأ صيغة بالسكربت الداخلي — ${(e.stderr || e.stdout).toString().split('\n')[0]}`);
-  } finally {
-    fs.unlinkSync(tmpPath);
-  }
+for (const [page, cfg] of Object.entries(PAGES)) {
+  const html = read(page);
+  if (html === null) { fail(`${page}: غير موجود`); continue; }
+  const srcs = [...html.matchAll(/<script[^>]*\bsrc="([^"]+)"/g)].map(m => m[1]).filter(s => !/^https?:/.test(s));
+  for (const s of srcs) (read(s) === null) ? fail(`${page}: يحمّل "${s}" وهو غير موجود!`) : pass(`${page} → ${s}: موجود`);
+  const mine = srcs.filter(s => CLASSIC.includes(s));
+  if (JSON.stringify(mine) === JSON.stringify(cfg.loads)) pass(`${page}: ترتيب التحميل صحيح (${mine.join(' → ')})`);
+  else fail(`${page}: ترتيب/مجموعة السكربتات خاطئة. المتوقع: ${cfg.loads.join(' → ')} | الفعلي: ${mine.join(' → ') || '(لا شيء)'} — script.js يجب أن يأتي أخيراً لأن window.App يشير لدوال الملفات السابقة`);
 }
 
 // ===================================================================
-// 2. فحص مسارات الاستيراد بين وحدات main.js (ES Modules)
+section('3. فحص تكرار تعريف الدوال بين الملفات المحمَّلة بنفس الصفحة');
 // ===================================================================
-section('2. فحص مسارات الاستيراد (import) بين الملفات');
-
-for (const f of jsModuleFiles) {
-  const content = readFile(f);
-  if (content === null) continue;
-  const imports = [...content.matchAll(/from\s+['"]\.\/([a-zA-Z0-9_-]+\.js)['"]/g)].map(m => m[1]);
-  for (const imp of imports) {
-    if (readFile(imp) === null) {
-      fail(`${f}: يستورد من './${imp}' لكن هذا الملف غير موجود بالمجلد!`);
-    } else {
-      pass(`${f} → ./${imp}: موجود`);
+for (const [page, cfg] of Object.entries(PAGES)) {
+  const seen = new Map(); let dup = 0;
+  for (const f of cfg.loads) {
+    const js = read(f); if (js === null) continue;
+    for (const n of declsOf(js)) {
+      if (seen.has(n)) { fail(`${page}: الدالة "${n}" معرّفة بالملفين ${seen.get(n)} و ${f}`); dup++; } else seen.set(n, f);
     }
   }
+  if (!dup) pass(`${page}: لا توجد دوال معرّفة مرتين بين ملفاته الخارجية`);
+}
+{
+  const adm = read('admin.html'), ap = read('admin-panel.js');
+  if (adm && ap) {
+    const inl = inlineScripts(adm).join('\n');
+    const both = declsOf(ap).filter(n => new RegExp(`function\\s+${n}\\s*\\(`).test(inl));
+    both.forEach(n => warn(`admin.html: "${n}" معرّفة بالسكربت الداخلي وبـ admin-panel.js — نسخة الـHTML (الأحدث تحميلاً) هي التي تعمل. وحّديهما لاحقاً.`));
+  }
 }
 
 // ===================================================================
-// 3. فحص تطابق أزرار onclick مع الدوال الفعلية (أهم فحص — نفس الأخطاء
-//    اللي واجهناها فعلياً بالمشروع: أزرار تستدعي دوال غير موجودة)
+section('4. فحص أزرار onclick مقابل الدوال المعرّفة فعلياً (لكل صفحة)');
 // ===================================================================
-section('3. فحص أزرار onclick مقابل الدوال المعرّفة فعلياً');
-
-function extractOnclickCalls(html) {
-  const bare = [...html.matchAll(/on(?:click|submit|change|input)="[^"]*?([a-zA-Z_][a-zA-Z0-9_]*)\(/g)].map(m => m[1]);
-  const appCalls = [...html.matchAll(/window\.App\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/g)].map(m => m[1]);
-  return { bare: [...new Set(bare)], appCalls: [...new Set(appCalls)] };
+const JS_BUILTINS = new Set(['event','this','window','document','console','getElementById','querySelector','querySelectorAll','preventDefault','stopPropagation','print','alert','confirm','prompt','reset','submit','focus','blur','click','close','open','setTimeout','setInterval','parseInt','parseFloat','toString','JSON','Object','Array','Number','String','Boolean','Math','if','for','while','return','function','encodeURIComponent','decodeURIComponent','remove','toggle','add','closest','select','scrollIntoView','replace','trim','toLowerCase','stop','history','location','sanitizeText','fetch','Date','Set','Map','Promise']);
+const handlerNames = (text) => {
+  const out = new Set();
+  for (const m of text.matchAll(/\bon(?:click|submit|change|input|keyup|keydown|blur|focus)\s*=\s*\\?"([^"]*)\\?"/g))
+    for (const f of m[1].matchAll(/(?<![\w$.])([A-Za-z_$][\w$]*)\s*\(/g)) out.add(f[1]);
+  return out;
+};
+for (const [page, cfg] of Object.entries(PAGES)) {
+  const html = read(page); if (html === null) continue;
+  const defined = new Set(); let appKeys = new Set();
+  const jsTexts = [];
+  for (const f of cfg.loads) {
+    const js = read(f); if (js === null) continue;
+    declsOf(js).forEach(n => defined.add(n));
+    stubNamesOf(js).forEach(n => defined.add(n));
+    for (const m of js.matchAll(/window\.([A-Za-z_$][\w$]*)\s*=/g)) defined.add(m[1]);
+    jsTexts.push([f, js]);
+    const app = js.match(/window\.App\s*=\s*\{([\s\S]*?)\n\};/);
+    if (app) app[1].split(',').map(s => s.trim()).filter(Boolean).forEach(e => {
+      const name = e.split(':')[0].trim(); if (/^[A-Za-z_$][\w$]*$/.test(name)) { appKeys.add(name); if (!e.includes(':') && !defined.has(name)) fail(`${page}: window.App يشير لـ "${name}" وهي غير معرّفة بأي ملف محمَّل قبله!`); }
+    });
+  }
+  inlineScripts(html).forEach(s => { declsOfInline(s).forEach(n => defined.add(n)); for (const m of s.matchAll(/(?:^|\n)\s*(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:\(|function)/g)) defined.add(m[1]); });
+  let bad = 0;
+  const check = (name, where) => { if (JS_BUILTINS.has(name) || defined.has(name)) return; fail(`${page}: ${where} يستدعي "${name}()" وهي غير معرّفة بالصفحة (لا بملف محمَّل ولا ببديل stub)`); bad++; };
+  handlerNames(html).forEach(n => check(n, 'زر بالـHTML'));
+  for (const [f, js] of jsTexts) handlerNames(js).forEach(n => check(n, `زر مولَّد داخل ${f}`));
+  for (const m of html.matchAll(/window\.App\.([A-Za-z_$][\w$]*)/g)) if (!appKeys.has(m[1])) { fail(`${page}: يستدعي window.App.${m[1]} غير مُصدَّرة`); bad++; }
+  if (!bad) pass(`${page}: كل أزرار onclick (الثابتة والمولَّدة) لها دوال معرّفة`);
 }
 
-function extractDefinedFunctions(js) {
-  const fnDecls = [...js.matchAll(/(?:^|\n)\s*(?:export\s+)?(?:async\s+)?function\s+([a-zA-Z_][a-zA-Z0-9_]*)/g)].map(m => m[1]);
-  const windowAssigns = [...js.matchAll(/window\.([a-zA-Z_][a-zA-Z0-9_]*)\s*=/g)].map(m => m[1]);
-
-  // أسماء مستوردة من ملفات ثانية (import { a, b } from './x.js') تُحسب كمعرّفة بردو
-  const importBlocks = [...js.matchAll(/import\s*\{([^}]+)\}\s*from/g)].map(m => m[1]);
-  const importedNames = importBlocks
-    .flatMap(block => block.split(','))
-    .map(s => s.trim().split(/\s+as\s+/).pop().trim())
-    .filter(s => /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(s));
-
-  const fnDeclsSet = new Set([...fnDecls, ...importedNames]);
-
-  const appObjectMatch = js.match(/window\.App\s*=\s*\{([\s\S]*?)\n\};/);
-  const appKeys = new Set();
-  const brokenAppShorthandRefs = [];
-
-  if (appObjectMatch) {
-    // نقسم على الفواصل بمستوى السطح (تبسيط كافي لصيغة الكود بهذا المشروع)
-    const body = appObjectMatch[1];
-    const entries = body.split(',').map(s => s.trim()).filter(Boolean);
-    for (const entry of entries) {
-      const colonIdx = entry.indexOf(':');
-      if (colonIdx === -1) {
-        // اختصار {fnName} يعني {fnName: fnName} — لازم fnName يكون دالة معرّفة فعلاً
-        const name = entry.trim();
-        if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
-          appKeys.add(name);
-          if (!fnDeclsSet.has(name)) {
-            brokenAppShorthandRefs.push(name);
-          }
-        }
-      } else {
-        const key = entry.slice(0, colonIdx).trim();
-        if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key)) appKeys.add(key);
+// ===================================================================
+section('5. استدعاءات دوال المشروع غير المعرّفة بالصفحة (Dangling Calls)');
+// ===================================================================
+{
+  const known = new Set(); const allTexts = {};
+  for (const f of CLASSIC) { const js = read(f); if (js) { declsOf(js).forEach(n => known.add(n)); allTexts[f] = js; } }
+  for (const [page, cfg] of Object.entries(PAGES)) {
+    const html = read(page); if (html === null) continue;
+    const defined = new Set();
+    for (const f of cfg.loads) { const js = allTexts[f]; if (!js) continue; declsOf(js).forEach(n => defined.add(n)); stubNamesOf(js).forEach(n => defined.add(n)); }
+    inlineScripts(html).forEach(s => declsOfInline(s).forEach(n => defined.add(n)));
+    let bad = 0;
+    for (const f of cfg.loads) {
+      const code = stripComments(allTexts[f] || '');
+      for (const m of code.matchAll(/(?<![\w$.])([A-Za-z_$][\w$]*)\s*\(/g)) {
+        const n = m[1];
+        if (known.has(n) && !defined.has(n)) { fail(`${page}: الملف ${f} يستدعي "${n}()" وهي معرّفة فقط بملف غير محمَّل بهذه الصفحة وبلا بديل stub`); defined.add(n); bad++; }
       }
     }
-  }
-
-  return { fnDecls: fnDeclsSet, windowAssigns: new Set(windowAssigns), appKeys, brokenAppShorthandRefs };
-}
-
-function checkPagePair(htmlFile, jsFile, alsoCheckInlineScripts = false) {
-  const html = readFile(htmlFile);
-  const externalJs = readFile(jsFile);
-  if (html === null || externalJs === null) {
-    warn(`${htmlFile} / ${jsFile}: أحد الملفين غير موجود، تخطيت هذا الفحص`);
-    return;
-  }
-
-  let combinedJs = externalJs;
-  if (alsoCheckInlineScripts) {
-    const inlineScripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
-    combinedJs += '\n' + inlineScripts.join('\n');
-  }
-
-  const { bare, appCalls } = extractOnclickCalls(html);
-  const { fnDecls, windowAssigns, appKeys, brokenAppShorthandRefs } = extractDefinedFunctions(combinedJs);
-
-  for (const name of brokenAppShorthandRefs) {
-    fail(`${jsFile}: window.App يشير لـ "${name}" لكن ما فيه أي "function ${name}" معرّفة فعلاً — الزر راح يفشل صامتاً!`);
-  }
-
-  // دوال/طرق جافاسكربت وDOM مدمجة بالمتصفح — مو دوال المشروع، نتجاهلها بالفحص
-  const builtIns = new Set([
-    'event', 'this', 'window', 'console', 'getElementById', 'querySelector',
-    'querySelectorAll', 'preventDefault', 'stopPropagation', 'print', 'alert',
-    'confirm', 'prompt', 'reset', 'submit', 'focus', 'blur', 'click', 'close',
-    'open', 'setTimeout', 'setInterval', 'parseInt', 'parseFloat', 'toString',
-    'JSON', 'Object', 'Array', 'Number', 'String', 'Boolean', 'Math'
-  ]);
-
-  for (const fn of bare) {
-    if (builtIns.has(fn)) continue;
-    if (fnDecls.has(fn) || windowAssigns.has(fn)) {
-      pass(`${htmlFile}: زر يستدعي "${fn}()" ← موجودة`);
-    } else {
-      fail(`${htmlFile}: زر يستدعي "${fn}()" لكنها غير معرّفة أبداً بملفات الجافاسكربت المرتبطة!`);
-    }
-  }
-  for (const fn of appCalls) {
-    if (builtIns.has(fn)) continue;
-    if (appKeys.has(fn) || fnDecls.has(fn)) {
-      pass(`${htmlFile}: زر يستدعي "window.App.${fn}()" ← موجودة`);
-    } else {
-      fail(`${htmlFile}: زر يستدعي "window.App.${fn}()" لكنها غير مُصدَّرة بـ window.App!`);
-    }
-  }
-}
-
-checkPagePair('Index.html', 'main.js');
-checkPagePair('Admin.html', 'script.js', true);
-
-// ===================================================================
-// 4. فحص عام لقواعد Firestore (توازن الأقواس)
-// ===================================================================
-section('4. فحص أساسي لقواعد Firestore');
-
-const rules = readFile('firestore.rules');
-if (rules === null) {
-  warn('firestore.rules: الملف غير موجود بهذا المجلد (تجاهلته)');
-} else {
-  const opens = (rules.match(/\{/g) || []).length;
-  const closes = (rules.match(/\}/g) || []).length;
-  if (opens === closes) {
-    pass(`firestore.rules: الأقواس متوازنة (${opens} فتح / ${closes} إغلاق)`);
-  } else {
-    fail(`firestore.rules: الأقواس غير متوازنة! (${opens} فتح / ${closes} إغلاق) — القاعدة راح ترفض النشر`);
-  }
-  // تحذير شائع: استخدام .field مباشرة بدل .get('field', default) على بيانات مو مضمون وجودها
-  const riskyDirectAccess = [...rules.matchAll(/get\([^)]*\)\.data\.([a-zA-Z_][a-zA-Z0-9_]*)\s*(?:!=|==)/g)];
-  if (riskyDirectAccess.length > 0) {
-    warn(`firestore.rules: فيه ${riskyDirectAccess.length} استخدام لـ .data.field مباشرة بدون get(key, default) — ممكن يرمي خطأ لو الحقل غير موجود (نفس مشكلة isPharmacyActive اللي صلحناها)`);
-  } else {
-    pass('firestore.rules: ما فيه استخدام مباشر خطير لحقول قد تكون غير موجودة');
+    if (!bad) pass(`${page}: لا توجد استدعاءات معلّقة لدوال غير محمَّلة`);
   }
 }
 
 // ===================================================================
-// النتيجة النهائية
+section('6. حواجز ضد رجوع الميزات الملغاة (توفير عمليات Firestore)');
+// ===================================================================
+{
+  const guards = [
+    [/analyticsDailyCol\(\)\s*\.doc\([^)]*\)\s*\.set/, 'كتابة عدّاد الزيارات (analytics_daily)'],
+    [/FieldValue\.increment\(1\)[\s\S]{0,60}views|views\s*:\s*firebase\.firestore\.FieldValue\.increment/, 'زيادة عدّاد مشاهدات المنتج (views)'],
+    [/function\s+rateProductInstant\b/, 'تصويت الزبون بالنجوم (rateProductInstant)'],
+  ];
+  let bad = 0;
+  for (const f of CLASSIC) {
+    const js = read(f); if (!js) continue;
+    for (const [re, label] of guards) if (re.test(stripComments(js))) { fail(`${f}: عاد استخدام ميزة ملغاة: ${label}`); bad++; }
+  }
+  const idx = read('index.html');
+  if (idx && /star-rating-box|instantRatingMsg|id="pdRating"|pdTabReviews/.test(idx)) { fail('index.html: ما زال فيه عنصر تقييم/نجوم'); bad++; }
+  const adm = read('admin.html');
+  if (adm && /adminProdRating|adminProdReviews|quickEditProdRating|quickEditProdReviews/.test(adm)) { fail('admin.html: ما زالت حقول إدخال التقييم موجودة'); bad++; }
+  for (const f of CLASSIC) { const js = read(f); if (js && /getElementById\(['"](?:pdRating|pdTabReviews|adminProdRating|adminProdReviews|quickEditProdRating|quickEditProdReviews)['"]\)|class="p-rating"/.test(stripComments(js))) { fail(`${f}: ما زال يتعامل مع عناصر التقييم`); bad++; } }
+  if (!bad) pass('لا أثر لعدّاد الزيارات ولا المشاهدات ولا تصويت النجوم بالواجهة');
+}
+
+// ===================================================================
+section('6ب. حواجز قراءات Firestore (منع رجوع مصادر الاستنزاف)');
+// ===================================================================
+{
+  let bad = 0;
+  const g = (cond, msg) => { if (cond) { fail(msg); bad++; } };
+  for (const f of CLASSIC) {
+    const js = read(f); if (!js) continue;
+    const code = stripComments(js);
+    g(/ordersCol\(\)\s*\.get\(\)/.test(code), `${f}: قراءة كل الطلبات بلا حد (ordersCol().get())`);
+    g(/ordersCol\(\)\s*\.onSnapshot/.test(code), `${f}: مستمع لحظي على كل الطلبات بلا limit`);
+    g(/ordersCol\(\)\s*\.orderBy\([^)]*\)\s*\.get\(\)/.test(code), `${f}: قراءة كل الطلبات مرتبة بلا limit`);
+    g(/productsCol\(\)\s*\.onSnapshot/.test(code), `${f}: مستمع لحظي على كل المنتجات (يقرأ كل المنتجات بكل فتح)`);
+  }
+  const sc = read('script.js') || '';
+  g(!/\/api\/storefront/.test(sc), 'script.js: الزوار لا يستخدمون /api/storefront (سيعودون لقراءات Firestore المباشرة)');
+  g(!/ADMIN_ORDERS_LIMIT/.test(read('admin-panel.js') || ''), 'admin-panel.js: حد قراءة الطلبات ADMIN_ORDERS_LIMIT غير موجود');
+  const idxh = read('index.html') || '';
+  g(/firebase-messaging-compat/.test(idxh), 'index.html: ما زال يحمّل firebase-messaging غير المستخدم');
+  if (!bad) pass('لا قراءات غير محدودة للطلبات/المنتجات، والزوار يستخدمون لقطة المتجر المخزَّنة');
+}
+
+// ===================================================================
+section('7. فحص قواعد Firestore');
+// ===================================================================
+{
+  const rules = read('firestore.rules');
+  if (rules === null) warn('firestore.rules: غير موجود بهذا المجلد (تجاهلته)');
+  else {
+    const code = rules.replace(/\/\/[^\n]*/g, '');
+    const o = (code.match(/\{/g) || []).length, c = (code.match(/\}/g) || []).length;
+    (o === c) ? pass(`الأقواس المعقوفة متوازنة (${o}/${c})`) : fail(`الأقواس المعقوفة غير متوازنة (${o} فتح / ${c} إغلاق)`);
+    const po = (code.match(/\(/g) || []).length, pc = (code.match(/\)/g) || []).length;
+    (po === pc) ? pass(`الأقواس الدائرية متوازنة (${po}/${pc})`) : fail(`الأقواس الدائرية غير متوازنة (${po}/${pc})`);
+    const risky = [...code.matchAll(/get\([^)]*\)\.data\.([A-Za-z_]\w*)\s*(?:!=|==)/g)];
+    risky.length ? warn(`فيه ${risky.length} استخدام لـ .data.field مباشرة بدل .get(key, default)`) : pass('لا استخدام مباشر خطير لحقول قد تكون غير موجودة');
+    /match \/orders\/\{orderId\}[\s\S]*?allow create:\s*if false/.test(code) ? pass('إنشاء الطلبات من العميل مغلق (الووركر فقط)') : fail('orders: لازم يبقى allow create: if false');
+    /match \/analytics_daily\/\{dayId\}[\s\S]*?allow write:\s*if false/.test(code) ? pass('analytics_daily: لا كتابة من العميل') : fail('analytics_daily: يجب إغلاق الكتابة من العميل');
+    /affectedKeys\(\)\.hasOnly\(\[\s*'views'\s*\]\)|hasOnly\(\[\s*'rating'/.test(code) ? fail('products: ما زالت هناك صلاحية عامة لتعديل views/rating') : pass('products: لا صلاحيات تعديل عامة (views/rating)');
+    /subscriptionExpiry/.test(code) ? pass('pharmacies: حقول الاشتراك محمية من تعديل المالك') : fail('pharmacies: يجب حماية subscriptionExpiry/isActive من تعديل مالك الصيدلية');
+    /email_verified/.test(code) ? pass('القواعد تشترط إيميلاً موثَّقاً للمشرفين') : fail('القواعد لا تشترط email_verified');
+    /allow\s+(?:create|update|write|delete)[^;]*:\s*if\s+true/.test(code) ? fail('يوجد allow كتابة بشرط true (مفتوحة للجميع)!') : pass('لا توجد كتابة مفتوحة للجميع');
+    /match \/orders\/\{orderId\}[\s\S]*?hasOnly\(\['status', 'cancelledAt'\]\)/.test(code) ? pass('orders: إلغاء الزبون مقيّد بحقلي status/cancelledAt') : fail('orders: تعديل الزبون غير مقيّد بالحقول');
+  }
+}
+
 // ===================================================================
 console.log('\n' + '='.repeat(50));
 console.log(`النتيجة: ${passCount} نجح ✅  |  ${warnCount} تحذير ⚠️  |  ${failCount} فشل ❌`);
 console.log('='.repeat(50));
-
-if (failCount > 0) {
-  console.log('\n🔴 لا تنشري هذا التحديث قبل حل المشاكل التالية:\n');
-  failures.forEach((f, i) => console.log(`${i + 1}. ${f}`));
-  process.exit(1);
-} else {
-  console.log('\n🟢 كل الفحوصات نجحت — آمن تنشري التحديث.');
-  process.exit(0);
-}
+if (failCount > 0) { console.log('\n🔴 لا تنشري هذا التحديث قبل حل المشاكل التالية:\n'); failures.forEach((f, i) => console.log(`${i + 1}. ${f}`)); process.exit(1); }
+else { console.log('\n🟢 كل الفحوصات نجحت — آمن تنشري التحديث.'); process.exit(0); }
