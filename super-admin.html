@@ -507,6 +507,10 @@
                 <input type="file" id="masterJsonFileInput" accept=".json,.csv" class="hidden" onchange="handleMasterBulkUpload(event)">
               </label>
 
+              <button onclick="rebuildMasterCatalogCacheNow(this)" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs px-4 py-2.5 rounded-xl border border-slate-700 transition flex items-center gap-2">
+                🔄 إعادة بناء الكاش
+              </button>
+
               <button onclick="exportMasterCatalogJSON()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs px-4 py-2.5 rounded-xl border border-slate-700 transition flex items-center gap-1.5">
                 💾 تصدير نسخة JSON
               </button>
@@ -1558,7 +1562,7 @@
         fetchMasterCatalog();
         // 🆕 حذف جماعي = يبني الكاش بالكامل مرة واحدة فقط بعد اكتمال كل الدفعات (أسرع
         // وأبسط من محاولة إزالة كل صنف من ملف R2 على حدة لعدد كبير كهذا).
-        superApiFetch('/api/admin/master-catalog/rebuild', { method: 'POST' });
+        await syncMasterCatalogCache('/api/admin/master-catalog/rebuild');
       } catch (err) {
         showToast('خطأ: ' + err.message, true);
       }
@@ -1572,10 +1576,7 @@
         fetchMasterCatalog();
         // 🆕 حذف صنف واحد = إزالته مباشرة من ملف R2 المخزَّن (قراءة واحدة + كتابة واحدة)
         // بلا أي قراءة لكامل المجموعة — أرخص بكثير من إعادة بناء الملف كاملاً.
-        superApiFetch('/api/admin/master-catalog/delete-item', {
-          method: 'POST',
-          body: JSON.stringify({ productId: id })
-        });
+        await syncMasterCatalogCache('/api/admin/master-catalog/delete-item', { productId: id });
       } catch (e) {
         showToast('خطأ: ' + e.message, true);
       }
@@ -1651,7 +1652,7 @@
         // 🆕 رفع جماعي = إعادة بناء الكاش بالكامل مرة واحدة بعد اكتمال كل الدفعات (أسرع
         // من تحديث ملف R2 لكل صنف من مئات الأصناف على حدة).
         statusText.textContent = 'جاري تحديث كاش المتجر...';
-        superApiFetch('/api/admin/master-catalog/rebuild', { method: 'POST' });
+        await syncMasterCatalogCache('/api/admin/master-catalog/rebuild');
       } catch (err) {
         showToast('خطأ بالرفع: ' + err.message, true);
         progressBox.classList.add('hidden');
@@ -1748,10 +1749,7 @@
         fetchMasterCatalog();
         // 🆕 اعتماد صنف واحد = إضافته مباشرة لملف R2 المخزَّن (قراءة واحدة + كتابة واحدة)
         // بلا أي قراءة لكامل مجموعة البنك — هذا بالضبط "الإضافة الجديدة فقط" المطلوبة.
-        superApiFetch('/api/admin/master-catalog/upsert-item', {
-          method: 'POST',
-          body: JSON.stringify({ productId: docId, data: { ...p, id: docId, crowdsourcedBy: subData.sourcePharmacyId || 'pharmacy' } })
-        });
+        await syncMasterCatalogCache('/api/admin/master-catalog/upsert-item', { productId: docId, data: { ...p, id: docId, crowdsourcedBy: subData.sourcePharmacyId || 'pharmacy' } });
       } catch (err) {
         showToast('خطأ: ' + err.message, true);
       }
@@ -2223,6 +2221,32 @@
         return await res.json();
       } catch (err) {
         return { success: false, message: err.message };
+      }
+    }
+
+    // 🆕 مزامنة كاش بنك المنتجات بعد أي تعديل بـ Firestore. كانت الاستدعاءات تُرسل بلا انتظار ولا فحص
+    // للنتيجة (fire-and-forget)، فإذا فشل الطلب لأي سبب (توكن منتهٍ، خطأ ووركر...) بقيت صفحات
+    // أدمن الصيدليات تعرض نسخة قديمة بلا أي إشارة. الآن ننتظر النتيجة ونُظهر تحذيراً واضحاً عند الفشل.
+    async function syncMasterCatalogCache(endpoint, payload) {
+      const opts = { method: 'POST' };
+      if (payload) opts.body = JSON.stringify(payload);
+      const result = await superApiFetch(endpoint, opts);
+      if (!result || result.success === false) {
+        showToast('⚠️ تم الحفظ، لكن تعذّر تحديث كاش بنك المنتجات (' + ((result && result.message) || 'خطأ غير معروف') + '). اضغطي "إعادة بناء الكاش" لإظهار التعديل عند الصيدليات.', true);
+        return false;
+      }
+      return true;
+    }
+
+    // 🆕 زر يدوي: يعيد بناء كاش بنك المنتجات من Firestore فوراً (للحالات التي فشلت فيها المزامنة التلقائية).
+    async function rebuildMasterCatalogCacheNow(btn) {
+      const original = btn ? btn.innerHTML : '';
+      if (btn) { btn.disabled = true; btn.innerHTML = '⏳ جاري إعادة البناء...'; }
+      try {
+        const ok = await syncMasterCatalogCache('/api/admin/master-catalog/rebuild');
+        if (ok) showToast('✅ تم تحديث كاش بنك المنتجات — ستظهر التعديلات عند الصيدليات فوراً');
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = original; }
       }
     }
 
