@@ -130,6 +130,15 @@ async function confirmOrder() {
       }
     } catch (e) { console.warn('Could not attach ID token to order:', e); }
 
+    // 🛡️ حماية من البوتات: Turnstile (إن ضُبط مفتاحه) + حقل فخ مخفي يملؤه البوتات فقط
+    const cfToken = TURNSTILE_SITE_KEY ? await getTurnstileToken() : '';
+    if (TURNSTILE_SITE_KEY && !cfToken) {
+      if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = 'تأكيد الطلب'; }
+      showToast('⚠️ تعذر التحقق الأمني، حدّثي الصفحة وحاولي مجدداً.');
+      return;
+    }
+    const hpEl = document.getElementById('hpWebsite');
+
     const res = await fetch(`${WORKER_API_BASE}/api/orders`, {
       method: 'POST',
       headers: orderHeaders,
@@ -139,7 +148,9 @@ async function confirmOrder() {
         customerAddress: address,
         deliveryMethod: deliveryMethod,
         items: itemsPayloadForServer,
-        promoCode: appliedPromo ? appliedPromo.code : null
+        promoCode: appliedPromo ? appliedPromo.code : null,
+        cfToken,
+        website: hpEl ? hpEl.value : ''
       })
     });
     serverResult = await res.json();
@@ -224,6 +235,42 @@ async function confirmOrder() {
 }
 
 // ================= 12. PROMO CODES / COUPONS =================
+// ---- Cloudflare Turnstile (يُحمَّل كسولاً فقط عند وجود مفتاح الموقع) ----
+let turnstileWidgetId = null;
+let turnstileScriptPromise = null;
+function loadTurnstileScript() {
+  if (turnstileScriptPromise) return turnstileScriptPromise;
+  turnstileScriptPromise = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    s.async = true;
+    s.onload = () => resolve();
+    s.onerror = () => { turnstileScriptPromise = null; reject(new Error('turnstile load failed')); };
+    document.head.appendChild(s);
+  });
+  return turnstileScriptPromise;
+}
+
+async function getTurnstileToken() {
+  try {
+    await loadTurnstileScript();
+    const box = document.getElementById('turnstileBox');
+    if (!box || !window.turnstile) return '';
+    return await new Promise((resolve) => {
+      const timer = setTimeout(() => resolve(''), 20000);
+      const done = (t) => { clearTimeout(timer); resolve(t || ''); };
+      if (turnstileWidgetId !== null) { try { window.turnstile.remove(turnstileWidgetId); } catch (e) {} turnstileWidgetId = null; }
+      box.innerHTML = '';
+      turnstileWidgetId = window.turnstile.render(box, {
+        sitekey: TURNSTILE_SITE_KEY,
+        callback: done,
+        'error-callback': () => done(''),
+        'expired-callback': () => done('')
+      });
+    });
+  } catch (e) { console.warn(e); return ''; }
+}
+
 async function applyPromoCode(code) {
   if (!code || !code.trim()) {
     showToast('يرجى كتابة كود الخصم أولاً');
@@ -237,41 +284,31 @@ async function applyPromoCode(code) {
 
   showToast('جاري التحقق من كود الخصم...');
   try {
+    // 🔐 التحقق عبر الووركر (قواعد Firestore لم تعد تسمح للزبائن بقراءة الكوبونات مباشرة، حتى لا يمكن سحب
+    // كل الأكواد). الووركر يطبّق نفس الشروط عند تثبيت الطلب: التفعيل، الانتهاء، الحد الأدنى، وعدد مرات الاستخدام.
     const cleanCode = code.trim().toUpperCase();
-    const snap = await dbPaths.couponsCol().doc(cleanCode).get();
-
-    if (snap.exists) {
-      const c = snap.data();
-      if (!c.active) {
-        showToast('كود الخصم غير مفعل حالياً ❌');
-        return;
-      }
-      const todayStr = new Date().toISOString().split('T')[0];
-      if (c.expiry && c.expiry < todayStr) {
-        showToast('كود الخصم منتهي الصلاحية ❌');
-        return;
-      }
-      if (c.minSpend && subtotal < Number(c.minSpend)) {
-        showToast(`الحد الأدنى لتفعيل الكود هو ${fmtPrice(c.minSpend)}`);
-        return;
-      }
-
-      let discountAmount = (c.type === 'percentage') 
-        ? Math.round(subtotal * (Number(c.value) / 100))
-        : Number(c.value);
-
-      appliedPromo = { code: cleanCode, discountAmount };
+    const res = await fetch(`${WORKER_API_BASE}/api/coupons/validate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Pharmacy-Id': currentPharmacyId },
+      body: JSON.stringify({ code: cleanCode, subtotal })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (data && data.success) {
+      appliedPromo = { code: data.code || cleanCode, discountAmount: Number(data.discountAmount || 0) };
       showToast('تم تطبيق الخصم بنجاح! 🎉');
       renderCart();
       renderCheckoutSummary();
       return;
     }
+    appliedPromo = null;
+    showToast((data && data.message) || 'كود الخصم غير صالح أو منتهي الصلاحية ❌');
+    return;
   } catch (err) {
     console.warn(err);
   }
 
   appliedPromo = null;
-  showToast('كود الخصم غير صالح أو منتهي الصلاحية ❌');
+  showToast('تعذر التحقق من كود الخصم الآن، حاولي بعد قليل ⚠️');
   renderCart();
   renderCheckoutSummary();
 }
@@ -622,14 +659,27 @@ function renderOffers() {
   // سعرها الحالي أقل من السعر قبل الخصم (oldPrice > price)، وليس أي منتج فقط وُضع له
   // سعر قديم في الماضي أو فُعِّل عليه مربع "عرض خاص" بلا فرق سعر حقيقي حالياً. هذا يمنع
   // ظهور منتجات في صفحة العروض بلا أي خصم ظاهر فعلياً (شارة الخصم كانت تختفي بصمت).
-  const discounted = products.filter(p =>
-    p.isDeleted !== true &&
-    Number(p.oldPrice) > 0 &&
-    Number(p.oldPrice) > Number(p.price)
-  );
+  const discounted = getDiscountedProducts();
   const countEl = document.getElementById('offersCount');
   if (countEl) countEl.textContent = discounted.length + ' عرض';
-  renderProductGrid('offersGrid', discounted);
+  renderProductGrid('offersGrid', discounted, 'لا توجد عروض على المنتجات حالياً — تابعونا قريباً 🌸');
+}
+
+// 🏷️ كل منتج عليه خصم فعلي (السعر الحالي أقل من السعر قبل الخصم) يظهر تلقائياً بتبويب العروض مرتباً من الأعلى
+// خصماً للأقل، دون أي إجراء إضافي من الأدمن. يُستدعى أيضاً لتحديث عدّاد التبويب العلوي.
+function getDiscountedProducts() {
+  const pct = (p) => (1 - Number(p.price) / Number(p.oldPrice));
+  return products
+    .filter(p => p.isDeleted !== true && Number(p.oldPrice) > 0 && Number(p.price) > 0 && Number(p.oldPrice) > Number(p.price))
+    .sort((a, b) => pct(b) - pct(a));
+}
+
+function updateOffersTabCount() {
+  const el = document.getElementById('offersTabCount');
+  if (!el) return;
+  const n = getDiscountedProducts().length;
+  el.textContent = n > 0 ? n : '';
+  el.style.display = n > 0 ? 'inline-flex' : 'none';
 }
 
 // 🎁 (جديد) نافذة تفاصيل البكج — تفتح عند الضغط على بطاقة البكج نفسها (وليس فقط زر
