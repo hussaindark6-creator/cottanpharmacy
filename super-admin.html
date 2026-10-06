@@ -507,6 +507,9 @@
                 <input type="file" id="masterJsonFileInput" accept=".json,.csv" class="hidden" onchange="handleMasterBulkUpload(event)">
               </label>
 
+              <button onclick="downloadFullBackup(this)" class="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl border border-amber-500 transition flex items-center gap-2">
+                💾 نسخة احتياطية كاملة
+              </button>
               <button onclick="rebuildMasterCatalogCacheNow(this)" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs px-4 py-2.5 rounded-xl border border-slate-700 transition flex items-center gap-2">
                 🔄 إعادة بناء الكاش
               </button>
@@ -1435,9 +1438,17 @@
     async function fetchMasterCatalog() {
       if (!db) return;
       try {
-        const snap = await db.collection('system').doc('master_catalog').collection('products').get();
+        // 🛡️ (توفير قراءات) القراءة من كاش R2 عبر الووركر (0 قراءة Firestore) بدل قراءة كل البنك بكل فتح للوحة.
+        // إن كان الكاش فارغاً/غير متاح (قبل أول إعادة بناء) نرجع لـ Firestore مرة واحدة.
         window.cachedMasterCatalog = [];
-        snap.forEach(d => window.cachedMasterCatalog.push({ id: d.id, ...d.data() }));
+        try {
+          const r = await fetch(`${WORKER_API_BASE_SUPER}/api/master-catalog`, { cache: 'no-cache' });
+          if (r.ok) { const arr = await r.json(); if (Array.isArray(arr)) window.cachedMasterCatalog = arr; }
+        } catch (e) { console.warn('master catalog via worker failed:', e); }
+        if (!window.cachedMasterCatalog.length) {
+          const snap = await db.collection('system').doc('master_catalog').collection('products').get();
+          snap.forEach(d => window.cachedMasterCatalog.push({ id: d.id, ...d.data() }));
+        }
 
         document.getElementById('statMasterItemsCount').textContent = window.cachedMasterCatalog.length;
         document.getElementById('catTotalCountBadge').textContent = window.cachedMasterCatalog.length;
@@ -1955,18 +1966,69 @@
       }).join('');
     }
 
+    // 🛡️ حماية صيغ Excel (CSV Injection): أي حقل يبدأ بـ = + - @ يُسبَق بفاصلة عليا حتى لا يُنفَّذ كصيغة
+    function csvCell(v) {
+      let t = String(v == null ? '' : v).replace(/"/g, '""');
+      if (/^[=+\-@\t\r]/.test(t)) t = "'" + t;
+      return `"${t}"`;
+    }
+
+    // 🛡️ (توفير قراءات) حد أقصى 3000 طلب لكل تصدير (كان يقرأ كل تاريخ الصيدلية بلا سقف)
     async function generateSinglePharmacyCSVData(slug) {
-      const ordersSnap = await db.collection('pharmacies').doc(slug).collection('orders').orderBy('createdAt', 'desc').get();
+      const ordersSnap = await db.collection('pharmacies').doc(slug).collection('orders').orderBy('createdAt', 'desc').limit(3000).get();
       let csv = "Order ID,Date,Customer Name,Phone,Address,Method,Status,Items,Total (IQD)\n";
       let totalAmount = 0;
 
       ordersSnap.forEach(d => {
         const o = d.data();
-        totalAmount += Number(o.total || 0);
+        const isCancelled = String(o.status || '').includes('ملغي');
+        if (!isCancelled) totalAmount += Number(o.total || 0);
         const itemsText = (o.items || []).map(it => `${it.name} (x${it.quantity})`).join(" + ");
-        csv += `"${o.id || d.id}","${o.date || ''}","${o.name || ''}","${o.phone || ''}","${(o.address || '').replace(/"/g, '""')}","${o.deliveryMethod || 'standard'}","${o.status || ''}","${itemsText.replace(/"/g, '""')}","${o.total || 0}"\n`;
+        csv += [o.id || d.id, o.date || '', o.name || '', o.phone || '', o.address || '', o.deliveryMethod || 'standard', o.status || '', itemsText].map(csvCell).join(',') + `,${Number(o.total || 0)}\n`;
       });
       return { csv, totalAmount, count: ordersSnap.size };
+    }
+
+    // 💾 نسخة احتياطية كاملة (JSON واحد): الصيدليات + لكل صيدلية (الأقسام، البكجات، المنتجات، آخر 2000 طلب) + بنك المنتجات.
+    // Firestore المجاني بلا تصدير تلقائي؛ شغّليها أسبوعياً واحفظي الملف خارج المنصة. تقرأ بيانات كثيرة (مرة واحدة يدوياً).
+    async function downloadFullBackup(btn) {
+      if (!confirm('سيتم قراءة بيانات كل الصيدليات لإنشاء نسخة احتياطية (قد تستهلك عدداً ملحوظاً من القراءات). تشغيلها مرة أسبوعياً يكفي. متابعة؟')) return;
+      const original = btn ? btn.innerHTML : '';
+      try {
+        if (btn) { btn.disabled = true; btn.innerHTML = '⏳ جاري إنشاء النسخة...'; }
+        const dump = { createdAt: new Date().toISOString(), pharmacies: {}, masterCatalog: [] };
+        const phSnap = await db.collection('pharmacies').get();
+        for (const ph of phSnap.docs) {
+          showToast(`نسخ صيدلية ${ph.id}...`);
+          const base = db.collection('pharmacies').doc(ph.id);
+          const grab = async (sub, lim) => {
+            const q = lim ? base.collection(sub).limit(lim) : base.collection(sub);
+            const sn = await q.get(); const arr = []; sn.forEach(d => arr.push({ _id: d.id, ...d.data() })); return arr;
+          };
+          dump.pharmacies[ph.id] = {
+            profile: ph.data(),
+            categories: await grab('categories'),
+            bundles: await grab('bundles'),
+            products: await grab('products'),
+            coupons: await grab('coupons'),
+            staff: await grab('staff'),
+            orders: await grab('orders', 2000)
+          };
+        }
+        const msSnap = await db.collection('system').doc('master_catalog').collection('products').get();
+        msSnap.forEach(d => dump.masterCatalog.push({ _id: d.id, ...d.data() }));
+        const blob = new Blob([JSON.stringify(dump)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `FULL_BACKUP_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+        showToast('✅ تم تنزيل النسخة الاحتياطية الكاملة — احفظيها خارج المنصة');
+      } catch (err) {
+        showToast('خطأ بالنسخ الاحتياطي: ' + err.message, true);
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = original; }
+      }
     }
 
     async function exportSinglePharmacyCSV(slug) {
