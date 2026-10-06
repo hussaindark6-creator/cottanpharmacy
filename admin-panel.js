@@ -1682,11 +1682,28 @@ function renderAdminOrdersList(orders) {
   }).join('');
 }
 
+// 🔐 تغيير الحالة عبر الووركر: عند الإلغاء يُرجع المخزون تلقائياً بمعاملة ذرية، ولا يسمح بإعادة تفعيل
+// طلب ملغي (كان إلغاء الأدمن يُبقي المنتجات محجوزة من المخزون للأبد).
 async function updateOrderStatus(orderId, newStatus) {
   if (!assertAdmin()) return;
-  if (db) {
-    await dbPaths.ordersCol().doc(String(orderId)).set({ status: newStatus }, { merge: true });
+  const refreshList = () => renderAdminOrdersList(window.adminLastOrdersList || []);
+  if (newStatus.includes('ملغي') && !confirm('سيتم إلغاء الطلب وإرجاع منتجاته للمخزون، ولا يمكن التراجع. متابعة؟')) {
+    refreshList();
+    return;
+  }
+  try {
+    const res = await apiFetch('/api/admin/orders/status', { method: 'POST', body: JSON.stringify({ orderId: String(orderId), status: newStatus }) });
+    if (!res || !res.success) {
+      showToast('⚠️ ' + ((res && res.message) || 'تعذر تحديث حالة الطلب'));
+      refreshList();
+      return;
+    }
     showToast(`تم تحديث حالة الطلب #${orderId} إلى: ${newStatus}`);
+    if (newStatus.includes('ملغي')) fetchCatalogFromR2(true);
+  } catch (e) {
+    console.warn(e);
+    showToast('⚠️ تعذر الاتصال بالسيرفر');
+    refreshList();
   }
 }
 
@@ -1737,7 +1754,97 @@ function csvSafeField(val) {
   return s;
 }
 
-async function buildDetailedOrdersCSV() {
+// ================= التقرير المالي (جدول واحد واضح) =================
+// بدل التقسيم السابق إلى 3 أقسام (مستحضرات/حليب/أسنان) الذي كان يكرر الطلب الواحد ويصعّب قراءته،
+// صار التقرير جدولاً واحداً: كل صف = طلب واحد بكل تفاصيله (الزبون، الهاتف، العنوان، المنتجات، المجموع،
+// الخصم، التوصيل، الإجمالي، التكلفة، صافي الربح، الحالة) وفوقه ملخص بالأرقام الإجمالية.
+// يلتزم بنفس فلاتر "الفترة" و"الحالة" المعروضة على شاشة الطلبات. الطلبات الملغاة تظهر بالجدول لكنها
+// لا تدخل بمجاميع المبيعات والأرباح.
+function reportOrderTimeMs(o) {
+  if (o.createdAt && typeof o.createdAt.toMillis === 'function') return o.createdAt.toMillis();
+  const t = o.date ? new Date(o.date).getTime() : 0;
+  return isNaN(t) ? 0 : t;
+}
+
+function reportFormatDate(o) {
+  const ms = reportOrderTimeMs(o);
+  if (!ms) return String(o.date || '');
+  const d = new Date(ms);
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+function reportIsCancelled(o) {
+  return !!(o.status && String(o.status).includes('ملغي'));
+}
+
+function filterOrdersForReport(orders) {
+  const timeFilter = document.getElementById('reportTimeRange') ? document.getElementById('reportTimeRange').value : 'all';
+  const statusFilter = document.getElementById('reportStatusFilter') ? document.getElementById('reportStatusFilter').value : 'all';
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const DAY = 86400000;
+  return (orders || []).filter(o => {
+    const ms = reportOrderTimeMs(o);
+    if (timeFilter === 'today' && !(ms >= startOfToday)) return false;
+    if (timeFilter === 'yesterday' && !(ms >= startOfToday - DAY && ms < startOfToday)) return false;
+    if (timeFilter === 'week' && !(ms >= startOfToday - 6 * DAY)) return false;
+    if (timeFilter === 'month' && !(ms >= new Date(now.getFullYear(), now.getMonth(), 1).getTime())) return false;
+    const st = String(o.status || '');
+    if (statusFilter === 'delivered' && !st.includes('التسليم')) return false;
+    if (statusFilter === 'shipping' && !st.includes('الشحن')) return false;
+    if (statusFilter === 'processing' && !st.includes('المعالجة')) return false;
+    if (statusFilter === 'customer_cancelled' && !st.includes('الزبون')) return false;
+    if (statusFilter === 'cancelled' && !st.includes('ملغي')) return false;
+    return true;
+  }).sort((x, y) => reportOrderTimeMs(y) - reportOrderTimeMs(x));
+}
+
+function reportPeriodLabel() {
+  const t = document.getElementById('reportTimeRange') ? document.getElementById('reportTimeRange').value : 'all';
+  const labels = { all: 'كل الطلبات المسجلة', today: 'اليوم', yesterday: 'أمس', week: 'آخر 7 أيام', month: 'هذا الشهر' };
+  return labels[t] || labels.all;
+}
+
+// يحسب صفاً لكل طلب + المجاميع
+function computeReportRows(orders) {
+  const rows = [];
+  const totals = { orders: 0, cancelled: 0, itemsTotal: 0, discount: 0, delivery: 0, grand: 0, cost: 0, profit: 0, missingCostOrders: 0 };
+  orders.forEach(o => {
+    const cancelled = reportIsCancelled(o);
+    const grand = Number(o.total || 0);
+    const delivery = (o.deliveryFee !== undefined && o.deliveryFee !== null)
+      ? Number(o.deliveryFee)
+      : ((o.deliveryMethod === 'express') ? Number(pharmacyProfile.deliveryFeeExpress || 8000) : Number(pharmacyProfile.deliveryFeeStandard || 4000));
+    const discount = Number(o.discountAmount || 0);
+    const itemsTotal = (o.subtotal !== undefined && o.subtotal !== null)
+      ? Number(o.subtotal)
+      : (o.items || []).reduce((sum, it) => sum + (Number(it.lineTotal) || (Number(it.unitPrice || it.price || 0) * Number(it.quantity || 1))), 0);
+
+    let cost = 0, missing = false;
+    (o.items || []).forEach(it => {
+      const qty = Number(it.quantity || 1);
+      if (!it.isBundle && it.unitCostPrice !== undefined && it.unitCostPrice !== null) cost += Number(it.unitCostPrice) * qty;
+      else missing = true;
+    });
+    const productsRevenue = Math.max(0, grand - delivery);   // المبلغ الذي يخص المنتجات بعد الخصم
+    const profit = productsRevenue - cost;
+    const itemsText = (o.items || []).map(it => `${it.name || 'منتج'} × ${Number(it.quantity || 1)}`).join(' + ');
+
+    rows.push({
+      id: o.id || '', date: reportFormatDate(o), name: o.name || '', phone: o.phone || '', address: o.address || '',
+      items: itemsText, itemsTotal, discount, delivery, grand, cost, profit, missing, cancelled, status: String(o.status || '').replace(/[🚚🛵✅❌]/g, '').trim()
+    });
+    if (cancelled) { totals.cancelled++; return; }
+    totals.orders++;
+    totals.itemsTotal += itemsTotal; totals.discount += discount; totals.delivery += delivery;
+    totals.grand += grand; totals.cost += cost; totals.profit += profit;
+    if (missing) totals.missingCostOrders++;
+  });
+  return { rows, totals };
+}
+
+async function getReportSourceOrders() {
   let orders = window.adminLastOrdersList || [];
   if (orders.length === 0 && db) {
     // 🛡️ حد أقصى 1000 طلب (كان يقرأ كل الطلبات التاريخية)
@@ -1745,111 +1852,132 @@ async function buildDetailedOrdersCSV() {
     snap.forEach(d => orders.push(d.data()));
   }
   if (orders.length === 0) orders = myOrders;
-
-  const groups = {
-    cosmetics: { orders: new Set(), totalSales: 0, rows: [] },
-    baby_milk: { orders: new Set(), totalSales: 0, rows: [] },
-    oral_care: { orders: new Set(), totalSales: 0, rows: [] }
-  };
-
-  let totalCOD = 0, totalDelivery = 0, totalNetStore = 0;
-  // 🌟 (جديد — صافي الربح) نعتمد حصراً على unitCostPrice المحفوظة كلقطة داخل كل طلب وقت
-  // البيع (وليس سعر التكلفة الحالي للمنتج، الذي قد يتغيّر لاحقاً من لوحة التحكم فيُفسد دقة
-  // تقارير الأشهر السابقة). itemsMissingCost يُحصي عدد القطع المباعة التي لم يُحدَّد لها
-  // سعر تكلفة بعد، ليكون الرقم النهائي صريحاً بأنه "حد أدنى" للربح لا رقماً نهائياً دقيقاً
-  // 100% ما دام بعض المنتجات ناقصة سعر التكلفة.
-  let totalCostOfGoods = 0, itemsMissingCost = 0, itemsWithCost = 0;
-
-  orders.forEach(o => {
-    const orderTotal = Number(o.total || 0);
-    const delFee = (o.deliveryFee !== undefined) ? Number(o.deliveryFee) : ((o.deliveryMethod === 'express') ? (pharmacyProfile.deliveryFeeExpress || 8000) : (pharmacyProfile.deliveryFeeStandard || 4000));
-    const netStore = Math.max(0, orderTotal - delFee);
-    totalCOD += orderTotal;
-    totalDelivery += delFee;
-    totalNetStore += netStore;
-
-    (o.items || []).forEach(it => {
-      if (it.isBundle) return; // هامش ربح البكجات غير محسوب حالياً (خارج نطاق هذا الإصلاح)
-      const qty = Number(it.quantity || 1);
-      if (it.unitCostPrice !== undefined && it.unitCostPrice !== null) {
-        totalCostOfGoods += Number(it.unitCostPrice) * qty;
-        itemsWithCost += qty;
-      } else {
-        itemsMissingCost += qty;
-      }
-    });
-
-    const englishDate = formatOrderDateEnglish(o);
-    const itemsByGroup = { cosmetics: [], baby_milk: [], oral_care: [] };
-
-    (o.items || []).forEach(it => {
-      const group = getOrderItemGroup(it);
-      itemsByGroup[group].push(it);
-    });
-
-    Object.keys(itemsByGroup).forEach(group => {
-      const itemsInGroup = itemsByGroup[group];
-      if (itemsInGroup.length === 0) return;
-      const groupSubtotal = itemsInGroup.reduce((sum, it) => sum + (Number(it.lineTotal) || (Number(it.price || it.unitPrice || 0) * Number(it.quantity || 1))), 0);
-      groups[group].orders.add(o.id);
-      groups[group].totalSales += groupSubtotal;
-      const itemsFormatted = itemsInGroup.map(it => `${it.name} (x${it.quantity})`).join(' + ');
-      groups[group].rows.push(
-        `"${csvSafeField(o.id)}","${englishDate}","${csvSafeField(o.name || '')}","${csvSafeField(o.phone || '')}","${csvSafeField(itemsFormatted)}","${groupSubtotal}"`
-      );
-    });
-  });
-
-  let csv = `SaaS Pharmacy Financial Report - ${pharmacyProfile.name || currentPharmacyId}\n`;
-  csv += `Generated: ${new Date().toLocaleString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}\n\n`;
-
-  ['cosmetics', 'baby_milk', 'oral_care'].forEach(group => {
-    const g = groups[group];
-    csv += `=== ${REPORT_GROUP_LABELS[group]} ===\n`;
-    csv += `Order ID,Date,Customer Name,Phone Number,Items Ordered,Section Sales (IQD)\n`;
-    if (g.rows.length === 0) {
-      csv += `"No orders in this section yet","","","","",""\n`;
-    } else {
-      csv += g.rows.join('\n') + '\n';
-    }
-    csv += `"SECTION TOTALS","${g.orders.size} Orders","","","","${g.totalSales} IQD"\n\n`;
-  });
-
-  csv += `=== OVERALL STORE TOTALS ===\n`;
-  csv += `"TOTAL ORDERS","${orders.length}"\n`;
-  csv += `"TOTAL SALES (IQD)","${totalCOD}"\n`;
-  csv += `"TOTAL DELIVERY FEES (IQD)","${totalDelivery}"\n`;
-  csv += `"NET STORE REVENUE (IQD, excl. delivery)","${totalNetStore}"\n`;
-  csv += `"TOTAL COST OF GOODS SOLD (IQD)","${totalCostOfGoods}"\n`;
-  csv += `"ESTIMATED NET PROFIT (IQD, excl. delivery)","${Math.max(0, totalNetStore - totalCostOfGoods)}"\n`;
-  if (itemsMissingCost > 0) {
-    csv += `"NOTE","${itemsMissingCost} sold unit(s) had no costPrice set — profit figure above is a minimum estimate, not exact"\n`;
-  }
-
-  return { csv, totalOrders: orders.length, totalRevenue: totalCOD, totalDelivery, totalNetStore, totalCostOfGoods, netProfit: Math.max(0, totalNetStore - totalCostOfGoods), itemsMissingCost };
+  return orders;
 }
 
-// 🔒 (إصلاح #9 — التقارير حصراً للمشرف العام) كانت متاحة لأي مشرف صيدلية (assertAdmin
-// فقط)، بينما التقرير المالي يحتوي بيانات حساسة (التكلفة، صافي الربح). أصبحت الآن مقيَّدة
-// بـ isSuperAdmin() حصراً، والزر نفسه يُخفى عن المشرف العادي في الواجهة (admin.html).
+const fmtReportNum = (n) => Number(n || 0).toLocaleString('en-US');
+
+async function buildDetailedOrdersCSV() {
+  const source = await getReportSourceOrders();
+  const orders = filterOrdersForReport(source);
+  const { rows, totals } = computeReportRows(orders);
+  const q = (v) => `"${csvSafeField(v)}"`;
+  const lines = [];
+  lines.push([q(`تقرير مبيعات ${pharmacyProfile.name || currentPharmacyId}`)].join(','));
+  lines.push([q('الفترة'), q(reportPeriodLabel())].join(','));
+  lines.push([q('تاريخ التقرير'), q(reportFormatDate({ date: new Date().toISOString() }))].join(','));
+  lines.push('');
+  lines.push([q('عدد الطلبات (بدون الملغاة)'), totals.orders].join(','));
+  lines.push([q('مبيعات المنتجات (بعد الخصم، بدون توصيل)'), totals.grand - totals.delivery].join(','));
+  lines.push([q('أجور التوصيل'), totals.delivery].join(','));
+  lines.push([q('إجمالي المقبوض (مع التوصيل)'), totals.grand].join(','));
+  lines.push([q('تكلفة البضاعة'), totals.cost].join(','));
+  lines.push([q('صافي الربح (بدون التوصيل)'), totals.profit].join(','));
+  if (totals.cancelled) lines.push([q('طلبات ملغاة (غير محسوبة)'), totals.cancelled].join(','));
+  if (totals.missingCostOrders) lines.push([q('تنبيه'), q(`${totals.missingCostOrders} طلب فيه منتج بلا سعر تكلفة — الربح أعلى من الحقيقي لهذه الطلبات`)].join(','));
+  lines.push('');
+  lines.push(['رقم الطلب', 'التاريخ', 'اسم الزبون', 'رقم الهاتف', 'العنوان', 'المنتجات', 'مجموع المنتجات', 'الخصم', 'أجرة التوصيل', 'الإجمالي مع التوصيل', 'تكلفة البضاعة', 'صافي الربح', 'الحالة', 'ملاحظة'].map(q).join(','));
+  rows.forEach(r => {
+    lines.push([
+      q(r.id), q(r.date), q(r.name), q(r.phone), q(r.address), q(r.items),
+      r.itemsTotal, r.discount, r.delivery, r.grand,
+      r.cancelled ? 0 : r.cost, r.cancelled ? 0 : r.profit,
+      q(r.status), q(r.cancelled ? 'ملغي — غير محسوب' : (r.missing ? 'تكلفة ناقصة' : ''))
+    ].join(','));
+  });
+  return { csv: lines.join('\r\n'), totals, rowsCount: rows.length };
+}
+
+async function buildOrdersReportHTML() {
+  const source = await getReportSourceOrders();
+  const orders = filterOrdersForReport(source);
+  const { rows, totals } = computeReportRows(orders);
+  const esc = (v) => sanitizeText(String(v == null ? '' : v));
+  const card = (label, value, color) => `<div class="card"><div class="lbl">${label}</div><div class="val" style="color:${color || '#111'}">${value}</div></div>`;
+  const body = rows.map(r => `
+    <tr class="${r.cancelled ? 'cancelled' : ''}">
+      <td>${esc(r.id)}</td><td>${esc(r.date)}</td><td>${esc(r.name)}</td><td dir="ltr">${esc(r.phone)}</td>
+      <td>${esc(r.address)}</td><td>${esc(r.items)}</td>
+      <td class="n">${fmtReportNum(r.itemsTotal)}</td><td class="n">${r.discount ? fmtReportNum(r.discount) : '—'}</td>
+      <td class="n">${fmtReportNum(r.delivery)}</td><td class="n b">${fmtReportNum(r.grand)}</td>
+      <td class="n">${r.cancelled ? '—' : fmtReportNum(r.cost)}</td>
+      <td class="n b ${r.profit < 0 ? 'neg' : 'pos'}">${r.cancelled ? '—' : fmtReportNum(r.profit)}${r.missing && !r.cancelled ? ' *' : ''}</td>
+      <td>${esc(r.status)}${r.cancelled ? ' (غير محسوب)' : ''}</td>
+    </tr>`).join('');
+  return `<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تقرير مبيعات ${esc(pharmacyProfile.name || currentPharmacyId)}</title>
+<style>
+  body{font-family:-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;background:#f6f7f9;color:#111;margin:0;padding:18px}
+  h1{margin:0 0 4px;font-size:22px} .sub{color:#666;font-size:13px;margin-bottom:14px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+  .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px}
+  .lbl{font-size:12px;color:#666;margin-bottom:6px} .val{font-size:20px;font-weight:800}
+  .wrap{overflow-x:auto;background:#fff;border:1px solid #e5e7eb;border-radius:12px}
+  table{border-collapse:collapse;width:100%;min-width:1100px;font-size:13px}
+  th{background:#111827;color:#fff;padding:9px 8px;text-align:right;position:sticky;top:0;white-space:nowrap}
+  td{padding:8px;border-top:1px solid #eee;vertical-align:top}
+  tr:nth-child(even) td{background:#fafafa} tr.cancelled td{color:#9ca3af;text-decoration:line-through}
+  .n{text-align:left;white-space:nowrap;font-variant-numeric:tabular-nums} .b{font-weight:800} .pos{color:#15803d} .neg{color:#b91c1c}
+  .note{margin-top:12px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px;font-size:13px}
+  @media print{body{background:#fff;padding:0}.wrap{border:0}th{position:static}}
+</style></head><body>
+<h1>📊 تقرير مبيعات ${esc(pharmacyProfile.name || currentPharmacyId)}</h1>
+<div class="sub">الفترة: ${esc(reportPeriodLabel())} — أُنشئ في ${esc(reportFormatDate({ date: new Date().toISOString() }))} — المبالغ بالدينار العراقي</div>
+<div class="cards">
+  ${card('عدد الطلبات', totals.orders)}
+  ${card('مبيعات المنتجات', fmtReportNum(totals.grand - totals.delivery))}
+  ${card('أجور التوصيل', fmtReportNum(totals.delivery))}
+  ${card('إجمالي المقبوض', fmtReportNum(totals.grand), '#1d4ed8')}
+  ${card('تكلفة البضاعة', fmtReportNum(totals.cost))}
+  ${card('صافي الربح', fmtReportNum(totals.profit), totals.profit < 0 ? '#b91c1c' : '#15803d')}
+</div>
+<div class="wrap"><table>
+<thead><tr><th>رقم الطلب</th><th>التاريخ</th><th>الزبون</th><th>الهاتف</th><th>العنوان</th><th>المنتجات</th><th>مجموع المنتجات</th><th>الخصم</th><th>التوصيل</th><th>الإجمالي مع التوصيل</th><th>التكلفة</th><th>صافي الربح</th><th>الحالة</th></tr></thead>
+<tbody>${body || '<tr><td colspan="13" style="text-align:center;padding:24px;color:#666">لا توجد طلبات ضمن هذا الفلتر</td></tr>'}</tbody>
+</table></div>
+${totals.cancelled ? `<div class="note">يوجد ${totals.cancelled} طلب ملغي ظاهر بالجدول بخط مشطوب وغير محسوب بالمجاميع.</div>` : ''}
+${totals.missingCostOrders ? `<div class="note">* ${totals.missingCostOrders} طلب فيه منتج بلا سعر تكلفة، لذلك صافي الربح لهذه الطلبات أعلى من الحقيقي. أضيفي سعر التكلفة للمنتجات لتصبح الأرباح دقيقة.</div>` : ''}
+<div class="note" style="color:#374151;background:#f3f4f6;border-color:#e5e7eb">صافي الربح = (إجمالي الطلب − أجرة التوصيل) − تكلفة البضاعة وقت البيع. أجرة التوصيل لا تُحتسب ربحاً.</div>
+</body></html>`;
+}
+
+function downloadReportFile(content, fileName, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', fileName);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+function reportFileStamp() {
+  return new Date().toISOString().split('T')[0];
+}
+
+// 🔒 (إصلاح #9 — التقارير حصراً للمشرف العام) التقرير المالي يحتوي التكلفة وصافي الربح.
 async function exportOrdersToCSV() {
   if (!isSuperAdmin()) { showToast('⚠️ التقارير المالية متاحة حصراً للمشرف العام للمنصة'); return; }
-  showToast('جاري تصدير وتحميل ملف المبيعات المقسّم حسب الأقسام...');
+  showToast('جاري تجهيز ملف Excel / CSV...');
   try {
     const report = await buildDetailedOrdersCSV();
-    const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit' }).replace(/\s|,/g, '-');
-    const fileName = `Sales_Report_${currentPharmacyId}_${dateStr}.csv`;
+    downloadReportFile('\uFEFF' + report.csv, `Sales_Report_${currentPharmacyId}_${reportFileStamp()}.csv`, 'text/csv;charset=utf-8;');
+    showToast(`تم تنزيل التقرير (${report.rowsCount} طلب) 📊`);
+  } catch (e) { console.error(e); showToast('⚠️ تعذر إنشاء التقرير'); }
+}
 
-    const blob = new Blob(["\uFEFF" + report.csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", fileName);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showToast(`تم تنزيل ${fileName} بنجاح! 📊`);
-  } catch (e) { console.error(e); }
+// 🆕 تقرير بصفحة واضحة (يفتح على الآيباد/الموبايل مباشرة، قابل للطباعة أو الحفظ PDF)
+async function exportOrdersReportHTML() {
+  if (!isSuperAdmin()) { showToast('⚠️ التقارير المالية متاحة حصراً للمشرف العام للمنصة'); return; }
+  showToast('جاري تجهيز التقرير...');
+  try {
+    const html = await buildOrdersReportHTML();
+    downloadReportFile(html, `Sales_Report_${currentPharmacyId}_${reportFileStamp()}.html`, 'text/html;charset=utf-8;');
+    showToast('تم تنزيل التقرير ✅ افتحيه من التنزيلات');
+  } catch (e) { console.error(e); showToast('⚠️ تعذر إنشاء التقرير'); }
 }
 
 // ================= 21. CLINICAL PRODUCTS CRUD, DIRECT UPLOAD & AUTO-CROWDSOURCING =================
@@ -1877,10 +2005,8 @@ async function quickEditPrice(id, currentPrice) {
   const newPriceStr = prompt('تعديل السعر المباشر (د.ع):', currentPrice);
   if (newPriceStr === null) return;
   const newPrice = Number(newPriceStr.trim());
-  if (isNaN(newPrice) || newPrice <= 0) {
-    showToast('يرجى إدخال سعر صحيح أكبر من صفر');
-    return;
-  }
+  const priceError = validateProductPrice(newPrice);
+  if (priceError) { showToast(priceError); return; }
   try {
     if (!db) throw new Error('لا يوجد اتصال بقاعدة البيانات');
     await dbPaths.productsCol().doc(String(id)).set({ price: newPrice }, { merge: true });
@@ -2160,6 +2286,8 @@ async function saveAdminQuickEdit() {
   const name = document.getElementById('quickEditProdName').value.trim();
   const brand = document.getElementById('quickEditProdBrand').value.trim();
   const price = Number(document.getElementById('quickEditProdPrice').value);
+  const quickPriceError = validateProductPrice(price);
+  if (quickPriceError) { showToast(quickPriceError); return; }
   const oldPriceVal = document.getElementById('quickEditProdOldPrice') ? document.getElementById('quickEditProdOldPrice').value.trim() : '';
   const oldPrice = oldPriceVal ? Number(oldPriceVal) : null;
   const costPriceVal = document.getElementById('quickEditProdCostPrice') ? document.getElementById('quickEditProdCostPrice').value.trim() : '';
@@ -2282,6 +2410,8 @@ async function handleAdminProductSave(e) {
     showToast('يرجى التأكد من كتابة الاسم والماركة والسعر');
     return;
   }
+  const priceError = validateProductPrice(price);
+  if (priceError) { showToast(priceError); return; }
 
   const payload = {
     name: sanitizeText(name),
@@ -2861,63 +2991,6 @@ function renderPharmacySubscriptionCard() {
 function sendRenewalReceiptWhatsApp(price) {
   const adminMsg = encodeURIComponent(`🌸 *طلب تجديد اشتراك صيدلية*\nاسم الصيدلية: ${pharmacyProfile.name}\nالمعرف: ${currentPharmacyId}\nالمبلغ المحول: ${price.toLocaleString()} د.ع\nتاريخ الطلب: ${new Date().toLocaleDateString('ar-IQ')}\nيرجى اعتماد التجديد.`);
   window.open(`https://wa.me/9647813703288?text=${adminMsg}`, '_blank');
-}
-
-// ================= 30. THEME, LOGO, LOADER & BRANDING CUSTOMIZATION =================
-async function handleSaveCustomization(e) {
-  e.preventDefault();
-  if (!assertAdmin(showToast)) return;
-
-  const getVal = (id, defaultVal = '') => {
-    const el = document.getElementById(id);
-    return el ? el.value.trim() : defaultVal;
-  };
-  const getChecked = (id, defaultVal = false) => {
-    const el = document.getElementById(id);
-    return el ? el.checked : defaultVal;
-  };
-
-  const primaryColor = getVal('adminPrimaryColorPicker', pharmacyProfile.primaryColor || '#E85D8A');
-  const deliveryStd = Number(getVal('adminDeliveryStandard', 4000));
-  const deliveryExp = Number(getVal('adminDeliveryExpress', 8000));
-
-  const newSettings = {
-    name: sanitizeText(getVal('adminPharmacyNameInput', pharmacyProfile.name || 'الصيدلية')),
-    logoUrl: sanitizeUrl(getVal('adminPharmacyLogoInput', pharmacyProfile.logoUrl || '')),
-    primaryColor: primaryColor,
-    deliveryFeeStandard: deliveryStd,
-    deliveryFeeExpress: deliveryExp,
-    showAnnouncement: getChecked('adminShowAnnouncement', true),
-    announcementText: sanitizeText(getVal('adminAnnouncementText', '✨ أهلاً بكم في متجرنا الإلكتروني 🌸')),
-    showPharmacistBanner: getChecked('adminShowPharmacistBanner', true),
-    pharmacistCtaTitle: sanitizeText(getVal('adminPharmacistTitleInput', 'استشر الصيدلي مجاناً 🩺')),
-    pharmacistCtaDesc: sanitizeText(getVal('adminPharmacistDescInput', 'تحدث مع الصيدلي المختص مباشرة للحصول على تشخيص دقيق لروتينك وروشتتك')),
-    socialWhatsapp: sanitizeText(getVal('adminSocialWhatsappInput', '9647813703288')),
-    socialTelegram: sanitizeText(getVal('adminSocialTelegramInput', '')),
-    socialInstagram: sanitizeText(getVal('adminSocialInstagramInput', '')),
-    socialPhone: sanitizeText(getVal('adminSocialPhoneInput', '07813703288')),
-    heroMainTitle: sanitizeText(getVal('adminHeroMainTitle', 'متجر الصيدلية')),
-    heroSubTitle: sanitizeText(getVal('adminHeroSubTitle', 'نحن هنا لتحسين صحتكم وجمالكم')),
-    heroDescTitle: sanitizeText(getVal('adminHeroDescTitle', 'منتجات أصلية ومعتمدة 100%')),
-    bannerImgUrl: sanitizeUrl(getVal('adminBannerImgInput', 'https://imgdb.io/i/EQ4D9ag.png')),
-    loaderImgUrl: sanitizeUrl(getVal('adminLoaderImgInput', pharmacyProfile.loaderImgUrl || '')),
-    loaderCircleSize: Number(getVal('adminLoaderCircleSize', pharmacyProfile.loaderCircleSize || 150)),
-    loaderTitle: sanitizeText(getVal('adminLoaderTitleInput', pharmacyProfile.loaderTitle || 'جاري تحميل الموقع')),
-    loaderSubText: sanitizeText(getVal('adminLoaderSubInput', pharmacyProfile.loaderSubText || 'انتظر لحظة من فضلك ..')),
-    // 🌟 (إصلاح #4) يقرأ القيمة من الحقل النصي المتزامن مع منتقي الألوان المرئي adminLoaderBgColorPicker
-    loaderBgColor: sanitizeText(getVal('adminLoaderBgColor', pharmacyProfile.loaderBgColor || 'linear-gradient(160deg, #FDF2F6 0%, #FFF9FB 45%, #FBEAF1 100%)')),
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-  };
-
-  pharmacyProfile = { ...pharmacyProfile, ...newSettings };
-  saveLocalState();
-  applyStoreSettings();
-  showToast('تم تطبيق وحفظ الهوية والشعار وشاشة التحميل سحابياً! ✨');
-
-  try {
-    if (db) await dbPaths.pharmacyDoc().set(newSettings, { merge: true });
-    refreshStorefrontCache();
-  } catch (err) { console.warn(err); }
 }
 
 async function handleSendBroadcastNotification(e) {
