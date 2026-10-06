@@ -47,6 +47,7 @@ export default defineConfig(({ mode }) => {
       __FIREBASE_MEASUREMENT_ID__: JSON.stringify(env.VITE_FIREBASE_MEASUREMENT_ID || ''),
       __WORKER_API_BASE__: JSON.stringify(env.VITE_WORKER_API_BASE || ''),
       __SUPER_ADMIN_EMAIL__: JSON.stringify(env.VITE_SUPER_ADMIN_EMAIL || ''),
+      __TURNSTILE_SITE_KEY__: JSON.stringify(env.VITE_TURNSTILE_SITE_KEY || ''),
   };
 
   return {
