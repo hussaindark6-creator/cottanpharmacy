@@ -40,6 +40,13 @@ function getActivePharmacyId() {
   const isPlatformHost = ignoredHostingDomains.some(d => hostname === d || hostname.endsWith('.' + d));
 
   if (!isPlatformHost) {
+    // 🌐 دومين/نطاق فرعي مربوط من لوحة السوبر أدمن (system/custom_domains): نسأل الووركر مرة واحدة ونحفظ النتيجة
+    // محلياً 24 ساعة (والنتيجة السلبية ساعة) — وإلا يُتجاهل أي دومين مخصص ويُفتح متجر الصيدلية الافتراضية.
+    const mapped = resolveCustomDomainTenant(hostname);
+    if (mapped) {
+      sessionStorage.setItem('saas_active_pharmacy_id', mapped);
+      return mapped;
+    }
     const parts = hostname.split('.');
     if (parts.length >= 3 && parts[0] !== 'www') {
       const sub = parts[0].toLowerCase().trim();
@@ -49,6 +56,34 @@ function getActivePharmacyId() {
   }
 
   return DEFAULT_PHARMACY_ID;
+}
+
+// يعمل متزامناً (XHR) لأن معرّف الصيدلية مطلوب قبل أي تهيئة أخرى، لكن فقط عند أول زيارة للدومين أو بعد انتهاء
+// الكاش المحلي. (WORKER_API_BASE معرَّف لاحقاً بالملف فنعيد حساب عنوان الووركر هنا لتفادي TDZ.)
+function resolveCustomDomainTenant(hostname) {
+  const cacheKey = 'saas_domain_map_' + hostname;
+  try {
+    const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+    if (cached && Date.now() < cached.expires) return cached.tenantId || null;
+  } catch (e) {}
+  try {
+    const base = typeof __WORKER_API_BASE__ !== 'undefined' && __WORKER_API_BASE__ ? __WORKER_API_BASE__ : "https://cottanbackend.hussaindark6.workers.dev";
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', `${base}/api/tenant/lookup-by-domain?hostname=${encodeURIComponent(hostname)}`, false);
+    xhr.timeout = 0;
+    xhr.send(null);
+    let tenantId = null;
+    if (xhr.status === 200) {
+      const data = JSON.parse(xhr.responseText);
+      if (data && data.success && data.tenantId) tenantId = String(data.tenantId).toLowerCase().trim();
+    }
+    if (xhr.status === 200 || xhr.status === 404) {
+      localStorage.setItem(cacheKey, JSON.stringify({ tenantId, expires: Date.now() + (tenantId ? 24 : 1) * 3600 * 1000 }));
+    }
+    return tenantId;
+  } catch (e) {
+    return null;
+  }
 }
 
 const currentPharmacyId = getActivePharmacyId();
@@ -75,6 +110,9 @@ function patchTenantLinks() {
 // typeof على معرّف غير معرَّف أصلاً لا يرمي خطأ إطلاقاً، ويرجع 'undefined' بأمان، فتُستخدم
 // القيمة الاحتياطية المطابقة للقيمة الأصلية تماماً — صفر خطر بأي سيناريو.
 const WORKER_API_BASE = typeof __WORKER_API_BASE__ !== 'undefined' && __WORKER_API_BASE__ ? __WORKER_API_BASE__ : "https://cottanbackend.hussaindark6.workers.dev";
+// Cloudflare Turnstile (اختياري): ضعي VITE_TURNSTILE_SITE_KEY بملف .env لتفعيل حماية الطلبات من البوتات
+const TURNSTILE_SITE_KEY = typeof __TURNSTILE_SITE_KEY__ !== 'undefined' && __TURNSTILE_SITE_KEY__ ? __TURNSTILE_SITE_KEY__ : '';
+const ABSOLUTE_MAX_UNIT_PRICE = 50000000;
 const SUPER_ADMIN_EMAIL = typeof __SUPER_ADMIN_EMAIL__ !== 'undefined' && __SUPER_ADMIN_EMAIL__ ? __SUPER_ADMIN_EMAIL__ : "hussaindark6@gmail.com";
 
 const firebaseConfig = {
@@ -158,9 +196,22 @@ function isSuperAdmin() {
   return !!(user && user.email && user.email.toLowerCase().trim() === SUPER_ADMIN_EMAIL.toLowerCase().trim());
 }
 
+// 🔐 لم يعد إيميل المالك يُرسل للزوار نصاً (الووركر يرسل SHA-256 فقط)؛ نحسب تجزئة إيميل المستخدم الحالي مرة
+// واحدة عند تسجيل الدخول ونقارنها. المقارنة بالإيميل الصريح تبقى تعمل لمن يقرأ مستند الصيدلية مباشرة (الطاقم).
+let currentUserEmailHash = '';
+async function computeEmailHash(email) {
+  try {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(email || '').toLowerCase().trim()));
+    return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+  } catch (e) { return ''; }
+}
+
 function isCurrentUserAdmin() {
   if (isSuperAdmin()) return true;
-  if (currentUser && pharmacyProfile.adminEmail && currentUser.email.toLowerCase().trim() === pharmacyProfile.adminEmail.toLowerCase().trim()) {
+  if (currentUser && currentUser.email && pharmacyProfile.adminEmail && currentUser.email.toLowerCase().trim() === pharmacyProfile.adminEmail.toLowerCase().trim()) {
+    return true;
+  }
+  if (currentUser && currentUserEmailHash && pharmacyProfile.adminEmailHash && currentUserEmailHash === pharmacyProfile.adminEmailHash) {
     return true;
   }
   if (!currentUser || !currentStaffData) return false;
@@ -538,6 +589,7 @@ function openBestSellers() {
 }
 
 function renderCurrentActiveView() {
+  if (typeof updateOffersTabCount === 'function') updateOffersTabCount();
   if (currentView === 'home') renderHome();
   else if (currentView === 'listing') renderListing();
   else if (currentView === 'categories') renderModernCategories();
@@ -676,26 +728,46 @@ function renderWishlist() {
   renderProductGrid('wishlistGrid', list, 'قائمتك المفضلة فارغة حالياً 🌸');
 }
 
+// 🔐 الإلغاء يمر عبر الووركر (قواعد Firestore لم تعد تسمح للزبون بتعديل طلبه مباشرة): يتحقق أن الطلب
+// طلبكِ، ويُرجع المنتجات للمخزون بمعاملة ذرية. الطلب الذي أُرسل كضيف (بلا تسجيل دخول) لا يمكن إلغاؤه
+// آلياً — يُطلب من الزبون التواصل مع الصيدلية.
 async function cancelMyOrder(orderId) {
-  if (!confirm('هل أنتِ متأكدة من رغبتكِ في إلغاء هذا الطلب؟')) return;
   const ord = myOrders.find(o => String(o.id) === String(orderId));
   if (!ord) return;
 
-  ord.status = 'طلب ملغي من قبل الزبون ❌';
-  saveLocalState();
-  renderMyOrders();
-
-  if (db) {
-    try {
-      await dbPaths.ordersCol().doc(String(orderId)).set({
-        status: 'طلب ملغي من قبل الزبون ❌',
-        cancelledAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
-      showToast('تم إلغاء طلبكِ بنجاح ❌');
-    } catch (err) {
-      console.warn("Cancellation sync fallback:", err);
-    }
+  const user = auth ? auth.currentUser : currentUser;
+  if (!user) {
+    showToast('لإلغاء الطلب سجّلي الدخول بحسابكِ أولاً، أو تواصلي مع الصيدلية عبر الواتساب 📞');
+    return;
   }
+  if (!confirm('هل أنتِ متأكدة من رغبتكِ في إلغاء هذا الطلب؟')) return;
+
+  try {
+    const token = await user.getIdToken();
+    const res = await fetch(`${WORKER_API_BASE}/api/orders/cancel`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Pharmacy-Id': currentPharmacyId, 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ orderId: String(orderId) })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!data.success) { showToast('⚠️ ' + (data.message || 'تعذر إلغاء الطلب')); return; }
+    ord.status = 'طلب ملغي من قبل الزبون ❌';
+    saveLocalState();
+    renderMyOrders();
+    showToast('تم إلغاء طلبكِ بنجاح ❌');
+  } catch (err) {
+    console.warn('Cancel order failed:', err);
+    showToast('⚠️ تعذر الاتصال بالسيرفر لإلغاء الطلب. حاولي مجدداً.');
+  }
+}
+
+// 🛡️ تحقق من السعر قبل الحفظ (خطأ إدخال مثل 8 مليار أفسد التقارير): سقف مطلق + سقف باقة الصيدلية للمشرف العادي
+function validateProductPrice(price) {
+  if (!Number.isFinite(price) || price <= 0) return 'يرجى إدخال سعر صحيح أكبر من صفر';
+  if (price > ABSOLUTE_MAX_UNIT_PRICE) return `السعر مرتفع جداً (الحد الأقصى ${ABSOLUTE_MAX_UNIT_PRICE.toLocaleString()} د.ع) — تأكدي من عدد الأصفار`;
+  const cap = Number(pharmacyProfile.maxPriceCap) || 150000;
+  if (!isSuperAdmin() && price > cap) return `السعر يتجاوز الحد الأقصى المسموح بباقتكِ (${cap.toLocaleString()} د.ع)`;
+  return '';
 }
 
 // ================= 26. PRODUCT GRID & DETAIL =================
@@ -1044,6 +1116,48 @@ async function loadStorefrontSnapshot() {
   }
 }
 
+// 🔐 اتصالات Firestore اللحظية صارت حصراً للوحة الأدمن وبعد التحقق من صلاحية المشرف (قواعد Firestore لم
+// تعد تسمح بأي قراءة عامة). تُربط مرة واحدة فقط، وتُستدعى من onAuthStateChanged بعد تأكيد الصلاحية.
+let adminLiveListenersAttached = false;
+function attachAdminLiveListenersOnce() {
+  if (adminLiveListenersAttached || !isFirebaseConfigured || !db) return;
+  adminLiveListenersAttached = true;
+
+  dbPaths.pharmacyDoc().onSnapshot(doc => {
+    if (doc.exists) applyPharmacyDocData(doc.data());
+  }, err => console.warn(err));
+
+  dbPaths.categoriesCol().onSnapshot(snap => {
+    if (!snap.empty) {
+      const loaded = [];
+      snap.forEach(d => loaded.push({ id: d.id, ...d.data() }));
+      applyCategoriesData(loaded);
+    }
+  }, err => console.warn(err));
+
+  dbPaths.bundlesCol().onSnapshot(snap => {
+    if (!snap.empty) {
+      const loaded = [];
+      snap.forEach(d => loaded.push({ id: d.id, ...d.data() }));
+      applyBundlesData(loaded);
+    }
+  }, err => console.warn(err));
+
+  listenToNotifications();
+}
+
+// 🛡️ (مقاومة الأعطال) إن فشل الووركر مؤقتاً لا نعود لقراءة Firestore مباشرة (كان ذلك يضاعف القراءات لحظة العطل
+// تماماً). نعتمد على النسخة المحفوظة محلياً ونعيد المحاولة 3 مرات بفواصل متزايدة فقط.
+function retryWithBackoff(fn, attempt = 0) {
+  const delays = [15000, 60000, 180000];
+  if (attempt >= delays.length) return;
+  setTimeout(async () => {
+    let ok = false;
+    try { ok = await fn(); } catch (e) { ok = false; }
+    if (!ok) retryWithBackoff(fn, attempt + 1);
+  }, delays[attempt]);
+}
+
 function initFirestoreSync() {
   if (!isFirebaseConfigured || !db) return Promise.resolve();
 
@@ -1055,79 +1169,15 @@ function initFirestoreSync() {
     } catch (e) {}
   }
 
-  function attachLiveListeners() {
-    const pharmacyDocPromise = new Promise(resolve => {
-      let resolved = false;
-      dbPaths.pharmacyDoc().onSnapshot(doc => {
-        if (doc.exists) applyPharmacyDocData(doc.data());
-        if (!resolved) { resolved = true; resolve(); }
-      }, err => { console.warn(err); if (!resolved) { resolved = true; resolve(); } });
-    });
+  // الجميع (زوار وأدمن) يأخذون لقطة المتجر من الووركر (R2 بـ ETag): صفر قراءات Firestore.
+  const baseDataPromise = loadStorefrontSnapshot().then(ok => {
+    if (!ok) retryWithBackoff(loadStorefrontSnapshot);
+  });
 
-    const categoriesPromise = new Promise(resolve => {
-      let resolved = false;
-      dbPaths.categoriesCol().onSnapshot(snap => {
-        if (!snap.empty) {
-          const loaded = [];
-          snap.forEach(d => loaded.push({ id: d.id, ...d.data() }));
-          applyCategoriesData(loaded);
-        }
-        if (!resolved) { resolved = true; resolve(); }
-      }, err => { console.warn(err); if (!resolved) { resolved = true; resolve(); } });
-    });
-
-    const bundlesPromise = new Promise(resolve => {
-      let resolved = false;
-      dbPaths.bundlesCol().onSnapshot(snap => {
-        if (!snap.empty) {
-          const loaded = [];
-          snap.forEach(d => loaded.push({ id: d.id, ...d.data() }));
-          applyBundlesData(loaded);
-        }
-        if (!resolved) { resolved = true; resolve(); }
-      }, err => { console.warn(err); if (!resolved) { resolved = true; resolve(); } });
-    });
-
-    listenToNotifications();
-    return [pharmacyDocPromise, categoriesPromise, bundlesPromise];
-  }
-
-  const baseDataPromise = IS_ADMIN_PAGE
-    ? Promise.allSettled(attachLiveListeners())
-    : loadStorefrontSnapshot().then(ok => ok ? null : Promise.allSettled(attachLiveListeners()));
-
-  // 🛡️ (عزل الأسعار عن الزبائن + توفير القراءات) كل المستخدمين يحصلون على المنتجات من كتالوج R2 فقط.
-  // لا اتصال لحظي بكل منتجات Firestore بعد الآن حتى للأدمن: كتالوج R2 يتحدث فوراً مع كل حفظ
-  // أدمن (تحديث/إضافة/أرشفة) ومع كل طلب (المخزون)، وهو مرتبط بـ ETag فلا تظهر نسخة قديمة أبداً.
-  // الأدمن يتزامن مع أجهزة الطاقم الأخرى عبر إعادة الجلب عند العودة للتبويب (302 رخيصة).
-  function applyProductsSnapshot(snap) {
-    if (!snap.empty) {
-      const loaded = [];
-      snap.forEach(doc => loaded.push({ id: doc.id, ...doc.data() }));
-      products = loaded;
-
-      products.forEach(p => {
-        if (p.brand && !brandsData[p.brand]) {
-          brandsData[p.brand] = { name: p.brand, color: hashColor(p.brand), logoUrl: '' };
-        }
-      });
-
-      saveLocalState();
-      renderCurrentActiveView();
-      renderModernCategories();
-      checkLowStockAlerts();
-      if (isCurrentUserAdmin()) {
-        fetchRealAnalytics();
-        if (typeof renderAdminProductManagementGrid === 'function') renderAdminProductManagementGrid();
-      }
-    }
-  }
-
+  // المنتجات من كتالوج R2 فقط (يتحدث فوراً مع كل حفظ أدمن ومع كل طلب، وبـ ETag فلا تظهر نسخة قديمة).
+  // الأدمن يتزامن مع أجهزة الطاقم الأخرى عبر إعادة الجلب عند العودة للتبويب.
   const catalogPromise = fetchCatalogFromR2().then(success => {
-    if (!success) {
-      // احتياط: إن تعذر جلب كاش R2 (سيرفر غير مهيأ)، نجلب لقطة واحدة غير حية من Firestore
-      return dbPaths.productsCol().get().then(applyProductsSnapshot).catch(err => console.warn(err));
-    }
+    if (!success) retryWithBackoff(() => fetchCatalogFromR2());
   });
 
   recordRealVisit();
@@ -1485,6 +1535,7 @@ if (isFirebaseConfigured && auth) {
 
   auth.onAuthStateChanged(async (user) => {
     currentUser = user;
+    currentUserEmailHash = (user && user.email) ? await computeEmailHash(user.email) : '';
     if (user) {
       await verifyStaffPermissions(user);
     } else {
@@ -1500,7 +1551,10 @@ if (isFirebaseConfigured && auth) {
     }
 
     // 🛡️ (توفير قراءات) لا اشتراك لحظي بكل المنتجات للأدمن بعد الآن — الكتالوج من R2 (يتحدث فوراً).
-    if (user && isCurrentUserAdmin()) setupAdminCatalogFocusRefresh();
+    if (user && isCurrentUserAdmin()) {
+      setupAdminCatalogFocusRefresh();
+      if (IS_ADMIN_PAGE) attachAdminLiveListenersOnce();
+    }
 
     // ⚡ (تحميل كسول) بمجرد تأكد صلاحيات الأدمن، نهيّئ فقط تبويب الإحصائيات الظاهر افتراضياً؛
     // بقية التبويبات (الطلبات، بنك المنتجات، الموظفين...) لا تُحمّل إلا عند نقر المشرف عليها فعلياً.
@@ -1544,6 +1598,8 @@ function updateAdminInterfaceState() {
   // exportOrdersToCSV() نفسها (دفاع مزدوج: طبقة واجهة + طبقة منطق).
   const exportReportBtn = document.getElementById('btnExportCsvReport');
   if (exportReportBtn) exportReportBtn.style.display = isSuperAdmin() ? 'inline-flex' : 'none';
+  const exportHtmlBtn = document.getElementById('btnExportHtmlReport');
+  if (exportHtmlBtn) exportHtmlBtn.style.display = isSuperAdmin() ? 'inline-flex' : 'none';
 }
 
 function checkUrlHashForProduct() {
