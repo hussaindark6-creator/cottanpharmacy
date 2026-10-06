@@ -193,11 +193,71 @@ section('6ب. حواجز قراءات Firestore (منع رجوع مصادر ال
     g(/productsCol\(\)\s*\.onSnapshot/.test(code), `${f}: مستمع لحظي على كل المنتجات (يقرأ كل المنتجات بكل فتح)`);
   }
   const sc = read('script.js') || '';
-  g(!/\/api\/storefront/.test(sc), 'script.js: الزوار لا يستخدمون /api/storefront (سيعودون لقراءات Firestore المباشرة)');
+  g(!/\/api\/storefront/.test(sc), 'script.js: الزوار لا يستخدمون /api/storefront');
   g(!/ADMIN_ORDERS_LIMIT/.test(read('admin-panel.js') || ''), 'admin-panel.js: حد قراءة الطلبات ADMIN_ORDERS_LIMIT غير موجود');
   const idxh = read('index.html') || '';
   g(/firebase-messaging-compat/.test(idxh), 'index.html: ما زال يحمّل firebase-messaging غير المستخدم');
   if (!bad) pass('لا قراءات غير محدودة للطلبات/المنتجات، والزوار يستخدمون لقطة المتجر المخزَّنة');
+}
+
+// ===================================================================
+section('6ج. ميزات الواجهة المطلوبة (طلباتي، العروض، إدارة البنك، التقرير)');
+// ===================================================================
+{
+  let bad = 0;
+  const g = (cond, msg) => { if (cond) { fail(msg); bad++; } };
+  const idx = read('index.html') || '', adm = read('admin.html') || '', sf = read('storefront.js') || '', ap = read('admin-panel.js') || '';
+  g(!/id="bn-orders"[^>]*showView\('orders'\)/.test(idx), "index.html: خانة 'طلباتي' غير موجودة بالشريط السفلي");
+  g(!/function getDiscountedProducts/.test(sf), 'storefront.js: تبويب العروض لا يعتمد الخصم التلقائي');
+  g(!/id="masterManageBar"/.test(adm) || !/bulk-upsert/.test(adm) || !/bulk-delete/.test(adm), 'admin.html: أدوات إدارة بنك المنتجات (حذف/رفع JSON) غير مكتملة');
+  g(!/function buildOrdersReportHTML/.test(ap) || !/function computeReportRows/.test(ap), 'admin-panel.js: التقرير المالي الجديد غير موجود');
+  g(/REPORT_GROUP_LABELS\[group\]/.test(ap), 'admin-panel.js: عاد التقرير القديم المقسّم لأقسام');
+  const w = workerFile ? read(workerFile) : null;
+  if (w) {
+    g(!/isPlatformAdminRoute/.test(w), 'worker.js: مسارات المنصة ما زالت تتطلب صيدلية معرَّفة (سبب عدم تحديث بنك المنتجات)');
+    g(!/master-catalog\/bulk-upsert/.test(w) || !/master-catalog\/bulk-delete/.test(w), 'worker.js: مسارات الرفع/الحذف الجماعي لبنك المنتجات مفقودة');
+  }
+  if (!bad) pass('طلباتي بالشريط، العروض تلقائية، إدارة البنك، والتقرير الجديد — كلها موجودة');
+}
+
+// ===================================================================
+section('6د. بوابة الإطلاق (أمان + قراءات + حصص مجانية)');
+// ===================================================================
+{
+  let bad = 0;
+  const g = (cond, msg) => { if (cond) { fail(msg); bad++; } };
+  const w = workerFile ? read(workerFile) : null;
+  const rules = read('firestore.rules') || '';
+  const sc = read('script.js') || '', sf = read('storefront.js') || '', ap = read('admin-panel.js') || '', idx = read('index.html') || '';
+
+  // قواعد: لا قراءة عامة
+  const publicReads = (rules.replace(/\/\/[^\n]*/g, '').match(/allow\s+(?:read|get|list)[^;]*:\s*if\s+true/g) || []);
+  g(publicReads.length > 0, `firestore.rules: ما زالت هناك ${publicReads.length} قاعدة قراءة عامة (if true) — تتيح استنزاف حصة القراءات`);
+  g(!/price <= 50000000/.test(rules), 'firestore.rules: سقف السعر 50 مليون غير مطبّق على المنتجات');
+
+  // الواجهة: لا قراءات Firestore مباشرة للزوار
+  g(/couponsCol\(\)/.test(sf), 'storefront.js: الزبون ما زال يقرأ الكوبونات مباشرة من Firestore');
+  g(/productsCol\(\)\s*\.get\(\)/.test(sc), 'script.js: عاد مسار قراءة كل المنتجات من Firestore (تضخيم القراءات وقت الأعطال)');
+  g(!/attachAdminLiveListenersOnce/.test(sc) || !/IS_ADMIN_PAGE\) attachAdminLiveListenersOnce/.test(sc), 'script.js: مستمعات الأدمن اللحظية يجب أن تُربط بعد التحقق من الصلاحية فقط');
+  g(/dbPaths\.ordersCol\(\)\.doc\([^)]*\)\.set\(\s*\{\s*status/.test(sc + sf + ap), 'تغيير حالة الطلب مباشرة بـ Firestore (يجب عبر الووركر ليُرجع المخزون)');
+  g(!/\/api\/orders\/cancel/.test(sc), 'script.js: إلغاء الزبون لا يمر عبر الووركر');
+  g(!/id="hpWebsite"/.test(idx) || !/getTurnstileToken/.test(sf), 'حماية البوتات (honeypot/Turnstile) غير مكتملة بالواجهة');
+
+  // الووركر
+  if (w) {
+    g(!/GLOBAL_ENV/.test(w) || /&key=\$\{FIREBASE_API_KEY\}`/.test(w), 'worker.js: قراءات الووركر ما زالت تعتمد مفتاح الويب العام بدل حساب الخدمة');
+    g(/checkRateLimitKV\(env,\s*`ip:/.test(w), 'worker.js: محدّد IP العام يكتب بـ KV (يستنزف حصة 1000 كتابة/يوم)');
+    g(!/memRateLimit/.test(w), 'worker.js: محدّد المعدل بالذاكرة غير موجود');
+    g(!/api\/orders\/cancel/.test(w) || !/cancelOrderAndRestoreStock/.test(w), 'worker.js: مسار إلغاء الطلب مع إرجاع المخزون غير موجود');
+    g(!/r2UpdateJson/.test(w) || !/etagMatches/.test(w), 'worker.js: تحديثات R2 بلا حماية تعارض (ETag)');
+    g(!/TURNSTILE_SECRET/.test(w) || !/PIN_PEPPER/.test(w), 'worker.js: دعم Turnstile/PIN_PEPPER غير موجود');
+    g(!/ABSOLUTE_MAX_UNIT_PRICE/.test(w), 'worker.js: سقف السعر المطلق غير مطبّق');
+    g(!/maxUses/.test(w) || !/usedCount/.test(w), 'worker.js: عدّاد استخدام الكوبون غير مطبّق');
+    g(/recordAuditLog\(env, ctx, "طلب شراء جديد/.test(w), 'worker.js: عاد سجل تدقيق KV لكل طلب (استنزاف الحصة)');
+    g(!/emailVerified/.test(w), 'worker.js: لا يشترط إيميلاً موثَّقاً');
+    g(!/adminEmailHash/.test(w), 'worker.js: لقطة المتجر تكشف إيميل المالك للزوار');
+  }
+  if (!bad) pass('بوابة الإطلاق: القواعد مقفلة، الزوار بلا قراءات Firestore، الووركر محصَّن ومعزول عن KV');
 }
 
 // ===================================================================
@@ -220,7 +280,7 @@ section('7. فحص قواعد Firestore');
     /subscriptionExpiry/.test(code) ? pass('pharmacies: حقول الاشتراك محمية من تعديل المالك') : fail('pharmacies: يجب حماية subscriptionExpiry/isActive من تعديل مالك الصيدلية');
     /email_verified/.test(code) ? pass('القواعد تشترط إيميلاً موثَّقاً للمشرفين') : fail('القواعد لا تشترط email_verified');
     /allow\s+(?:create|update|write|delete)[^;]*:\s*if\s+true/.test(code) ? fail('يوجد allow كتابة بشرط true (مفتوحة للجميع)!') : pass('لا توجد كتابة مفتوحة للجميع');
-    /match \/orders\/\{orderId\}[\s\S]*?hasOnly\(\['status', 'cancelledAt'\]\)/.test(code) ? pass('orders: إلغاء الزبون مقيّد بحقلي status/cancelledAt') : fail('orders: تعديل الزبون غير مقيّد بالحقول');
+    (() => { const m = code.match(/match \/orders\/\{orderId\}[\s\S]*?allow update:[^;]*;/); return m && !/request\.auth\.uid/.test(m[0].slice(m[0].lastIndexOf('allow update'))); })() ? pass('orders: تعديل الطلب للطاقم فقط (إلغاء الزبون عبر الووركر)') : fail('orders: تعديل الطلب يجب أن يكون للطاقم فقط');
   }
 }
 
