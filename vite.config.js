@@ -15,7 +15,10 @@ import { copyFileSync, readFileSync, writeFileSync, mkdirSync, existsSync } from
 // 🆕 المرحلة 3: ملفات السكربتات الكلاسيكية (بلا type="module") لا يضمّنها Vite ولا ينسخها إلى dist
 // تلقائياً عند البناء. هذه الإضافة تنسخها بعد البناء مع تطبيق نفس قيم "define" (استبدال نصي وقت
 // البناء)، حتى يعمل الموقع المنشور من dist بنفس سلوك التشغيل المحلي تماماً. لا تؤثر على npm run dev.
-const CLASSIC_SCRIPTS = ['script.js', 'storefront.js', 'storefront-stubs.js', 'admin-panel.js', 'admin-stubs.js'];
+const CLASSIC_SCRIPTS = ['script.js', 'storefront.js', 'storefront-stubs.js', 'admin-stubs.js',
+  'admin-core.js', 'admin-products.js', 'admin-catalog-tools.js', 'admin-orders.js', 'admin-reports.js', 'admin-marketing.js', 'admin-settings.js',
+  'admin-page.js',
+  'super-admin-core.js', 'super-admin-pharmacies.js', 'super-admin-catalog.js', 'super-admin-billing.js', 'super-admin-reports.js', 'super-admin-platform.js'];
 function copyClassicScripts(defineMap) {
   return {
     name: 'copy-classic-scripts',
