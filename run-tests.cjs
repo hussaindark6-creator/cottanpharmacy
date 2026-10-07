@@ -4,8 +4,8 @@
    الاستخدام (من مجلد المشروع):   npm test      أو      node run-tests.cjs
 
    نسخة محدّثة لبنية المشروع الحالية (Vite + سكربتات كلاسيكية مقسّمة):
-     index.html  : admin-stubs.js → storefront.js → script.js   (+ admin-panel.js كسولاً للأدمن)
-     admin.html  : storefront-stubs.js → admin-panel.js → script.js
+     index.html  : admin-stubs.js → storefront.js → script.js   (+ ملفات admin-*.js كسولاً للأدمن)
+     admin.html  : storefront-stubs.js → admin-*.js (7 ملفات) → admin-page.js → script.js
    (الامتداد .cjs ضروري لأن package.json فيه "type": "module".)
    ========================================================== */
 const fs = require('fs');
@@ -22,14 +22,27 @@ const warn = (m) => { warnCount++; console.log(`  ⚠️  ${m}`); };
 const section = (t) => console.log(`\n=== ${t} ===`);
 const read = (n) => { const p = path.join(ROOT, n); return fs.existsSync(p) ? fs.readFileSync(p, 'utf8') : null; };
 
-const CLASSIC = ['script.js', 'storefront.js', 'storefront-stubs.js', 'admin-panel.js', 'admin-stubs.js'];
+const ADMIN_FILES = ['admin-core.js', 'admin-products.js', 'admin-catalog-tools.js', 'admin-orders.js', 'admin-reports.js', 'admin-marketing.js', 'admin-settings.js'];
+const SUPER_FILES = ['super-admin-core.js', 'super-admin-pharmacies.js', 'super-admin-catalog.js', 'super-admin-billing.js', 'super-admin-reports.js', 'super-admin-platform.js'];
+const CLASSIC = ['script.js', 'storefront.js', 'storefront-stubs.js', 'admin-stubs.js', ...ADMIN_FILES, 'admin-page.js', ...SUPER_FILES];
+const adminText = () => ADMIN_FILES.map(f => read(f) || '').join('\n');
 const PAGES = {
-  'index.html': { loads: ['admin-stubs.js', 'storefront.js', 'script.js'], lazy: ['admin-panel.js'] },
-  'admin.html': { loads: ['storefront-stubs.js', 'admin-panel.js', 'script.js'], lazy: [] },
+  'index.html': { loads: ['admin-stubs.js', 'storefront.js', 'script.js'], lazy: ADMIN_FILES },
+  'admin.html': { loads: ['storefront-stubs.js', ...ADMIN_FILES, 'admin-page.js', 'script.js'], lazy: [] },
+  'super-admin.html': { loads: SUPER_FILES, lazy: [], standalone: true },
 };
 
 // ---------- أدوات مساعدة ----------
-const declsOf = (js) => [...js.matchAll(/^(?:async\s+)?function\s*\*?\s*([A-Za-z_$][\w$]*)\s*\(/gm)].map(m => m[1]);
+// الملفات المستخرجة من سكربتات داخلية (admin-page.js و super-admin-*.js) بقيت بمسافات بادئة أصلية كي لا يتغير
+// محتوى أي نص متعدد الأسطر؛ لذلك نقبل المسافة البادئة لها فقط (بقية الملفات: دوال المستوى الأعلى على العمود 0).
+const INDENTED_FILES = new Set(['admin-page.js', ...SUPER_FILES]);
+let currentDeclFile = null;
+const declsOf = (js, file) => {
+  const re = (file && INDENTED_FILES.has(file)) || (currentDeclFile && INDENTED_FILES.has(currentDeclFile))
+    ? /^[ \t]*(?:async\s+)?function\s*\*?\s*([A-Za-z_$][\w$]*)\s*\(/gm
+    : /^(?:async\s+)?function\s*\*?\s*([A-Za-z_$][\w$]*)\s*\(/gm;
+  return [...js.matchAll(re)].map(m => m[1]);
+};
 const declsOfInline = (js) => [...js.matchAll(/^[ \t]*(?:async\s+)?function\s*\*?\s*([A-Za-z_$][\w$]*)\s*\(/gm)].map(m => m[1]);
 const stubNamesOf = (js) => {            // أسماء داخل مصفوفات ADMIN_FUNCTION_NAMES / NOOP_FUNCTION_NAMES
   const m = js.match(/(?:ADMIN|NOOP)_FUNCTION_NAMES\s*=\s*\[([\s\S]*?)\]/);
@@ -84,18 +97,18 @@ for (const [page, cfg] of Object.entries(PAGES)) {
   const seen = new Map(); let dup = 0;
   for (const f of cfg.loads) {
     const js = read(f); if (js === null) continue;
-    for (const n of declsOf(js)) {
+    for (const n of declsOf(js, f)) {
       if (seen.has(n)) { fail(`${page}: الدالة "${n}" معرّفة بالملفين ${seen.get(n)} و ${f}`); dup++; } else seen.set(n, f);
     }
   }
   if (!dup) pass(`${page}: لا توجد دوال معرّفة مرتين بين ملفاته الخارجية`);
 }
 {
-  const adm = read('admin.html'), ap = read('admin-panel.js');
+  const adm = read('admin.html'), ap = adminText();
   if (adm && ap) {
     const inl = inlineScripts(adm).join('\n');
     const both = declsOf(ap).filter(n => new RegExp(`function\\s+${n}\\s*\\(`).test(inl));
-    both.forEach(n => warn(`admin.html: "${n}" معرّفة بالسكربت الداخلي وبـ admin-panel.js — نسخة الـHTML (الأحدث تحميلاً) هي التي تعمل. وحّديهما لاحقاً.`));
+    both.forEach(n => warn(`admin.html: "${n}" معرّفة بالسكربت الداخلي وبملفات admin-*.js — النسخة الأحدث تحميلاً هي التي تعمل. وحّديهما.`));
   }
 }
 
@@ -115,7 +128,7 @@ for (const [page, cfg] of Object.entries(PAGES)) {
   const jsTexts = [];
   for (const f of cfg.loads) {
     const js = read(f); if (js === null) continue;
-    declsOf(js).forEach(n => defined.add(n));
+    declsOf(js, f).forEach(n => defined.add(n));
     stubNamesOf(js).forEach(n => defined.add(n));
     for (const m of js.matchAll(/window\.([A-Za-z_$][\w$]*)\s*=/g)) defined.add(m[1]);
     jsTexts.push([f, js]);
@@ -138,11 +151,11 @@ section('5. استدعاءات دوال المشروع غير المعرّفة �
 // ===================================================================
 {
   const known = new Set(); const allTexts = {};
-  for (const f of CLASSIC) { const js = read(f); if (js) { declsOf(js).forEach(n => known.add(n)); allTexts[f] = js; } }
+  for (const f of CLASSIC) { const js = read(f); if (js) { declsOf(js, f).forEach(n => known.add(n)); allTexts[f] = js; } }
   for (const [page, cfg] of Object.entries(PAGES)) {
     const html = read(page); if (html === null) continue;
     const defined = new Set();
-    for (const f of cfg.loads) { const js = allTexts[f]; if (!js) continue; declsOf(js).forEach(n => defined.add(n)); stubNamesOf(js).forEach(n => defined.add(n)); }
+    for (const f of cfg.loads) { const js = allTexts[f]; if (!js) continue; declsOf(js, f).forEach(n => defined.add(n)); stubNamesOf(js).forEach(n => defined.add(n)); }
     inlineScripts(html).forEach(s => declsOfInline(s).forEach(n => defined.add(n)));
     let bad = 0;
     for (const f of cfg.loads) {
@@ -194,7 +207,7 @@ section('6ب. حواجز قراءات Firestore (منع رجوع مصادر ال
   }
   const sc = read('script.js') || '';
   g(!/\/api\/storefront/.test(sc), 'script.js: الزوار لا يستخدمون /api/storefront');
-  g(!/ADMIN_ORDERS_LIMIT/.test(read('admin-panel.js') || ''), 'admin-panel.js: حد قراءة الطلبات ADMIN_ORDERS_LIMIT غير موجود');
+  g(!/ADMIN_ORDERS_LIMIT/.test(adminText()), 'admin-orders.js: حد قراءة الطلبات ADMIN_ORDERS_LIMIT غير موجود');
   const idxh = read('index.html') || '';
   g(/firebase-messaging-compat/.test(idxh), 'index.html: ما زال يحمّل firebase-messaging غير المستخدم');
   if (!bad) pass('لا قراءات غير محدودة للطلبات/المنتجات، والزوار يستخدمون لقطة المتجر المخزَّنة');
@@ -206,12 +219,13 @@ section('6ج. ميزات الواجهة المطلوبة (طلباتي، الع�
 {
   let bad = 0;
   const g = (cond, msg) => { if (cond) { fail(msg); bad++; } };
-  const idx = read('index.html') || '', adm = read('admin.html') || '', sf = read('storefront.js') || '', ap = read('admin-panel.js') || '';
+  const idx = read('index.html') || '', adm = read('admin.html') || '', sf = read('storefront.js') || '', ap = adminText();
   g(!/id="bn-orders"[^>]*showView\('orders'\)/.test(idx), "index.html: خانة 'طلباتي' غير موجودة بالشريط السفلي");
   g(!/function getDiscountedProducts/.test(sf), 'storefront.js: تبويب العروض لا يعتمد الخصم التلقائي');
-  g(!/id="masterManageBar"/.test(adm) || !/bulk-upsert/.test(adm) || !/bulk-delete/.test(adm), 'admin.html: أدوات إدارة بنك المنتجات (حذف/رفع JSON) غير مكتملة');
-  g(!/function buildOrdersReportHTML/.test(ap) || !/function computeReportRows/.test(ap), 'admin-panel.js: التقرير المالي الجديد غير موجود');
-  g(/REPORT_GROUP_LABELS\[group\]/.test(ap), 'admin-panel.js: عاد التقرير القديم المقسّم لأقسام');
+  const adminPageJs = read('admin-page.js') || '';
+  g(!/id="masterManageBar"/.test(adm) || !/bulk-upsert/.test(adminPageJs) || !/bulk-delete/.test(adminPageJs), 'admin.html/admin-page.js: أدوات إدارة بنك المنتجات (حذف/رفع JSON) غير مكتملة');
+  g(!/function buildOrdersReportHTML/.test(ap) || !/function computeReportRows/.test(ap), 'admin-reports.js: التقرير المالي الجديد غير موجود');
+  g(/REPORT_GROUP_LABELS\[group\]/.test(ap), 'admin-reports.js: عاد التقرير القديم المقسّم لأقسام');
   const w = workerFile ? read(workerFile) : null;
   if (w) {
     g(!/isPlatformAdminRoute/.test(w), 'worker.js: مسارات المنصة ما زالت تتطلب صيدلية معرَّفة (سبب عدم تحديث بنك المنتجات)');
@@ -228,7 +242,7 @@ section('6د. بوابة الإطلاق (أمان + قراءات + حصص مجا
   const g = (cond, msg) => { if (cond) { fail(msg); bad++; } };
   const w = workerFile ? read(workerFile) : null;
   const rules = read('firestore.rules') || '';
-  const sc = read('script.js') || '', sf = read('storefront.js') || '', ap = read('admin-panel.js') || '', idx = read('index.html') || '';
+  const sc = read('script.js') || '', sf = read('storefront.js') || '', ap = adminText(), idx = read('index.html') || '';
 
   // قواعد: لا قراءة عامة
   const publicReads = (rules.replace(/\/\/[^\n]*/g, '').match(/allow\s+(?:read|get|list)[^;]*:\s*if\s+true/g) || []);
