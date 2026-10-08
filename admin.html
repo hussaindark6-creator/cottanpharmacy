@@ -367,6 +367,7 @@
         لوحة تحكم وإدارة المتجر الشاملة
       </h2>
       <p id="adminWelcomeDesc">مرحباً بك — إدارة متكاملة للطلبات، الموظفين، المنتجات، والاشتراكات.</p>
+      <span id="adminRoleBadge" style="display:none; background:#E0E7FF; color:#3730A3; font-weight:800; font-size:12px; padding:4px 12px; border-radius:999px; margin-top:6px;"></span>
     </div>
 
     <!-- ⚡ (أُخفي بطلب المستخدم) زر توليد وحبس كتالوج R2 السحابي يدوياً — التحديث التلقائي
@@ -495,7 +496,7 @@
 
     <!-- 2. ORDERS MANAGEMENT -->
     <div id="adminSecOrders" style="display:none;">
-      <div class="admin-fieldset">
+      <div class="admin-fieldset" id="adminReportFilterCard">
         <legend style="margin-bottom:8px;">📊 فلاتر تقارير المبيعات والتصدير الذكي</legend>
         <div class="admin-report-filter-row">
           <div style="flex:1; min-width:140px;">
@@ -521,7 +522,7 @@
           </div>
           <div style="display:flex; gap:8px; align-items:flex-end; margin-top:4px;">
             <button type="button" id="btnExportCsvReport" onclick="exportOrdersToCSV()" style="background:#16A34A; color:#fff; font-weight:800; font-size:12px; padding:9px 14px; border-radius:10px; display:inline-flex; align-items:center; gap:6px;">
-              📊 تنزيل Excel / CSV (تقرير مالي)
+              📊 تنزيل Excel (تقرير مالي منظّم)
             </button>
             <button type="button" id="btnExportHtmlReport" onclick="exportOrdersReportHTML()" style="background:#7C3AED; color:#fff; font-weight:800; font-size:12px; padding:9px 14px; border-radius:10px; display:inline-flex; align-items:center; gap:6px;">
               🧾 تقرير واضح (يفتح مباشرة)
@@ -1189,10 +1190,9 @@
           <div class="form-field">
             <label>الدور الوظيفي والصلاحيات *</label>
             <select id="staffRoleSelect" required>
-              <option value="pharmacist">صيدلي (استقبال الطلبات، تغيير الأسعار والمخزون، الاستشارات)</option>
-              <option value="manager">مدير فرع (إدارة شاملة للمنتجات والطلبات والكوبونات)</option>
-              <option value="staff">موظف تجهيز وشحن (معاينة وتجهيز الطلبات فقط)</option>
-              <option value="owner">مشرف / مالك مشارك (صلاحيات كاملة للمتجر)</option>
+              <option value="shift">موظف شفت — يشوف طلبات الزبائن فقط (بلا تقارير)</option>
+              <option value="cosmetics">موظف الكوزمتك — يشوف الطلبات + يعدّل المنتجات + يضيف منتجات جديدة</option>
+              <option value="owner">أونر الصيدلية / مالك مشارك — كل الميزات</option>
             </select>
           </div>
           <button type="submit" class="admin-btn-save" style="background:#111827;">+ إضافة الموظف واعتماد الصلاحيات سحابياً</button>
