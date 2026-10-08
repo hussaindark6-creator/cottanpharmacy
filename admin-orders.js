@@ -389,13 +389,13 @@ function renderAdminOrdersList(orders) {
           <span class="order-card-id mono">#${sanitizeText(ord.id)}</span>
           <div style="display:flex; gap:6px; align-items:center;">
             <button type="button" onclick="openReceiptModal('${sanitizeText(ord.id)}')" style="background:#10B981; color:#fff; font-size:11px; font-weight:800; padding:6px 12px; border-radius:8px; cursor:pointer;">🖨️ طباعة وصل</button>
-            <select class="admin-order-status-select" onchange="updateOrderStatus('${sanitizeText(ord.id)}', this.value)">
+            ${!can('orders.manage') ? `<span class="admin-order-status-select" style="display:inline-block; padding:6px 10px; font-weight:800; font-size:12px;">${sanitizeText(String(ord.status || '').replace(/[🚚🛵✅❌]/g, '').trim())}</span>` : `<select class="admin-order-status-select" onchange="updateOrderStatus('${sanitizeText(ord.id)}', this.value)">
               <option value="قيد المعالجة والتجهيز 🚚" ${ord.status === 'قيد المعالجة والتجهيز 🚚' ? 'selected' : ''}>قيد التجهيز 🚚</option>
               <option value="تم الشحن مع المندوب 🛵" ${ord.status === 'تم الشحن مع المندوب 🛵' ? 'selected' : ''}>تم الشحن 🛵</option>
               <option value="تم التسليم بنجاح ✅" ${ord.status === 'تم التسليم بنجاح ✅' ? 'selected' : ''}>تم التسليم ✅</option>
               <option value="طلب ملغي من قبل الزبون ❌" ${ord.status === 'طلب ملغي من قبل الزبون ❌' ? 'selected' : ''}>ملغي من الزبون ❌</option>
               <option value="طلب ملغي ❌" ${ord.status === 'طلب ملغي ❌' ? 'selected' : ''}>طلب ملغي ❌</option>
-            </select>
+            </select>`}
           </div>
         </div>
         <div style="font-size:12px; color:var(--text-soft); margin-bottom:6px;">
@@ -424,7 +424,7 @@ function renderAdminOrdersList(orders) {
 // 🔐 تغيير الحالة عبر الووركر: عند الإلغاء يُرجع المخزون تلقائياً بمعاملة ذرية، ولا يسمح بإعادة تفعيل
 // طلب ملغي (كان إلغاء الأدمن يُبقي المنتجات محجوزة من المخزون للأبد).
 async function updateOrderStatus(orderId, newStatus) {
-  if (!assertAdmin()) return;
+  if (!assertCan('orders.manage')) return;
   const refreshList = () => renderAdminOrdersList(window.adminLastOrdersList || []);
   if (newStatus.includes('ملغي') && !confirm('سيتم إلغاء الطلب وإرجاع منتجاته للمخزون، ولا يمكن التراجع. متابعة؟')) {
     refreshList();
