@@ -279,6 +279,9 @@ function csvSafeField(val) {
 // الخصم، التوصيل، الإجمالي، التكلفة، صافي الربح، الحالة) وفوقه ملخص بالأرقام الإجمالية.
 // يلتزم بنفس فلاتر "الفترة" و"الحالة" المعروضة على شاشة الطلبات. الطلبات الملغاة تظهر بالجدول لكنها
 // لا تدخل بمجاميع المبيعات والأرباح.
+// طلب بإجمالي أعلى من هذا الرقم يُعلَّم "مبلغ غير معتاد" بالتقرير (غالباً خطأ إدخال سعر) ولا يُستبعد من المجاميع
+const REPORT_SUSPICIOUS_ORDER_TOTAL = 5000000;
+
 function reportOrderTimeMs(o) {
   if (o.createdAt && typeof o.createdAt.toMillis === 'function') return o.createdAt.toMillis();
   const t = o.date ? new Date(o.date).getTime() : 0;
@@ -352,8 +355,17 @@ function computeReportRows(orders) {
 
     rows.push({
       id: o.id || '', date: reportFormatDate(o), name: o.name || '', phone: o.phone || '', address: o.address || '',
-      items: itemsText, itemsTotal, discount, delivery, grand, cost, profit, missing, cancelled, status: String(o.status || '').replace(/[🚚🛵✅❌]/g, '').trim()
+      items: itemsText, itemsTotal, discount, delivery, grand, cost, profit, missing, cancelled, status: String(o.status || '').replace(/[🚚🛵✅❌]/g, '').trim(),
+      suspicious: grand > REPORT_SUSPICIOUS_ORDER_TOTAL,
+      lines: (o.items || []).map(it => {
+        const qty = Number(it.quantity || 1);
+        const unit = Number(it.unitPrice || it.price || 0);
+        const lineTotal = Number(it.lineTotal) || unit * qty;
+        const unitCost = (!it.isBundle && it.unitCostPrice !== undefined && it.unitCostPrice !== null) ? Number(it.unitCostPrice) : null;
+        return { name: it.name || 'منتج', qty, unit, lineTotal, unitCost, lineProfit: unitCost === null ? null : lineTotal - unitCost * qty };
+      })
     });
+    if (grand > REPORT_SUSPICIOUS_ORDER_TOTAL) totals.suspiciousOrders = (totals.suspiciousOrders || 0) + 1;
     if (cancelled) { totals.cancelled++; return; }
     totals.orders++;
     totals.itemsTotal += itemsTotal; totals.discount += discount; totals.delivery += delivery;
@@ -414,7 +426,7 @@ async function buildOrdersReportHTML() {
   const esc = (v) => sanitizeText(String(v == null ? '' : v));
   const card = (label, value, color) => `<div class="card"><div class="lbl">${label}</div><div class="val" style="color:${color || '#111'}">${value}</div></div>`;
   const body = rows.map(r => `
-    <tr class="${r.cancelled ? 'cancelled' : ''}">
+    <tr class="${r.cancelled ? 'cancelled' : ''}${r.suspicious ? ' suspicious' : ''}">
       <td>${esc(r.id)}</td><td>${esc(r.date)}</td><td>${esc(r.name)}</td><td dir="ltr">${esc(r.phone)}</td>
       <td>${esc(r.address)}</td><td>${esc(r.items)}</td>
       <td class="n">${fmtReportNum(r.itemsTotal)}</td><td class="n">${r.discount ? fmtReportNum(r.discount) : '—'}</td>
@@ -436,7 +448,7 @@ async function buildOrdersReportHTML() {
   table{border-collapse:collapse;width:100%;min-width:1100px;font-size:13px}
   th{background:#111827;color:#fff;padding:9px 8px;text-align:right;position:sticky;top:0;white-space:nowrap}
   td{padding:8px;border-top:1px solid #eee;vertical-align:top}
-  tr:nth-child(even) td{background:#fafafa} tr.cancelled td{color:#9ca3af;text-decoration:line-through}
+  tr:nth-child(even) td{background:#fafafa} tr.cancelled td{color:#9ca3af;text-decoration:line-through} tr.suspicious td{background:#fef2f2 !important;font-weight:700}
   .n{text-align:left;white-space:nowrap;font-variant-numeric:tabular-nums} .b{font-weight:800} .pos{color:#15803d} .neg{color:#b91c1c}
   .note{margin-top:12px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px;font-size:13px}
   @media print{body{background:#fff;padding:0}.wrap{border:0}th{position:static}}
@@ -456,6 +468,7 @@ async function buildOrdersReportHTML() {
 <tbody>${body || '<tr><td colspan="13" style="text-align:center;padding:24px;color:#666">لا توجد طلبات ضمن هذا الفلتر</td></tr>'}</tbody>
 </table></div>
 ${totals.cancelled ? `<div class="note">يوجد ${totals.cancelled} طلب ملغي ظاهر بالجدول بخط مشطوب وغير محسوب بالمجاميع.</div>` : ''}
+${totals.suspiciousOrders ? `<div class="note" style="color:#991B1B;background:#FEF2F2;border-color:#FECACA">⚠️ يوجد ${totals.suspiciousOrders} طلب بمبلغ غير معتاد (أكثر من ${fmtReportNum(REPORT_SUSPICIOUS_ORDER_TOTAL)} د.ع). غالباً خطأ بإدخال سعر منتج — راجعيه، فهو يؤثر على كل المجاميع والأرباح.</div>` : ''}
 ${totals.missingCostOrders ? `<div class="note">* ${totals.missingCostOrders} طلب فيه منتج بلا سعر تكلفة، لذلك صافي الربح لهذه الطلبات أعلى من الحقيقي. أضيفي سعر التكلفة للمنتجات لتصبح الأرباح دقيقة.</div>` : ''}
 <div class="note" style="color:#374151;background:#f3f4f6;border-color:#e5e7eb">صافي الربح = (إجمالي الطلب − أجرة التوصيل) − تكلفة البضاعة وقت البيع. أجرة التوصيل لا تُحتسب ربحاً.</div>
 </body></html>`;
@@ -477,20 +490,222 @@ function reportFileStamp() {
   return new Date().toISOString().split('T')[0];
 }
 
-// 🔒 (إصلاح #9 — التقارير حصراً للمشرف العام) التقرير المالي يحتوي التكلفة وصافي الربح.
+// ================= ملف Excel حقيقي (.xlsx) بتنسيق منظّم =================
+// بدل CSV الخام الذي كان يظهر عشوائياً (أرقام الهاتف والمبالغ تتحول لروابط، بلا ألوان ولا عرض أعمدة):
+// ملف xlsx حقيقي يُبنى بلا أي مكتبة: ورقة "التقرير" (ملخص + جدول الطلبات + المجموع) وورقة "تفاصيل المنتجات".
+// يفتح على Excel وNumbers وGoogle Sheets ومعاينة الآيباد. الجدول من اليمين لليسار، الترويسة مثبّتة، الأرقام بفواصل.
+const XLSX_STYLE = { DEFAULT: 0, TITLE: 1, LABEL: 2, SUM_NUM: 3, HEADER: 4, TEXT: 5, NUM: 6, TEXT_CANCEL: 7, NUM_CANCEL: 8, TOTAL_LABEL: 9, TOTAL_NUM: 10, PROFIT_POS: 11, PROFIT_NEG: 12, NOTE: 13, WARN_TEXT: 14, WARN_NUM: 15, SUBTITLE: 16 };
+
+const xlsxEsc = (v) => String(v == null ? '' : v).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const xlsxCol = (i) => { let n = i + 1, s = ''; while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; };
+
+function xlsxCell(ref, cell) {
+  if (cell === null || cell === undefined || cell === '') return cell && cell.s ? `<c r="${ref}"/>` : '';
+  const c = (typeof cell === 'object') ? cell : { v: cell };
+  const style = c.s !== undefined ? ` s="${c.s}"` : '';
+  if (c.v === null || c.v === undefined || c.v === '') return `<c r="${ref}"${style}/>`;
+  if (typeof c.v === 'number' && isFinite(c.v)) return `<c r="${ref}"${style}><v>${c.v}</v></c>`;
+  return `<c r="${ref}"${style} t="inlineStr"><is><t xml:space="preserve">${xlsxEsc(c.v)}</t></is></c>`;
+}
+
+// sheet = { name, rows: [[cell|value,...],...], widths: [..], merges: ['A1:F1'], freezeRow: n (عدد الصفوف المثبّتة), heights: {rowIndex: pt} }
+function buildSheetXml(sheet) {
+  const rowsXml = sheet.rows.map((row, r) => {
+    const cells = row.map((cell, c) => xlsxCell(xlsxCol(c) + (r + 1), cell)).join('');
+    const h = sheet.heights && sheet.heights[r] ? ` ht="${sheet.heights[r]}" customHeight="1"` : '';
+    return `<row r="${r + 1}"${h}>${cells}</row>`;
+  }).join('');
+  const cols = (sheet.widths || []).map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join('');
+  const pane = sheet.freezeRow ? `<pane ySplit="${sheet.freezeRow}" topLeftCell="A${sheet.freezeRow + 1}" activePane="bottomLeft" state="frozen"/>` : '';
+  const merges = (sheet.merges && sheet.merges.length) ? `<mergeCells count="${sheet.merges.length}">${sheet.merges.map(m => `<mergeCell ref="${m}"/>`).join('')}</mergeCells>` : '';
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView rightToLeft="1" workbookViewId="0">${pane}</sheetView></sheetViews><sheetFormatPr defaultRowHeight="18"/><cols>${cols}</cols><sheetData>${rowsXml}</sheetData>${merges}<pageMargins left="0.4" right="0.4" top="0.5" bottom="0.5" header="0.3" footer="0.3"/><pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0"/></worksheet>`;
+}
+
+function buildXlsxStylesXml() {
+  const font = (opts) => `<font>${opts.b ? '<b/>' : ''}${opts.i ? '<i/>' : ''}${opts.strike ? '<strike/>' : ''}<sz val="${opts.sz || 11}"/><color rgb="${opts.color || 'FF111827'}"/><name val="Arial"/></font>`;
+  const fills = ['<fill><patternFill patternType="none"/></fill>', '<fill><patternFill patternType="gray125"/></fill>',
+    '<fill><patternFill patternType="solid"><fgColor rgb="FF111827"/></patternFill></fill>',     // 2 داكن (ترويسة)
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFF3F4F6"/></patternFill></fill>',     // 3 رمادي فاتح
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFFEF2F2"/></patternFill></fill>',     // 4 أحمر فاتح (تحذير)
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFFFFBEB"/></patternFill></fill>',     // 5 أصفر فاتح (ملاحظة)
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFEFF6FF"/></patternFill></fill>'];    // 6 أزرق فاتح (عنوان فرعي)
+  const border = '<border><left style="thin"><color rgb="FFD1D5DB"/></left><right style="thin"><color rgb="FFD1D5DB"/></right><top style="thin"><color rgb="FFD1D5DB"/></top><bottom style="thin"><color rgb="FFD1D5DB"/></bottom><diagonal/></border>';
+  const fonts = [font({}), font({ b: 1 }), font({ b: 1, color: 'FFFFFFFF' }), font({ b: 1, sz: 16 }), font({ strike: 1, color: 'FF9CA3AF' }), font({ b: 1, color: 'FF15803D' }), font({ b: 1, color: 'FFB91C1C' }), font({ i: 1, color: 'FF92400E' }), font({ b: 1, sz: 12, color: 'FF1D4ED8' })];
+  // [fontId, fillId, borderId, numFmtId, halign, wrap]
+  const xfs = [
+    [0, 0, 0, 0, 'right', 0],      // 0 افتراضي
+    [3, 0, 0, 0, 'right', 0],      // 1 عنوان
+    [1, 3, 1, 0, 'right', 0],      // 2 تسمية الملخص
+    [1, 3, 1, 3, 'left', 0],       // 3 قيمة الملخص (#,##0)
+    [2, 2, 1, 0, 'center', 1],     // 4 ترويسة الجدول
+    [0, 0, 1, 49, 'right', 1],     // 5 نص (خلية نصية)
+    [0, 0, 1, 3, 'left', 0],       // 6 رقم (#,##0)
+    [4, 0, 1, 49, 'right', 1],     // 7 نص ملغي
+    [4, 0, 1, 3, 'left', 0],       // 8 رقم ملغي
+    [1, 3, 1, 0, 'right', 0],      // 9 تسمية المجموع
+    [1, 3, 1, 3, 'left', 0],       // 10 رقم المجموع
+    [5, 0, 1, 3, 'left', 0],       // 11 ربح موجب
+    [6, 0, 1, 3, 'left', 0],       // 12 ربح سالب
+    [7, 5, 0, 0, 'right', 1],      // 13 ملاحظة
+    [1, 4, 1, 49, 'right', 1],     // 14 نص تحذير
+    [1, 4, 1, 3, 'left', 0],       // 15 رقم تحذير
+    [8, 6, 0, 0, 'right', 0]       // 16 عنوان فرعي
+  ];
+  const xfXml = xfs.map(([f, fl, b, nf, h, w]) => `<xf numFmtId="${nf}" fontId="${f}" fillId="${fl}" borderId="${b}" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="${h}" vertical="center"${w ? ' wrapText="1"' : ''}/></xf>`).join('');
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="${fonts.length}">${fonts.join('')}</fonts><fills count="${fills.length}">${fills.join('')}</fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>${border}</borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="${xfs.length}">${xfXml}</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+}
+
+let __crcTable = null;
+function xlsxCrc32(bytes) {
+  if (!__crcTable) { __crcTable = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); __crcTable[n] = c >>> 0; } }
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) crc = __crcTable[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+// ZIP بدون ضغط (store) — كافٍ لملف xlsx صغير، وبلا أي اعتماد خارجي
+function xlsxZip(files) {
+  const enc = new TextEncoder();
+  const d = new Date();
+  const dosTime = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
+  const dosDate = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+  const parts = [], central = [];
+  let offset = 0;
+  files.forEach(f => {
+    const name = enc.encode(f.name), data = enc.encode(f.content), crc = xlsxCrc32(data);
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(8, 0, true);
+    lh.setUint16(10, dosTime, true); lh.setUint16(12, dosDate, true); lh.setUint32(14, crc, true);
+    lh.setUint32(18, data.length, true); lh.setUint32(22, data.length, true); lh.setUint16(26, name.length, true); lh.setUint16(28, 0, true);
+    parts.push(new Uint8Array(lh.buffer), name, data);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true); ch.setUint16(10, 0, true);
+    ch.setUint16(12, dosTime, true); ch.setUint16(14, dosDate, true); ch.setUint32(16, crc, true);
+    ch.setUint32(20, data.length, true); ch.setUint32(24, data.length, true); ch.setUint16(28, name.length, true);
+    ch.setUint16(30, 0, true); ch.setUint16(32, 0, true); ch.setUint16(34, 0, true); ch.setUint16(36, 0, true); ch.setUint32(38, 0, true); ch.setUint32(42, offset, true);
+    central.push(new Uint8Array(ch.buffer), name);
+    offset += 30 + name.length + data.length;
+  });
+  const centralSize = central.reduce((n, p) => n + p.length, 0);
+  const end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+  end.setUint32(12, centralSize, true); end.setUint32(16, offset, true);
+  const all = [...parts, ...central, new Uint8Array(end.buffer)];
+  const out = new Uint8Array(all.reduce((n, p) => n + p.length, 0));
+  let pos = 0; all.forEach(p => { out.set(p, pos); pos += p.length; });
+  return out;
+}
+
+function buildXlsxFile(sheets) {
+  const sheetEntries = sheets.map((sh, i) => ({ name: `xl/worksheets/sheet${i + 1}.xml`, content: buildSheetXml(sh) }));
+  const ct = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>${sheets.map((_, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`;
+  const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`;
+  const wb = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><bookViews><workbookView/></bookViews><sheets>${sheets.map((sh, i) => `<sheet name="${xlsxEsc(sh.name)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('')}</sheets></workbook>`;
+  const wbRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${sheets.map((_, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('')}<Relationship Id="rId${sheets.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`;
+  return xlsxZip([
+    { name: '[Content_Types].xml', content: ct }, { name: '_rels/.rels', content: rootRels },
+    { name: 'xl/workbook.xml', content: wb }, { name: 'xl/_rels/workbook.xml.rels', content: wbRels },
+    { name: 'xl/styles.xml', content: buildXlsxStylesXml() }, ...sheetEntries
+  ]);
+}
+
+// يحوّل الطلبات المفلترة إلى ورقتَي Excel
+async function buildOrdersXlsxSheets() {
+  const source = await getReportSourceOrders();
+  const orders = filterOrdersForReport(source);
+  const { rows, totals } = computeReportRows(orders);
+  const S = XLSX_STYLE;
+  const colCount = 13;
+  const T = (v, s = S.TEXT) => ({ v, s });
+  const N = (v, s = S.NUM) => ({ v: Number(v) || 0, s });
+  const main = [];
+  const merges = [];
+  const mergeRow = (rowIdx) => merges.push(`A${rowIdx + 1}:${xlsxCol(colCount - 1)}${rowIdx + 1}`);
+
+  main.push([T(`📊 تقرير مبيعات ${pharmacyProfile.name || currentPharmacyId}`, S.TITLE)]); mergeRow(0);
+  main.push([T(`الفترة: ${reportPeriodLabel()}   |   أُنشئ في: ${reportFormatDate({ date: new Date().toISOString() })}   |   المبالغ بالدينار العراقي`, S.SUBTITLE)]); mergeRow(1);
+  main.push([]);
+  // ملخص: تسمية (A:C) + قيمة (D:E)
+  const summary = [
+    ['عدد الطلبات (بدون الملغاة)', totals.orders], ['مبيعات المنتجات (بعد الخصم، بدون توصيل)', totals.grand - totals.delivery],
+    ['أجور التوصيل', totals.delivery], ['إجمالي المقبوض (مع التوصيل)', totals.grand],
+    ['تكلفة البضاعة', totals.cost], ['صافي الربح (بدون التوصيل)', totals.profit]
+  ];
+  summary.forEach(([label, val]) => {
+    const r = main.length;
+    main.push([T(label, S.LABEL), T('', S.LABEL), T('', S.LABEL), N(val, S.SUM_NUM), T('', S.LABEL)]);
+    merges.push(`A${r + 1}:C${r + 1}`, `D${r + 1}:E${r + 1}`);
+  });
+  if (totals.cancelled) { const r = main.length; main.push([T('طلبات ملغاة (غير محسوبة بالمجاميع)', S.LABEL), T('', S.LABEL), T('', S.LABEL), N(totals.cancelled, S.SUM_NUM), T('', S.LABEL)]); merges.push(`A${r + 1}:C${r + 1}`, `D${r + 1}:E${r + 1}`); }
+  const addNote = (txt, style = S.NOTE) => { const r = main.length; main.push([T(txt, style)]); mergeRow(r); };
+  if (totals.suspiciousOrders) addNote(`⚠️ يوجد ${totals.suspiciousOrders} طلب بمبلغ غير معتاد (أكثر من ${fmtReportNum(REPORT_SUSPICIOUS_ORDER_TOTAL)} د.ع) — غالباً خطأ بإدخال سعر منتج، راجعيه فهو يؤثر على كل المجاميع. الصف الأحمر بالجدول.`, S.WARN_TEXT);
+  if (totals.missingCostOrders) addNote(`* ${totals.missingCostOrders} طلب فيه منتج بلا سعر تكلفة، فربحه أعلى من الحقيقي. أضيفي سعر التكلفة للمنتجات لتصبح الأرباح دقيقة.`);
+  addNote('صافي الربح = (إجمالي الطلب − أجرة التوصيل) − تكلفة البضاعة وقت البيع. أجرة التوصيل لا تُحتسب ربحاً.');
+  main.push([]);
+
+  const headerRowIdx = main.length;
+  const headers = ['رقم الطلب', 'التاريخ', 'اسم الزبون', 'رقم الهاتف', 'العنوان', 'المنتجات', 'مجموع المنتجات', 'الخصم', 'أجرة التوصيل', 'الإجمالي مع التوصيل', 'تكلفة البضاعة', 'صافي الربح', 'الحالة'];
+  main.push(headers.map(h => T(h, S.HEADER)));
+  rows.forEach(r => {
+    const tx = r.cancelled ? S.TEXT_CANCEL : (r.suspicious ? S.WARN_TEXT : S.TEXT);
+    const nm = r.cancelled ? S.NUM_CANCEL : (r.suspicious ? S.WARN_NUM : S.NUM);
+    const profitStyle = r.cancelled ? S.NUM_CANCEL : (r.suspicious ? S.WARN_NUM : (r.profit < 0 ? S.PROFIT_NEG : S.PROFIT_POS));
+    main.push([
+      T(r.id, tx), T(r.date, tx), T(r.name, tx), T(String(r.phone || ''), tx), T(r.address, tx), T(r.items, tx),
+      N(r.itemsTotal, nm), N(r.discount, nm), N(r.delivery, nm), N(r.grand, nm),
+      r.cancelled ? T('—', tx) : N(r.cost, nm), r.cancelled ? T('—', tx) : N(r.profit, profitStyle),
+      T(r.cancelled ? `${r.status} (غير محسوب)` : (r.missing ? `${r.status} — تكلفة ناقصة` : r.status), tx)
+    ]);
+  });
+  const sumOf = (k) => rows.filter(r => !r.cancelled).reduce((n, r) => n + (Number(r[k]) || 0), 0);
+  const totalRowIdx = main.length;
+  main.push([T('المجموع (بدون الملغاة)', S.TOTAL_LABEL), T('', S.TOTAL_LABEL), T('', S.TOTAL_LABEL), T('', S.TOTAL_LABEL), T('', S.TOTAL_LABEL), T('', S.TOTAL_LABEL),
+    N(sumOf('itemsTotal'), S.TOTAL_NUM), N(sumOf('discount'), S.TOTAL_NUM), N(sumOf('delivery'), S.TOTAL_NUM), N(sumOf('grand'), S.TOTAL_NUM),
+    N(sumOf('cost'), S.TOTAL_NUM), N(sumOf('profit'), S.TOTAL_NUM), T('', S.TOTAL_LABEL)]);
+  merges.push(`A${totalRowIdx + 1}:F${totalRowIdx + 1}`);
+
+  const heights = { 0: 30, [headerRowIdx]: 26 };
+  const sheet1 = { name: 'التقرير', rows: main, merges, freezeRow: headerRowIdx + 1, heights, widths: [16, 17, 18, 15, 28, 44, 15, 11, 13, 16, 15, 15, 24] };
+
+  // ورقة 2: سطر لكل منتج مباع
+  const d = [[T('رقم الطلب', S.HEADER), T('التاريخ', S.HEADER), T('اسم الزبون', S.HEADER), T('المنتج', S.HEADER), T('الكمية', S.HEADER), T('سعر الوحدة', S.HEADER), T('إجمالي السطر', S.HEADER), T('تكلفة الوحدة', S.HEADER), T('ربح السطر', S.HEADER), T('الحالة', S.HEADER)]];
+  rows.forEach(r => (r.lines || []).forEach(l => {
+    const tx = r.cancelled ? S.TEXT_CANCEL : S.TEXT, nm = r.cancelled ? S.NUM_CANCEL : S.NUM;
+    d.push([T(r.id, tx), T(r.date, tx), T(r.name, tx), T(l.name, tx), N(l.qty, nm), N(l.unit, nm), N(l.lineTotal, nm),
+      l.unitCost === null ? T('—', tx) : N(l.unitCost, nm), l.lineProfit === null ? T('—', tx) : N(l.lineProfit, r.cancelled ? S.NUM_CANCEL : (l.lineProfit < 0 ? S.PROFIT_NEG : S.PROFIT_POS)), T(r.cancelled ? 'ملغي (غير محسوب)' : r.status, tx)]);
+  }));
+  const sheet2 = { name: 'تفاصيل المنتجات', rows: d, freezeRow: 1, heights: { 0: 26 }, widths: [16, 17, 18, 36, 9, 14, 15, 14, 14, 22] };
+  return { sheets: [sheet1, sheet2], rowsCount: rows.length };
+}
+
+// 🔒 التقرير المالي يحتوي التكلفة وصافي الربح: لأونر الصيدلية (وللمشرف العام) فقط.
 async function exportOrdersToCSV() {
-  if (!isSuperAdmin()) { showToast('⚠️ التقارير المالية متاحة حصراً للمشرف العام للمنصة'); return; }
-  showToast('جاري تجهيز ملف Excel / CSV...');
+  if (!assertCan('reports')) return;
+  showToast('جاري تجهيز ملف Excel...');
   try {
-    const report = await buildDetailedOrdersCSV();
-    downloadReportFile('\uFEFF' + report.csv, `Sales_Report_${currentPharmacyId}_${reportFileStamp()}.csv`, 'text/csv;charset=utf-8;');
-    showToast(`تم تنزيل التقرير (${report.rowsCount} طلب) 📊`);
-  } catch (e) { console.error(e); showToast('⚠️ تعذر إنشاء التقرير'); }
+    const { sheets, rowsCount } = await buildOrdersXlsxSheets();
+    const bytes = buildXlsxFile(sheets);
+    downloadReportFile(bytes, `Sales_Report_${currentPharmacyId}_${reportFileStamp()}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    showToast(`تم تنزيل ملف Excel (${rowsCount} طلب) 📊`);
+  } catch (e) {
+    console.error('xlsx failed, falling back to CSV:', e);
+    try {
+      const report = await buildDetailedOrdersCSV();
+      downloadReportFile('\uFEFF' + report.csv, `Sales_Report_${currentPharmacyId}_${reportFileStamp()}.csv`, 'text/csv;charset=utf-8;');
+      showToast(`تم تنزيل التقرير بصيغة CSV (${report.rowsCount} طلب)`);
+    } catch (e2) { console.error(e2); showToast('⚠️ تعذر إنشاء التقرير'); }
+  }
 }
 
 // 🆕 تقرير بصفحة واضحة (يفتح على الآيباد/الموبايل مباشرة، قابل للطباعة أو الحفظ PDF)
 async function exportOrdersReportHTML() {
-  if (!isSuperAdmin()) { showToast('⚠️ التقارير المالية متاحة حصراً للمشرف العام للمنصة'); return; }
+  if (!assertCan('reports')) return;
   showToast('جاري تجهيز التقرير...');
   try {
     const html = await buildOrdersReportHTML();
