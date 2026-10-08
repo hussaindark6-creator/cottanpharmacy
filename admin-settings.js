@@ -175,10 +175,10 @@ function renderStaffList() {
       <div>
         <div style="font-weight:800; font-size:13.5px; color:var(--ink);">
           👤 ${sanitizeText(st.name || 'موظف')} (${sanitizeText(st.email)})
-          <span class="log-badge" style="background:#E0E7FF; color:#3730A3;">${sanitizeText(st.role || 'staff')}</span>
+          <span class="log-badge" style="background:#E0E7FF; color:#3730A3;">${sanitizeText(ROLE_LABELS[normalizeStaffRole(st.role)] || 'دور غير معروف — لا صلاحيات')}</span>
         </div>
         <div style="font-size:11.5px; color:var(--text-soft); margin-top:2px;">
-          الصلاحيات: ${(st.permissions || ['all']).join(', ')}
+          الصلاحيات: ${sanitizeText(describeRolePerms(normalizeStaffRole(st.role)))}
         </div>
       </div>
       <div style="display:flex; gap:6px;">
@@ -188,16 +188,28 @@ function renderStaffList() {
   `).join('');
 }
 
+// وصف مختصر لصلاحيات كل دور (يظهر بقائمة الموظفين)
+function describeRolePerms(roleKey) {
+  if (roleKey === 'owner') return 'كل الميزات: الطلبات، المنتجات، التقارير، التسويق، الإعدادات، الموظفون';
+  if (roleKey === 'cosmetics') return 'مشاهدة الطلبات + تعديل المنتجات + إضافة منتجات جديدة (بلا حذف/أرشفة أو تقارير)';
+  if (roleKey === 'shift') return 'مشاهدة طلبات الزبائن فقط (بلا تقارير ولا تعديل)';
+  return 'لا شيء';
+}
+
 async function handleAddStaffMember(e) {
   e.preventDefault();
-  if (!assertAdmin()) return;
+  if (!assertCan('staff')) return;
 
   const email = document.getElementById('staffEmailInput').value.trim().toLowerCase();
   const name = document.getElementById('staffNameInput').value.trim();
-  const role = document.getElementById('staffRoleSelect').value;
+  const role = normalizeStaffRole(document.getElementById('staffRoleSelect').value);
 
-  if (!email || !name) {
-    showToast('يرجى كتابة اسم وبريد الموظف');
+  if (!email || !name || !role) {
+    showToast('يرجى كتابة اسم وبريد الموظف واختيار دوره');
+    return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showToast('البريد الإلكتروني غير صحيح — يجب أن يكون حساب Google الذي سيسجّل به الموظف');
     return;
   }
 
@@ -206,7 +218,7 @@ async function handleAddStaffMember(e) {
     email,
     name: sanitizeText(name),
     role,
-    permissions: role === 'owner' ? ['all'] : ['orders', 'products', 'analytics'],
+    permissions: ROLE_PERMS[role],
     addedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
 
