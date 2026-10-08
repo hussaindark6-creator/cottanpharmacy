@@ -226,6 +226,49 @@ function assertAdmin(showToastFn = showToast) {
   return true;
 }
 
+// ================= 🔑 نظام أدوار الموظفين =================
+// ثلاثة أدوار فقط (وتبقى الأدوار القديمة تعمل: manager/admin = أونر، pharmacist = كوزمتك، staff = شفت):
+//   owner     : أونر الصيدلية — كل الميزات (تقارير، إعدادات، موظفون، تسويق، منتجات، طلبات).
+//   shift     : موظف شفت — يشوف طلبات الزبائن فقط (قراءة)، بلا تقارير ولا تعديل.
+//   cosmetics : موظف الكوزمتك — يشوف الطلبات + يعدّل المنتجات + يضيف منتجات جديدة (بلا أرشفة/حذف/تقارير/إعدادات).
+// هذه الواجهة تخفي/تمنع؛ الفرض الحقيقي بقواعد Firestore والووركر (نفس الأدوار).
+const ROLE_PERMS = {
+  owner: ['orders.view', 'orders.manage', 'products.view', 'products.edit', 'products.create', 'products.archive', 'reports', 'marketing', 'settings', 'staff'],
+  shift: ['orders.view'],
+  cosmetics: ['orders.view', 'products.view', 'products.edit', 'products.create']
+};
+const ROLE_LABELS = {
+  owner: 'أونر الصيدلية (كل الميزات)',
+  shift: 'موظف شفت (يشوف الطلبات فقط)',
+  cosmetics: 'موظف الكوزمتك (طلبات + منتجات)'
+};
+function normalizeStaffRole(role) {
+  const r = String(role || '').toLowerCase();
+  if (r === 'owner' || r === 'manager' || r === 'admin') return 'owner';
+  if (r === 'cosmetics' || r === 'pharmacist') return 'cosmetics';
+  if (r === 'shift' || r === 'staff') return 'shift';
+  return '';
+}
+function getStaffRoleKey() {
+  if (!(auth ? auth.currentUser : currentUser)) return '';
+  if (isCurrentUserAdmin()) return 'owner';
+  return currentStaffData ? normalizeStaffRole(currentStaffData.role) : '';
+}
+function isStaffMember() { return !!getStaffRoleKey(); }
+function can(perm) {
+  const k = getStaffRoleKey();
+  return !!k && ROLE_PERMS[k].includes(perm);
+}
+function assertCan(perm, showToastFn = showToast) {
+  if (!can(perm)) {
+    if (typeof showToastFn === 'function') showToastFn('⚠️ غير مصرح: صلاحية دورك لا تسمح بهذه العملية.');
+    return false;
+  }
+  return true;
+}
+// أول قسم يراه كل دور عند فتح لوحة التحكم
+function defaultAdminSection() { return can('reports') ? 'stats' : (can('orders.view') ? 'orders' : 'products'); }
+
 const actionLocks = new Map();
 function lockAction(actionKey, cooldownMs = 1500) {
   const now = Date.now();
@@ -1192,7 +1235,7 @@ function setupAdminCatalogFocusRefresh() {
   window.__adminFocusRefreshAttached = true;
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState !== 'visible') return;
-    if (!isCurrentUserAdmin()) return;
+    if (!isStaffMember()) return;
     const now = Date.now();
     if (now - lastAdminCatalogRefreshAt < 30000) return;
     lastAdminCatalogRefreshAt = now;
@@ -1551,16 +1594,15 @@ if (isFirebaseConfigured && auth) {
     }
 
     // 🛡️ (توفير قراءات) لا اشتراك لحظي بكل المنتجات للأدمن بعد الآن — الكتالوج من R2 (يتحدث فوراً).
-    if (user && isCurrentUserAdmin()) {
-      setupAdminCatalogFocusRefresh();
-      if (IS_ADMIN_PAGE) attachAdminLiveListenersOnce();
-    }
+    if (user && isStaffMember()) setupAdminCatalogFocusRefresh();
+    // مستمعات الأقسام/البكجات/الإعدادات اللحظية لأونر الصيدلية فقط (قواعد Firestore تمنعها عن بقية الأدوار)
+    if (user && isCurrentUserAdmin() && IS_ADMIN_PAGE) attachAdminLiveListenersOnce();
 
     // ⚡ (تحميل كسول) بمجرد تأكد صلاحيات الأدمن، نهيّئ فقط تبويب الإحصائيات الظاهر افتراضياً؛
     // بقية التبويبات (الطلبات، بنك المنتجات، الموظفين...) لا تُحمّل إلا عند نقر المشرف عليها فعلياً.
-    if (user && isCurrentUserAdmin() && document.getElementById('adminSecStats')) {
-      checkLowStockAlerts();
-      switchAdminSection('stats');
+    if (user && isStaffMember() && document.getElementById('adminSecStats')) {
+      if (can('products.view')) checkLowStockAlerts();
+      switchAdminSection(defaultAdminSection());
     }
   });
 }
@@ -1575,8 +1617,31 @@ async function handleSignOut() {
   showToast('تم تسجيل الخروج بنجاح');
 }
 
+// أي قسم يحتاج أي صلاحية (للقائمة الجانبية ولحماية switchAdminSection)
+const ADMIN_SECTION_PERMS = {
+  stats: 'reports', orders: 'orders.view', import: 'products.create', products: 'products.view', trash: 'products.archive',
+  cats: 'settings', offers: 'marketing', bundles: 'marketing', coupons: 'marketing', brands: 'settings', notifs: 'marketing',
+  audit: 'settings', staff: 'staff', subscription: 'settings', design: 'settings'
+};
+
+function applyRoleToAdminUI() {
+  Object.keys(ADMIN_SECTION_PERMS).forEach(key => {
+    const btn = document.getElementById('btnTabV' + key.charAt(0).toUpperCase() + key.slice(1));
+    if (btn) btn.style.display = can(ADMIN_SECTION_PERMS[key]) ? '' : 'none';
+  });
+  // بطاقة فلاتر التقارير والتصدير داخل قسم الطلبات: لمن يملك صلاحية التقارير فقط
+  const reportCard = document.getElementById('adminReportFilterCard');
+  if (reportCard) reportCard.style.display = can('reports') ? '' : 'none';
+  const roleBadge = document.getElementById('adminRoleBadge');
+  if (roleBadge) {
+    const k = getStaffRoleKey();
+    roleBadge.textContent = k ? ROLE_LABELS[k] : '';
+    roleBadge.style.display = k ? 'inline-block' : 'none';
+  }
+}
+
 function updateAdminInterfaceState() {
-  const isAdmin = isCurrentUserAdmin();
+  const isAdmin = isStaffMember();
   const topBar = document.getElementById('adminTopBar');
   const menuLink = document.getElementById('adminMenuLink');
   const bnAdmin = document.getElementById('bn-admin');
@@ -1586,7 +1651,7 @@ function updateAdminInterfaceState() {
   if (topBar) topBar.style.display = isAdmin ? 'flex' : 'none';
   if (menuLink) menuLink.style.display = isAdmin ? 'flex' : 'none';
   if (bnAdmin) bnAdmin.style.display = isAdmin ? 'flex' : 'none';
-  if (floatAddBtn) floatAddBtn.style.display = isAdmin ? 'flex' : 'none';
+  if (floatAddBtn) floatAddBtn.style.display = can('products.create') ? 'flex' : 'none';
 
   if (adminGate) {
     if (isAdmin) adminGate.classList.remove('locked');
@@ -1596,10 +1661,12 @@ function updateAdminInterfaceState() {
   // 🔒 (إصلاح #9) زر التقرير المالي (Excel/CSV) يُخفى تماماً عن أي مشرف عادي — يظهر
   // حصراً للمشرف العام للمنصة (isSuperAdmin)، تماشياً مع القيد المطبَّق أيضاً داخل
   // exportOrdersToCSV() نفسها (دفاع مزدوج: طبقة واجهة + طبقة منطق).
+  // التقارير المالية لأونر الصيدلية (وللمشرف العام): كل الميزات للأونر.
   const exportReportBtn = document.getElementById('btnExportCsvReport');
-  if (exportReportBtn) exportReportBtn.style.display = isSuperAdmin() ? 'inline-flex' : 'none';
+  if (exportReportBtn) exportReportBtn.style.display = can('reports') ? 'inline-flex' : 'none';
   const exportHtmlBtn = document.getElementById('btnExportHtmlReport');
-  if (exportHtmlBtn) exportHtmlBtn.style.display = isSuperAdmin() ? 'inline-flex' : 'none';
+  if (exportHtmlBtn) exportHtmlBtn.style.display = can('reports') ? 'inline-flex' : 'none';
+  applyRoleToAdminUI();
 }
 
 function checkUrlHashForProduct() {
