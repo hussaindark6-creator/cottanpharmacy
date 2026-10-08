@@ -39,7 +39,7 @@
   window.loadAdminPanel = loadAdminPanel;
 
   function isAdminNow() {
-    try { return typeof isCurrentUserAdmin === 'function' && !!isCurrentUserAdmin(); }
+    try { return typeof isStaffMember === 'function' ? !!isStaffMember() : (typeof isCurrentUserAdmin === 'function' && !!isCurrentUserAdmin()); }
     catch (e) { return false; }
   }
 
