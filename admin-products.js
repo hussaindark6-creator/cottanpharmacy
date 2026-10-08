@@ -26,7 +26,7 @@ function toggleLowStockFilter() {
 }
 
 async function quickEditPrice(id, currentPrice) {
-  if (!assertAdmin()) return;
+  if (!assertCan('products.edit')) return;
   const newPriceStr = prompt('تعديل السعر المباشر (د.ع):', currentPrice);
   if (newPriceStr === null) return;
   const newPrice = Number(newPriceStr.trim());
@@ -47,7 +47,7 @@ async function quickEditPrice(id, currentPrice) {
 }
 
 async function quickToggleStock(id) {
-  if (!assertAdmin()) return;
+  if (!assertCan('products.edit')) return;
   const p = findProduct(id);
   if (!p) return;
   const newStock = (p.inStock === false) ? true : false;
@@ -247,7 +247,7 @@ function ensureAdminQuickEditModalMarkup() {
 }
 
 function openAdminQuickEditModal(id) {
-  if (!assertAdmin()) return;
+  if (!assertCan('products.edit')) return;
 
   try {
     const p = findProduct(id) || archivedProducts.find(x => String(x.id) === String(id));
@@ -305,7 +305,7 @@ function closeAdminQuickEditModal() {
 }
 
 async function saveAdminQuickEdit() {
-  if (!assertAdmin()) return;
+  if (!assertCan('products.edit')) return;
 
   const id = document.getElementById('quickEditProdId').value;
   const name = document.getElementById('quickEditProdName').value.trim();
@@ -419,7 +419,7 @@ function resetAdminProductForm() {
 
 async function handleAdminProductSave(e) {
   e.preventDefault();
-  if (!assertAdmin() || !lockAction('saveProductAdmin', 1200)) return;
+  if (!assertCan('products.edit') || !lockAction('saveProductAdmin', 1200)) return;
 
   const docId = document.getElementById('adminProdDocId').value.trim();
   const name = document.getElementById('adminProdName').value.trim();
@@ -500,7 +500,7 @@ async function handleAdminProductSave(e) {
 
 // ----------------- سلة المحذوفات والأرشفة (SOFT DELETE) -----------------
 async function archiveProductConfirm(id, name) {
-  if (!assertAdmin()) return;
+  if (!assertCan('products.archive')) return;
   if (confirm(`هل أنتِ متأكدة من نقل المنتج "${name}" إلى سلة المحذوفات؟`)) {
     if (db) {
       await dbPaths.productsCol().doc(String(id)).set({
@@ -514,7 +514,7 @@ async function archiveProductConfirm(id, name) {
 }
 
 async function restoreProduct(id) {
-  if (!assertAdmin()) return;
+  if (!assertCan('products.archive')) return;
   if (db) {
     await dbPaths.productsCol().doc(String(id)).set({
       isDeleted: false,
@@ -530,7 +530,7 @@ async function restoreProduct(id) {
 }
 
 async function permanentDeleteProduct(id, name) {
-  if (!assertAdmin()) return;
+  if (!assertCan('products.archive')) return;
   if (confirm(`تحذير نهائي: هل تريد حذف "${name}" نهائياً من قاعدة البيانات بلا رجعة؟`)) {
     if (db) {
       const existingProd = archivedProducts.find(x => String(x.id) === String(id)) || findProduct(id);
