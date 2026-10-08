@@ -302,6 +302,12 @@ function checkLowStockAlerts() {
 
 // ================= 22. ADMIN SECTIONS CONTROLLER =================
 function switchAdminSection(sec) {
+  // 🔑 حماية الأقسام حسب دور الموظف (الواجهة تخفي الأزرار، وهذه تمنع الدخول المباشر بالكود/الاستدعاء)
+  const requiredPerm = ADMIN_SECTION_PERMS[String(sec).toLowerCase()];
+  if (requiredPerm && !can(requiredPerm)) {
+    showToast('⚠️ هذا القسم غير متاح لصلاحيات دورك.');
+    sec = defaultAdminSection();
+  }
   const sections = ['Stats', 'Orders', 'Import', 'Products', 'Cats', 'Offers', 'Bundles', 'Coupons', 'Brands', 'Notifs', 'Audit', 'Staff', 'Design', 'Subscription', 'Trash'];
   
   sections.forEach(k => {
