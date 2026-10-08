@@ -231,6 +231,21 @@ section('6ج. ميزات الواجهة المطلوبة (طلباتي، الع�
     g(!/isPlatformAdminRoute/.test(w), 'worker.js: مسارات المنصة ما زالت تتطلب صيدلية معرَّفة (سبب عدم تحديث بنك المنتجات)');
     g(!/master-catalog\/bulk-upsert/.test(w) || !/master-catalog\/bulk-delete/.test(w), 'worker.js: مسارات الرفع/الحذف الجماعي لبنك المنتجات مفقودة');
   }
+  // أدوار الموظفين الثلاثة + تقرير Excel المنظّم
+  const rulesTxt = read('firestore.rules') || '', wTxt = workerFile ? read(workerFile) : null;
+  const settingsJs = read('admin-settings.js') || '', reportsJs = read('admin-reports.js') || '', scriptJs = read('script.js') || '';
+  g(!/value="shift"/.test(adm) || !/value="cosmetics"/.test(adm) || !/value="owner"/.test(adm), 'admin.html: قائمة أدوار الموظفين يجب أن تحتوي shift و cosmetics و owner');
+  g(/value="pharmacist"|value="manager"|value="staff"/.test(adm.split('staffRoleSelect')[1] ? adm.split('staffRoleSelect')[1].slice(0, 900) : ''), 'admin.html: عادت أدوار قديمة في قائمة الموظفين');
+  g(!/const ROLE_PERMS/.test(scriptJs) || !/function can\(/.test(scriptJs) || !/function assertCan/.test(scriptJs), 'script.js: نموذج صلاحيات الأدوار غير موجود');
+  g(!/ADMIN_SECTION_PERMS/.test(ap) && !/ADMIN_SECTION_PERMS/.test(scriptJs), 'أقسام لوحة الأدمن غير محمية بالصلاحيات');
+  g(!/assertCan\('products\.archive'\)/.test(ap), 'أرشفة/حذف المنتجات يجب أن تتطلب صلاحية products.archive');
+  g(!/assertCan\('orders\.manage'\)/.test(ap), 'تغيير حالة الطلب يجب أن يتطلب orders.manage');
+  g(!/assertCan\('reports'\)/.test(ap), 'التقارير يجب أن تتطلب صلاحية reports');
+  g(!/function buildXlsxFile/.test(ap) || !/function xlsxZip/.test(ap), 'admin-reports.js: منشئ ملف Excel (xlsx) غير موجود');
+  g(/isSuperAdmin\(\)\)\s*\{\s*showToast\('⚠️ التقارير المالية/.test(ap), 'admin-reports.js: التقارير ما زالت مقصورة على المشرف العام فقط');
+  if (wTxt) g(!/COSMETICS_ALLOWED_ADMIN_ROUTES/.test(wTxt) || !/readStaffRole/.test(wTxt), 'worker.js: صلاحيات موظف الكوزمتك غير مطبّقة بالووركر');
+  g(!/isCosmeticsStaff/.test(rulesTxt) || !/canViewOrders/.test(rulesTxt) || !/canEditProducts/.test(rulesTxt), 'firestore.rules: دوال أدوار الموظفين غير موجودة');
+  g(/isTenantStaff\(/.test(rulesTxt.replace(/\/\/[^\n]*/g, '')), 'firestore.rules: عادت الدالة العامة isTenantStaff (تعطي أي موظف كل الصلاحيات)');
   if (!bad) pass('طلباتي بالشريط، العروض تلقائية، إدارة البنك، والتقرير الجديد — كلها موجودة');
 }
 
