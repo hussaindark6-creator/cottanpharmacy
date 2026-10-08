@@ -1011,7 +1011,7 @@ function renderAccountView() {
   if (!container) return;
 
   if (currentUser) {
-    const isAdmin = isCurrentUserAdmin();
+    const isAdmin = isStaffMember();
     const cleanPhoto = sanitizeUrl(currentUser.photoURL);
     container.innerHTML = `
       <div class="account-card">
