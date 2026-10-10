@@ -195,7 +195,7 @@
           PLATFORM_ROOT_DOMAIN = data.platformRootDomain || "";
           cloudflareAutoDnsReady = !!data.cloudflareAutoDnsReady;
           if (!PLATFORM_ROOT_DOMAIN) {
-            showToast('⚠️ لم يُعرَّف دومين المنصة الجذري (PLATFORM_ROOT_DOMAIN) على الووركر بعد — خاصية "النطاق الفرعي المجاني" لن تعمل حتى تضيفيه من إعدادات Cloudflare Workers.', true);
+            console.info('PLATFORM_ROOT_DOMAIN غير مضبوط بالووركر (اختياري: يلزم فقط للنطاقات الفرعية المجانية). لا تنبيه عند الدخول؛ يظهر تنبيه عند محاولة إنشاء نطاق فرعي مجاني فقط.');
           }
         }
       } catch (err) {
