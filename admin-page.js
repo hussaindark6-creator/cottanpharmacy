@@ -135,6 +135,34 @@
       selectTenantMainCategory(activeMainCategory);
     }
 
+    // كلمات مفتاحية لحقل category (عربي/إنجليزي) → القسم الرئيسي. الترتيب مهم: الأكثر تحديداً أولاً.
+    const CATEGORY_FIELD_RULES = [
+      ['dental', ['dental', 'أسنان', 'اسنان']],
+      ['baby_care', ['baby_care', 'baby care', 'بالطفل', 'حفاض', 'مناديل أطفال']],
+      ['baby_milk', ['baby_milk', 'milk', 'حليب']],
+      ['supplements', ['supplement', 'vitamin', 'multivitamin', 'mineral', 'probiotic', 'مكمل', 'فيتامين']],
+      ['hair', ['hair', 'شعر']],
+      ['hygiene', ['hygiene', 'نظافة']],
+      ['cosmetics', ['cosmetic', 'skincare', 'كوزمتك', 'تجميل', 'بشرة', 'face']]
+    ];
+    function classifyByCategoryField(cat) {
+      if (!cat) return null;
+      for (const [main, words] of CATEGORY_FIELD_RULES) {
+        if (words.some(w => cat.includes(w))) return main;
+      }
+      return null;
+    }
+    function defaultSubFor(main, item) {
+      const t = String(item.type || '').toLowerCase();
+      if (main === 'dental') return /mouth|rinse/.test(t) ? 'Mouthwash' : (/brush/.test(t) ? 'Toothbrush' : 'Toothpaste');
+      if (main === 'baby_milk') return 'Stage 1 (0-6M)';
+      if (main === 'baby_care') return 'Baby Skincare';
+      if (main === 'hair') return 'Hair Care - Shampoo';
+      if (main === 'hygiene') return 'Hand Wash';
+      if (main === 'supplements') return 'Supplement';
+      return 'Skincare';
+    }
+
     function getItemClassification(item) {
       const cat = (item.category || '').toLowerCase().trim();
       const subCat = (item.subCategory || '').toLowerCase().trim();
@@ -146,6 +174,15 @@
         if ((customCat.keywords || []).some(kw => name.includes(kw) || cat.includes(kw) || subCat.includes(kw) || desc.includes(kw))) {
           return { main: customCat.id, sub: customCat.name, isCustom: true };
         }
+      }
+
+      // 🆕 التصنيف الصريح بحقل category أولاً (إنجليزي أو عربي) — كان يفهم الإنجليزي فقط، فتُصنَّف أصناف ملفات
+      // البنك العربية ("العناية بالأسنان"، "حليب الأطفال"، "المكملات الغذائية") بالقسم الخطأ (كوزمتك غالباً).
+      const explicitMain = classifyByCategoryField(cat);
+      if (explicitMain) return { main: explicitMain, sub: item.subCategory || defaultSubFor(explicitMain, item) };
+
+      if (/mouth ?wash|mouth ?rinse|oral rinse|toothbrush|tooth ?paste|dental floss/.test(name)) {
+        return { main: 'dental', sub: item.subCategory || defaultSubFor('dental', item) };
       }
 
       if (cat === 'baby_milk' || cat === 'milk' || name.includes('حليب') || name.includes('milk') || name.includes('aptamil') || name.includes('bebelac') || name.includes('similac') || name.includes('nan') || name.includes('novalac')) {
@@ -190,8 +227,15 @@
 
       const conf = MASTER_CATEGORIES_CONFIG[activeMainCategory];
       if (conf && conf.subCategories) {
+        // 🆕 نضيف التصنيفات الفرعية الفعلية الموجودة بأصناف البنك (مثل "غسول الفم" و"معجون أسنان") إلى القائمة الثابتة
+        const actualSubs = new Set();
+        cachedMasterCatalog.forEach(item => {
+          const cl = getItemClassification(item);
+          if (cl.main === activeMainCategory && cl.sub) actualSubs.add(cl.sub);
+        });
+        const allSubs = [...new Set([...conf.subCategories, ...actualSubs])];
         subSelect.innerHTML = `<option value="all">📂 جميع أقسام ${conf.labelAr} (All)</option>` + 
-          conf.subCategories.map(sub => `<option value="${escapeHtml(sub)}">${escapeHtml(sub)}</option>`).join('');
+          allSubs.map(sub => `<option value="${escapeHtml(sub)}">${escapeHtml(sub)}</option>`).join('');
       }
     }
 
@@ -458,6 +502,25 @@
       }).join('');
     }
 
+    // المنتجات تُعرض بالمتجر حسب p.category === معرّف قسم المتجر. أصناف البنك قد تحمل اسم القسم بالعربي
+    // ("العناية بالأسنان")، فنطابقه مع قسم المتجر الموجود فعلاً (بالمعرّف، أو بالاسم، أو بالتصنيف الرئيسي)
+    // وإلا نُبقي قيمة البنك كما هي.
+    function resolveStoreCategoryId(masterItem) {
+      const raw = String(masterItem.category || '').trim();
+      const storeCats = Array.isArray(categories) ? categories : [];
+      if (!storeCats.length) return raw;
+      if (storeCats.some(c => c.id === raw)) return raw;
+      const norm = (t) => String(t || '').replace(/[\u064B-\u0652ـ]/g, '').replace(/ال/g, '').replace(/\s+/g, '').toLowerCase();
+      const byLabel = storeCats.find(c => norm(c.label) && (norm(c.label) === norm(raw) || norm(c.label).includes(norm(raw)) || (norm(raw) && norm(raw).includes(norm(c.label)))));
+      if (byLabel) return byLabel.id;
+      const main = getItemClassification(masterItem).main;
+      const byMainId = storeCats.find(c => c.id === main);
+      if (byMainId) return byMainId.id;
+      const mainLabel = (MASTER_CATEGORIES_CONFIG[main] || {}).labelAr;
+      const byMainLabel = mainLabel ? storeCats.find(c => norm(c.label) && (norm(c.label).includes(norm(mainLabel)) || norm(mainLabel).includes(norm(c.label)))) : null;
+      return byMainLabel ? byMainLabel.id : raw;
+    }
+
     async function handleTenantImportSingle(masterId) {
       if (!isFirebaseConfigured || !db) return;
       const masterItem = cachedMasterCatalog.find(x => String(x.id) === String(masterId));
@@ -485,6 +548,8 @@
         } else {
           const payload = {
             ...masterItem,
+            category: resolveStoreCategoryId(masterItem),
+            masterCategoryLabel: masterItem.category || '',
             masterCatalogId: masterId,
             price: sellingPrice,
             oldPrice: null,
