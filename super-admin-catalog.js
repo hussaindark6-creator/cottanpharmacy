@@ -121,27 +121,18 @@
       if (!confirm(`تحذير: هل أنت متأكد من حذف (${ids.length}) صنف دفعة واحدة من الكتالوج المركزي؟`)) return;
 
       showToast(`جاري حذف ${ids.length} صنف...`);
-      const CHUNK_SIZE = 400;
-      const totalBatches = Math.ceil(ids.length / CHUNK_SIZE);
-
       try {
-        for (let i = 0; i < totalBatches; i++) {
-          const chunk = ids.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-          const batch = db.batch();
-          chunk.forEach(id => {
-            const docRef = db.collection('system').doc('master_catalog').collection('products').doc(id);
-            batch.delete(docRef);
-          });
-          await batch.commit();
+        // عبر الووركر: يحذف من Firestore ويحدّث كاش R2 معاً، ثم نعيد تحميل القائمة (بعد اكتمال التحديث لا قبله)
+        let deleted = 0;
+        for (let i = 0; i < ids.length; i += 1000) {
+          const result = await superApiFetch('/api/admin/master-catalog/bulk-delete', { method: 'POST', body: JSON.stringify({ productIds: ids.slice(i, i + 1000) }) });
+          if (!result || !result.success) throw new Error((result && result.message) || 'رفض الووركر عملية الحذف');
+          deleted += result.deleted || 0;
         }
-
-        showToast(`🎉 تم حذف ${ids.length} صنف بنجاح!`);
+        showToast(`🎉 تم حذف ${deleted} صنف بنجاح!`);
         window.selectedMasterItemIds.clear();
         updateSelectedMasterCount();
-        fetchMasterCatalog();
-        // 🆕 حذف جماعي = يبني الكاش بالكامل مرة واحدة فقط بعد اكتمال كل الدفعات (أسرع
-        // وأبسط من محاولة إزالة كل صنف من ملف R2 على حدة لعدد كبير كهذا).
-        await syncMasterCatalogCache('/api/admin/master-catalog/rebuild');
+        await fetchMasterCatalog();
       } catch (err) {
         showToast('خطأ: ' + err.message, true);
       }
@@ -150,12 +141,10 @@
     async function deleteFromMasterCatalog(id) {
       if (!confirm('حذف هذا الصنف من الكتالوج المركزي؟')) return;
       try {
-        await db.collection('system').doc('master_catalog').collection('products').doc(id).delete();
+        const result = await superApiFetch('/api/admin/master-catalog/bulk-delete', { method: 'POST', body: JSON.stringify({ productIds: [String(id)] }) });
+        if (!result || !result.success) throw new Error((result && result.message) || 'رفض الووركر عملية الحذف');
         showToast('تم حذف الصنف');
-        fetchMasterCatalog();
-        // 🆕 حذف صنف واحد = إزالته مباشرة من ملف R2 المخزَّن (قراءة واحدة + كتابة واحدة)
-        // بلا أي قراءة لكامل المجموعة — أرخص بكثير من إعادة بناء الملف كاملاً.
-        await syncMasterCatalogCache('/api/admin/master-catalog/delete-item', { productId: id });
+        await fetchMasterCatalog();
       } catch (e) {
         showToast('خطأ: ' + e.message, true);
       }
@@ -179,59 +168,39 @@
         const text = await file.text();
         let items = [];
 
-        if (file.name.endsWith('.json')) {
-          items = JSON.parse(text);
+        if (/\.json$/i.test(file.name)) {
+          const parsed = JSON.parse(text.replace(/^\uFEFF/, ''));
+          items = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.items) ? parsed.items : []);
         } else {
           items = parseCSVToMasterArray(text);
         }
+        items = items.filter(x => x && typeof x === 'object' && x.name);
 
         if (!Array.isArray(items) || items.length === 0) {
-          throw new Error('الملف فارغ أو لا يحتوي على مصفوفة بيانات صالحة.');
+          throw new Error('الملف فارغ أو لا يحتوي أصنافاً (يجب أن يكون لكل صنف حقل name).');
         }
 
+        // 🛠️ الرفع عبر الووركر (وليس كتابة Firestore مباشرة): (1) يحفظ **كل حقول** الصنف (التصنيف الفرعي، المرحلة،
+        // الفئة العمرية، المؤشرات الطبية...) — الكود القديم كان يحفظ 12 حقلاً ثابتاً فقط ويضيّع الباقي،
+        // (2) يحدّث كاش R2 داخل نفس الطلب، فتظهر الأصناف لكل الصيدليات فور انتهاء الرفع، (3) يرجع نتيجة صريحة.
         statusText.textContent = `تم قراءة ${items.length} صنف. جاري الحفظ السحابي...`;
         const CHUNK_SIZE = 400;
         const totalBatches = Math.ceil(items.length / CHUNK_SIZE);
+        let saved = 0;
 
         for (let i = 0; i < totalBatches; i++) {
           const chunk = items.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-          const batch = db.batch();
-
-          chunk.forEach(rawItem => {
-            const docId = rawItem.id ? String(rawItem.id).trim() : ('item_' + Math.random().toString(36).substring(2, 9));
-            const docRef = db.collection('system').doc('master_catalog').collection('products').doc(docId);
-            
-            batch.set(docRef, {
-              id: docId,
-              name: rawItem.name || 'بدون اسم',
-              brand: rawItem.brand || 'عام',
-              category: rawItem.category || 'face',
-              size: rawItem.size || 'عبوة قياسية',
-              price: Number(rawItem.price || rawItem.suggestedPrice || 0),
-              suggestedPrice: Number(rawItem.suggestedPrice || rawItem.price || 0),
-              stockQuantity: Number(rawItem.stockQuantity || 10),
-              inStock: rawItem.inStock !== false,
-              description: rawItem.description || '',
-              ingredients: rawItem.ingredients || '',
-              barcode: rawItem.barcode || '',
-              imageUrl: rawItem.imageUrl || '',
-              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            }, { merge: true });
-          });
-
-          await batch.commit();
+          const result = await superApiFetch('/api/admin/master-catalog/bulk-upsert', { method: 'POST', body: JSON.stringify({ items: chunk }) });
+          if (!result || !result.success) throw new Error((result && result.message) || 'رفض الووركر الدفعة ' + (i + 1));
+          saved += result.saved || 0;
           const pct = Math.round(((i + 1) / totalBatches) * 100);
           progressFill.style.width = pct + '%';
           percentText.textContent = pct + '%';
         }
 
-        showToast(`🎉 تم استيراد (${items.length}) صنف بنجاح!`);
+        showToast(`🎉 تم استيراد (${saved}) صنف بنجاح وتحديث كاش الصيدليات!`);
         setTimeout(() => progressBox.classList.add('hidden'), 2000);
-        fetchMasterCatalog();
-        // 🆕 رفع جماعي = إعادة بناء الكاش بالكامل مرة واحدة بعد اكتمال كل الدفعات (أسرع
-        // من تحديث ملف R2 لكل صنف من مئات الأصناف على حدة).
-        statusText.textContent = 'جاري تحديث كاش المتجر...';
-        await syncMasterCatalogCache('/api/admin/master-catalog/rebuild');
+        await fetchMasterCatalog();
       } catch (err) {
         showToast('خطأ بالرفع: ' + err.message, true);
         progressBox.classList.add('hidden');
@@ -325,10 +294,10 @@
 
         showToast('🎉 تم اعتماد الصنف في الكتالوج المركزي!');
         fetchCrowdsourcedSubmissions();
-        fetchMasterCatalog();
         // 🆕 اعتماد صنف واحد = إضافته مباشرة لملف R2 المخزَّن (قراءة واحدة + كتابة واحدة)
         // بلا أي قراءة لكامل مجموعة البنك — هذا بالضبط "الإضافة الجديدة فقط" المطلوبة.
         await syncMasterCatalogCache('/api/admin/master-catalog/upsert-item', { productId: docId, data: { ...p, id: docId, crowdsourcedBy: subData.sourcePharmacyId || 'pharmacy' } });
+        await fetchMasterCatalog();
       } catch (err) {
         showToast('خطأ: ' + err.message, true);
       }
