@@ -246,6 +246,11 @@ section('6ج. ميزات الواجهة المطلوبة (طلباتي، الع�
   if (wTxt) g(!/COSMETICS_ALLOWED_ADMIN_ROUTES/.test(wTxt) || !/readStaffRole/.test(wTxt), 'worker.js: صلاحيات موظف الكوزمتك غير مطبّقة بالووركر');
   g(!/isCosmeticsStaff/.test(rulesTxt) || !/canViewOrders/.test(rulesTxt) || !/canEditProducts/.test(rulesTxt), 'firestore.rules: دوال أدوار الموظفين غير موجودة');
   g(/isTenantStaff\(/.test(rulesTxt.replace(/\/\/[^\n]*/g, '')), 'firestore.rules: عادت الدالة العامة isTenantStaff (تعطي أي موظف كل الصلاحيات)');
+  // رفع/حذف بنك المنتجات من السوبر أدمن يجب أن يمر عبر الووركر (يحفظ كل الحقول ويحدّث الكاش قبل إعادة تحميل القائمة)
+  const superCat = read('super-admin-catalog.js') || '';
+  g(!/master-catalog\/bulk-upsert/.test(superCat) || !/master-catalog\/bulk-delete/.test(superCat), 'super-admin-catalog.js: الرفع/الحذف الجماعي لا يمر عبر الووركر');
+  g(/batch\.set\(/.test(superCat.slice(superCat.indexOf('handleMasterBulkUpload'), superCat.indexOf('function parseCSVToMasterArray'))), 'super-admin-catalog.js: عاد الرفع المباشر لـ Firestore (يضيّع حقول الصنف ولا يحدّث الكاش)');
+  g(!/function classifyByCategoryField/.test(read('admin-page.js') || ''), 'admin-page.js: تصنيف البنك لا يفهم أقسام الأصناف العربية');
   if (!bad) pass('طلباتي بالشريط، العروض تلقائية، إدارة البنك، والتقرير الجديد — كلها موجودة');
 }
 
