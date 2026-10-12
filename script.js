@@ -633,6 +633,7 @@ function openBestSellers() {
 
 function renderCurrentActiveView() {
   if (typeof updateOffersTabCount === 'function') updateOffersTabCount();
+  if (currentView === 'home' && typeof applyHomePromoStripImages === 'function') applyHomePromoStripImages();
   if (currentView === 'home') renderHome();
   else if (currentView === 'listing') renderListing();
   else if (currentView === 'categories') renderModernCategories();
@@ -727,32 +728,27 @@ function addBundleToCart(bundleId) {
 function renderBundleCardHtml(b) {
   const cleanImg = sanitizeUrl(b.imageUrl);
   const linkedProducts = (b.productIds || []).map(id => findProduct(id)).filter(Boolean);
-  const thumbsHtml = linkedProducts.slice(0, 3).map((p, idx) => {
+  const thumbsHtml = linkedProducts.slice(0, 3).map(p => {
     const pImg = sanitizeUrl(p.imageUrl);
-    return `
-      ${idx > 0 ? '<span class="bundle-plus-icon">+</span>' : ''}
-      <div class="bundle-thumb-item">
-        ${pImg ? `<img src="${pImg}" alt="${sanitizeText(p.name)}">` : (icons[p.type] || icons.bottle)(getBrandColor(p.brand))}
-      </div>`;
+    return `<div class="bundle-thumb-item">${pImg ? `<img src="${pImg}" alt="${sanitizeText(p.name)}">` : (icons[p.type] || icons.bottle)(getBrandColor(p.brand))}</div>`;
   }).join('');
 
+  // 🎁 شريط أفقي: الصورة المختارة خلفية كاملة واسم البكج مدموج فوقها بوضوح (طبقة تعتيم تدرّجية تحفظ وضوح النص)
   return `
-    <div class="bundle-card" onclick="openBundleDetail('${sanitizeText(b.id)}')" style="cursor:pointer;">
-      ${b.savingsBadge ? `<span class="bundle-savings-badge">${sanitizeText(b.savingsBadge)}</span>` : ''}
-      <div class="bundle-thumb-row">
-        ${cleanImg ? `<img src="${cleanImg}" alt="${sanitizeText(b.title)}" style="width:100%; height:100%; object-fit:cover; border-radius:12px;">` : (thumbsHtml || icons.bottle('var(--accent)'))}
+    <div class="bundle-strip" onclick="openBundleDetail('${sanitizeText(b.id)}')">
+      <div class="bundle-strip-media">${cleanImg ? `<img src="${cleanImg}" alt="${sanitizeText(b.title)}" loading="lazy">` : ''}</div>
+      ${!cleanImg && thumbsHtml ? `<div class="bundle-strip-thumbs">${thumbsHtml}</div>` : ''}
+      <div class="bundle-strip-overlay"></div>
+      <div class="bundle-strip-body">
+        ${b.savingsBadge ? `<span class="bundle-strip-badge">${sanitizeText(b.savingsBadge)}</span>` : ''}
+        <h3 class="bundle-strip-title">🎁 ${sanitizeText(b.title)}</h3>
+        ${linkedProducts.length ? `<span class="bundle-strip-sub">${linkedProducts.length} منتجات في البكج</span>` : ''}
+        <div class="bundle-strip-price-row">
+          <span class="bundle-strip-price mono">${fmtPrice(b.price)}</span>
+          ${b.oldPrice ? `<span class="bundle-strip-old mono">${fmtPrice(b.oldPrice)}</span>` : ''}
+        </div>
       </div>
-      <h3 class="bundle-title">🎁 ${sanitizeText(b.title)}</h3>
-      <p class="bundle-desc">${sanitizeText(b.description)}</p>
-      ${linkedProducts.length > 0 ? `
-        <div class="bundle-items-list">
-          ${linkedProducts.map(p => `<span>• ${sanitizeText(p.name)}</span>`).join('')}
-        </div>` : ''}
-      <div class="bundle-price-box">
-        <span class="pd-price mono" style="font-size:19px;">${fmtPrice(b.price)}</span>
-        ${b.oldPrice ? `<span class="p-oldprice mono">${fmtPrice(b.oldPrice)}</span>` : ''}
-      </div>
-      <button class="add-cart-btn" onclick="event.stopPropagation(); addBundleToCart('${sanitizeText(b.id)}')">أضف البكج كاملاً للسلة 🎁</button>
+      <button class="bundle-strip-add" onclick="event.stopPropagation(); addBundleToCart('${sanitizeText(b.id)}')">أضف للسلة 🛒</button>
     </div>`;
 }
 
@@ -1434,7 +1430,17 @@ async function verifyStaffPermissions(user) {
   }
   try {
     const staffDocId = user.email.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    // 🛡️ (توفير قراءات) كان كل زبون مسجَّل بجوجل يقرأ مستند الموظف من Firestore عند كل فتح للمتجر.
+    // بصفحة المتجر نحفظ النتيجة السلبية (ليس موظفاً) 24 ساعة بالمتصفح؛ بلوحة الأدمن القراءة دائماً طازجة.
+    const staffCacheKey = 'staff_neg_' + currentPharmacyId + '_' + staffDocId;
+    if (!IS_ADMIN_PAGE) {
+      try {
+        const at = Number(localStorage.getItem(staffCacheKey) || 0);
+        if (at && Date.now() - at < 24 * 3600 * 1000) { currentStaffData = null; return; }
+      } catch (e) { /* غير حرج */ }
+    }
     const doc = await dbPaths.staffCol().doc(staffDocId).get();
+    if (!doc.exists && !IS_ADMIN_PAGE) { try { localStorage.setItem(staffCacheKey, String(Date.now())); } catch (e) {} }
     if (doc.exists) {
       currentStaffData = doc.data();
     } else {
@@ -1491,10 +1497,13 @@ async function registerWithPhone() {
   if (btn) { btn.disabled = true; btn.textContent = '⏳ جاري إنشاء الحساب...'; }
 
   try {
+    // 🛡️ حماية من البوتات: Turnstile (إن ضُبط مفتاح الموقع) قبل أي عملية على الووركر
+    const cfToken = (TURNSTILE_SITE_KEY && typeof getTurnstileToken === 'function') ? await getTurnstileToken('turnstileRegisterBox') : '';
+    if (TURNSTILE_SITE_KEY && !cfToken) { showPhoneAuthError('⚠️ تعذر التحقق من أنكِ إنسان، حدّثي الصفحة وأعيدي المحاولة.'); return; }
     const res = await fetch(`${WORKER_API_BASE}/api/auth/phone-register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Pharmacy-Id': currentPharmacyId },
-      body: JSON.stringify({ name, phone, pin })
+      body: JSON.stringify({ name, phone, pin, cfToken })
     });
     const data = await res.json();
     if (!data.success) { showPhoneAuthError(data.message || '⚠️ تعذر إنشاء الحساب'); return; }
@@ -1527,10 +1536,12 @@ async function loginWithPhone() {
   if (btn) { btn.disabled = true; btn.textContent = '⏳ جاري تسجيل الدخول...'; }
 
   try {
+    const cfToken = (TURNSTILE_SITE_KEY && typeof getTurnstileToken === 'function') ? await getTurnstileToken('turnstileLoginBox') : '';
+    if (TURNSTILE_SITE_KEY && !cfToken) { showPhoneAuthError('⚠️ تعذر التحقق من أنكِ إنسان، حدّثي الصفحة وأعيدي المحاولة.'); return; }
     const res = await fetch(`${WORKER_API_BASE}/api/auth/phone-login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Pharmacy-Id': currentPharmacyId },
-      body: JSON.stringify({ phone, pin })
+      body: JSON.stringify({ phone, pin, cfToken })
     });
     const data = await res.json();
     if (!data.success) { showPhoneAuthError(data.message || '⚠️ تعذر تسجيل الدخول'); return; }
