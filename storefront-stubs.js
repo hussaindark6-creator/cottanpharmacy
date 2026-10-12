@@ -13,6 +13,7 @@
     "checkAndShowWelcomeModal",
     "checkStorefrontSubscriptionLock",
     "closeMenu",
+    "getTurnstileToken",
     "openBundleDetail",
     "openProduct",
     "renderAccountView",
@@ -30,6 +31,8 @@
     "selectProductVariantCard",
     "showListingView",
     "updateCartBadge",
+    "updateOffersTabCount",
+    "applyHomePromoStripImages",
     "updateUserHeaderProfile"
 ];
   NOOP_FUNCTION_NAMES.forEach(function (name) {
