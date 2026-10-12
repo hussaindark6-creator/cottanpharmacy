@@ -45,14 +45,17 @@ async function fetchRealAnalytics() {
       if (!adminOrdersWindowCapped || (oldestMs && oldestMs <= windowStart.getTime())) windowOrders = listed;
     }
     if (!windowOrders) {
-      if (window.__analyticsWindowCache && Date.now() - window.__analyticsWindowCache.at < 60000) {
-        windowOrders = window.__analyticsWindowCache.orders;
-      } else {
+      // 🛡️ (توفير قراءات) استعلام الفترة الكاملة (قد يكون آلاف الطلبات) يُخزَّن 15 دقيقة بدل دقيقة، وأحدث الطلبات
+      // (من المستمع اللحظي) تُدمج فوقه بلا أي قراءة إضافية، فتبقى أرقام اليوم دقيقة لحظياً.
+      if (!(window.__analyticsWindowCache && Date.now() - window.__analyticsWindowCache.at < 15 * 60 * 1000)) {
         const wsnap = await dbPaths.ordersCol().where('createdAt', '>=', windowStart).get();
-        windowOrders = [];
-        wsnap.forEach(d => windowOrders.push({ id: d.id, ...d.data() }));
-        window.__analyticsWindowCache = { at: Date.now(), orders: windowOrders };
+        const fetched = [];
+        wsnap.forEach(d => fetched.push({ id: d.id, ...d.data() }));
+        window.__analyticsWindowCache = { at: Date.now(), orders: fetched };
       }
+      const mergedMap = new Map(window.__analyticsWindowCache.orders.map(o => [String(o.id), o]));
+      (Array.isArray(listed) ? listed : []).forEach(o => mergedMap.set(String(o.id), o));
+      windowOrders = [...mergedMap.values()];
     }
     const ordersSnap = { size: windowOrders.length, forEach: (fn) => windowOrders.forEach(o => fn({ data: () => o })) };
     totalOrdersCount = Math.max(windowOrders.length, (window.adminLastOrdersList || []).length, myOrders.length);
