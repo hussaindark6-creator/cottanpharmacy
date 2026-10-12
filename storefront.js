@@ -251,10 +251,10 @@ function loadTurnstileScript() {
   return turnstileScriptPromise;
 }
 
-async function getTurnstileToken() {
+async function getTurnstileToken(boxId = 'turnstileBox') {
   try {
     await loadTurnstileScript();
-    const box = document.getElementById('turnstileBox');
+    const box = document.getElementById(boxId);
     if (!box || !window.turnstile) return '';
     return await new Promise((resolve) => {
       const timer = setTimeout(() => resolve(''), 20000);
@@ -675,6 +675,22 @@ function getDiscountedProducts() {
     .sort((a, b) => pct(b) - pct(a));
 }
 
+// 🖼️ صورة شريطَي الرئيسية: البكجات = صورة أول بكج له صورة، العروض = صورة أول منتج مخفَّض (إن لم توجد تبقى الخلفية المتدرجة)
+function applyHomePromoStripImages() {
+  const setImg = (id, url) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const clean = url ? sanitizeUrl(url) : '';
+    if (clean) { el.style.setProperty('--strip-img', `url("${clean}")`); el.classList.add('has-img'); }
+    else { el.style.removeProperty('--strip-img'); el.classList.remove('has-img'); }
+  };
+  const b = (bundles || []).find(x => x && x.imageUrl);
+  setImg('promoStripBundles', b ? b.imageUrl : '');
+  let o = null;
+  try { o = (getDiscountedProducts() || []).find(x => x && x.imageUrl); } catch (e) { /* غير حرج */ }
+  setImg('promoStripOffers', o ? o.imageUrl : '');
+}
+
 function updateOffersTabCount() {
   const el = document.getElementById('offersTabCount');
   if (!el) return;
@@ -712,7 +728,7 @@ function openBundleDetail(bundleId) {
       : linkedProducts.map(p => {
           const pImg = sanitizeUrl(p.imageUrl);
           return `
-            <div style="display:flex; align-items:center; gap:10px; padding:8px; border:1.5px solid var(--line); border-radius:14px;">
+            <div onclick="closeBundleDetail(); openProduct('${sanitizeText(p.id)}', true)" role="button" style="display:flex; align-items:center; gap:10px; padding:8px; border:1.5px solid var(--line); border-radius:14px; cursor:pointer;">
               <div style="width:48px; height:48px; flex-shrink:0; border-radius:10px; overflow:hidden; background:var(--surface); display:flex; align-items:center; justify-content:center;">
                 ${pImg ? `<img src="${pImg}" alt="${sanitizeText(p.name)}" style="width:100%; height:100%; object-fit:cover;">` : (icons[p.type] || icons.bottle)(getBrandColor(p.brand))}
               </div>
@@ -720,6 +736,7 @@ function openBundleDetail(bundleId) {
                 <div style="font-weight:800; font-size:13px;">${sanitizeText(p.name)}</div>
                 <div style="font-size:11px; color:var(--text-soft);">${sanitizeText(p.brand || '')}${p.size ? ' · ' + sanitizeText(p.size) : ''}</div>
               </div>
+              <span style="font-size:18px; color:var(--text-soft); flex-shrink:0;">‹</span>
             </div>`;
         }).join('');
   }
@@ -843,8 +860,6 @@ function renderProductDetailDOM(p) {
   stockEl.innerHTML = inStock ? `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" style="width:18px;height:18px;"><path d="M5 13l4 4L19 7"/></svg><span>متوفر بالمخزون (${p.stockQuantity !== undefined ? p.stockQuantity : 'متوفر'} قطعة)</span>` : `<span>نفذت الكمية حالياً</span>`;
 
   document.getElementById('pdTabDesc').textContent = p.description || 'منتج أصلي معتمد من الصيدلية.';
-  document.getElementById('pdTabIng').textContent = p.ingredients || p.medicalIndications || 'تركيبة غنية ومفحوصة جلدياً وطبياً.';
-  document.getElementById('pdTabUse').textContent = p.usage || 'يُوضع على بشرة نظيفة وفق الإرشادات الصيدلانية.';
   
   renderCrossSelling(p);
   switchPdTab('desc');
@@ -909,14 +924,10 @@ function goBackFromProduct() {
 }
 
 function switchPdTab(tab) {
-  pdActiveTab = tab;
-  document.querySelectorAll('.pd-tab').forEach((el,i) => el.classList.toggle('active', ['desc','ing','use'][i] === tab));
+  // التبويبات أُزيلت (المكونات/الاستخدام): تبقى دالة متوافقة تُظهر الوصف فقط
+  pdActiveTab = 'desc';
   const dTab = document.getElementById('pdTabDesc');
-  const iTab = document.getElementById('pdTabIng');
-  const uTab = document.getElementById('pdTabUse');
-  if (dTab) dTab.classList.toggle('active', tab === 'desc');
-  if (iTab) iTab.classList.toggle('active', tab === 'ing');
-  if (uTab) uTab.classList.toggle('active', tab === 'use');
+  if (dTab) dTab.classList.add('active');
 }
 
 function changePdQty(delta) {
@@ -929,11 +940,18 @@ function renderCrossSelling(currentP) {
   const grid = document.getElementById('pdSuggestedGrid');
   if (!grid || !currentP) return;
 
+  // 🎯 ذات صلة = نفس قسم المنتج حصراً (معجون أسنان ← معاجين/فُرَش أسنان). كان الشرط السابق يعرض أي منتج من قسم مختلف.
+  // الترتيب: المتوفر أولاً، ثم نفس الماركة، ثم بقية القسم. إن لم يوجد شيء يُخفى القسم كاملاً.
+  const inStockOf = (p) => p.inStock !== false && (p.stockQuantity === undefined || p.stockQuantity > 0);
   const suggestions = products
-    .filter(p => p.id !== currentP.id && p.isDeleted !== true && (p.brand === currentP.brand || p.category !== currentP.category))
-    .slice(0, 4);
+    .filter(p => String(p.id) !== String(currentP.id) && p.isDeleted !== true && currentP.category && p.category === currentP.category)
+    .sort((a, b) => (inStockOf(b) - inStockOf(a)) || ((b.brand === currentP.brand) - (a.brand === currentP.brand)))
+    .slice(0, 6);
 
-  renderProductGrid('pdSuggestedGrid', suggestions);
+  const head = document.getElementById('pdRelatedHead');
+  if (head) head.style.display = suggestions.length ? '' : 'none';
+  grid.style.display = suggestions.length ? '' : 'none';
+  if (suggestions.length) renderProductGrid('pdSuggestedGrid', suggestions);
 }
 
 // ================= 27. CATEGORIES & BRANDS =================
@@ -1051,6 +1069,7 @@ function renderAccountView() {
             <label>كلمة المرور (رمز سري من 4 إلى 6 أرقام)</label>
             <input type="password" id="phoneLoginPin" placeholder="••••" inputmode="numeric" maxlength="6">
           </div>
+          <div id="turnstileLoginBox" style="display:flex; justify-content:center; margin-bottom:8px;"></div>
           <button class="auth-btn-google" style="background:var(--accent); color:#fff; border:none; margin-bottom:10px;" onclick="loginWithPhone()">تسجيل الدخول</button>
         </div>
 
@@ -1067,6 +1086,7 @@ function renderAccountView() {
             <label>كلمة المرور (رمز سري من 4 إلى 6 أرقام)</label>
             <input type="password" id="phoneRegisterPin" placeholder="••••" inputmode="numeric" maxlength="6">
           </div>
+          <div id="turnstileRegisterBox" style="display:flex; justify-content:center; margin-bottom:8px;"></div>
           <button class="auth-btn-google" style="background:var(--accent); color:#fff; border:none; margin-bottom:10px;" onclick="registerWithPhone()">إنشاء الحساب</button>
         </div>
 
