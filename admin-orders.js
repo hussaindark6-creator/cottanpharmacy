@@ -283,7 +283,7 @@ function triggerRepeatingNewOrderAlert() {
   }, 1600);
 }
 
-const ADMIN_ORDERS_LIMIT = 400;
+const ADMIN_ORDERS_LIMIT = 200; // 🛡️ (توفير قراءات) كان 400: كل فتح للوحة/تبويب الطلبات يقرأ هذا العدد كاملاً
 let adminOrdersWindowCapped = false;
 
 function listenToAdminOrdersRealtime() {
