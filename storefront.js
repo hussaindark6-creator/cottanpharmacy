@@ -513,7 +513,7 @@ function renderListing() {
       return nameNorm.includes(qNorm) || brandNorm.includes(qNorm) || descNorm.includes(qNorm) || ingNorm.includes(qNorm);
     });
   } else if (listingMode === 'bestsellers') {
-    list = list.filter(p => p.inStock !== false);
+    list = sortProductsByCategoryOrder(list.filter(p => p.inStock !== false));
   } else if (listingMode === 'promo_offer') {
     const allowedSet = new Set((listingValue || []).map(String));
     list = list.filter(p => allowedSet.has(String(p.id)));
@@ -623,7 +623,8 @@ function renderHomeProductGrid() {
     list = list.filter(p => p.brand === homeActiveBrand);
   }
 
-  renderProductGrid('bestSellersGrid', list);
+  // المنتجات بترتيب الأقسام الذي يحدده الأدمن (القسم الأول أولاً ثم الثاني...)
+  renderProductGrid('bestSellersGrid', sortProductsByCategoryOrder(list));
 }
 
 function renderBrandStrip() {
