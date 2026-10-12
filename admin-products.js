@@ -116,6 +116,7 @@ function renderAdminProductManagementGrid() {
           <button type="button" onclick="quickEditPrice('${sanitizeText(p.id)}', ${Number(p.price) || 0})" style="background:#FEF3C7; color:#92400E;">💰 سعر</button>
           <button type="button" onclick="quickToggleStock('${sanitizeText(p.id)}')" style="background:${inStock ? '#FEE2E2' : '#DCFCE7'}; color:${inStock ? '#991B1B' : '#15803D'};">${inStock ? '🔴 إخفاء' : '🟢 توفير'}</button>
           <button type="button" onclick="openAdminQuickEditModal('${sanitizeText(p.id)}')" style="background:var(--surface); color:var(--ink);">✏️ تعديل</button>
+          ${can('products.archive') ? `<button type="button" data-name="${sanitizeText(p.name)}" onclick="archiveProductConfirm('${sanitizeText(p.id)}', this.dataset.name)" style="background:#FEE2E2; color:#991B1B;">🗑️ حذف</button>` : ''}
         </div>
       </div>`;
   }).join('');
@@ -240,6 +241,7 @@ function ensureAdminQuickEditModalMarkup() {
           </div>
 
           <button class="admin-btn-save" onclick="saveAdminQuickEdit()">💾 حفظ التعديلات سحابياً</button>
+<button class="admin-btn-save" id="quickEditDeleteBtn" onclick="deleteProductFromQuickEdit()" style="background:#FEE2E2; color:#991B1B; margin-top:8px; display:none;">🗑️ حذف المنتج (نقله لسلة المحذوفات)</button>
         </div>
       </div>
     </div>`;
@@ -260,6 +262,8 @@ function openAdminQuickEditModal(id) {
     populateCategoryDropdowns();
 
     document.getElementById('quickEditProdId').value = p.id;
+    const delBtn = document.getElementById('quickEditDeleteBtn');
+    if (delBtn) delBtn.style.display = can('products.archive') ? 'block' : 'none';
     document.getElementById('quickEditProdName').value = p.name || '';
     document.getElementById('quickEditProdBrand').value = p.brand || '';
     document.getElementById('quickEditProdPrice').value = p.price || '';
@@ -501,16 +505,36 @@ async function handleAdminProductSave(e) {
 // ----------------- سلة المحذوفات والأرشفة (SOFT DELETE) -----------------
 async function archiveProductConfirm(id, name) {
   if (!assertCan('products.archive')) return;
-  if (confirm(`هل أنتِ متأكدة من نقل المنتج "${name}" إلى سلة المحذوفات؟`)) {
+  if (confirm(`🗑️ حذف المنتج "${name}"؟\n\nسيختفي من المتجر فوراً وينتقل لسلة المحذوفات، ويمكنكِ استرجاعه أو حذفه نهائياً من هناك.`)) {
     if (db) {
-      await dbPaths.productsCol().doc(String(id)).set({
-        isDeleted: true,
-        deletedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
-      removeFromR2Catalog(id);
-      showToast(`تم نقل "${name}" إلى سلة المحذوفات 🗑️`);
+      try {
+        await dbPaths.productsCol().doc(String(id)).set({
+          isDeleted: true,
+          deletedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+        removeFromR2Catalog(id);
+        // يختفي من القوائم المحلية فوراً بلا انتظار إعادة تحميل الكتالوج
+        const idx = products.findIndex(p => String(p.id) === String(id));
+        if (idx > -1) products.splice(idx, 1);
+        saveLocalState();
+        renderAdminProductManagementGrid();
+        renderCurrentActiveView();
+        closeAdminQuickEditModal();
+        showToast(`تم حذف "${name}" ونقله لسلة المحذوفات 🗑️`);
+      } catch (err) {
+        console.warn(err);
+        showToast('⚠️ تعذر حذف المنتج، حاولي مجدداً.');
+      }
     }
   }
+}
+
+// زر "حذف المنتج" داخل نافذة التعديل الكامل
+function deleteProductFromQuickEdit() {
+  const id = document.getElementById('quickEditProdId') ? document.getElementById('quickEditProdId').value : '';
+  const p = products.find(x => String(x.id) === String(id));
+  if (!id || !p) { showToast('تعذر تحديد المنتج'); return; }
+  archiveProductConfirm(id, p.name || id);
 }
 
 async function restoreProduct(id) {
