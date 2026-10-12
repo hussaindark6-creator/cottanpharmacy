@@ -251,6 +251,16 @@ section('6ج. ميزات الواجهة المطلوبة (طلباتي، الع�
   g(!/master-catalog\/bulk-upsert/.test(superCat) || !/master-catalog\/bulk-delete/.test(superCat), 'super-admin-catalog.js: الرفع/الحذف الجماعي لا يمر عبر الووركر');
   g(/batch\.set\(/.test(superCat.slice(superCat.indexOf('handleMasterBulkUpload'), superCat.indexOf('function parseCSVToMasterArray'))), 'super-admin-catalog.js: عاد الرفع المباشر لـ Firestore (يضيّع حقول الصنف ولا يحدّث الكاش)');
   g(!/function classifyByCategoryField/.test(read('admin-page.js') || ''), 'admin-page.js: تصنيف البنك لا يفهم أقسام الأصناف العربية');
+  // كاش يومي عند منتصف الليل + ترتيب الأقسام + زر حذف المنتج
+  if (wTxt) {
+    g(!/lastIraqMidnightMs/.test(wTxt) || !/fullBuiltAt/.test(wTxt), 'worker.js: التجديد اليومي لكاش الكتالوج عند منتصف الليل غير موجود');
+    g(/STOREFRONT_TTL_MS/.test(wTxt), 'worker.js: عاد تقادم لقطة المتجر كل 10 دقائق (يستهلك قراءات)');
+    g(!/nextPageToken/.test(wTxt.slice(wTxt.indexOf('async function buildAndStoreTenantCatalog'), wTxt.indexOf('async function buildAndStoreMasterCatalog'))), 'worker.js: بناء الكتالوج بلا ترقيم صفحات (يقتطع أكثر من 1000 منتج)');
+    g(!/async scheduled\(/.test(wTxt), 'worker.js: معالج Cron الليلي الاختياري غير موجود');
+  }
+  g(!/function moveAdminCategory/.test(scriptJs) || !/function sortCategoriesByOrder/.test(scriptJs) || !/function sortProductsByCategoryOrder/.test(scriptJs), 'script.js: ترتيب الأقسام بيد الأدمن غير موجود');
+  g(!/sortProductsByCategoryOrder/.test(read('storefront.js') || ''), 'storefront.js: واجهة الزبائن لا تلتزم بترتيب الأقسام');
+  g(!/deleteProductFromQuickEdit/.test(ap) || !/🗑️ حذف/.test(ap), 'admin-products.js: زر حذف المنتج غير موجود');
   if (!bad) pass('طلباتي بالشريط، العروض تلقائية، إدارة البنك، والتقرير الجديد — كلها موجودة');
 }
 
