@@ -571,7 +571,7 @@ async function permanentDeleteProduct(id, name) {
 async function fetchArchivedProducts() {
   if (!isFirebaseConfigured || !db) return;
   try {
-    const snap = await dbPaths.productsCol().where('isDeleted', '==', true).get();
+    const snap = await dbPaths.productsCol().where('isDeleted', '==', true).limit(100).get(); // 🛡️ سقف 100 (كان بلا سقف)
     archivedProducts = [];
     snap.forEach(d => archivedProducts.push({ id: d.id, ...d.data() }));
     renderTrashBinList();
