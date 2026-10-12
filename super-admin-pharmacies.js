@@ -168,9 +168,15 @@
     }
 
     // ⚡ (خفض قراءات ~98%) نستخدم استعلام count() المجمّع بدل جلب كل مستندات الطلبات/المنتجات لكل صيدلية
-    async function calculateLiveConsumptionBilling() {
+    async function calculateLiveConsumptionBilling(force = true) {
       if (!db) return;
       const tbody = document.getElementById('billingTableBody');
+      // 🛡️ (توفير قراءات) نتيجة الفوترة (قراءة كل الصيدليات + استعلامَي count لكل صيدلية) تُخزَّن 10 دقائق عند التنقل بين
+      // التبويبات؛ زر التحديث اليدوي يعيد الحساب دائماً (force=true).
+      if (!force && window.__billingCache && Date.now() - window.__billingCache.at < 10 * 60 * 1000) {
+        tbody.innerHTML = window.__billingCache.html;
+        return;
+      }
       tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-400">جاري احتساب استهلاك الصيدليات (بقراءات مخفّضة)...</td></tr>`;
 
       const cfg = JSON.parse(localStorage.getItem('saas_billing_config') || '{}');
@@ -225,6 +231,7 @@
         }
 
         tbody.innerHTML = rows.length ? rows.join('') : `<tr><td colspan="8" class="text-center py-6 text-slate-500">لا توجد بيانات.</td></tr>`;
+        window.__billingCache = { at: Date.now(), html: tbody.innerHTML };
       } catch (err) {
         tbody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-red-400">خطأ: ${err.message}</td></tr>`;
       }
@@ -233,6 +240,7 @@
     async function applyDynamicPriceToPharmacy(slug, newPrice) {
       try {
         await db.collection('pharmacies').doc(slug).set({ subscriptionPrice: newPrice }, { merge: true });
+        window.__billingCache = null;
         showToast('تم تحديث سعر اشتراك الصيدلية بنجاح ✓');
         fetchPharmaciesList();
       } catch (err) {
