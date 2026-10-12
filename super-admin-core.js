@@ -97,7 +97,7 @@
       const sidebar = document.getElementById('superSidebar');
       if (sidebar && window.innerWidth < 1024) toggleSuperSidebar(false);
 
-      if (tabKey === 'billing') calculateLiveConsumptionBilling();
+      if (tabKey === 'billing') calculateLiveConsumptionBilling(false); // false = استخدم النسخة المخزَّنة (10 دقائق) إن وُجدت
       if (tabKey === 'catalog') fetchMasterCatalog();
       if (tabKey === 'crowdsource') fetchCrowdsourcedSubmissions();
       if (tabKey === 'reports') renderIndividualReportsList();
