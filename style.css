@@ -226,6 +226,7 @@ header {
 }
 
 .nav { 
+  position: relative;
   display: flex; 
   align-items: center; 
   justify-content: space-between; 
@@ -272,15 +273,23 @@ header {
 }
 
 .logo-block { 
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  max-width: calc(100% - 130px);
   display: flex; 
   align-items: center; 
-  gap: 8px; 
+  justify-content: center;
   cursor: pointer; 
 }
 
 .logo-text { 
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-weight: 900; 
-  font-size: 19px; 
+  font-size: 21px; 
   color: var(--rose-deep); 
   letter-spacing: -0.5px; 
 }
@@ -550,72 +559,75 @@ header {
 
 /* 🎁 بطاقتا العروض المزدوجتان المتجاورتان */
 .double-banner-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
   margin: 6px 0 18px;
 }
 
 .double-banner-card {
   position: relative;
-  border-radius: var(--radius-md);
-  padding: 16px;
-  min-height: 110px;
+  isolation: isolate;
+  border-radius: 22px;
+  padding: 0 20px;
+  min-height: 104px;
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: flex-start;
   cursor: pointer;
   overflow: hidden;
+  color: #fff;
   transition: transform .2s ease, box-shadow .2s ease;
   box-shadow: var(--shadow-soft);
 }
-
-.double-banner-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-hover);
+.double-banner-card::before {
+  content: "";
+  position: absolute; inset: 0; z-index: -2;
+  background-size: cover; background-position: center;
+  background-image: var(--strip-img, none);
 }
-
-.double-banner-bundles {
-  background: linear-gradient(135deg, #FCE7F3 0%, #FBCFE8 100%);
-  border: 1.5px solid #F9A8D4;
+.double-banner-card::after {
+  content: "";
+  position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(270deg, rgba(20,8,4,.86) 0%, rgba(20,8,4,.6) 48%, rgba(20,8,4,.06) 100%);
 }
+.double-banner-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
 
-.double-banner-offers {
-  background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%);
-  border: 1.5px solid #93C5FD;
-}
+.double-banner-bundles { background: linear-gradient(120deg, var(--rose-deep, #5a1e0f) 0%, var(--accent, #E85D8A) 100%); }
+.double-banner-offers  { background: linear-gradient(120deg, #2b1a10 0%, #8a5a2b 100%); }
 
+.double-banner-text { display: flex; flex-direction: column; gap: 4px; max-width: 70%; }
 .double-banner-text h4 {
-  margin: 0 0 2px;
-  font-size: 15px;
+  margin: 0;
+  font-size: 19px;
   font-weight: 900;
-  color: #1F2937;
+  color: #fff;
+  text-shadow: 0 1px 6px rgba(0,0,0,.35);
 }
-
 .double-banner-text p {
-  margin: 0 0 8px;
-  font-size: 11.5px;
+  margin: 0 0 6px;
+  font-size: 12px;
   font-weight: 700;
-  color: #4B5563;
+  color: rgba(255,255,255,.88);
 }
-
 .double-banner-btn {
-  display: inline-block;
-  background: rgba(255,255,255,0.85);
-  color: #1F2937;
-  font-size: 11px;
+  align-self: flex-start;
+  background: #fff;
+  color: var(--rose-deep, #5a1e0f);
+  font-size: 11.5px;
   font-weight: 900;
-  padding: 5px 12px;
+  padding: 6px 14px;
   border-radius: 999px;
 }
-
 .double-banner-icon {
   position: absolute;
-  top: 10px;
-  left: 10px;
-  font-size: 28px;
-  opacity: .5;
+  left: 18px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 44px;
+  opacity: .9;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,.3));
 }
+.double-banner-card.has-img .double-banner-icon { display: none; }
 
 /* أزرار اختيار نوع الاستشارة (نافذة استشارة الصيدلي) */
 .consult-toggle-btn {
@@ -767,7 +779,7 @@ header {
    HERO BANNER SLIDER & CAROUSEL (سلايدر البانرات العلوي)
    ========================================================== */
 .hero-wrap { 
-  padding: 10px 0 14px; 
+  padding: 0 0 14px; 
 }
 
 .hero-slider-wrapper {
@@ -1123,29 +1135,61 @@ header {
    ليست مشكلة أصلاً. */
 .bundle-grid {
   display: flex;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
+  flex-direction: column;
   gap: 12px;
   margin: 14px 0;
   padding: 2px 2px 8px;
-  scrollbar-width: none;
 }
-
-.bundle-grid::-webkit-scrollbar { display: none; }
 
 @media (min-width: 1024px) {
   .bundle-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    overflow: visible;
-    scroll-snap-type: none;
-    gap: 18px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
     padding: 0;
   }
 }
+
+/* 🎁 شريط البكج الأفقي */
+.bundle-strip {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  min-height: 124px;
+  border-radius: 22px;
+  overflow: hidden;
+  cursor: pointer;
+  background: linear-gradient(120deg, var(--rose-deep, #5a1e0f) 0%, var(--accent, #E85D8A) 100%);
+  box-shadow: var(--shadow-soft);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.bundle-strip:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+.bundle-strip-media { position: absolute; inset: 0; z-index: -2; }
+.bundle-strip-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.bundle-strip-thumbs { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); display: flex; gap: 6px; }
+.bundle-strip-thumbs .bundle-thumb-item { width: 44px; height: 44px; border-radius: 12px; overflow: hidden; background: #fff; display: flex; align-items: center; justify-content: center; }
+.bundle-strip-thumbs img { width: 100%; height: 100%; object-fit: cover; }
+.bundle-strip-overlay {
+  position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(270deg, rgba(20,8,4,.88) 0%, rgba(20,8,4,.62) 46%, rgba(20,8,4,.06) 100%);
+}
+.bundle-strip-body { padding: 14px 18px; max-width: 72%; display: flex; flex-direction: column; gap: 5px; }
+.bundle-strip-badge { align-self: flex-start; background: #fff; color: var(--rose-deep, #5a1e0f); font-size: 10.5px; font-weight: 900; padding: 3px 10px; border-radius: 999px; }
+.bundle-strip-title { margin: 0; font-size: 18px; font-weight: 900; line-height: 1.35; color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,.35); }
+.bundle-strip-sub { font-size: 11.5px; font-weight: 700; color: rgba(255,255,255,.85); }
+.bundle-strip-price-row { display: flex; align-items: baseline; gap: 8px; }
+.bundle-strip-price { font-size: 17px; font-weight: 900; color: #fff; }
+.bundle-strip-old { font-size: 12px; color: rgba(255,255,255,.68); text-decoration: line-through; }
+.bundle-strip-add {
+  position: absolute; left: 12px; bottom: 12px;
+  border: 0; border-radius: 999px; background: #fff; color: var(--rose-deep, #5a1e0f);
+  font-weight: 900; font-size: 12px; padding: 8px 14px; cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,.25);
+}
+
+/* 📝 وصف المنتج (التبويبات أُزيلت: الوصف فقط) */
+.pd-desc-title { font-weight: 900; font-size: 15px; margin: 16px 0 6px; color: var(--text, #1F2937); }
 
 .bundle-card {
   scroll-snap-align: start;
