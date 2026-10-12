@@ -886,7 +886,10 @@ function populateCategoryDropdowns() {
 function renderAdminCategoriesList() {
   const container = document.getElementById('adminCategoriesListGrid');
   if (!container) return;
-  container.innerHTML = categories.map(c => {
+  const orderHint = categories.length > 1
+    ? `<div style="font-size:12px; color:#047857; background:#ECFDF5; border:1px solid #A7F3D0; border-radius:10px; padding:8px 12px; margin-bottom:10px; font-weight:700;">🔢 رتّبي الأقسام بالأسهم ▲▼: ترتيب الأقسام هنا = ترتيب ظهورها ومنتجاتها بواجهة الزبائن (الأول يظهر أولاً).</div>`
+    : '';
+  container.innerHTML = orderHint + categories.map((c, idx) => {
     const count = products.filter(p => p.category === c.id && p.isDeleted !== true).length;
     const cleanImg = sanitizeUrl(c.imageUrl);
     return `
@@ -900,12 +903,50 @@ function renderAdminCategoriesList() {
             <div style="font-size:11.5px; color:var(--text-soft);">${count} منتج مرتبط</div>
           </div>
         </div>
-        <div style="display:flex; gap:6px;">
+        <div style="display:flex; gap:6px; align-items:center;">
+          <span class="mono" style="font-weight:900; font-size:12px; color:var(--text-soft); min-width:18px; text-align:center;">${idx + 1}</span>
+          <button onclick="moveAdminCategory('${sanitizeText(c.id)}', -1)" ${idx === 0 ? 'disabled' : ''} title="تحريك للأعلى (يظهر أولاً بالمتجر)" style="background:#ECFDF5; color:#047857; padding:5px 9px; border-radius:8px; font-weight:900; font-size:13px; ${idx === 0 ? 'opacity:.35;' : ''}">▲</button>
+          <button onclick="moveAdminCategory('${sanitizeText(c.id)}', 1)" ${idx === categories.length - 1 ? 'disabled' : ''} title="تحريك للأسفل" style="background:#ECFDF5; color:#047857; padding:5px 9px; border-radius:8px; font-weight:900; font-size:13px; ${idx === categories.length - 1 ? 'opacity:.35;' : ''}">▼</button>
           <button onclick="editAdminCategory('${sanitizeText(c.id)}')" style="background:#E0E7FF; color:#3730A3; padding:5px 10px; border-radius:8px; font-weight:800; font-size:11px;">تعديل ✏️</button>
           <button onclick="deleteAdminCategory('${sanitizeText(c.id)}', '${sanitizeText(c.label)}')" style="background:#FEE2E2; color:var(--red); padding:5px 10px; border-radius:8px; font-weight:800; font-size:11px;">حذف 🗑️</button>
         </div>
       </div>`;
   }).join('');
+}
+
+// تحريك قسم للأعلى/الأسفل: نعيد ترقيم كل الأقسام (order = 10، 20، 30...) ونحفظ المتغير فقط، ثم نحدّث لقطة المتجر
+async function moveAdminCategory(catId, direction) {
+  if (!assertCan('settings')) return;
+  if (!lockAction('moveCat', 600)) return;
+  const ordered = [...categories];
+  const i = ordered.findIndex(c => c.id === catId);
+  const j = i + direction;
+  if (i < 0 || j < 0 || j >= ordered.length) return;
+  [ordered[i], ordered[j]] = [ordered[j], ordered[i]];
+
+  const changed = [];
+  ordered.forEach((c, idx) => {
+    const newOrder = (idx + 1) * 10;
+    if (Number(c.order) !== newOrder) { c.order = newOrder; changed.push(c); }
+  });
+  categories = ordered;
+  renderAdminCategoriesList();
+  renderModernCategories();
+  renderHomeCategoryCircles();
+  renderCurrentActiveView();
+
+  try {
+    if (db && changed.length) {
+      const batch = db.batch();
+      changed.forEach(c => batch.set(dbPaths.categoriesCol().doc(String(c.id)), { order: c.order }, { merge: true }));
+      await batch.commit();
+    }
+    refreshStorefrontCache();
+    showToast('تم حفظ ترتيب الأقسام ✓ — سيظهر بالمتجر خلال ثوانٍ');
+  } catch (err) {
+    console.warn(err);
+    showToast('⚠️ تعذر حفظ الترتيب، حاولي مجدداً.');
+  }
 }
 
 function previewAdminCatImg(url) {
@@ -1090,9 +1131,31 @@ function applyPharmacyDocData(data) {
   if (navTitleEl) navTitleEl.textContent = `لوحة تحكم ${pharmacyProfile.name || 'الصيدلية'}`;
 }
 
+// 🔢 ترتيب الأقسام يحدده الأدمن (حقل order بكل قسم). الأقسام بلا order تأتي بعد المرتّبة بترتيبها الأصلي.
+// نفس الترتيب يحدد ترتيب ظهور المنتجات بواجهة الزبائن (منتجات القسم الأول أولاً ثم الثاني...).
+function sortCategoriesByOrder(list) {
+  return list
+    .map((c, i) => ({ c, i }))
+    .sort((a, b) => {
+      const oa = Number.isFinite(Number(a.c.order)) ? Number(a.c.order) : 1e9;
+      const ob = Number.isFinite(Number(b.c.order)) ? Number(b.c.order) : 1e9;
+      return oa - ob || a.i - b.i;
+    })
+    .map(x => x.c);
+}
+
+function sortProductsByCategoryOrder(list) {
+  const rank = new Map(categories.map((c, i) => [c.id, i]));
+  const unknown = categories.length + 1;
+  return list
+    .map((p, i) => ({ p, i }))
+    .sort((a, b) => ((rank.has(a.p.category) ? rank.get(a.p.category) : unknown) - (rank.has(b.p.category) ? rank.get(b.p.category) : unknown)) || a.i - b.i)
+    .map(x => x.p);
+}
+
 function applyCategoriesData(list) {
   if (!list || !list.length) return;
-  categories = list;
+  categories = sortCategoriesByOrder(list);
   renderModernCategories();
   renderAdminCategoriesList();
   populateCategoryDropdowns();
