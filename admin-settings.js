@@ -34,6 +34,10 @@ async function handleAdminCategorySave(e) {
   }
 
   const payload = { id: catKey || id, label: sanitizeText(label), imageUrl, icon: sanitizeText(icon) };
+  // قسم جديد يُضاف بآخر الترتيب (يمكن تحريكه بالأسهم بعدها)
+  if (!categories.some(c => c.id === payload.id)) {
+    payload.order = categories.reduce((m, c) => Math.max(m, Number(c.order) || 0), 0) + 10;
+  }
 
   try {
     if (db) await dbPaths.categoriesCol().doc(payload.id).set(payload, { merge: true });
