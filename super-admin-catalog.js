@@ -241,7 +241,7 @@
       tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-400">جاري فحص المساهمات...</td></tr>`;
 
       try {
-        const snap = await db.collection('system').doc('master_catalog_submissions').collection('submissions').where('status', '==', 'pending_review').get();
+        const snap = await db.collection('system').doc('master_catalog_submissions').collection('submissions').where('status', '==', 'pending_review').limit(100).get();
         badge.textContent = snap.size;
 
         if (snap.empty) {
