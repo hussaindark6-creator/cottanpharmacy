@@ -633,7 +633,6 @@ function openBestSellers() {
 
 function renderCurrentActiveView() {
   if (typeof updateOffersTabCount === 'function') updateOffersTabCount();
-  if (currentView === 'home' && typeof applyHomePromoStripImages === 'function') applyHomePromoStripImages();
   if (currentView === 'home') renderHome();
   else if (currentView === 'listing') renderListing();
   else if (currentView === 'categories') renderModernCategories();
@@ -1789,15 +1788,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   await loadDynamicTheme(pharmacyProfile.templateId);
   renderCurrentActiveView();
 
-  // 🌟 (تحديث — مدة شاشة التحميل مضبوطة على 3 ثوانٍ بالضبط بطلب صريح) تنتظر الآن أمرين
-  // معاً دائماً: (أ) مرور 3 ثوانٍ كاملة كحد أدنى، و(ب) اكتمال بيانات initFirestoreSync
-  // الأربع فعلياً (البروفايل + الأقسام + البكجات + الكتالوج). فإن وصلت البيانات أسرع، تبقى
-  // الشاشة حتى تكتمل الـ3 ثوانٍ بالضبط، وإن تأخرت البيانات (شبكة بطيئة) تبقى الشاشة حتى
-  // اكتمال البيانات الفعلي كي لا تظهر بيانات قديمة أو ناقصة — هذا الملف يخدم كلا الصفحتين
-  // index.html وadmin.html لأنهما يحمّلان script.js نفسه ويتشاركان نفس عنصر appLoadingOverlay،
-  // فهذا التعديل الواحد يضبط مدة الشاشتين معاً. لا توجد هنا أي قراءة أو طلب شبكة إضافي —
-  // فقط توقيت محلي بحت (setTimeout) لا علاقة له بالكاش أو القراءات إطلاقاً.
-  const MIN_LOADER_DISPLAY_MS = 3000;
+  // ⚡ شاشة التحميل: حد أدنى قصير (0.7 ثانية) بدل 3 ثوانٍ، وتبقى بعده حتى تكتمل البيانات فعلياً
+  // (لقطة المتجر + الأقسام + البكجات + الكتالوج من الووركر). فالزبون لا يرى الموقع أبداً قبل وصول آخر
+  // تعديلات الأدمن، وإن كانت الشبكة سريعة يدخل الموقع فوراً. هذا الملف يخدم index.html وadmin.html معاً.
+  const MIN_LOADER_DISPLAY_MS = 700;
   const minDisplayPromise = new Promise(resolve => setTimeout(resolve, MIN_LOADER_DISPLAY_MS));
   const dataReadyPromise = initFirestoreSync();
 
