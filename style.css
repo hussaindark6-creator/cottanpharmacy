@@ -273,15 +273,21 @@ header {
 }
 
 .logo-block { 
+  display: flex; 
+  align-items: center; 
+  gap: 8px; 
+  cursor: pointer; 
+}
+
+/* اسم الصيدلية بمنتصف الهيدر العلوي فقط */
+header .nav .logo-block {
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
   max-width: calc(100% - 130px);
-  display: flex; 
-  align-items: center; 
   justify-content: center;
-  cursor: pointer; 
+  gap: 0;
 }
 
 .logo-text { 
@@ -559,75 +565,72 @@ header {
 
 /* 🎁 بطاقتا العروض المزدوجتان المتجاورتان */
 .double-banner-row {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
   margin: 6px 0 18px;
 }
 
 .double-banner-card {
   position: relative;
-  isolation: isolate;
-  border-radius: 22px;
-  padding: 0 20px;
-  min-height: 104px;
+  border-radius: var(--radius-md);
+  padding: 16px;
+  min-height: 110px;
   display: flex;
-  align-items: center;
-  justify-content: flex-start;
+  align-items: flex-end;
+  justify-content: space-between;
   cursor: pointer;
   overflow: hidden;
-  color: #fff;
   transition: transform .2s ease, box-shadow .2s ease;
   box-shadow: var(--shadow-soft);
 }
-.double-banner-card::before {
-  content: "";
-  position: absolute; inset: 0; z-index: -2;
-  background-size: cover; background-position: center;
-  background-image: var(--strip-img, none);
-}
-.double-banner-card::after {
-  content: "";
-  position: absolute; inset: 0; z-index: -1;
-  background: linear-gradient(270deg, rgba(20,8,4,.86) 0%, rgba(20,8,4,.6) 48%, rgba(20,8,4,.06) 100%);
-}
-.double-banner-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
 
-.double-banner-bundles { background: linear-gradient(120deg, var(--rose-deep, #5a1e0f) 0%, var(--accent, #E85D8A) 100%); }
-.double-banner-offers  { background: linear-gradient(120deg, #2b1a10 0%, #8a5a2b 100%); }
+.double-banner-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
 
-.double-banner-text { display: flex; flex-direction: column; gap: 4px; max-width: 70%; }
+.double-banner-bundles {
+  background: linear-gradient(135deg, #FCE7F3 0%, #FBCFE8 100%);
+  border: 1.5px solid #F9A8D4;
+}
+
+.double-banner-offers {
+  background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%);
+  border: 1.5px solid #93C5FD;
+}
+
 .double-banner-text h4 {
-  margin: 0;
-  font-size: 19px;
+  margin: 0 0 2px;
+  font-size: 15px;
   font-weight: 900;
-  color: #fff;
-  text-shadow: 0 1px 6px rgba(0,0,0,.35);
+  color: #1F2937;
 }
+
 .double-banner-text p {
-  margin: 0 0 6px;
-  font-size: 12px;
-  font-weight: 700;
-  color: rgba(255,255,255,.88);
-}
-.double-banner-btn {
-  align-self: flex-start;
-  background: #fff;
-  color: var(--rose-deep, #5a1e0f);
+  margin: 0 0 8px;
   font-size: 11.5px;
+  font-weight: 700;
+  color: #4B5563;
+}
+
+.double-banner-btn {
+  display: inline-block;
+  background: rgba(255,255,255,0.85);
+  color: #1F2937;
+  font-size: 11px;
   font-weight: 900;
-  padding: 6px 14px;
+  padding: 5px 12px;
   border-radius: 999px;
 }
+
 .double-banner-icon {
   position: absolute;
-  left: 18px; top: 50%;
-  transform: translateY(-50%);
-  font-size: 44px;
-  opacity: .9;
-  filter: drop-shadow(0 4px 10px rgba(0,0,0,.3));
+  top: 10px;
+  left: 10px;
+  font-size: 28px;
+  opacity: .5;
 }
-.double-banner-card.has-img .double-banner-icon { display: none; }
 
 /* أزرار اختيار نوع الاستشارة (نافذة استشارة الصيدلي) */
 .consult-toggle-btn {
