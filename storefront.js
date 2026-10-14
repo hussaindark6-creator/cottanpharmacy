@@ -675,22 +675,6 @@ function getDiscountedProducts() {
     .sort((a, b) => pct(b) - pct(a));
 }
 
-// 🖼️ صورة شريطَي الرئيسية: البكجات = صورة أول بكج له صورة، العروض = صورة أول منتج مخفَّض (إن لم توجد تبقى الخلفية المتدرجة)
-function applyHomePromoStripImages() {
-  const setImg = (id, url) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    const clean = url ? sanitizeUrl(url) : '';
-    if (clean) { el.style.setProperty('--strip-img', `url("${clean}")`); el.classList.add('has-img'); }
-    else { el.style.removeProperty('--strip-img'); el.classList.remove('has-img'); }
-  };
-  const b = (bundles || []).find(x => x && x.imageUrl);
-  setImg('promoStripBundles', b ? b.imageUrl : '');
-  let o = null;
-  try { o = (getDiscountedProducts() || []).find(x => x && x.imageUrl); } catch (e) { /* غير حرج */ }
-  setImg('promoStripOffers', o ? o.imageUrl : '');
-}
-
 function updateOffersTabCount() {
   const el = document.getElementById('offersTabCount');
   if (!el) return;
