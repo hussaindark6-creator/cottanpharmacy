@@ -32,7 +32,6 @@
     "showListingView",
     "updateCartBadge",
     "updateOffersTabCount",
-    "applyHomePromoStripImages",
     "updateUserHeaderProfile"
 ];
   NOOP_FUNCTION_NAMES.forEach(function (name) {
