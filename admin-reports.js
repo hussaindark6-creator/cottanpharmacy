@@ -303,18 +303,47 @@ function reportIsCancelled(o) {
   return !!(o.status && String(o.status).includes('ملغي'));
 }
 
-function filterOrdersForReport(orders) {
-  const timeFilter = document.getElementById('reportTimeRange') ? document.getElementById('reportTimeRange').value : 'all';
-  const statusFilter = document.getElementById('reportStatusFilter') ? document.getElementById('reportStatusFilter').value : 'all';
+// ================= 🎯 نطاق التقرير: يوم واحد أو شهر كامل (يقلّل قراءات Firestore) =================
+// التقرير لا يقرأ إلا طلبات اليوم/الشهر المحدَّد. إن كانت الطلبات المطلوبة موجودة أصلاً بقائمة الطلبات
+// المحمّلة بالذاكرة (آخر 200 طلب، مستمع لحظي) فلا تُجرى أي قراءة جديدة (صفر قراءات). وإلا يُنفَّذ استعلام واحد
+// محصور بتاريخ النطاق (createdAt من بداية النطاق إلى نهايته) بسقف أمان، بدل تحميل كل الطلبات السابقة.
+const REPORT_RANGE_MAX_DOCS = 3000;
+
+function onReportRangeModeChange() {
+  const mode = (document.getElementById('reportRangeMode') || {}).value || 'day';
+  const dayEl = document.getElementById('reportDayInput');
+  const monthEl = document.getElementById('reportMonthInput');
+  if (dayEl) dayEl.style.display = mode === 'day' ? '' : 'none';
+  if (monthEl) monthEl.style.display = mode === 'month' ? '' : 'none';
+}
+
+function getReportRange() {
   const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const DAY = 86400000;
+  const p2 = (n) => String(n).padStart(2, '0');
+  const mode = (document.getElementById('reportRangeMode') || {}).value === 'month' ? 'month' : 'day';
+
+  if (mode === 'month') {
+    let v = (document.getElementById('reportMonthInput') || {}).value || '';
+    let [y, m] = v.split('-').map(Number);
+    if (!y || !m || m < 1 || m > 12) { y = now.getFullYear(); m = now.getMonth() + 1; }
+    return { mode, start: new Date(y, m - 1, 1), end: new Date(y, m, 1), label: `شهر ${m} / ${y} (كامل)`, key: `m:${y}-${p2(m)}`, stamp: `${y}-${p2(m)}` };
+  }
+
+  let v = (document.getElementById('reportDayInput') || {}).value || '';
+  let [y, m, d] = v.split('-').map(Number);
+  if (!y || !m || !d) { y = now.getFullYear(); m = now.getMonth() + 1; d = now.getDate(); }
+  const ds = `${y}-${p2(m)}-${p2(d)}`;
+  return { mode, start: new Date(y, m - 1, d), end: new Date(y, m - 1, d + 1), label: `يوم ${ds}`, key: `d:${ds}`, stamp: ds };
+}
+
+function filterOrdersForReport(orders) {
+  const statusFilter = document.getElementById('reportStatusFilter') ? document.getElementById('reportStatusFilter').value : 'all';
+  const range = getReportRange();
+  const startMs = range.start.getTime();
+  const endMs = range.end.getTime();
   return (orders || []).filter(o => {
     const ms = reportOrderTimeMs(o);
-    if (timeFilter === 'today' && !(ms >= startOfToday)) return false;
-    if (timeFilter === 'yesterday' && !(ms >= startOfToday - DAY && ms < startOfToday)) return false;
-    if (timeFilter === 'week' && !(ms >= startOfToday - 6 * DAY)) return false;
-    if (timeFilter === 'month' && !(ms >= new Date(now.getFullYear(), now.getMonth(), 1).getTime())) return false;
+    if (!(ms >= startMs && ms < endMs)) return false;
     const st = String(o.status || '');
     if (statusFilter === 'delivered' && !st.includes('التسليم')) return false;
     if (statusFilter === 'shipping' && !st.includes('الشحن')) return false;
@@ -326,9 +355,7 @@ function filterOrdersForReport(orders) {
 }
 
 function reportPeriodLabel() {
-  const t = document.getElementById('reportTimeRange') ? document.getElementById('reportTimeRange').value : 'all';
-  const labels = { all: 'كل الطلبات المسجلة', today: 'اليوم', yesterday: 'أمس', week: 'آخر 7 أيام', month: 'هذا الشهر' };
-  return labels[t] || labels.all;
+  return getReportRange().label;
 }
 
 // يحسب صفاً لكل طلب + المجاميع
@@ -379,14 +406,40 @@ function computeReportRows(orders) {
 }
 
 async function getReportSourceOrders() {
-  let orders = window.adminLastOrdersList || [];
-  if (orders.length === 0 && db) {
-    // 🛡️ حد أقصى 1000 طلب (كان يقرأ كل الطلبات التاريخية)
-    const snap = await dbPaths.ordersCol().orderBy('createdAt', 'desc').limit(1000).get();
-    snap.forEach(d => orders.push(d.data()));
+  const range = getReportRange();
+  const startMs = range.start.getTime();
+  const endMs = range.end.getTime();
+  const inRange = (o) => { const ms = reportOrderTimeMs(o); return ms >= startMs && ms < endMs; };
+
+  // (1) من الذاكرة بلا أي قراءة: القائمة اللحظية تغطي النطاق إذا كانت تحوي كل الطلبات، أو أقدم طلب فيها أسبق من بداية النطاق
+  const mem = window.adminLastOrdersList || [];
+  if (mem.length > 0) {
+    const limit = (typeof ADMIN_ORDERS_LIMIT !== 'undefined') ? ADMIN_ORDERS_LIMIT : 200;
+    const times = mem.map(reportOrderTimeMs).filter(Boolean);
+    const oldest = times.length ? Math.min(...times) : Infinity;
+    if (mem.length < limit || oldest <= startMs) return mem.filter(inRange);
   }
-  if (orders.length === 0) orders = myOrders;
-  return orders;
+
+  // (2) استعلام واحد محصور بالنطاق فقط (يوم/شهر) — لا قراءة للأيام الأخرى
+  window.__reportRangeCache = window.__reportRangeCache || {};
+  const cached = window.__reportRangeCache[range.key];
+  if (cached && Date.now() - cached.at < 5 * 60 * 1000) return cached.orders;
+
+  if (db) {
+    const TS = firebase.firestore.Timestamp;
+    const snap = await dbPaths.ordersCol()
+      .where('createdAt', '>=', TS.fromDate(range.start))
+      .where('createdAt', '<', TS.fromDate(range.end))
+      .limit(REPORT_RANGE_MAX_DOCS)
+      .get();
+    const orders = [];
+    snap.forEach(d => orders.push({ id: d.id, ...d.data() }));
+    if (snap.size >= REPORT_RANGE_MAX_DOCS) showToast(`⚠️ النطاق كبير: حُمّل أول ${REPORT_RANGE_MAX_DOCS} طلب فقط، اختاري يوماً بدل الشهر للتفاصيل الكاملة`);
+    // النطاقات المنتهية فقط تُخزَّن (اليوم/الشهر الجاري يتغيّر مع الطلبات الجديدة)
+    if (endMs <= Date.now()) window.__reportRangeCache[range.key] = { at: Date.now(), orders };
+    return orders;
+  }
+  return (myOrders || []).filter(inRange);
 }
 
 const fmtReportNum = (n) => Number(n || 0).toLocaleString('en-US');
@@ -490,7 +543,7 @@ function downloadReportFile(content, fileName, mime) {
 }
 
 function reportFileStamp() {
-  return new Date().toISOString().split('T')[0];
+  return getReportRange().stamp;
 }
 
 // ================= ملف Excel حقيقي (.xlsx) بتنسيق منظّم =================
@@ -716,3 +769,17 @@ async function exportOrdersReportHTML() {
     showToast('تم تنزيل التقرير ✅ افتحيه من التنزيلات');
   } catch (e) { console.error(e); showToast('⚠️ تعذر إنشاء التقرير'); }
 }
+
+// تعبئة الافتراضي: يوم اليوم والشهر الحالي (بتوقيت الجهاز) في خانات نطاق التقرير
+(function initReportRangeDefaults() {
+  const init = () => {
+    const now = new Date();
+    const p2 = (n) => String(n).padStart(2, '0');
+    const dayEl = document.getElementById('reportDayInput');
+    const monthEl = document.getElementById('reportMonthInput');
+    if (dayEl && !dayEl.value) dayEl.value = `${now.getFullYear()}-${p2(now.getMonth() + 1)}-${p2(now.getDate())}`;
+    if (monthEl && !monthEl.value) monthEl.value = `${now.getFullYear()}-${p2(now.getMonth() + 1)}`;
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
