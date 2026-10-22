@@ -32,6 +32,7 @@
     "showListingView",
     "updateCartBadge",
     "updateOffersTabCount",
+    "openStockAlertModal",
     "updateUserHeaderProfile"
 ];
   NOOP_FUNCTION_NAMES.forEach(function (name) {
