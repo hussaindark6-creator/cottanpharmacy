@@ -626,6 +626,9 @@
           if (document.getElementById('adminSocialPhoneInput')) document.getElementById('adminSocialPhoneInput').value = p.socialPhone || '';
           if (document.getElementById('adminDeliveryStandard')) document.getElementById('adminDeliveryStandard').value = p.deliveryFeeStandard || 4000;
           if (document.getElementById('adminDeliveryExpress')) document.getElementById('adminDeliveryExpress').value = p.deliveryFeeExpress || 8000;
+          if (document.getElementById('adminDeliveryZones')) document.getElementById('adminDeliveryZones').value = (Array.isArray(p.deliveryZones) ? p.deliveryZones : []).map(z => `${z.name} : ${z.fee}`).join('\n');
+          if (document.getElementById('adminFreeDeliveryThreshold')) document.getElementById('adminFreeDeliveryThreshold').value = Number(p.freeDeliveryThreshold || 0);
+          if (document.getElementById('adminLowStockThreshold')) document.getElementById('adminLowStockThreshold').value = (p.lowStockThreshold === undefined ? 5 : Number(p.lowStockThreshold) || 0);
           if (document.getElementById('adminHeroMainTitle')) document.getElementById('adminHeroMainTitle').value = p.heroMainTitle || '';
           if (document.getElementById('adminHeroSubTitle')) document.getElementById('adminHeroSubTitle').value = p.heroSubTitle || '';
           if (document.getElementById('adminHeroDescTitle')) document.getElementById('adminHeroDescTitle').value = p.heroDescTitle || '';
@@ -672,6 +675,20 @@
       const deliveryFeeStandard = Number(document.getElementById('adminDeliveryStandard').value || 4000);
       const deliveryFeeExpress = Number(document.getElementById('adminDeliveryExpress').value || 8000);
 
+      // 🗺️ مناطق التوصيل: "الاسم : السعر" بكل سطر (أرقام عربية مقبولة)، حتى 30 منطقة
+      const toLatinDigits = (str) => String(str).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+      const deliveryZones = [];
+      const zonesRaw = (document.getElementById('adminDeliveryZones')?.value || '').split(/\r?\n/);
+      for (const line of zonesRaw) {
+        const m = toLatinDigits(line).trim().match(/^(.+?)\s*[:：=]\s*([\d,.]+)\s*$/);
+        if (!m) continue;
+        const zName = sanitizeText(m[1].trim()).slice(0, 40);
+        const zFee = Math.max(0, Math.round(Number(m[2].replace(/,/g, '')) || 0));
+        if (zName && !deliveryZones.some(z => z.name === zName) && deliveryZones.length < 30) deliveryZones.push({ name: zName, fee: zFee });
+      }
+      const freeDeliveryThreshold = Math.max(0, Number(document.getElementById('adminFreeDeliveryThreshold')?.value || 0));
+      const lowStockThreshold = Math.max(0, Number(document.getElementById('adminLowStockThreshold')?.value ?? 5));
+
       const bannerImgUrl = sanitizeUrl(document.getElementById('adminBannerImgInput').value.trim());
       const heroMainTitle = document.getElementById('adminHeroMainTitle').value.trim();
       const heroSubTitle = document.getElementById('adminHeroSubTitle').value.trim();
@@ -701,6 +718,9 @@
           socialPhone: sanitizeText(socialPhone),
           deliveryFeeStandard,
           deliveryFeeExpress,
+          deliveryZones,
+          freeDeliveryThreshold,
+          lowStockThreshold,
           bannerImgUrl,
           heroMainTitle: sanitizeText(heroMainTitle),
           heroSubTitle: sanitizeText(heroSubTitle),
