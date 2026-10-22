@@ -756,6 +756,17 @@
               <input type="text" id="adminProdUsage" placeholder="يوضع صباحاً ومساءً...">
             </div>
           </div>
+          <div style="display:flex; gap:10px;">
+            <div class="form-field" style="flex:1;">
+              <label>📅 تاريخ انتهاء الصلاحية (اختياري)</label>
+              <input type="date" id="adminProdExpiry">
+            </div>
+            <div class="form-field" style="flex:1;">
+              <label>🏷️ رقم الدفعة (اختياري)</label>
+              <input type="text" id="adminProdBatch" placeholder="LOT-2026-01" maxlength="40">
+            </div>
+          </div>
+
           <div class="admin-toggle-switch">
             <span>متوفر في المخزون (In Stock)</span>
             <input type="checkbox" id="adminProdInStock" checked style="width:20px; height:20px; cursor:pointer;">
@@ -1368,6 +1379,21 @@
               <input type="number" id="adminDeliveryExpress" value="8000" min="0" required>
             </div>
           </div>
+          <div class="form-field" style="margin-top:10px;">
+            <label>🗺️ مناطق التوصيل (اختياري) — سطر لكل منطقة بصيغة: الاسم : السعر</label>
+            <textarea id="adminDeliveryZones" rows="4" placeholder="الكرادة : 3000&#10;المنصور : 4000&#10;الأعظمية : 5000"></textarea>
+            <small style="color:var(--text-soft); font-size:11px;">عند إضافة مناطق يختار الزبون منطقته ويُحسب سعر التوصيل منها بدل السعر الموحّد. اتركيها فارغة لاستخدام السعر الموحّد.</small>
+          </div>
+          <div style="display:flex; gap:10px; margin-top:10px;">
+            <div class="form-field" style="flex:1;">
+              <label>🎁 توصيل مجاني للطلبات فوق (د.ع) — 0 = معطّل</label>
+              <input type="number" id="adminFreeDeliveryThreshold" value="0" min="0">
+            </div>
+            <div class="form-field" style="flex:1;">
+              <label>⚠️ تنبيه تيليجرام عند بقاء (قطعة) أو أقل — 0 = معطّل</label>
+              <input type="number" id="adminLowStockThreshold" value="5" min="0">
+            </div>
+          </div>
         </fieldset>
 
         <button type="submit" class="admin-btn-save">✨ حفظ وتطبيق جميع التعديلات سحابياً</button>
@@ -1467,7 +1493,18 @@
           </div>
         </div>
 
-        <div class="admin-toggle-switch">
+        <div style="display:flex; gap:10px;">
+            <div class="form-field" style="flex:1;">
+              <label>📅 تاريخ انتهاء الصلاحية (اختياري)</label>
+              <input type="date" id="quickEditProdExpiry">
+            </div>
+            <div class="form-field" style="flex:1;">
+              <label>🏷️ رقم الدفعة (اختياري)</label>
+              <input type="text" id="quickEditProdBatch" placeholder="LOT-2026-01" maxlength="40">
+            </div>
+          </div>
+
+          <div class="admin-toggle-switch">
           <span>متوفر في المخزون (In Stock)</span>
           <input type="checkbox" id="quickEditProdInStock" style="width:20px; height:20px; cursor:pointer;">
         </div>
@@ -1576,6 +1613,9 @@
   <script src="admin-marketing.js"></script>
   <script src="admin-settings.js"></script>
   <script src="admin-page.js"></script>
+  <script src="admin-order-tools.js"></script>
+  <script src="image-compress.js"></script>
+  <script src="admin-inventory-badges.js"></script>
   <script src="script.js"></script>
 
   
