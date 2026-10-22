@@ -102,6 +102,13 @@ async function confirmOrder() {
 
   localStorage.setItem('saas_customer_saved_profile', JSON.stringify({ name, phone, address }));
 
+  // 🗺️ إن كانت للصيدلية مناطق توصيل فيجب اختيار واحدة
+  if (getDeliveryZones().length && !getDeliveryZones().some(z => String(z.name) === String(getSelectedDeliveryZone()))) {
+    if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = 'تأكيد الطلب'; }
+    showToast('⚠️ يرجى اختيار منطقة التوصيل أولاً.');
+    return;
+  }
+
   // هذه القيم "تقديرية" فقط لبناء طلب الإرسال — القيم الحقيقية النهائية المعتمدة تأتي
   // حصراً من استجابة الووركر أدناه بعد إعادة الاحتساب من المصدر الحقيقي.
   const itemsPayloadForServer = ids.map(id => {
@@ -147,6 +154,8 @@ async function confirmOrder() {
         customerPhone: phone,
         customerAddress: address,
         deliveryMethod: deliveryMethod,
+        deliveryZone: getSelectedDeliveryZone() || undefined,
+        utm: (() => { try { return JSON.parse(sessionStorage.getItem('saas_utm') || 'null') || undefined; } catch (e) { return undefined; } })(),
         items: itemsPayloadForServer,
         promoCode: appliedPromo ? appliedPromo.code : null,
         cfToken,
@@ -397,7 +406,8 @@ function renderCart() {
 
   const subtotal = getCartSubtotal();
   const discount = appliedPromo ? Number(appliedPromo.discountAmount || 0) : 0;
-  const fee = (deliveryMethod === 'express') ? (Number(pharmacyProfile.deliveryFeeExpress) || 8000) : (Number(pharmacyProfile.deliveryFeeStandard) || 4000);
+  const feeInfo = calcDeliveryFee(Math.max(0, subtotal - discount));
+  const fee = feeInfo.zoneMissing ? 0 : feeInfo.fee;
   const finalTotal = Math.max(0, subtotal - discount) + fee;
 
   if (appliedPromo && promoBadge) {
@@ -411,9 +421,10 @@ function renderCart() {
   summaryEl.innerHTML = `
     <div class="summary-row"><span>المجموع الفرعي للمنتجات</span><span class="mono">${fmtPrice(subtotal)}</span></div>
     ${discount > 0 ? `<div class="summary-row discount-row"><span>خصم الكوبون (${appliedPromo.code})</span><span class="mono">-${fmtPrice(discount)}</span></div>` : ''}
-    <div class="summary-row"><span>أجرة التوصيل</span><span class="mono">+${fmtPrice(fee)}</span></div>
+    <div class="summary-row"><span>أجرة التوصيل${feeInfo.free ? ' (مجاني 🎉)' : ''}</span><span class="mono">${feeInfo.zoneMissing ? 'حسب المنطقة' : '+' + fmtPrice(fee)}</span></div>
     <div class="summary-row total"><span>المجموع الإجمالي المطلوب</span><span class="mono">${fmtPrice(finalTotal)}</span></div>
     <button class="checkout-btn" onclick="showView('checkout')">متابعة الطلب</button>`;
+  summaryEl.insertAdjacentHTML('afterbegin', freeDeliveryBarHtml(Math.max(0, subtotal - discount)));
 }
 
 function selectDelivery(method) {
@@ -428,16 +439,19 @@ function selectDelivery(method) {
 function renderCheckoutSummary() {
   const summaryEl = document.getElementById('checkoutSummaryBlock');
   if (!summaryEl) return;
+  renderDeliveryZoneField();
   const subtotal = getCartSubtotal();
   const discount = appliedPromo ? Number(appliedPromo.discountAmount || 0) : 0;
-  const fee = (deliveryMethod === 'express') ? (Number(pharmacyProfile.deliveryFeeExpress) || 8000) : (Number(pharmacyProfile.deliveryFeeStandard) || 4000);
+  const feeInfo = calcDeliveryFee(Math.max(0, subtotal - discount));
+  const fee = feeInfo.zoneMissing ? 0 : feeInfo.fee;
   const finalTotal = Math.max(0, subtotal - discount) + fee;
 
   summaryEl.innerHTML = `
     <div class="summary-row"><span>المجموع الفرعي للمنتجات</span><span class="mono">${fmtPrice(subtotal)}</span></div>
     ${discount > 0 ? `<div class="summary-row discount-row"><span>خصم الكوبون (${appliedPromo.code})</span><span class="mono">-${fmtPrice(discount)}</span></div>` : ''}
-    <div class="summary-row"><span>أجرة التوصيل</span><span class="mono">+${fmtPrice(fee)}</span></div>
+    <div class="summary-row"><span>أجرة التوصيل${feeInfo.free ? ' (مجاني 🎉)' : ''}</span><span class="mono">${feeInfo.zoneMissing ? 'حسب المنطقة' : '+' + fmtPrice(fee)}</span></div>
     <div class="summary-row total"><span>المجموع الإجمالي المطلوب</span><span class="mono">${fmtPrice(finalTotal)}</span></div>`;
+  summaryEl.insertAdjacentHTML('afterbegin', freeDeliveryBarHtml(Math.max(0, subtotal - discount)));
 }
 
 function closeSuccessModal() {
@@ -504,14 +518,14 @@ function renderListing() {
   if (listingMode === 'category') {
     list = list.filter(p => p.category === listingValue);
   } else if (listingMode === 'search') {
+    // 🔎 بحث ذكي: كل كلمة يجب أن تُطابَق بالاسم/الماركة/القسم/الوصف/الباركود، مع تسامح بخطأ إملائي واحد، وترتيب النتائج بالأقرب
     const qNorm = normalizeArabic(listingValue);
-    list = list.filter(p => {
-      const nameNorm = normalizeArabic(p.name || '');
-      const brandNorm = normalizeArabic(p.brand || '');
-      const descNorm = normalizeArabic(p.description || '');
-      const ingNorm = normalizeArabic(p.ingredients || '');
-      return nameNorm.includes(qNorm) || brandNorm.includes(qNorm) || descNorm.includes(qNorm) || ingNorm.includes(qNorm);
-    });
+    const tokens = qNorm.split(' ').filter(Boolean);
+    list = list
+      .map(p => ({ p, s: scoreProductForQuery(p, qNorm, tokens) }))
+      .filter(x => x.s > 0)
+      .sort((a, b) => b.s - a.s)
+      .map(x => x.p);
   } else if (listingMode === 'bestsellers') {
     list = sortProductsByCategoryOrder(list.filter(p => p.inStock !== false));
   } else if (listingMode === 'promo_offer') {
@@ -811,6 +825,7 @@ function renderMyOrders() {
         <div class="order-card-footer">
           <div>
             ${isProcessing ? `<button type="button" class="btn-cancel-order" onclick="cancelMyOrder('${sanitizeText(ord.id)}')">❌ إلغاء الطلب</button>` : ''}
+            ${(ord.items || []).length ? `<button type="button" class="btn-reorder" onclick="reorderMyOrder('${sanitizeText(ord.id)}')">🔁 أعد الطلب</button>` : ''}
           </div>
           <div>
             <span style="font-size:12px; color:var(--text-soft);">المجموع الكلي: </span>
@@ -849,9 +864,16 @@ function renderProductDetailDOM(p) {
   switchPdTab('desc');
   document.getElementById('pdQtyVal').textContent = pdQty;
 
-  document.getElementById('pdAddBtn').onclick = () => {
+  if (inStock && p.stockQuantity !== undefined && p.stockQuantity > 0 && p.stockQuantity <= 5) {
+    stockEl.innerHTML += `<span class="pd-low-stock">⚠️ بقي ${Number(p.stockQuantity)} فقط</span>`;
+  }
+
+  const addBtn = document.getElementById('pdAddBtn');
+  if (!addBtn.dataset.orig) addBtn.dataset.orig = addBtn.innerHTML;
+  addBtn.innerHTML = inStock ? addBtn.dataset.orig : '🔔 أبلغيني عند التوفر';
+  addBtn.onclick = () => {
     if (inStock) addToCart(p.id, false, pdQty);
-    else showToast('عذراً، المنتج غير متوفر حالياً');
+    else openStockAlertModal(p.id);
   };
 }
 
@@ -1050,7 +1072,7 @@ function renderAccountView() {
             <input type="tel" id="phoneLoginPhone" placeholder="07xxxxxxxxx" inputmode="numeric">
           </div>
           <div class="form-field" style="text-align:right;">
-            <label>كلمة المرور (رمز سري من 4 إلى 6 أرقام)</label>
+            <label>كلمة المرور (الرمز السري)</label>
             <input type="password" id="phoneLoginPin" placeholder="••••" inputmode="numeric" maxlength="6">
           </div>
           <div id="turnstileLoginBox" style="display:flex; justify-content:center; margin-bottom:8px;"></div>
@@ -1067,8 +1089,8 @@ function renderAccountView() {
             <input type="tel" id="phoneRegisterPhone" placeholder="07xxxxxxxxx" inputmode="numeric">
           </div>
           <div class="form-field" style="text-align:right;">
-            <label>كلمة المرور (رمز سري من 4 إلى 6 أرقام)</label>
-            <input type="password" id="phoneRegisterPin" placeholder="••••" inputmode="numeric" maxlength="6">
+            <label>كلمة المرور (رمز سري من 6 أرقام)</label>
+            <input type="password" id="phoneRegisterPin" placeholder="••••••" inputmode="numeric" maxlength="6">
           </div>
           <div id="turnstileRegisterBox" style="display:flex; justify-content:center; margin-bottom:8px;"></div>
           <button class="auth-btn-google" style="background:var(--accent); color:#fff; border:none; margin-bottom:10px;" onclick="registerWithPhone()">إنشاء الحساب</button>
@@ -1164,3 +1186,5 @@ function applyWelcomeAndShop() {
   closeWelcomeModal();
   showToast('تسوقي الآن واستخدمي كود الخصم في السلة ✨');
 }
+
+
