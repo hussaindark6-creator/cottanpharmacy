@@ -388,6 +388,8 @@ function renderAdminOrdersList(orders) {
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed var(--line); padding-bottom:8px; margin-bottom:8px;">
           <span class="order-card-id mono">#${sanitizeText(ord.id)}</span>
           <div style="display:flex; gap:6px; align-items:center;">
+            <button type="button" onclick="whatsappOrderStatus('${sanitizeText(ord.id)}')" title="رسالة حالة الطلب للزبون" style="background:#25D366; color:#fff; font-size:11px; font-weight:800; padding:6px 10px; border-radius:8px; cursor:pointer;">💬 واتساب</button>
+            <button type="button" onclick="printOrderThermal('${sanitizeText(ord.id)}')" title="طباعة وصل حراري 80mm" style="background:#374151; color:#fff; font-size:11px; font-weight:800; padding:6px 10px; border-radius:8px; cursor:pointer;">🧾 طباعة</button>
             <button type="button" onclick="openReceiptModal('${sanitizeText(ord.id)}')" style="background:#10B981; color:#fff; font-size:11px; font-weight:800; padding:6px 12px; border-radius:8px; cursor:pointer;">🖨️ طباعة وصل</button>
             ${!can('orders.manage') ? `<span class="admin-order-status-select" style="display:inline-block; padding:6px 10px; font-weight:800; font-size:12px;">${sanitizeText(String(ord.status || '').replace(/[🚚🛵✅❌]/g, '').trim())}</span>` : `<select class="admin-order-status-select" onchange="updateOrderStatus('${sanitizeText(ord.id)}', this.value)">
               <option value="قيد المعالجة والتجهيز 🚚" ${ord.status === 'قيد المعالجة والتجهيز 🚚' ? 'selected' : ''}>قيد التجهيز 🚚</option>
@@ -402,7 +404,7 @@ function renderAdminOrdersList(orders) {
           التاريخ: <span class="mono">${sanitizeText(ord.date || '')}</span> · الزبون: <b>${sanitizeText(ord.name || '')}</b> (${sanitizeText(ord.phone || '')})
         </div>
         <div style="font-size:12px; color:var(--text-soft); margin-bottom:6px;">
-          العنوان: ${sanitizeText(ord.address || '')} (${ord.deliveryMethod === 'express' ? 'توصيل سريع' : 'توصيل عادي'})
+          العنوان: ${sanitizeText(ord.address || '')} (${ord.deliveryMethod === 'express' ? 'توصيل سريع' : 'توصيل عادي'})${ord.deliveryZone ? ' · المنطقة: ' + sanitizeText(ord.deliveryZone) : ''}${ord.utmSource ? ' · المصدر: ' + sanitizeText(ord.utmSource) : ''}
         </div>
         <div style="font-size:12px; color:var(--ink); margin-bottom:6px; background:#F9FAFB; padding:8px 10px; border-radius:8px;">
           ${itemsHtml}
@@ -478,3 +480,5 @@ function formatOrderDateEnglish(o) {
   // احتياط: إن لم يوجد createdAt (طلبات قديمة محلية)، نعرض التاريخ المخزن كما هو
   return o.date || '';
 }
+
+
