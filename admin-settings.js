@@ -248,9 +248,10 @@ async function deleteStaffMember(staffId) {
 async function fetchSuperAdminPaymentInfo() {
   if (!isFirebaseConfigured || !db) return;
   try {
-    const snap = await dbPaths.systemDoc('payment_info').get();
-    if (snap.exists) {
-      superAdminPaymentInfo = { ...superAdminPaymentInfo, ...snap.data() };
+    // 🔐 بيانات الدفع لم تعد تُقرأ من Firestore مباشرة (القواعد أُغلقت)؛ تأتي من الووركر بعد التحقق من صلاحية المشرف
+    const r = await apiFetch('/api/admin/payment-info', { method: 'GET' });
+    if (r && r.success && r.payment) {
+      superAdminPaymentInfo = { ...superAdminPaymentInfo, ...r.payment };
     }
     renderPharmacySubscriptionCard();
   } catch (e) {
