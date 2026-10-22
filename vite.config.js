@@ -18,6 +18,8 @@ import { copyFileSync, readFileSync, writeFileSync, mkdirSync, existsSync } from
 const CLASSIC_SCRIPTS = ['script.js', 'storefront.js', 'storefront-stubs.js', 'admin-stubs.js',
   'admin-core.js', 'admin-products.js', 'admin-catalog-tools.js', 'admin-orders.js', 'admin-reports.js', 'admin-marketing.js', 'admin-settings.js',
   'admin-page.js',
+  'delivery-zones.js', 'smart-search.js', 'barcode-scanner.js', 'stock-alerts.js', 'reorder.js', 'growth-pwa.js',
+  'admin-order-tools.js', 'image-compress.js', 'admin-inventory-badges.js',
   'super-admin-core.js', 'super-admin-pharmacies.js', 'super-admin-catalog.js', 'super-admin-billing.js', 'super-admin-reports.js', 'super-admin-platform.js'];
 function copyClassicScripts(defineMap) {
   return {
@@ -51,6 +53,7 @@ export default defineConfig(({ mode }) => {
       __WORKER_API_BASE__: JSON.stringify(env.VITE_WORKER_API_BASE || ''),
       __SUPER_ADMIN_EMAIL__: JSON.stringify(env.VITE_SUPER_ADMIN_EMAIL || ''),
       __TURNSTILE_SITE_KEY__: JSON.stringify(env.VITE_TURNSTILE_SITE_KEY || ''),
+      __CF_ANALYTICS_TOKEN__: JSON.stringify(env.VITE_CF_ANALYTICS_TOKEN || ''),
   };
 
   return {
