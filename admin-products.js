@@ -112,6 +112,7 @@ function renderAdminProductManagementGrid() {
         <div class="admin-prod-card-name">${sanitizeText(p.name)}</div>
         <div class="admin-prod-card-brand">${sanitizeText(p.brand || '')}${p.size ? ' · ' + sanitizeText(p.size) : ''}</div>
         <div class="admin-prod-card-price mono">${fmtPrice(p.price)}</div>
+        ${adminStockExpiryBadges(p)}
         <div class="admin-prod-card-actions">
           <button type="button" onclick="quickEditPrice('${sanitizeText(p.id)}', ${Number(p.price) || 0})" style="background:#FEF3C7; color:#92400E;">💰 سعر</button>
           <button type="button" onclick="quickToggleStock('${sanitizeText(p.id)}')" style="background:${inStock ? '#FEE2E2' : '#DCFCE7'}; color:${inStock ? '#991B1B' : '#15803D'};">${inStock ? '🔴 إخفاء' : '🟢 توفير'}</button>
@@ -230,6 +231,17 @@ function ensureAdminQuickEditModalMarkup() {
             </div>
           </div>
 
+          <div style="display:flex; gap:10px;">
+            <div class="form-field" style="flex:1;">
+              <label>📅 تاريخ انتهاء الصلاحية (اختياري)</label>
+              <input type="date" id="quickEditProdExpiry">
+            </div>
+            <div class="form-field" style="flex:1;">
+              <label>🏷️ رقم الدفعة (اختياري)</label>
+              <input type="text" id="quickEditProdBatch" placeholder="LOT-2026-01" maxlength="40">
+            </div>
+          </div>
+
           <div class="admin-toggle-switch">
             <span>متوفر في المخزون (In Stock)</span>
             <input type="checkbox" id="quickEditProdInStock" style="width:20px; height:20px; cursor:pointer;">
@@ -288,6 +300,8 @@ function openAdminQuickEditModal(id) {
     if (document.getElementById('quickEditProdDesc')) document.getElementById('quickEditProdDesc').value = p.description || '';
     if (document.getElementById('quickEditProdIng')) document.getElementById('quickEditProdIng').value = p.ingredients || p.medicalIndications || '';
     if (document.getElementById('quickEditProdUsage')) document.getElementById('quickEditProdUsage').value = p.usage || '';
+    if (document.getElementById('quickEditProdExpiry')) document.getElementById('quickEditProdExpiry').value = p.expiryDate ? String(p.expiryDate).slice(0, 10) : '';
+    if (document.getElementById('quickEditProdBatch')) document.getElementById('quickEditProdBatch').value = p.batchNo || '';
     if (document.getElementById('quickEditProdInStock')) document.getElementById('quickEditProdInStock').checked = (p.inStock !== false);
     if (document.getElementById('quickEditProdIsOffer')) document.getElementById('quickEditProdIsOffer').checked = !!p.isSpecialOffer;
 
@@ -331,6 +345,9 @@ async function saveAdminQuickEdit() {
   const usage = document.getElementById('quickEditProdUsage') ? sanitizeText(document.getElementById('quickEditProdUsage').value.trim()) : '';
   const inStock = document.getElementById('quickEditProdInStock') ? document.getElementById('quickEditProdInStock').checked : true;
   const isSpecialOffer = document.getElementById('quickEditProdIsOffer') ? document.getElementById('quickEditProdIsOffer').checked : false;
+  const expiryRaw = document.getElementById('quickEditProdExpiry') ? document.getElementById('quickEditProdExpiry').value : '';
+  const expiryDate = /^\d{4}-\d{2}-\d{2}$/.test(expiryRaw) ? expiryRaw : '';
+  const batchNo = document.getElementById('quickEditProdBatch') ? sanitizeText(document.getElementById('quickEditProdBatch').value.trim()).slice(0, 40) : '';
 
   if (!name || !brand || isNaN(price) || price <= 0) {
     showToast('يرجى التأكد من كتابة الاسم والماركة والسعر');
@@ -352,7 +369,9 @@ async function saveAdminQuickEdit() {
     ingredients,
     usage,
     inStock: inStock && stockQty > 0,
-    isSpecialOffer
+    isSpecialOffer,
+    expiryDate,
+    batchNo
   };
 
   const saveBtn = document.querySelector('#adminQuickEditModal .admin-btn-save');
@@ -414,6 +433,8 @@ function resetAdminProductForm() {
   document.getElementById('adminProdIng').value = '';
   document.getElementById('adminProdUsage').value = '';
   if (document.getElementById('adminProdStockQty')) document.getElementById('adminProdStockQty').value = '10';
+  if (document.getElementById('adminProdExpiry')) document.getElementById('adminProdExpiry').value = '';
+  if (document.getElementById('adminProdBatch')) document.getElementById('adminProdBatch').value = '';
   document.getElementById('adminProdInStock').checked = true;
   document.getElementById('adminProdIsOffer').checked = false;
   document.getElementById('adminProdImgPreviewBox').style.display = 'none';
@@ -458,6 +479,8 @@ async function handleAdminProductSave(e) {
     usage: sanitizeText(document.getElementById('adminProdUsage').value.trim()),
     inStock: document.getElementById('adminProdInStock').checked && stockQty > 0,
     isSpecialOffer: document.getElementById('adminProdIsOffer').checked,
+    expiryDate: (() => { const v = document.getElementById('adminProdExpiry') ? document.getElementById('adminProdExpiry').value : ''; return /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : ''; })(),
+    batchNo: document.getElementById('adminProdBatch') ? sanitizeText(document.getElementById('adminProdBatch').value.trim()).slice(0, 40) : '',
     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
 
@@ -480,10 +503,7 @@ async function handleAdminProductSave(e) {
             submissionId: subDocId,
             sourcePharmacyId: currentPharmacyId,
             sourcePharmacyName: pharmacyProfile.name || currentPharmacyId,
-            productData: {
-              ...payload,
-              suggestedPrice: payload.price
-            },
+            productData: (() => { const pd = { ...payload, suggestedPrice: payload.price }; delete pd.expiryDate; delete pd.batchNo; delete pd.costPrice; return pd; })(),
             status: 'pending_review',
             submittedAt: firebase.firestore.FieldValue.serverTimestamp()
           });
