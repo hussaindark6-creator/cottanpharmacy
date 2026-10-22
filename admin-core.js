@@ -200,8 +200,9 @@ async function manualRebuildR2Catalog() {
 
 // دالة رفع الصور المباشرة من الاستوديو أو الكاميرا إلى Cloudflare R2
 async function uploadDirectImageFile(fileInput, targetHiddenUrlId, previewImgId, previewBoxId) {
-  const file = fileInput.files[0];
-  if (!file) return;
+  const originalFile = fileInput.files[0];
+  if (!originalFile) return;
+  const file = await compressImageToWebp(originalFile);
 
   showToast('جاري رفع ومعالجة الصورة سحابياً... ⏳');
 
