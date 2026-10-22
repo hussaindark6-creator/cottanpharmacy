@@ -5,6 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#E85D8A">
+  <meta name="description" content="متجر إلكتروني للعناية بالبشرة والصحة — منتجات أصلية ومعتمدة وتوصيل سريع.">
+  <!-- 📲 PWA: قابل للتثبيت كتطبيق على الموبايل -->
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <!-- 🔗 معاينة الرابط عند مشاركته (إنستغرام/واتساب/تيليجرام): قيم افتراضية ثابتة لأن الزواحف لا تنفّذ JavaScript -->
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ar_IQ">
+  <meta property="og:title" content="صيدلية القطن | عناية وصحة">
+  <meta property="og:description" content="منتجات أصلية ومعتمدة للعناية بالبشرة والصحة، وتوصيل سريع.">
+  <meta property="og:image" content="/icons/icon-512.png">
+  <meta name="twitter:card" content="summary">
   <title>الصيدلية | متجرك الإلكتروني للعناية والصحة</title>
 
   <!-- 🌸 (إصلاح حرج #1 — وميض شاشة التحميل) سكربت متزامن (Inline) يعمل قبل أي رسم للصفحة:
@@ -295,6 +309,7 @@
       <button class="menu-link" id="drawerConsultBtn" onclick="openConsultModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.7-2.5 2-2.5 4"/><path d="M12 17h.01"/></svg><span id="pharmacistCtaTitle">استشر الصيدلي مجاناً 🩺</span></button>
       <button class="menu-link" onclick="openNotifModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z"/><path d="M10.3 19a2 2 0 0 0 3.4 0"/></svg><span>الإشعارات</span></button>
       <a class="menu-link" id="adminMenuLink" href="admin.html" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82"/></svg><span>لوحة تحكم المشرف</span></a>
+      <button class="menu-link" id="installAppLink" onclick="promptInstallApp()" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/></svg><span>📲 ثبّتي التطبيق</span></button>
       <button class="menu-link" id="userHeaderLogoutBtn" onclick="handleSignOut()" style="display:none; color:var(--red);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg><span>تسجيل الخروج</span></button>
     </div>
 
@@ -434,6 +449,11 @@
       <div class="form-field">
         <label>العنوان بالتفصيل *</label>
         <textarea id="custAddress" rows="2" placeholder="المحافظة، المنطقة، أقرب نقطة دالة..."></textarea>
+      </div>
+
+      <div class="form-field" id="deliveryZoneField" style="display:none;">
+        <label>منطقة التوصيل *</label>
+        <select id="deliveryZoneSelect" onchange="selectDeliveryZone(this.value)"></select>
       </div>
 
       <div class="form-field">
@@ -664,5 +684,11 @@
   <!-- 🆕 كود واجهة الزبون (السلة/الطلبات/العرض) في ملف مستقل — يجب أن يسبق script.js -->
   <script defer src="storefront.js"></script>
   <script defer src="script.js"></script>
+  <script defer src="delivery-zones.js"></script>
+  <script defer src="smart-search.js"></script>
+  <script defer src="barcode-scanner.js"></script>
+  <script defer src="stock-alerts.js"></script>
+  <script defer src="reorder.js"></script>
+  <script defer src="growth-pwa.js"></script>
 </body>
 </html>
