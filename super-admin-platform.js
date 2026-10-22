@@ -209,7 +209,7 @@
       const slugs = Object.keys(window.cachedPharmaciesMap);
       sel.innerHTML = slugs.map(slug => {
         const data = window.cachedPharmaciesMap[slug];
-        return `<option value="${slug}">${data.name || slug} (${slug})</option>`;
+        return `<option value="${escSA(slug)}">${escSA(data.name || slug)} (${escSA(slug)})</option>`;
       }).join('');
     }
 
@@ -358,11 +358,11 @@
           const tenantName = (window.cachedPharmaciesMap[d.tenantId] && window.cachedPharmaciesMap[d.tenantId].name) || d.tenantId;
           return `
             <tr class="hover:bg-slate-800/40 transition text-xs">
-              <td class="py-3 px-4 font-mono text-white">${doc.id}</td>
-              <td class="py-3 px-4 text-slate-300">${typeLabels[d.domainType] || d.domainType || '—'}</td>
-              <td class="py-3 px-4 font-bold text-emerald-400">${tenantName}</td>
+              <td class="py-3 px-4 font-mono text-white">${escSA(doc.id)}</td>
+              <td class="py-3 px-4 text-slate-300">${escSA(typeLabels[d.domainType] || d.domainType || '—')}</td>
+              <td class="py-3 px-4 font-bold text-emerald-400">${escSA(tenantName)}</td>
               <td class="py-3 px-4 text-center">
-                <button onclick="unlinkDomain('${doc.id}')" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-3 py-1 rounded-lg font-bold">فصل 🗑️</button>
+                <button onclick="unlinkDomain(${jsArg(doc.id)})" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-3 py-1 rounded-lg font-bold">فصل 🗑️</button>
               </td>
             </tr>`;
         }).join('');
