@@ -58,16 +58,16 @@
       grid.innerHTML = packages.map(p => `
         <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5 flex flex-col gap-3">
           <div class="flex items-center justify-between">
-            <h4 class="font-black text-white text-sm">${p.name || p.id}</h4>
+            <h4 class="font-black text-white text-sm">${escSA(p.name || p.id)}</h4>
             ${p.customDomainAllowed ? '<span class="text-[10px] bg-blue-950/60 text-blue-400 border border-blue-800/50 px-2 py-0.5 rounded-full font-bold">🌐 دومين مخصص</span>' : ''}
           </div>
           <div class="text-2xl font-black text-amber-400 font-mono">${Number(p.price || 0).toLocaleString()} <span class="text-xs text-slate-500 font-bold">د.ع / شهرياً</span></div>
           <ul class="text-xs text-slate-400 space-y-1 flex-1">
-            ${(p.features || []).map(f => `<li>✓ ${f}</li>`).join('') || '<li class="text-slate-600">لا توجد ميزات مضافة</li>'}
+            ${(p.features || []).map(f => `<li>✓ ${escSA(f)}</li>`).join('') || '<li class="text-slate-600">لا توجد ميزات مضافة</li>'}
           </ul>
           <div class="flex gap-2 pt-2 border-t border-slate-800">
-            <button onclick='editPackage(${JSON.stringify(p).replace(/'/g, "&#39;")})' class="flex-1 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold py-2 rounded-lg transition">تعديل ✏️</button>
-            <button onclick="deletePackage('${p.id}')" class="flex-1 bg-red-950/50 hover:bg-red-900/50 text-red-400 text-xs font-bold py-2 rounded-lg transition">حذف 🗑️</button>
+            <button onclick="editPackage(${escSA(JSON.stringify(p))})" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold py-2 rounded-lg transition">تعديل ✏️</button>
+            <button onclick="deletePackage(${jsArg(p.id)})" class="flex-1 bg-red-950/50 hover:bg-red-900/50 text-red-400 text-xs font-bold py-2 rounded-lg transition">حذف 🗑️</button>
           </div>
         </div>
       `).join('');
@@ -132,7 +132,7 @@
 
     function populatePackageDropdowns(packages) {
       const options = '<option value="">— بدون باقة (تسعير يدوي) —</option>' +
-        packages.map(p => `<option value="${p.id}">${p.name} — ${Number(p.price || 0).toLocaleString()} د.ع</option>`).join('');
+        packages.map(p => `<option value="${escSA(p.id)}">${escSA(p.name)} — ${Number(p.price || 0).toLocaleString()} د.ع</option>`).join('');
       ['newPharmacyPackageId', 'editPackageId'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.innerHTML = options;
