@@ -112,6 +112,7 @@ function patchTenantLinks() {
 const WORKER_API_BASE = typeof __WORKER_API_BASE__ !== 'undefined' && __WORKER_API_BASE__ ? __WORKER_API_BASE__ : "https://cottanbackend.hussaindark6.workers.dev";
 // Cloudflare Turnstile (اختياري): ضعي VITE_TURNSTILE_SITE_KEY بملف .env لتفعيل حماية الطلبات من البوتات
 const TURNSTILE_SITE_KEY = typeof __TURNSTILE_SITE_KEY__ !== 'undefined' && __TURNSTILE_SITE_KEY__ ? __TURNSTILE_SITE_KEY__ : '';
+
 const ABSOLUTE_MAX_UNIT_PRICE = 50000000;
 const SUPER_ADMIN_EMAIL = typeof __SUPER_ADMIN_EMAIL__ !== 'undefined' && __SUPER_ADMIN_EMAIL__ ? __SUPER_ADMIN_EMAIL__ : "hussaindark6@gmail.com";
 
@@ -134,6 +135,14 @@ try {
     auth = firebase.auth();
     db = firebase.firestore();
     isFirebaseConfigured = true;
+
+    // 💾 لوحة الأدمن فقط: تخزين Firestore محلي (IndexedDB) فتُعاد قراءة الطلبات بعد تحديث الصفحة بتكلفة التغييرات فقط
+    // (ضمن 30 دقيقة) بدل إعادة فوترة كل المستندات. المتجر للزبائن لا يستخدمه.
+    try {
+      if (document.getElementById('adminSecStats')) {
+        db.enablePersistence({ synchronizeTabs: true }).catch(() => { /* تبويبات متعددة/متصفح لا يدعم: نتجاهل */ });
+      }
+    } catch (e) { /* غير حرج */ }
 
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(err => {
       console.warn("Persistence fallback:", err);
@@ -845,6 +854,7 @@ function renderProductGrid(targetId, list, emptyMsg) {
         </button>
         ${discountPct ? `<span class="discount-badge">خصم ${discountPct}%</span>` : ''}
         ${!inStock ? `<span class="badge-out-stock">نفذت الكمية</span>` : ''}
+        ${(inStock && p.stockQuantity !== undefined && p.stockQuantity > 0 && p.stockQuantity <= 5) ? `<span class="badge-low-stock">بقي ${Number(p.stockQuantity)} فقط</span>` : ''}
         
         <div class="product-thumb" style="background:${color}18;">
           ${cleanImg ? `<img src="${cleanImg}" alt="${sanitizeText(p.name)}" loading="lazy">` : (icons[p.type] || icons.bottle)(color)}
@@ -855,8 +865,8 @@ function renderProductGrid(targetId, list, emptyMsg) {
           <span class="p-price mono" id="price-val-${sanitizeText(p.id)}">${fmtPrice(p.price)}</span>
           ${p.oldPrice ? `<span class="p-oldprice mono" id="oldprice-val-${sanitizeText(p.id)}">${fmtPrice(p.oldPrice)}</span>` : ''}
         </div>
-        <button class="add-cart-btn" style="${!inStock ? 'opacity:0.6; pointer-events:none;' : ''}" onclick="event.stopPropagation(); addToCart('${sanitizeText(p.id)}')">
-          ${inStock ? 'أضف إلى السلة' : 'غير متوفر'}
+        <button class="add-cart-btn" style="${!inStock ? 'background:var(--surface); color:var(--text); border:1.5px solid var(--line);' : ''}" onclick="event.stopPropagation(); ${inStock ? `addToCart('${sanitizeText(p.id)}')` : `openStockAlertModal('${sanitizeText(p.id)}')`}">
+          ${inStock ? 'أضف إلى السلة' : '🔔 أبلغيني عند التوفر'}
         </button>
       </div>`;
   }).join('');
@@ -1490,7 +1500,7 @@ async function registerWithPhone() {
   const pin = (document.getElementById('phoneRegisterPin').value || '').trim();
 
   if (!name || phone.length < 8) { showPhoneAuthError('يرجى إدخال اسم ورقم هاتف صحيحين'); return; }
-  if (!/^\d{4,6}$/.test(pin)) { showPhoneAuthError('كلمة المرور يجب أن تكون من 4 إلى 6 أرقام'); return; }
+  if (!/^\d{6}$/.test(pin)) { showPhoneAuthError('كلمة المرور يجب أن تكون 6 أرقام'); return; }
 
   const btn = document.querySelector('#phoneAuthFormRegister .auth-btn-google');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ جاري إنشاء الحساب...'; }
