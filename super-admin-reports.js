@@ -18,15 +18,15 @@
         const fileName = `Sales_Report_${slug}_${dateStr}.csv`;
         return `
           <tr class="hover:bg-slate-800/40 transition text-xs">
-            <td class="py-3 px-4 font-bold text-white">${data.name || slug}</td>
-            <td class="py-3 px-4 font-mono text-emerald-400">${slug}</td>
-            <td class="py-3 px-4 font-mono text-slate-300">${fileName}</td>
+            <td class="py-3 px-4 font-bold text-white">${escSA(data.name || slug)}</td>
+            <td class="py-3 px-4 font-mono text-emerald-400">${escSA(slug)}</td>
+            <td class="py-3 px-4 font-mono text-slate-300">${escSA(fileName)}</td>
             <td class="py-3 px-4 text-center">
               <div class="flex items-center justify-center gap-2">
-                <button onclick="exportSinglePharmacyCSV('${slug}')" class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-lg font-bold">
+                <button onclick="exportSinglePharmacyCSV(${jsArg(slug)})" class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-lg font-bold">
                   📊 تنزيل Excel
                 </button>
-                <button onclick="sendSinglePharmacyReportTelegram('${slug}')" class="bg-blue-500/10 text-blue-400 border border-blue-500/30 px-3 py-1 rounded-lg font-bold">
+                <button onclick="sendSinglePharmacyReportTelegram(${jsArg(slug)})" class="bg-blue-500/10 text-blue-400 border border-blue-500/30 px-3 py-1 rounded-lg font-bold">
                   ✈️ إرسال لتلغرامي
                 </button>
               </div>
