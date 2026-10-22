@@ -32,11 +32,11 @@
 
           rows.push(`
             <tr class="hover:bg-slate-800/40 transition text-xs">
-              <td class="py-3.5 px-4 font-bold text-white">${data.name || slug}</td>
-              <td class="py-3.5 px-4 font-mono text-emerald-400">${slug}</td>
-              <td class="py-3.5 px-4 font-mono text-slate-300">${data.adminEmail || 'غير محدد'}</td>
+              <td class="py-3.5 px-4 font-bold text-white">${escSA(data.name || slug)}</td>
+              <td class="py-3.5 px-4 font-mono text-emerald-400">${escSA(slug)}</td>
+              <td class="py-3.5 px-4 font-mono text-slate-300">${escSA(data.adminEmail || 'غير محدد')}</td>
               <td class="py-3.5 px-4 font-mono text-amber-400 font-bold">${subPrice.toLocaleString()} د.ع</td>
-              <td class="py-3.5 px-4 font-mono text-slate-300">${data.templateId || 'template_default'}</td>
+              <td class="py-3.5 px-4 font-mono text-slate-300">${escSA(data.templateId || 'template_default')}</td>
               <td class="py-3.5 px-4">
                 <span class="px-2.5 py-1 rounded-full font-bold ${isSuspended ? 'bg-red-500/10 text-red-400 border border-red-500/30' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'}">
                   ${isSuspended ? '⛔ موقوف' : '● نشط'}
@@ -50,13 +50,13 @@
                   <a href="admin.html?pharmacy=${encodeURIComponent(slug)}" target="_blank" class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-1 rounded-lg font-bold transition">
                     ⚙️ الإدارة
                   </a>
-                  <button onclick="openFullEditModal('${slug}')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2 py-1 rounded-lg font-bold transition">
+                  <button onclick="openFullEditModal(${jsArg(slug)})" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2 py-1 rounded-lg font-bold transition">
                     ✏️ تعديل
                   </button>
-                  <button onclick="togglePharmacyStatus('${slug}', ${!isSuspended})" class="${isSuspended ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'} border px-2 py-1 rounded-lg font-bold">
+                  <button onclick="togglePharmacyStatus(${jsArg(slug)}, ${!isSuspended})" class="${isSuspended ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'} border px-2 py-1 rounded-lg font-bold">
                     ${isSuspended ? 'تفعيل 🟢' : 'حظر 🔴'}
                   </button>
-                  <button onclick="handleDeletePharmacy('${slug}', '${data.name || slug}')" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-1 rounded-lg font-bold">
+                  <button onclick="handleDeletePharmacy(${jsArg(slug)}, ${jsArg(data.name || slug)})" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-1 rounded-lg font-bold">
                     🗑️
                   </button>
                 </div>
@@ -214,7 +214,7 @@
 
           rows.push(`
             <tr class="hover:bg-slate-800/40 transition text-xs">
-              <td class="py-3.5 px-4 font-bold text-white">${data.name || slug}</td>
+              <td class="py-3.5 px-4 font-bold text-white">${escSA(data.name || slug)}</td>
               <td class="py-3.5 px-4 font-mono">${ordersCount} طلب</td>
               <td class="py-3.5 px-4 font-mono">${productsCount} مادة</td>
               <td class="py-3.5 px-4 font-mono text-slate-300">${basePrice.toLocaleString()} د.ع</td>
@@ -222,7 +222,7 @@
               <td class="py-3.5 px-4 font-mono text-emerald-400 font-black text-sm">${finalCalculatedPrice.toLocaleString()} د.ع</td>
               <td class="py-3.5 px-4 font-mono text-amber-400 font-bold">${maxCap.toLocaleString()} د.ع</td>
               <td class="py-3.5 px-4 text-center">
-                <button onclick="applyDynamicPriceToPharmacy('${slug}', ${finalCalculatedPrice})" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-lg font-bold">
+                <button onclick="applyDynamicPriceToPharmacy(${jsArg(slug)}, ${finalCalculatedPrice})" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-lg font-bold">
                   اعتماد 💰
                 </button>
               </td>
