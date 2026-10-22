@@ -24,11 +24,14 @@ const read = (n) => { const p = path.join(ROOT, n); return fs.existsSync(p) ? fs
 
 const ADMIN_FILES = ['admin-core.js', 'admin-products.js', 'admin-catalog-tools.js', 'admin-orders.js', 'admin-reports.js', 'admin-marketing.js', 'admin-settings.js'];
 const SUPER_FILES = ['super-admin-core.js', 'super-admin-pharmacies.js', 'super-admin-catalog.js', 'super-admin-billing.js', 'super-admin-reports.js', 'super-admin-platform.js'];
-const CLASSIC = ['script.js', 'storefront.js', 'storefront-stubs.js', 'admin-stubs.js', ...ADMIN_FILES, 'admin-page.js', ...SUPER_FILES];
+// ملفات الميزات الجديدة المستقلة (كل واحد بوظيفة واحدة): واجهة الزبون / لوحة الأدمن
+const STORE_EXTRA = ['delivery-zones.js', 'smart-search.js', 'barcode-scanner.js', 'stock-alerts.js', 'reorder.js', 'growth-pwa.js'];
+const ADMIN_EXTRA = ['admin-order-tools.js', 'image-compress.js', 'admin-inventory-badges.js'];
+const CLASSIC = ['script.js', 'storefront.js', 'storefront-stubs.js', 'admin-stubs.js', ...ADMIN_FILES, 'admin-page.js', ...SUPER_FILES, ...STORE_EXTRA, ...ADMIN_EXTRA];
 const adminText = () => ADMIN_FILES.map(f => read(f) || '').join('\n');
 const PAGES = {
-  'index.html': { loads: ['admin-stubs.js', 'storefront.js', 'script.js'], lazy: ADMIN_FILES },
-  'admin.html': { loads: ['storefront-stubs.js', ...ADMIN_FILES, 'admin-page.js', 'script.js'], lazy: [] },
+  'index.html': { loads: ['admin-stubs.js', 'storefront.js', 'script.js', ...STORE_EXTRA], lazy: ADMIN_FILES },
+  'admin.html': { loads: ['storefront-stubs.js', ...ADMIN_FILES, 'admin-page.js', ...ADMIN_EXTRA, 'script.js'], lazy: [] },
   'super-admin.html': { loads: SUPER_FILES, lazy: [], standalone: true },
 };
 
