@@ -60,17 +60,17 @@
           return `
             <tr class="hover:bg-slate-800/40 transition text-xs">
               <td class="py-3 px-4 text-center">
-                <input type="checkbox" value="${item.id}" ${isChecked ? 'checked' : ''} onchange="toggleMasterItemSelection(this, '${item.id}')" class="master-row-cb w-4 h-4 rounded bg-slate-900 border-slate-700 text-emerald-500 cursor-pointer">
+                <input type="checkbox" value="${escSA(item.id)}" ${isChecked ? 'checked' : ''} onchange="toggleMasterItemSelection(this, ${jsArg(item.id)})" class="master-row-cb w-4 h-4 rounded bg-slate-900 border-slate-700 text-emerald-500 cursor-pointer">
               </td>
               <td class="py-3 px-4">
-                <div class="font-bold text-white">${item.name || ''}</div>
-                <div class="text-[11px] text-slate-400">${item.size || ''} ${item.barcode ? `· باركود: ${item.barcode}` : ''}</div>
+                <div class="font-bold text-white">${escSA(item.name || '')}</div>
+                <div class="text-[11px] text-slate-400">${escSA(item.size || '')} ${item.barcode ? `· باركود: ${escSA(item.barcode)}` : ''}</div>
               </td>
-              <td class="py-3 px-4 font-bold text-emerald-400">${item.brand || ''}</td>
-              <td class="py-3 px-4 text-slate-300">${item.category || 'عام'}</td>
+              <td class="py-3 px-4 font-bold text-emerald-400">${escSA(item.brand || '')}</td>
+              <td class="py-3 px-4 text-slate-300">${escSA(item.category || 'عام')}</td>
               <td class="py-3 px-4 font-mono text-amber-400 font-bold">${Number(item.price || item.suggestedPrice || 0).toLocaleString()} د.ع</td>
               <td class="py-3 px-4 text-center">
-                <button onclick="deleteFromMasterCatalog('${item.id}')" class="text-red-400 hover:text-red-300 font-bold p-1">🗑️</button>
+                <button onclick="deleteFromMasterCatalog(${jsArg(item.id)})" class="text-red-400 hover:text-red-300 font-bold p-1">🗑️</button>
               </td>
             </tr>
           `;
@@ -254,14 +254,14 @@
           const p = s.productData || {};
           return `
             <tr class="hover:bg-slate-800/40 transition text-xs">
-              <td class="py-3 px-4 font-bold text-white">${s.sourcePharmacyName || s.sourcePharmacyId || 'صيدلية'}</td>
-              <td class="py-3 px-4 font-bold text-white">${p.name || 'منتج'}</td>
-              <td class="py-3 px-4 font-bold text-emerald-400">${p.brand || ''}</td>
+              <td class="py-3 px-4 font-bold text-white">${escSA(s.sourcePharmacyName || s.sourcePharmacyId || 'صيدلية')}</td>
+              <td class="py-3 px-4 font-bold text-white">${escSA(p.name || 'منتج')}</td>
+              <td class="py-3 px-4 font-bold text-emerald-400">${escSA(p.brand || '')}</td>
               <td class="py-3 px-4 font-mono text-amber-400 font-bold">${Number(p.price || p.suggestedPrice || 0).toLocaleString()} د.ع</td>
               <td class="py-3 px-4 text-center">
                 <div class="flex items-center justify-center gap-2">
-                  <button onclick="approveCrowdsourcedItem('${doc.id}')" class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-lg font-bold">اعتماد ✅</button>
-                  <button onclick="rejectCrowdsourcedItem('${doc.id}')" class="bg-red-500/10 text-red-400 border border-red-500/30 px-3 py-1 rounded-lg font-bold">رفض ❌</button>
+                  <button onclick="approveCrowdsourcedItem(${jsArg(doc.id)})" class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-lg font-bold">اعتماد ✅</button>
+                  <button onclick="rejectCrowdsourcedItem(${jsArg(doc.id)})" class="bg-red-500/10 text-red-400 border border-red-500/30 px-3 py-1 rounded-lg font-bold">رفض ❌</button>
                 </div>
               </td>
             </tr>
