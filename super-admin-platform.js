@@ -194,6 +194,7 @@
         if (data.success) {
           PLATFORM_ROOT_DOMAIN = data.platformRootDomain || "";
           cloudflareAutoDnsReady = !!data.cloudflareAutoDnsReady;
+          window.missingCloudflareEnv = Array.isArray(data.missingCloudflareEnv) ? data.missingCloudflareEnv : [];
           if (!PLATFORM_ROOT_DOMAIN) {
             console.info('PLATFORM_ROOT_DOMAIN غير مضبوط بالووركر (اختياري: يلزم فقط للنطاقات الفرعية المجانية). لا تنبيه عند الدخول؛ يظهر تنبيه عند محاولة إنشاء نطاق فرعي مجاني فقط.');
           }
@@ -227,6 +228,17 @@
       dnsResult.textContent = '';
       input.value = '';
 
+      const autoHint = () => {
+        if (cloudflareAutoDnsReady) {
+          dnsResult.textContent = '✅ الربط التلقائي مفعّل: سيُضاف الدومين لمشروع الموقع ويُنشأ سجل DNS ويُضاف لدومينات تسجيل الدخول، بضغطة واحدة.';
+          dnsResult.className = 'text-xs font-bold text-emerald-400';
+        } else {
+          const miss = (window.missingCloudflareEnv || []).join('، ') || 'متغيرات Cloudflare';
+          dnsResult.textContent = `ℹ️ الربط التلقائي غير مفعّل بعد: ينقص بالووركر ${miss}. سيُحفظ الربط ويلزم إضافة الدومين يدوياً بمشروع الموقع (Custom domains).`;
+          dnsResult.className = 'text-xs font-bold text-amber-400';
+        }
+      };
+
       if (type === 'free_subdomain') {
         if (!PLATFORM_ROOT_DOMAIN) {
           showToast('⚠️ لا يمكن إنشاء نطاق فرعي مجاني: دومين المنصة الجذري غير مُفعَّل بعد على السيرفر. أضيفي PLATFORM_ROOT_DOMAIN من إعدادات الووركر أولاً.', true);
@@ -236,6 +248,7 @@
         freeHint.classList.remove('hidden');
         inputWrap.classList.add('hidden');
         dnsGuide.classList.add('hidden');
+        autoHint();
       } else if (type === 'platform_subdomain') {
         title.textContent = '🔗 إنشاء رابط فرعي من دومينك الخاص';
         freeHint.classList.add('hidden');
@@ -243,10 +256,7 @@
         inputLabel.textContent = 'الرابط الفرعي الكامل (مثال: pharmacy-name.mainbrand.com) *';
         input.placeholder = 'pharmacy-name.mainbrand.com';
         dnsGuide.classList.add('hidden');
-        if (!cloudflareAutoDnsReady) {
-          dnsResult.textContent = 'ℹ️ الربط التلقائي لسجل DNS غير مُفعَّل على السيرفر حالياً (CLOUDFLARE_API_TOKEN/CLOUDFLARE_ZONE_ID) — سيلزم إضافة السجل يدوياً بعد الحفظ.';
-          dnsResult.className = 'text-xs font-bold text-amber-400';
-        }
+        autoHint();
       } else {
         title.textContent = '👑 إنشاء / ربط دومين خاص مستقل';
         freeHint.classList.add('hidden');
@@ -327,7 +337,9 @@
             }
           }
           fetchLinkedDomains();
-          if (type !== 'platform_subdomain' || data.dnsAutoLinked) {
+          const autoType = (type === 'platform_subdomain' || type === 'free_subdomain');
+          if (!autoType || data.dnsAutoLinked) {
+            if (data.dnsAutoLinked && data.dnsMessage) showToast(data.dnsMessage);
             closeDomainLinkModal();
           }
         } else {
@@ -362,6 +374,7 @@
               <td class="py-3 px-4 text-slate-300">${escSA(typeLabels[d.domainType] || d.domainType || '—')}</td>
               <td class="py-3 px-4 font-bold text-emerald-400">${escSA(tenantName)}</td>
               <td class="py-3 px-4 text-center">
+                <button onclick="checkDomainStatus(${jsArg(doc.id)})" class="bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/30 px-3 py-1 rounded-lg font-bold ml-1">فحص 🔍</button>
                 <button onclick="unlinkDomain(${jsArg(doc.id)})" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-3 py-1 rounded-lg font-bold">فصل 🗑️</button>
               </td>
             </tr>`;
@@ -371,11 +384,38 @@
       }
     }
 
-    async function unlinkDomain(domain) {
-      if (!confirm(`فصل ربط الدومين "${domain}"؟`)) return;
+    // 🔍 فحص حالة الدومين (مشروع الموقع + سجل DNS) عبر الووركر
+    async function checkDomainStatus(domain) {
+      showToast('⏳ جاري فحص الدومين...');
       try {
-        await db.collection('system').doc('custom_domains').collection('domains').doc(domain).delete();
-        showToast('تم فصل الدومين بنجاح');
+        const idToken = await currentUser.getIdToken();
+        const res = await fetch(`${WORKER_API_BASE_SUPER}/api/admin/domains/status?domain=${encodeURIComponent(domain)}`, {
+          headers: { 'Authorization': `Bearer ${idToken}` }
+        });
+        const data = await res.json();
+        showToast(data.message || 'تعذر الفحص', !data.success || !data.active);
+      } catch (err) {
+        showToast('خطأ: ' + err.message, true);
+      }
+    }
+
+    // الفصل عبر الووركر: يحذف الربط + الدومين من مشروع الموقع + سجل DNS + دومينات Firebase (حيث أمكن)
+    async function unlinkDomain(domain) {
+      if (!confirm(`فصل الدومين "${domain}" نهائياً؟\nسيُحذف الربط، وإن كان مرتبطاً تلقائياً فسيُحذف من مشروع الموقع وسجل DNS أيضاً.`)) return;
+      try {
+        const idToken = await currentUser.getIdToken();
+        const res = await fetch(`${WORKER_API_BASE_SUPER}/api/admin/domains/unlink`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+          body: JSON.stringify({ domain })
+        });
+        const data = await res.json();
+        if (data.success) { showToast(data.message || 'تم فصل الدومين بنجاح'); }
+        else {
+          // احتياط: إن لم يتوفر مسار الووركر نحذف الربط مباشرة كما كان
+          await db.collection('system').doc('custom_domains').collection('domains').doc(domain).delete();
+          showToast('تم حذف الربط فقط (' + (data.message || 'الووركر غير متاح') + ')');
+        }
         fetchLinkedDomains();
       } catch (err) {
         showToast('خطأ: ' + err.message, true);
