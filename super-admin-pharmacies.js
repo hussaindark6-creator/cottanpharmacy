@@ -1,3 +1,27 @@
+
+// 🌐 رابط صفحة المتجر/الإدارة: بوجود دومين المنصة (PLATFORM_ROOT_DOMAIN من الووركر) نستخدم <slug>.<الدومين>،
+// وإلا الرابط القديم بمعامل ?pharmacy= (يعمل قبل شراء الدومين وعلى localhost/المعاينات).
+function tenantPageUrl(slug, page) {
+  const root = (typeof PLATFORM_ROOT_DOMAIN === 'string' ? PLATFORM_ROOT_DOMAIN : '').trim();
+  if (root) return `https://${slug}.${root}/${page === 'index.html' ? '' : page}`;
+  return `${page}?pharmacy=${encodeURIComponent(slug)}`;
+}
+
+// 🔑 مالك الصيدلية (adminEmail) يحتاج مستند موظف بدور owner، لأن قواعد Firestore تقرأ الصلاحية من مجموعة staff.
+// بدونه يفتح اللوحة لكن عمليات القراءة/الكتابة تُرفض (permission-denied). معرّف المستند بنفس صيغة الووركر والقواعد.
+async function ensureOwnerStaffDoc(slug, adminEmail) {
+  const email = String(adminEmail || '').trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return;
+  const staffDocId = email.replace(/[^a-z0-9]/g, '_');
+  await db.collection('pharmacies').doc(slug).collection('staff').doc(staffDocId).set({
+    email,
+    name: 'مالك الصيدلية',
+    role: 'owner',
+    permissions: ['all'],
+    addedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge: true });
+}
+
 /* ==========================================================
    super-admin-pharmacies.js — الصيدليات: القائمة، الإنشاء، الإيقاف/الحذف، فوترة الاستهلاك
    جزء من لوحة السوبر أدمن (كان سكربتاً واحداً بـ1480 سطراً داخل الصفحة). سكربت كلاسيكي بلا تغيير بالمنطق،
@@ -44,12 +68,18 @@
               </td>
               <td class="py-3.5 px-4 text-center">
                 <div class="flex items-center justify-center gap-1.5">
-                  <a href="index.html?pharmacy=${encodeURIComponent(slug)}" target="_blank" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-1 rounded-lg font-bold transition">
+                  <a href="${escSA(tenantPageUrl(slug, 'index.html'))}" target="_blank" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-1 rounded-lg font-bold transition">
                     🛍️ المتجر
                   </a>
-                  <a href="admin.html?pharmacy=${encodeURIComponent(slug)}" target="_blank" class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-1 rounded-lg font-bold transition">
+                  <a href="${escSA(tenantPageUrl(slug, 'admin.html'))}" target="_blank" class="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-1 rounded-lg font-bold transition">
                     ⚙️ الإدارة
                   </a>
+                  <button onclick="openOnboardingModal(${jsArg(slug)})" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-1 rounded-lg font-bold transition">
+                    ✅ التفعيل
+                  </button>
+                  <button onclick="openDesignModal(${jsArg(slug)})" class="bg-fuchsia-500/10 hover:bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/30 px-2 py-1 rounded-lg font-bold transition">
+                    🎨 تصميم
+                  </button>
                   <button onclick="openFullEditModal(${jsArg(slug)})" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2 py-1 rounded-lg font-bold transition">
                     ✏️ تعديل
                   </button>
@@ -72,7 +102,7 @@
         tbody.innerHTML = rows.length ? rows.join('') : `<tr><td colspan="7" class="text-center py-10 text-slate-500">لا توجد صيدليات مسجلة.</td></tr>`;
         populateDomainLinkTenantSelect();
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-400">خطأ: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-400">خطأ: ${escSA(err.message)}</td></tr>`;
       }
     }
 
@@ -126,9 +156,20 @@
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        showToast(`🎉 تم إنشاء صيدلية "${name}" وفصل أسرارها بنجاح!`);
+        await ensureOwnerStaffDoc(slug, adminEmail);
+
+        // 📋 (المرحلة 5) نسخ أقسام جاهزة حسب نوع النشاط ثم فتح قائمة التفعيل
+        const presetId = (document.getElementById('newPharmacyPreset') || {}).value || '';
+        let presetNote = '';
+        if (presetId) {
+          try { presetNote = ` (+${await applyCategoryPreset(slug, presetId)} قسماً جاهزاً)`; }
+          catch (presetErr) { presetNote = ` (تعذر نسخ الأقسام: ${presetErr.message})`; }
+        }
+
+        showToast(`🎉 تم إنشاء صيدلية "${name}" وفصل أسرارها بنجاح!${presetNote}`);
         document.getElementById('addPharmacyForm').reset();
         fetchPharmaciesList();
+        openOnboardingModal(slug);
       } catch (err) {
         showToast(`خطأ: ${err.message}`, true);
       }
@@ -233,7 +274,7 @@
         tbody.innerHTML = rows.length ? rows.join('') : `<tr><td colspan="8" class="text-center py-6 text-slate-500">لا توجد بيانات.</td></tr>`;
         window.__billingCache = { at: Date.now(), html: tbody.innerHTML };
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-red-400">خطأ: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-red-400">خطأ: ${escSA(err.message)}</td></tr>`;
       }
     }
 
