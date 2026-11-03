@@ -23,9 +23,9 @@ const section = (t) => console.log(`\n=== ${t} ===`);
 const read = (n) => { const p = path.join(ROOT, n); return fs.existsSync(p) ? fs.readFileSync(p, 'utf8') : null; };
 
 const ADMIN_FILES = ['admin-core.js', 'admin-products.js', 'admin-catalog-tools.js', 'admin-orders.js', 'admin-reports.js', 'admin-marketing.js', 'admin-settings.js'];
-const SUPER_FILES = ['super-admin-core.js', 'super-admin-pharmacies.js', 'super-admin-catalog.js', 'super-admin-billing.js', 'super-admin-reports.js', 'super-admin-platform.js'];
+const SUPER_FILES = ['super-admin-core.js', 'super-admin-pharmacies.js', 'super-admin-catalog.js', 'super-admin-billing.js', 'super-admin-reports.js', 'super-admin-platform.js', 'super-admin-templates.js', 'super-admin-onboarding.js'];
 // ملفات الميزات الجديدة المستقلة (كل واحد بوظيفة واحدة): واجهة الزبون / لوحة الأدمن
-const STORE_EXTRA = ['delivery-zones.js', 'smart-search.js', 'barcode-scanner.js', 'stock-alerts.js', 'reorder.js', 'growth-pwa.js'];
+const STORE_EXTRA = ['delivery-zones.js', 'smart-search.js', 'stock-alerts.js', 'reorder.js'];
 const ADMIN_EXTRA = ['admin-order-tools.js', 'image-compress.js', 'admin-inventory-badges.js'];
 const CLASSIC = ['script.js', 'storefront.js', 'storefront-stubs.js', 'admin-stubs.js', ...ADMIN_FILES, 'admin-page.js', ...SUPER_FILES, ...STORE_EXTRA, ...ADMIN_EXTRA];
 const adminText = () => ADMIN_FILES.map(f => read(f) || '').join('\n');
@@ -329,6 +329,130 @@ section('7. فحص قواعد Firestore');
     /allow\s+(?:create|update|write|delete)[^;]*:\s*if\s+true/.test(code) ? fail('يوجد allow كتابة بشرط true (مفتوحة للجميع)!') : pass('لا توجد كتابة مفتوحة للجميع');
     (() => { const m = code.match(/match \/orders\/\{orderId\}[\s\S]*?allow update:[^;]*;/); return m && !/request\.auth\.uid/.test(m[0].slice(m[0].lastIndexOf('allow update'))); })() ? pass('orders: تعديل الطلب للطاقم فقط (إلغاء الزبون عبر الووركر)') : fail('orders: تعديل الطلب يجب أن يكون للطاقم فقط');
   }
+}
+
+// ---------- 7) محرك القوالب + الدومينات (المرحلتان 0 و1) ----------
+section('القوالب والدومينات');
+{
+  const vm = require('vm');
+  const contractSrc = read('template-contract.js');
+  const registryRaw = read('public/templates/registry.json');
+  if (!contractSrc || !registryRaw) {
+    fail('template-contract.js أو public/templates/registry.json غير موجود');
+  } else {
+    let registry = null;
+    try { registry = JSON.parse(registryRaw); } catch (e) { fail('registry.json ليس JSON صالحاً: ' + e.message); }
+    if (registry) {
+      const sandbox = { window: {}, console };
+      vm.createContext(sandbox);
+      vm.runInContext(contractSrc, sandbox);
+      const W = sandbox.window;
+      (W.TemplateContract && typeof W.validateTemplate === 'function') ? pass('عقد القوالب يُحمَّل (TemplateContract + validateTemplate)') : fail('template-contract.js لا يعرّف TemplateContract/validateTemplate');
+
+      const ids = new Set(), aliases = new Set();
+      (registry.templates || []).forEach(e => {
+        if (!e.id || !e.script || !e.dataTemplate) { fail(`registry: القالب «${e.id}» ينقصه id/script/dataTemplate`); return; }
+        if (ids.has(e.id)) fail(`registry: id مكرر «${e.id}»`); ids.add(e.id);
+        (e.aliases || []).forEach(a => { if (aliases.has(a) || ids.has(a)) fail(`registry: اسم بديل مكرر «${a}»`); aliases.add(a); });
+      });
+      (ids.has(registry.default)) ? pass('registry: القالب الافتراضي موجود') : fail('registry: default غير موجود بالقائمة');
+
+      (registry.templates || []).forEach(e => {
+        if (e.css) {
+          const css = read(`public/templates/${e.css}`);
+          if (!css) { fail(`registry: ملف CSS «${e.css}» غير موجود`); return; }
+          // كل قاعدة بملف قالب يجب أن تُقيَّد بـ data-template الخاص به كي لا تتسرب لقوالب أخرى
+          const bare = css.replace(/\/\*[\s\S]*?\*\//g, '').split('}').map(b => b.split('{')[0].trim()).filter(sel => sel && !sel.startsWith('@') && !sel.includes(`[data-template="${e.dataTemplate}"]`));
+          bare.length === 0 ? pass(`CSS «${e.css}»: كل القواعد مقيّدة بـ data-template="${e.dataTemplate}"`) : fail(`CSS «${e.css}»: قواعد غير مقيّدة: ${bare.slice(0, 3).join(' | ')}`);
+        }
+      });
+
+      const scripts = [...new Set((registry.templates || []).map(e => e.script))];
+      scripts.forEach(name => {
+        const src = read(`public/templates/${name}.js`);
+        if (!src) { fail(`templates/${name}.js غير موجود`); return; }
+        try { vm.runInContext(src, sandbox); } catch (e) { fail(`templates/${name}.js يرمي خطأ عند التحميل: ${e.message}`); return; }
+        const tpl = W.PharmacyTemplates && W.PharmacyTemplates[name];
+        if (!tpl) { fail(`templates/${name}.js لا يسجّل window.PharmacyTemplates.${name}`); return; }
+        const res = W.validateTemplate(tpl);
+        res.ok ? pass(`قالب «${name}» يطابق العقد (كل الدوال المطلوبة)`) : fail(`قالب «${name}» لا يطابق العقد: ${res.errors.join(' | ')}`);
+        if (res.ok) {
+          const H = {
+            sanitizeText: v => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'),
+            sanitizeUrl: v => (/^https?:\/\//i.test(String(v || '')) ? String(v).replace(/"/g, '%22') : ''),
+            fmtPrice: n => String(n), getBrandColor: () => '#E85D8A', icons: { bottle: () => '<svg></svg>' }, catIcons: { jar: () => '<svg></svg>' }, wishlist: new Set()
+          };
+          const outs = [tpl.renderHeader({}, H), tpl.renderProductCard({ id: 'p1', name: 'x', price: 1 }, H), tpl.renderCategoryCard({ id: 'c1', label: 'x' }, 0, H), tpl.renderBundleCard({ id: 'b1', title: 'x', price: 1 }, H), tpl.renderProductPage({ id: 'p1' }, H), tpl.renderFooter({}, H)];
+          // اختبار الهروب: بيانات خبيثة يجب ألا تظهر كوسوم خام بأي مخرج (مع helpers تحاكي sanitizeText/sanitizeUrl)
+          const evil = '<img src=x onerror=alert(1)>';
+          const real = [
+            tpl.renderProductCard({ id: evil, name: evil, brand: evil, size: evil, price: 10, oldPrice: 20, imageUrl: 'javascript:alert(1)', stockQuantity: 3 }, H),
+            tpl.renderCategoryCard({ id: evil, label: evil, imageUrl: 'javascript:1' }, 2, H),
+            tpl.renderBundleCard({ id: evil, title: evil, savingsBadge: evil, price: 5, imageUrl: '' }, H),
+            tpl.renderFooter({ name: evil, socialWhatsapp: '<b>', socialInstagram: 'a"b onclick=x', socialPhone: 'x' }, H)
+          ].filter(x => typeof x === 'string');
+          real.every(x => !/<img src=x|<b>|onclick=x/i.test(x)) ? pass(`قالب «${name}»: لا يمرّر HTML خبيثاً من بيانات المنتج/القسم/البكج/الفوتر`) : fail(`قالب «${name}»: مخرج غير مهرَّب (XSS)`);
+          const storeSrc = ['script.js', 'storefront.js', 'delivery-zones.js', 'smart-search.js', 'stock-alerts.js', 'reorder.js'].map(f => read(f) || '').join('\n');
+          const definedFns = new Set([...storeSrc.matchAll(/^(?:async\s+)?function\s+([A-Za-z_]\w*)/gm)].map(m => m[1]));
+          const usedFns = new Set([...src.matchAll(/\b((?:open|add|toggle|show|close|select)[A-Z]\w*)\(/g)].map(m => m[1]));
+          const missingFns = [...usedFns].filter(n => !definedFns.has(n));
+          missingFns.length === 0 ? pass(`قالب «${name}»: كل دوال المتجر التي يستدعيها معرّفة (${[...usedFns].length})`) : fail(`قالب «${name}» يستدعي دوالاً غير معرّفة بالمتجر: ${missingFns.join(', ')}`);
+          outs.every(o => o === null || o === undefined || typeof o === 'string') ? pass(`قالب «${name}»: دوال الرسم ترجع نصاً أو null فقط`) : fail(`قالب «${name}»: إحدى دوال الرسم ترجع نوعاً غير نص/null`);
+        }
+      });
+
+      const idx = read('index.html') || '';
+      (W.TemplateContract ? W.TemplateContract.homeSectionIds : []).forEach(id => {
+        idx.includes(`data-home-section="${id}"`) ? pass(`index.html: جزء الرئيسية «${id}» موسوم`) : fail(`index.html: ينقصه data-home-section="${id}"`);
+      });
+    }
+  }
+  ['platform-host.js', 'template-engine.js', 'template-contract.js'].forEach(f => read(f) ? pass(`${f} موجود`) : fail(`${f} غير موجود`));
+  ['index.html', 'admin.html', 'super-admin.html'].forEach(p => (read(p) || '').includes('src="platform-host.js"') ? pass(`${p} يحمّل platform-host.js`) : fail(`${p} لا يحمّل platform-host.js`));
+  const noPwa = ['index.html', 'vite.config.js', 'run-tests.cjs'].filter(f => /growth-pwa|barcode-scanner|manifest\.webmanifest|installAppLink/.test((read(f) || '').replace(/\/growth-pwa\|[^\n]*/, '')));
+  noPwa.length ? fail(`بقايا PWA/باركود بـ: ${noPwa.join(', ')} (قرار: لا ملفات PWA)`) : pass('لا بقايا لملفات PWA');
+}
+
+// ---------- 8) قوالب الأقسام وقائمة التفعيل (المرحلة 5) ----------
+section('قوالب الأقسام وقائمة التفعيل');
+{
+  const pr = read('public/presets/category-presets.json');
+  const ck = read('public/presets/onboarding-checklist.json');
+  const onbSrc = read('super-admin-onboarding.js') || '';
+  const storeSrc = read('script.js') || '';
+  const iconBlock = storeSrc.slice(storeSrc.indexOf('const catIcons'), storeSrc.indexOf('const catIcons') + 6000);
+  const iconKeys = new Set([...iconBlock.matchAll(/^\s{2}([a-z]+):/gm)].map(m => m[1]));
+  let presets = null, items = null;
+  try { presets = JSON.parse(pr).presets; } catch (e) { fail('category-presets.json غير صالح: ' + e.message); }
+  try { items = JSON.parse(ck).items; } catch (e) { fail('onboarding-checklist.json غير صالح: ' + e.message); }
+  if (presets) {
+    const pids = new Set();
+    presets.forEach(p => {
+      if (!p.id || !p.name || !Array.isArray(p.categories) || !p.categories.length) { fail(`قالب أقسام «${p.id}» ناقص`); return; }
+      if (pids.has(p.id)) fail(`قالب أقسام مكرر «${p.id}»`); pids.add(p.id);
+      const cids = new Set(); const problems = [];
+      p.categories.forEach(c => {
+        if (!/^[a-z0-9_-]{2,40}$/.test(c.id || '')) problems.push(`معرّف غير صالح «${c.id}»`);
+        if (cids.has(c.id)) problems.push(`معرّف مكرر «${c.id}»`); cids.add(c.id);
+        if (!c.label || !String(c.label).trim()) problems.push(`اسم فارغ لـ«${c.id}»`);
+        if (!iconKeys.has(c.icon)) problems.push(`أيقونة غير موجودة «${c.icon}» لـ«${c.id}»`);
+        if (!Number.isFinite(c.order)) problems.push(`ترتيب غير رقمي لـ«${c.id}»`);
+      });
+      problems.length === 0 ? pass(`قالب الأقسام «${p.id}»: ${p.categories.length} أقسام صالحة`) : fail(`قالب الأقسام «${p.id}»: ${problems.join(' | ')}`);
+    });
+    iconKeys.size >= 6 ? pass(`أيقونات الأقسام المعروفة (${iconKeys.size})`) : fail('تعذر قراءة أيقونات الأقسام من script.js');
+  }
+  if (items) {
+    const keys = new Set(); const problems = [];
+    items.forEach(i => {
+      if (!i.key || !i.title) problems.push('بند ناقص');
+      if (keys.has(i.key)) problems.push(`مفتاح مكرر «${i.key}»`); keys.add(i.key);
+      if (i.auto && !onbSrc.includes(`${i.key}:`)) problems.push(`البند التلقائي «${i.key}» بلا فحص بـ onbDetect`);
+    });
+    problems.length === 0 ? pass(`قائمة التفعيل: ${items.length} بنداً، كل التلقائي له فحص`) : fail('قائمة التفعيل: ' + problems.join(' | '));
+  }
+  (read('super-admin.html') || '').includes('id="newPharmacyPreset"') ? pass('نموذج الإنشاء فيه نوع النشاط') : fail('نموذج الإنشاء ينقصه newPharmacyPreset');
+  (read('super-admin-pharmacies.js') || '').includes('applyCategoryPreset(slug, presetId)') ? pass('الإنشاء ينسخ قالب الأقسام') : fail('handleCreatePharmacy لا ينسخ قالب الأقسام');
 }
 
 // ===================================================================
