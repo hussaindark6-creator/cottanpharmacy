@@ -875,6 +875,16 @@ function renderProductDetailDOM(p) {
     if (inStock) addToCart(p.id, false, pdQty);
     else openStockAlertModal(p.id);
   };
+
+  // 🎨 محتوى إضافي من قالب الصيدلية بصفحة المنتج (classic يرجع null فلا يظهر شيء)
+  try {
+    const extra = (activeThemeModule && typeof activeThemeModule.renderProductPage === 'function') ? activeThemeModule.renderProductPage(p, getTemplateHelpers()) : null;
+    let slot = document.getElementById('tplProductExtra');
+    if (extra) {
+      if (!slot) { slot = document.createElement('div'); slot.id = 'tplProductExtra'; const pv = document.getElementById('view-product'); if (pv) pv.appendChild(slot); }
+      if (slot) slot.innerHTML = extra;
+    } else if (slot) { slot.innerHTML = ''; }
+  } catch (e) { console.warn('[Theme Engine] خطأ في صفحة المنتج:', e); }
 }
 
 function openProduct(id, isUserClick = false) {
@@ -962,6 +972,7 @@ function renderCrossSelling(currentP) {
 
 // ================= 27. CATEGORIES & BRANDS =================
 function renderModernCategories() {
+  if (window.TemplateEngine && typeof window.TemplateEngine.refreshSlots === 'function') window.TemplateEngine.refreshSlots();
   const container = document.getElementById('catRowFull');
   const totalCountEl = document.getElementById('categoriesTotalCount');
   if (totalCountEl) totalCountEl.textContent = `${categories.length} أقسام معتمدة`;
@@ -972,7 +983,8 @@ function renderModernCategories() {
       
       if (activeThemeModule && typeof activeThemeModule.renderCategoryCard === 'function') {
         try {
-          return activeThemeModule.renderCategoryCard(c, count, getTemplateHelpers());
+          const customCat = activeThemeModule.renderCategoryCard(c, count, getTemplateHelpers());
+          if (customCat) return customCat;
         } catch (e) {
           console.warn("[Theme Engine] خطأ في عرض بطاقة القسم:", e);
         }
