@@ -1,0 +1,96 @@
+/* ==========================================================
+   templates/market.css — تنسيق قالب Market (يُحمَّل فقط للصيدليات التي تستخدمه)
+   كل القواعد مقيّدة بـ html[data-template="market"]. اللون الأساسي للصيدلية (--accent) يُستخدم للسعر والأزرار،
+   والأحمر ثابت لشارات الخصم فقط (إشارة بصرية عامة للعروض).
+   ========================================================== */
+html[data-template="market"] {
+  --mk-ink: #111827;
+  --mk-soft: #6B7280;
+  --mk-bg: #F3F4F6;
+  --mk-line: #E5E7EB;
+  --mk-sale: #DC2626;
+}
+
+html[data-template="market"] body { background: var(--mk-bg); }
+
+/* ---------- هيدر مضغوط وبحث مسطّح ---------- */
+html[data-template="market"] header { background: #fff; border-bottom: 1px solid var(--mk-line); }
+html[data-template="market"] .nav { padding: 6px 0; }
+html[data-template="market"] .logo-text { font-weight: 900; letter-spacing: 0; color: var(--mk-ink); }
+html[data-template="market"] .announcement-bar { font-size: 11.5px; padding: 4px 10px; }
+html[data-template="market"] .search-wrap { padding-top: 4px; padding-bottom: 8px; }
+html[data-template="market"] .search-bar { background: var(--mk-bg); border: 1px solid var(--mk-line); border-radius: 8px; box-shadow: none; }
+
+/* ---------- شريط الأقسام الثابت ---------- */
+html[data-template="market"] .mk-catbar { position: sticky; top: 0; z-index: 35; background: #fff; border-bottom: 1px solid var(--mk-line); box-shadow: 0 2px 8px rgba(17, 24, 39, .06); }
+html[data-template="market"] .mk-catbar-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 8px 12px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+html[data-template="market"] .mk-catbar-scroll::-webkit-scrollbar { display: none; }
+html[data-template="market"] .mk-chip { flex: 0 0 auto; background: var(--mk-bg); color: var(--mk-ink); border: 1px solid var(--mk-line); border-radius: 999px; padding: 6px 14px; font-size: 12.5px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+html[data-template="market"] .mk-chip:hover { border-color: var(--accent); color: var(--accent); }
+html[data-template="market"] .mk-chip-all { background: var(--accent); color: #fff; border-color: var(--accent); }
+html[data-template="market"] .mk-chip-all:hover { color: #fff; opacity: .9; }
+
+/* ---------- العناوين والبنرات: أقل ارتفاعاً ---------- */
+html[data-template="market"] .section { margin: 14px 0; }
+html[data-template="market"] .section-head { margin-bottom: 8px; }
+html[data-template="market"] .section-head h2 { font-size: 16px; font-weight: 900; color: var(--mk-ink); }
+html[data-template="market"] .see-all { color: var(--accent); font-weight: 800; font-size: 12px; }
+html[data-template="market"] .hero-wrap { padding-bottom: 10px; }
+html[data-template="market"] .hero-slider-wrapper,
+html[data-template="market"] .hero-slider-track { border-radius: 8px; }
+html[data-template="market"] .double-banner-row { margin: 4px 0 12px; gap: 8px; }
+html[data-template="market"] .double-banner-card { border-radius: 8px; box-shadow: none; }
+html[data-template="market"] .brand-strip { gap: 10px; }
+html[data-template="market"] .brand-chip-img-box { border-radius: 8px; border: 1px solid var(--mk-line); box-shadow: none; }
+html[data-template="market"] .brand-chip-title { font-size: 11.5px; color: var(--mk-ink); }
+
+/* ---------- شبكة المنتجات المضغوطة ---------- */
+html[data-template="market"] .product-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+@media (min-width: 560px) { html[data-template="market"] .product-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 900px) { html[data-template="market"] .product-grid { grid-template-columns: repeat(4, 1fr); gap: 10px; } }
+@media (min-width: 1200px) { html[data-template="market"] .product-grid { grid-template-columns: repeat(5, 1fr); } }
+html[data-template="market"] .product-card.mk-card { position: relative; display: flex; flex-direction: column; padding: 0; background: #fff; border: 1px solid var(--mk-line); border-radius: 8px; overflow: hidden; box-shadow: none; transform: none; }
+html[data-template="market"] .product-card.mk-card:hover { transform: none; box-shadow: 0 4px 14px rgba(17, 24, 39, .1); border-color: var(--accent); }
+html[data-template="market"] .mk-media { position: relative; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+html[data-template="market"] .mk-media img { width: 100%; height: 100%; object-fit: cover; }
+html[data-template="market"] .mk-media svg { max-width: 55%; max-height: 55%; }
+html[data-template="market"] .mk-off { position: absolute; top: 0; inset-inline-start: 0; background: var(--mk-sale); color: #fff; font-weight: 900; font-size: 12px; padding: 3px 9px; border-end-end-radius: 8px; z-index: 2; }
+html[data-template="market"] .mk-wish { position: absolute; top: 6px; inset-inline-end: 6px; width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; z-index: 2; }
+html[data-template="market"] .mk-stock { position: absolute; left: 0; right: 0; bottom: 0; text-align: center; font-size: 11px; font-weight: 800; padding: 3px 6px; color: #fff; }
+html[data-template="market"] .mk-stock-out { background: rgba(75, 85, 99, .92); }
+html[data-template="market"] .mk-stock-low { background: rgba(217, 119, 6, .92); }
+html[data-template="market"] .mk-body { display: flex; flex-direction: column; gap: 2px; padding: 8px 8px 6px; flex: 1; }
+html[data-template="market"] .mk-name { font-size: 12.5px; font-weight: 700; line-height: 1.45; color: var(--mk-ink); min-height: 36px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+html[data-template="market"] .mk-sub { font-size: 10.5px; color: var(--mk-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html[data-template="market"] .mk-price-row { display: flex; align-items: baseline; gap: 6px; margin-top: 2px; flex-wrap: wrap; }
+html[data-template="market"] .mk-price { font-size: 17px; font-weight: 900; color: var(--accent); line-height: 1.2; }
+html[data-template="market"] .mk-old { font-size: 11px; color: var(--mk-soft); text-decoration: line-through; }
+html[data-template="market"] .mk-save { font-size: 11px; font-weight: 800; color: var(--mk-sale); }
+html[data-template="market"] .mk-add { margin: 0 8px 8px; background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 8px; font-weight: 900; font-size: 12.5px; cursor: pointer; }
+html[data-template="market"] .mk-add-alert { background: #fff; color: var(--mk-ink); border: 1px solid var(--mk-line); }
+
+/* ---------- الأقسام: بلاطات صغيرة ---------- */
+html[data-template="market"] .cat-grid-modern { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+@media (min-width: 560px) { html[data-template="market"] .cat-grid-modern { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 900px) { html[data-template="market"] .cat-grid-modern { grid-template-columns: repeat(4, 1fr); } }
+html[data-template="market"] .mk-cat { flex-direction: row; align-items: center; gap: 10px; padding: 8px; background: #fff; border: 1px solid var(--mk-line); border-radius: 8px; box-shadow: none; }
+html[data-template="market"] .mk-cat:hover { transform: none; border-color: var(--accent); box-shadow: none; }
+html[data-template="market"] .mk-cat-ico { width: 44px; height: 44px; flex: 0 0 44px; border-radius: 8px; overflow: hidden; background: var(--mk-bg); display: flex; align-items: center; justify-content: center; }
+html[data-template="market"] .mk-cat-ico img { width: 100%; height: 100%; object-fit: cover; }
+html[data-template="market"] .mk-cat-ico svg { width: 60%; height: 60%; }
+html[data-template="market"] .mk-cat-text { display: flex; flex-direction: column; min-width: 0; }
+html[data-template="market"] .mk-cat-title { font-size: 13px; font-weight: 800; margin: 0; color: var(--mk-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html[data-template="market"] .mk-cat-count { font-size: 10.5px; color: var(--mk-soft); }
+
+/* ---------- البكجات ---------- */
+html[data-template="market"] .bundle-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+@media (min-width: 900px) { html[data-template="market"] .bundle-grid { grid-template-columns: repeat(4, 1fr); } }
+html[data-template="market"] .mk-bundle { position: relative; display: flex; flex-direction: column; background: #fff; border: 1px solid var(--mk-line); border-radius: 8px; overflow: hidden; cursor: pointer; }
+html[data-template="market"] .mk-bundle-media { position: relative; aspect-ratio: 1 / 1; background: var(--mk-bg); display: flex; align-items: center; justify-content: center; font-size: 36px; overflow: hidden; }
+html[data-template="market"] .mk-bundle-media img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ---------- الفوتر ---------- */
+html[data-template="market"] .mk-footer { text-align: center; padding: 22px 16px 110px; background: #fff; border-top: 1px solid var(--mk-line); margin-top: 18px; }
+html[data-template="market"] .mk-footer-name { font-weight: 900; font-size: 16px; color: var(--mk-ink); }
+html[data-template="market"] .mk-footer-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 16px; margin-top: 10px; }
+html[data-template="market"] .mk-footer-links a { color: var(--mk-soft); font-size: 12.5px; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
