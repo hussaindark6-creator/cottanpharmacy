@@ -1,0 +1,222 @@
+{
+  "version": 1,
+  "presets": [
+    {
+      "id": "beauty",
+      "name": "تجميل وعناية",
+      "description": "عناية بالبشرة والشعر والجسم والمكياج والعطور (معرّفات الأقسام الأساسية تطابق بنك المنتجات المشترك).",
+      "categories": [
+        {
+          "id": "face",
+          "label": "العناية بالبشرة",
+          "icon": "face",
+          "imageUrl": "",
+          "order": 10
+        },
+        {
+          "id": "hair",
+          "label": "العناية بالشعر",
+          "icon": "hair",
+          "imageUrl": "",
+          "order": 20
+        },
+        {
+          "id": "body",
+          "label": "العناية بالجسم",
+          "icon": "body",
+          "imageUrl": "",
+          "order": 30
+        },
+        {
+          "id": "sunscreen",
+          "label": "واقي الشمس",
+          "icon": "sunscreen",
+          "imageUrl": "",
+          "order": 40
+        },
+        {
+          "id": "makeup",
+          "label": "المكياج",
+          "icon": "jar",
+          "imageUrl": "",
+          "order": 50
+        },
+        {
+          "id": "perfumes",
+          "label": "العطور",
+          "icon": "bottle",
+          "imageUrl": "",
+          "order": 60
+        },
+        {
+          "id": "intimate",
+          "label": "العناية الحميمة",
+          "icon": "intimate",
+          "imageUrl": "",
+          "order": 70
+        }
+      ]
+    },
+    {
+      "id": "pharma",
+      "name": "أدوية وصيدلية عامة",
+      "description": "أقسام صيدلية عامة: مسكنات، زكام، هضمي، إسعافات، جلدية، عين وأذن، أجهزة طبية.",
+      "categories": [
+        {
+          "id": "pain_fever",
+          "label": "مسكنات وخافضات حرارة",
+          "icon": "bottle",
+          "imageUrl": "",
+          "order": 10
+        },
+        {
+          "id": "cold_flu",
+          "label": "الزكام والسعال",
+          "icon": "bottle",
+          "imageUrl": "",
+          "order": 20
+        },
+        {
+          "id": "digestive",
+          "label": "الجهاز الهضمي",
+          "icon": "bottle",
+          "imageUrl": "",
+          "order": 30
+        },
+        {
+          "id": "first_aid",
+          "label": "الإسعافات الأولية",
+          "icon": "jar",
+          "imageUrl": "",
+          "order": 40
+        },
+        {
+          "id": "skin_care_med",
+          "label": "الأمراض الجلدية",
+          "icon": "face",
+          "imageUrl": "",
+          "order": 50
+        },
+        {
+          "id": "eye_ear",
+          "label": "العين والأذن",
+          "icon": "bottle",
+          "imageUrl": "",
+          "order": 60
+        },
+        {
+          "id": "medical_devices",
+          "label": "أجهزة ومستلزمات طبية",
+          "icon": "jar",
+          "imageUrl": "",
+          "order": 70
+        },
+        {
+          "id": "personal_care",
+          "label": "العناية الشخصية",
+          "icon": "body",
+          "imageUrl": "",
+          "order": 80
+        }
+      ]
+    },
+    {
+      "id": "kids",
+      "name": "أطفال وأمهات",
+      "description": "عناية الطفل والحفاضات والحليب والرضاعة وعناية الأم.",
+      "categories": [
+        {
+          "id": "baby_care",
+          "label": "العناية بالطفل",
+          "icon": "baby",
+          "imageUrl": "",
+          "order": 10
+        },
+        {
+          "id": "diapers",
+          "label": "الحفاضات",
+          "icon": "baby",
+          "imageUrl": "",
+          "order": 20
+        },
+        {
+          "id": "baby_food",
+          "label": "حليب وغذاء الأطفال",
+          "icon": "jar",
+          "imageUrl": "",
+          "order": 30
+        },
+        {
+          "id": "feeding",
+          "label": "الرضاعة والمستلزمات",
+          "icon": "bottle",
+          "imageUrl": "",
+          "order": 40
+        },
+        {
+          "id": "mom_care",
+          "label": "العناية بالأم",
+          "icon": "body",
+          "imageUrl": "",
+          "order": 50
+        }
+      ]
+    },
+    {
+      "id": "supplements",
+      "name": "مكملات وفيتامينات",
+      "description": "فيتامينات ومعادن وأوميغا ومناعة ومكملات رياضية وللأطفال.",
+      "categories": [
+        {
+          "id": "vitamins",
+          "label": "الفيتامينات",
+          "icon": "jar",
+          "imageUrl": "",
+          "order": 10
+        },
+        {
+          "id": "minerals",
+          "label": "المعادن",
+          "icon": "jar",
+          "imageUrl": "",
+          "order": 20
+        },
+        {
+          "id": "omega",
+          "label": "أوميغا وزيوت",
+          "icon": "bottle",
+          "imageUrl": "",
+          "order": 30
+        },
+        {
+          "id": "immunity",
+          "label": "دعم المناعة",
+          "icon": "jar",
+          "imageUrl": "",
+          "order": 40
+        },
+        {
+          "id": "sports_supp",
+          "label": "مكملات رياضية",
+          "icon": "body",
+          "imageUrl": "",
+          "order": 50
+        },
+        {
+          "id": "beauty_supp",
+          "label": "الشعر والبشرة والأظافر",
+          "icon": "hair",
+          "imageUrl": "",
+          "order": 60
+        },
+        {
+          "id": "kids_supp",
+          "label": "مكملات الأطفال",
+          "icon": "baby",
+          "imageUrl": "",
+          "order": 70
+        }
+      ]
+    }
+  ]
+}
