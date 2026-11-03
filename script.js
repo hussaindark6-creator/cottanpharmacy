@@ -6,11 +6,20 @@
 // ================= 1. SUBDOMAIN & SLUG RESOLVER =================
 const DEFAULT_PHARMACY_ID = "cottanpharmacy";
 
+// 🌐 (المرحلة 0) يُفعَّل الوضع الصارم فقط عند ضبط VITE_PLATFORM_ROOT_DOMAIN (انظر platform-host.js). بدونه: السلوك القديم كما هو.
+function platformAllowsParam() { return !window.__PLATFORM__ || window.__PLATFORM__.allowsPharmacyParam(); }
+function platformFallbackTenant() {
+  const p = window.__PLATFORM__;
+  if (!p || p.allowsDefaultFallback()) return DEFAULT_PHARMACY_ID;
+  p.showNotFound(window.__domainLookupFailed ? 'unreachable' : 'missing'); // يعرض الصفحة ويوقف السكربت
+  return DEFAULT_PHARMACY_ID;
+}
+
 function getActivePharmacyId() {
   const urlParams = new URLSearchParams(window.location.search);
   const paramId = urlParams.get('pharmacy') || urlParams.get('p_id') || urlParams.get('p') || urlParams.get('id');
 
-  if (paramId && paramId.trim()) {
+  if (paramId && paramId.trim() && platformAllowsParam()) {
     const cleanId = paramId.trim().toLowerCase();
     sessionStorage.setItem('saas_active_pharmacy_id', cleanId);
     return cleanId;
@@ -47,15 +56,18 @@ function getActivePharmacyId() {
       sessionStorage.setItem('saas_active_pharmacy_id', mapped);
       return mapped;
     }
-    const parts = hostname.split('.');
-    if (parts.length >= 3 && parts[0] !== 'www') {
-      const sub = parts[0].toLowerCase().trim();
-      sessionStorage.setItem('saas_active_pharmacy_id', sub);
-      return sub;
+    // بالوضع الصارم: الدومين المربوط فقط (system/custom_domains) يفتح متجراً؛ لا استنتاج من اسم النطاق الفرعي.
+    if (!window.__PLATFORM__ || !window.__PLATFORM__.strict) {
+      const parts = hostname.split('.');
+      if (parts.length >= 3 && parts[0] !== 'www') {
+        const sub = parts[0].toLowerCase().trim();
+        sessionStorage.setItem('saas_active_pharmacy_id', sub);
+        return sub;
+      }
     }
   }
 
-  return DEFAULT_PHARMACY_ID;
+  return platformFallbackTenant();
 }
 
 // يعمل متزامناً (XHR) لأن معرّف الصيدلية مطلوب قبل أي تهيئة أخرى، لكن فقط عند أول زيارة للدومين أو بعد انتهاء
@@ -77,11 +89,13 @@ function resolveCustomDomainTenant(hostname) {
       const data = JSON.parse(xhr.responseText);
       if (data && data.success && data.tenantId) tenantId = String(data.tenantId).toLowerCase().trim();
     }
+    if (xhr.status !== 200 && xhr.status !== 404) window.__domainLookupFailed = true;
     if (xhr.status === 200 || xhr.status === 404) {
       localStorage.setItem(cacheKey, JSON.stringify({ tenantId, expires: Date.now() + (tenantId ? 24 : 1) * 3600 * 1000 }));
     }
     return tenantId;
   } catch (e) {
+    window.__domainLookupFailed = true;
     return null;
   }
 }
@@ -438,16 +452,9 @@ function getBrandColor(brandName) {
 }
 
 // ================= 7. DYNAMIC THEME LOADER =================
-const TEMPLATE_MODULE_MAP = {
-  'template-one': 'templates/template_a.js',
-  'template_a': 'templates/template_a.js',
-  'template-two': 'templates/template_b.js',
-  'template_b': 'templates/template_b.js',
-  'default': 'templates/template_default.js',
-  'template_default': 'templates/template_default.js'
-};
-
 let activeThemeModule = null;
+// يستدعيه محرك القوالب عند تبديل القالب (مثلاً بوضع المعاينة) ليبقى activeThemeModule متزامناً
+window.__setActiveTemplate = function (tpl) { activeThemeModule = tpl; };
 
 function getTemplateHelpers() {
   return {
@@ -461,37 +468,24 @@ function getTemplateHelpers() {
     wishlist,
     findProduct,
     findBundle,
-    isCurrentUserAdmin
+    isCurrentUserAdmin,
+    getCategories: () => categories
   };
 }
 
+// 🎨 محرك القوالب (template-engine.js): يحمّل قالب هذه الصيدلية فقط ويطبّق حقل design. عند أي فشل يرجع للقالب الافتراضي.
+// (المعامل templateId أُبقي للتوافق مع الاستدعاءات القديمة؛ القالب يُقرأ من pharmacyProfile.design ثم templateId.)
 async function loadDynamicTheme(templateId) {
-  const targetKey = templateId || pharmacyProfile.templateId || 'template_default';
-  const targetFile = TEMPLATE_MODULE_MAP[targetKey] || 'templates/template_default.js';
-
-  try {
-    const module = await import(`./${targetFile}?t=${Date.now()}`);
-    activeThemeModule = module.default || module.TemplateA || module.TemplateB || module.TemplateDefault || window.TemplateDefault;
-    if (!activeThemeModule) throw new Error("Template module export is empty");
-  } catch (err) {
-    console.warn(`[Theme Engine] خطأ في تحميل القالب (${targetKey}):`, err);
+  if (window.TemplateEngine) {
     try {
-      const fallbackModule = await import(`./templates/template_default.js?t=${Date.now()}`);
-      activeThemeModule = fallbackModule.default || fallbackModule.TemplateDefault || window.TemplateDefault;
-    } catch (fallbackErr) {
-      activeThemeModule = null;
+      activeThemeModule = await window.TemplateEngine.load(pharmacyProfile, { helpers: getTemplateHelpers() });
+      return;
+    } catch (err) {
+      console.error('[Theme Engine] فشل المحرك، سنستخدم الأنماط القديمة:', err);
     }
   }
-
-  if (activeThemeModule && typeof activeThemeModule.applyStyles === 'function') {
-    try {
-      activeThemeModule.applyStyles(pharmacyProfile);
-    } catch (e) {
-      console.warn("[Theme Engine] خطأ في تطبيق أنماط القالب:", e);
-    }
-  } else {
-    applyPharmacyTemplate(targetKey);
-  }
+  activeThemeModule = null;
+  applyPharmacyTemplate(templateId || pharmacyProfile.templateId || 'template_default');
 }
 
 function applyDynamicThemeColor(hexColor) {
@@ -734,6 +728,12 @@ function addBundleToCart(bundleId) {
 }
 
 function renderBundleCardHtml(b) {
+  if (activeThemeModule && typeof activeThemeModule.renderBundleCard === 'function') {
+    try {
+      const customBundle = activeThemeModule.renderBundleCard(b, getTemplateHelpers());
+      if (customBundle) return customBundle;
+    } catch (e) { console.warn('[Theme Engine] خطأ في عرض بطاقة البكج:', e); }
+  }
   const cleanImg = sanitizeUrl(b.imageUrl);
   const linkedProducts = (b.productIds || []).map(id => findProduct(id)).filter(Boolean);
   const thumbsHtml = linkedProducts.slice(0, 3).map(p => {
@@ -835,7 +835,8 @@ function renderProductGrid(targetId, list, emptyMsg) {
   el.innerHTML = displayList.map(p => {
     if (activeThemeModule && typeof activeThemeModule.renderProductCard === 'function') {
       try {
-        return activeThemeModule.renderProductCard(p, getTemplateHelpers());
+        const customCard = activeThemeModule.renderProductCard(p, getTemplateHelpers());
+        if (customCard) return customCard;
       } catch (e) {
         console.warn("[Theme Engine] خطأ في عرض بطاقة المنتج:", e);
       }
