@@ -1,0 +1,102 @@
+/* ==========================================================
+   templates/boutique.css — تنسيق قالب Boutique (يُحمَّل فقط للصيدليات التي تستخدم هذا القالب)
+   كل القواعد مقيّدة بـ html[data-template="boutique"] فلا تؤثر على أي قالب آخر.
+   ملاحظة: لا نعتمد على تبديل متغيرات --surface/--line لأن اللون الأساسي للصيدلية يُحقن مباشرة بجذر الصفحة؛
+   لذلك للقالب متغيراته الخاصة --bq-* (الحبر والكريمي والذهبي)، واللون الأساسي (--accent) يبقى لعلامة الصيدلية.
+   ========================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap');
+
+html[data-template="boutique"] {
+  --bq-ink: #2A2422;
+  --bq-soft: #8A7F7A;
+  --bq-cream: #FBF8F5;
+  --bq-line: #EDE4DE;
+  --bq-gold: #B8935A;
+}
+
+html[data-template="boutique"] body { background: var(--bq-cream); }
+
+/* ---------- الهيدر والبحث (نفس الأزرار، تنسيق مختلف) ---------- */
+html[data-template="boutique"] header { background: #fff; border-bottom: 1px solid var(--bq-line); }
+html[data-template="boutique"] .logo-text { font-family: 'Amiri', serif; font-size: 26px; font-weight: 700; letter-spacing: .5px; color: var(--bq-ink); }
+html[data-template="boutique"] .announcement-bar { background: var(--bq-ink); color: #F5EDE6; font-size: 12px; letter-spacing: .3px; }
+html[data-template="boutique"] .search-bar { background: transparent; border: 0; border-bottom: 1px solid var(--bq-line); border-radius: 0; box-shadow: none; }
+
+/* ---------- عناوين الأقسام: مركزية بخط ذهبي رفيع ---------- */
+html[data-template="boutique"] .section { margin: 38px 0; padding: 0; }
+html[data-template="boutique"] .section-head { flex-direction: column; align-items: center; gap: 8px; margin-bottom: 22px; text-align: center; }
+html[data-template="boutique"] .section-head > * { order: 2; }
+html[data-template="boutique"] .section-head > h2 { order: 1; justify-content: center; font-family: 'Amiri', serif; font-size: 24px; font-weight: 700; color: var(--bq-ink); }
+html[data-template="boutique"] .section-head::after { content: ""; order: 3; width: 34px; height: 1px; background: var(--bq-gold); }
+html[data-template="boutique"] .section-head > .see-all { order: 4; color: var(--bq-ink); font-size: 12px; text-decoration: underline; text-underline-offset: 5px; }
+
+/* ---------- البنر الرئيسي: أوسع وأهدأ ---------- */
+html[data-template="boutique"] .hero-wrap { padding: 0 0 28px; }
+html[data-template="boutique"] .hero-slider-wrapper,
+html[data-template="boutique"] .hero-slider-track { border-radius: 4px; }
+html[data-template="boutique"] .hero-slide .qutn-hybrid-banner,
+html[data-template="boutique"] .hero-slide .hero-promo-slide { min-height: 300px; }
+html[data-template="boutique"] .hero-slide .main-title { font-family: 'Amiri', serif; font-size: clamp(26px, 6vw, 38px); letter-spacing: .3px; }
+html[data-template="boutique"] .hero-cta-btn { background: var(--bq-ink); color: #fff; border-radius: 0; letter-spacing: .5px; }
+html[data-template="boutique"] .double-banner-row { margin: 8px 0 34px; gap: 14px; }
+html[data-template="boutique"] .double-banner-card { border-radius: 4px; min-height: 150px; box-shadow: none; }
+
+/* ---------- الماركات: دوائر كبيرة ---------- */
+html[data-template="boutique"] .brand-strip { gap: 18px; justify-content: flex-start; }
+html[data-template="boutique"] .brand-chip { width: 92px; }
+html[data-template="boutique"] .brand-chip-img-box { width: 84px; height: 84px; border-radius: 50%; border: 1px solid var(--bq-line); box-shadow: none; background: #fff; }
+html[data-template="boutique"] .brand-chip.active .brand-chip-img-box { border-color: var(--accent); border-width: 2px; box-shadow: none; background: #fff; }
+html[data-template="boutique"] .brand-chip-placeholder { border-radius: 50%; }
+html[data-template="boutique"] .brand-chip-title { font-size: 12px; color: var(--bq-ink); letter-spacing: .2px; }
+
+/* ---------- بطاقة المنتج الطويلة ---------- */
+html[data-template="boutique"] .product-grid { gap: 26px 14px; }
+@media (min-width: 900px) { html[data-template="boutique"] .product-grid { gap: 38px 22px; } }
+html[data-template="boutique"] .product-card.bq-card { background: transparent; border: 0; border-radius: 0; padding: 0; box-shadow: none; transform: none; }
+html[data-template="boutique"] .product-card.bq-card:hover { box-shadow: none; transform: none; border: 0; }
+html[data-template="boutique"] .bq-media { position: relative; aspect-ratio: 3 / 4; overflow: hidden; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+html[data-template="boutique"] .bq-media img { width: 100%; height: 100%; object-fit: cover; transition: transform .5s ease; }
+html[data-template="boutique"] .bq-card:hover .bq-media img { transform: scale(1.04); }
+html[data-template="boutique"] .bq-media svg { max-width: 55%; max-height: 55%; }
+html[data-template="boutique"] .bq-badge { position: absolute; left: 10px; bottom: 10px; background: var(--bq-ink); color: #fff; font-size: 11px; font-weight: 800; padding: 4px 10px; letter-spacing: .3px; z-index: 2; }
+html[data-template="boutique"] .bq-badge-out { background: #6b6460; }
+html[data-template="boutique"] .bq-badge-low { left: auto; right: 10px; background: var(--bq-gold); }
+html[data-template="boutique"] .bq-body { text-align: center; padding: 12px 4px 4px; display: flex; flex-direction: column; gap: 3px; flex: 1; }
+html[data-template="boutique"] .bq-brand { font-size: 10.5px; letter-spacing: 1.4px; color: var(--bq-gold); font-weight: 800; text-transform: uppercase; }
+html[data-template="boutique"] .bq-name { font-family: 'Amiri', serif; font-size: 15.5px; line-height: 1.5; color: var(--bq-ink); min-height: 46px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+html[data-template="boutique"] .bq-size { font-size: 11px; color: var(--bq-soft); }
+html[data-template="boutique"] .bq-price-row { display: flex; justify-content: center; align-items: baseline; gap: 8px; margin-top: 4px; }
+html[data-template="boutique"] .bq-price { font-weight: 800; font-size: 14px; color: var(--bq-ink); }
+html[data-template="boutique"] .bq-old { text-decoration: line-through; color: var(--bq-soft); font-size: 11px; }
+html[data-template="boutique"] .bq-add { width: 100%; margin-top: 10px; background: transparent; color: var(--bq-ink); border: 1px solid var(--bq-ink); border-radius: 0; padding: 10px; font-weight: 800; font-size: 12px; letter-spacing: .4px; cursor: pointer; transition: background .2s ease, color .2s ease; }
+html[data-template="boutique"] .bq-add:hover { background: var(--bq-ink); color: #fff; }
+html[data-template="boutique"] .bq-add-alert { border-color: var(--bq-soft); color: var(--bq-soft); }
+
+/* ---------- الأقسام: دوائر بصور ---------- */
+html[data-template="boutique"] .cat-grid-modern { grid-template-columns: repeat(3, 1fr); gap: 28px 10px; }
+@media (min-width: 640px) { html[data-template="boutique"] .cat-grid-modern { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 900px) { html[data-template="boutique"] .cat-grid-modern { grid-template-columns: repeat(6, 1fr); } }
+html[data-template="boutique"] .bq-cat { background: transparent; border: 0; box-shadow: none; align-items: center; text-align: center; gap: 4px; }
+html[data-template="boutique"] .bq-cat:hover { transform: none; box-shadow: none; border: 0; }
+html[data-template="boutique"] .bq-cat-circle { width: 100%; max-width: 104px; aspect-ratio: 1 / 1; border-radius: 50%; overflow: hidden; background: #fff; border: 1px solid var(--bq-line); display: flex; align-items: center; justify-content: center; }
+html[data-template="boutique"] .bq-cat-circle img { width: 100%; height: 100%; object-fit: cover; }
+html[data-template="boutique"] .bq-cat-circle svg { width: 44%; height: 44%; }
+html[data-template="boutique"] .bq-cat-title { font-family: 'Amiri', serif; font-size: 15px; font-weight: 700; margin: 8px 0 0; color: var(--bq-ink); }
+html[data-template="boutique"] .bq-cat-count { font-size: 10.5px; color: var(--bq-soft); }
+
+/* ---------- البكجات: بطاقات عمودية بدل الشريط الأفقي ---------- */
+html[data-template="boutique"] .bundle-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 26px 14px; }
+@media (min-width: 900px) { html[data-template="boutique"] .bundle-grid { grid-template-columns: repeat(4, 1fr); } }
+html[data-template="boutique"] .bq-bundle { cursor: pointer; display: flex; flex-direction: column; }
+html[data-template="boutique"] .bq-bundle-media { position: relative; aspect-ratio: 4 / 5; overflow: hidden; border-radius: 4px; background: #F1E9E3; display: flex; align-items: center; justify-content: center; }
+html[data-template="boutique"] .bq-bundle-media img { width: 100%; height: 100%; object-fit: cover; }
+html[data-template="boutique"] .bq-bundle-ph { font-size: 48px; }
+
+/* ---------- صفحة المنتج + الفوتر ---------- */
+html[data-template="boutique"] .bq-trust { display: flex; justify-content: space-around; gap: 8px; margin: 22px 0; padding: 14px 8px; border-top: 1px solid var(--bq-line); border-bottom: 1px solid var(--bq-line); font-size: 12px; font-weight: 800; color: var(--bq-ink); text-align: center; }
+html[data-template="boutique"] .bq-trust span { color: var(--bq-gold); margin-inline-end: 6px; }
+html[data-template="boutique"] .bq-footer { text-align: center; padding: 38px 16px 110px; background: #fff; border-top: 1px solid var(--bq-line); margin-top: 30px; }
+html[data-template="boutique"] .bq-footer-name { font-family: 'Amiri', serif; font-size: 24px; font-weight: 700; color: var(--bq-ink); }
+html[data-template="boutique"] .bq-footer-line { width: 34px; height: 1px; background: var(--bq-gold); margin: 12px auto 16px; }
+html[data-template="boutique"] .bq-footer-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 20px; }
+html[data-template="boutique"] .bq-footer-links a { color: var(--bq-ink); font-size: 13px; font-weight: 700; text-decoration: underline; text-underline-offset: 5px; }
