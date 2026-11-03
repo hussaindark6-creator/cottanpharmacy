@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+  <script src="platform-host.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>لوحة التحكم المركزية للمنصة | Super Admin SaaS</title>
@@ -263,6 +264,12 @@
                   <option value="template_default">القالب الافتراضي الكلاسيكي (Classic)</option>
                   <option value="template_a">القالب العصري الناعم (Soft Rose)</option>
                   <option value="template_b">القالب الطبي الحديث (Clinical Blue)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-300 mb-2">نوع النشاط (أقسام جاهزة تُنسخ للمتجر)</label>
+                <select id="newPharmacyPreset" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white font-bold focus:outline-none focus:border-emerald-500">
+                  <option value="">جارٍ التحميل...</option>
                 </select>
               </div>
               <div>
@@ -876,6 +883,67 @@
 
   <!-- MODALS SECTION -->
   
+  <!-- ✅ ONBOARDING CHECKLIST MODAL (المرحلة 5) -->
+  <div id="onboardingModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-3">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-xl w-full p-4 sm:p-6 shadow-2xl max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+        <h3 id="onbTitle" class="font-black text-white text-base">✅ قائمة التفعيل</h3>
+        <button onclick="closeOnboardingModal()" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+      </div>
+      <div class="flex items-center gap-3 mb-3">
+        <div class="flex-1 h-2 rounded-full bg-slate-800 overflow-hidden"><div id="onbBar" class="h-full bg-emerald-500" style="width:0%"></div></div>
+        <span id="onbProgress" class="text-xs font-black text-emerald-400">0 / 0</span>
+      </div>
+      <div id="onbBody" class="space-y-2"></div>
+      <div class="mt-4 pt-3 border-t border-slate-800">
+        <div class="text-xs font-bold text-slate-300 mb-2">نسخ أقسام جاهزة لهذه الصيدلية (يضيف الناقص فقط)</div>
+        <div class="flex gap-2">
+          <select id="onbPresetSelect" class="flex-1 min-w-0 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white font-bold"></select>
+          <button id="onbApplyBtn" onclick="onbApplyPreset()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-black whitespace-nowrap">نسخ الأقسام</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🎨 DESIGN / TEMPLATE PICKER MODAL (المرحلة 1) -->
+  <div id="designModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-3">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-5xl w-full p-4 sm:p-6 shadow-2xl max-h-[94vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+        <h3 id="dsgTitle" class="font-black text-white text-base">🎨 تصميم المتجر</h3>
+        <button onclick="closeDesignModal()" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+      </div>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="space-y-4 order-2 md:order-1">
+          <div><div class="text-xs font-bold text-slate-300 mb-2">القالب</div><div id="dsgTemplates" class="space-y-2"></div></div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="block text-xs font-bold text-slate-300 mb-1">اللون الأساسي</label>
+              <input type="color" id="dsgPrimary" oninput="designSet('primary', this.value)" class="w-full h-10 bg-slate-950 border border-slate-700 rounded-xl"></div>
+            <div><label class="block text-xs font-bold text-slate-300 mb-1">شكل الزوايا</label>
+              <select id="dsgRadius" onchange="designSet('radius', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white font-bold"></select></div>
+            <div><label class="block text-xs font-bold text-slate-300 mb-1">خط النصوص</label>
+              <select id="dsgFontBody" onchange="designSet('fontBody', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white font-bold"></select></div>
+            <div><label class="block text-xs font-bold text-slate-300 mb-1">خط العناوين</label>
+              <select id="dsgFontHeading" onchange="designSet('fontHeading', this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-white font-bold"></select></div>
+          </div>
+          <div><div class="text-xs font-bold text-slate-300 mb-2">أجزاء الصفحة الرئيسية (ترتيب/إخفاء)</div><div id="dsgSections" class="space-y-2"></div></div>
+          <div><div class="text-xs font-bold text-slate-300 mb-2">الميزات</div><div id="dsgFeatures" class="space-y-2"></div>
+            <div class="text-[11px] text-slate-500 mt-1">إيقاف ميزة يخفيها من الواجهة فقط.</div></div>
+        </div>
+        <div class="order-1 md:order-2">
+          <div class="text-xs font-bold text-slate-300 mb-2">معاينة حيّة (غير محفوظة)</div>
+          <iframe id="dsgPreview" onload="designPostPreview()" class="w-full h-[460px] md:h-[600px] rounded-2xl border border-slate-700 bg-white" title="معاينة المتجر"></iframe>
+        </div>
+      </div>
+      <div class="mt-4 pt-3 border-t border-slate-800 space-y-2">
+        <div id="dsgStatus" class="text-xs text-slate-400 font-bold"></div>
+        <div class="flex gap-2 justify-end">
+          <button onclick="designReset()" class="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-200 text-sm font-bold">↺ إعادة للافتراضي</button>
+          <button id="dsgSaveBtn" onclick="saveDesign()" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-black">💾 حفظ التصميم</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 1. FULL EDIT PHARMACY MODAL (WITH SECRETS & CUSTOM DOMAIN SYNC) -->
   <div id="fullEditModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -921,7 +989,7 @@
             <input type="date" id="editSubExpiry" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white font-mono" required>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-300 mb-1">قالب الواجهة (Template ID) *</label>
+            <label class="block text-xs font-bold text-slate-300 mb-1">قالب الواجهة (قديم — يُطبَّق فقط إن لم يُحفظ تصميم من زر 🎨 تصميم) *</label>
             <select id="editTemplateId" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white font-bold" required>
               <option value="template_default">القالب الافتراضي الكلاسيكي (Classic)</option>
               <option value="template_a">القالب العصري الناعم (Soft Rose)</option>
@@ -1039,5 +1107,8 @@
   <script src="super-admin-billing.js"></script>
   <script src="super-admin-reports.js"></script>
   <script src="super-admin-platform.js"></script>
+  <script src="template-contract.js"></script>
+  <script src="super-admin-templates.js"></script>
+  <script src="super-admin-onboarding.js"></script>
 </body>
 </html>
