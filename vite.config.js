@@ -18,7 +18,8 @@ import { copyFileSync, readFileSync, writeFileSync, mkdirSync, existsSync } from
 const CLASSIC_SCRIPTS = ['script.js', 'storefront.js', 'storefront-stubs.js', 'admin-stubs.js',
   'admin-core.js', 'admin-products.js', 'admin-catalog-tools.js', 'admin-orders.js', 'admin-reports.js', 'admin-marketing.js', 'admin-settings.js',
   'admin-page.js',
-  'delivery-zones.js', 'smart-search.js', 'barcode-scanner.js', 'stock-alerts.js', 'reorder.js', 'growth-pwa.js',
+  'delivery-zones.js', 'smart-search.js', 'stock-alerts.js', 'reorder.js',
+  'platform-host.js', 'template-contract.js', 'template-engine.js', 'super-admin-templates.js', 'super-admin-onboarding.js',
   'admin-order-tools.js', 'image-compress.js', 'admin-inventory-badges.js',
   'super-admin-core.js', 'super-admin-pharmacies.js', 'super-admin-catalog.js', 'super-admin-billing.js', 'super-admin-reports.js', 'super-admin-platform.js'];
 function copyClassicScripts(defineMap) {
@@ -54,7 +55,16 @@ export default defineConfig(({ mode }) => {
       __SUPER_ADMIN_EMAIL__: JSON.stringify(env.VITE_SUPER_ADMIN_EMAIL || ''),
       __TURNSTILE_SITE_KEY__: JSON.stringify(env.VITE_TURNSTILE_SITE_KEY || ''),
       __CF_ANALYTICS_TOKEN__: JSON.stringify(env.VITE_CF_ANALYTICS_TOKEN || ''),
+      // 🌐 دومين المنصة: فارغ = السلوك القديم (لا وضع صارم). عند ضبطه تُفعَّل قواعد الدومينات (platform-host.js)
+      __PLATFORM_ROOT_DOMAIN__: JSON.stringify(env.VITE_PLATFORM_ROOT_DOMAIN || ''),
+      // (اختياري) المضيف الكامل لصيدلية القطن لتحويل رابط pages.dev القديم إليه، مثل cottan.example.com
+      __LEGACY_REDIRECT_HOST__: JSON.stringify(env.VITE_LEGACY_REDIRECT_HOST || ''),
   };
+
+  // ⚠️ بدون مفتاح Turnstile ببيئة البناء تبقى حماية البوتات مطفأة بصمت (الووركر وحده لا يكفي)
+  if (mode === 'production' && !env.VITE_TURNSTILE_SITE_KEY) {
+    console.warn('\n⚠️  VITE_TURNSTILE_SITE_KEY غير مضبوط: حماية Turnstile من البوتات غير مفعّلة بالموقع المنشور.\n');
+  }
 
   return {
     define: defineMap,
