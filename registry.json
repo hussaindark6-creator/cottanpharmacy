@@ -1,0 +1,114 @@
+{
+  "version": 1,
+  "default": "classic",
+  "templates": [
+    {
+      "id": "classic",
+      "name": "Classic",
+      "description": "التصميم الحالي للمتجر (وردي هادئ، بطاقات متوسطة).",
+      "script": "classic",
+      "dataTemplate": "template_default",
+      "aliases": [
+        "template_default",
+        "default"
+      ],
+      "status": "stable",
+      "preview": null,
+      "homeOrder": [
+        "hero",
+        "promo-cards",
+        "brands",
+        "best-sellers"
+      ]
+    },
+    {
+      "id": "soft-rose",
+      "name": "Soft Rose",
+      "description": "نفس هيكل Classic بلمسة وردية ناعمة (CSS فقط).",
+      "script": "classic",
+      "dataTemplate": "template-one",
+      "aliases": [
+        "template-one",
+        "template_a"
+      ],
+      "status": "stable",
+      "preview": null,
+      "homeOrder": [
+        "hero",
+        "promo-cards",
+        "brands",
+        "best-sellers"
+      ]
+    },
+    {
+      "id": "clinical-blue",
+      "name": "Clinical Blue",
+      "description": "نفس هيكل Classic بلمسة زرقاء طبية (CSS فقط).",
+      "script": "classic",
+      "dataTemplate": "template-two",
+      "aliases": [
+        "template-two",
+        "template_b"
+      ],
+      "status": "stable",
+      "preview": null,
+      "homeOrder": [
+        "hero",
+        "promo-cards",
+        "brands",
+        "best-sellers"
+      ]
+    },
+    {
+      "id": "boutique",
+      "name": "Boutique",
+      "description": "تجميل فاخر: بطاقات منتج طويلة، أقسام دوائر بصور، فراغات واسعة، عناوين زخرفية وفوتر أنيق.",
+      "script": "boutique",
+      "css": "boutique.css",
+      "dataTemplate": "boutique",
+      "aliases": [],
+      "homeOrder": [
+        "hero",
+        "brands",
+        "best-sellers",
+        "promo-cards"
+      ],
+      "status": "beta",
+      "preview": null
+    },
+    {
+      "id": "clinic",
+      "name": "Clinic",
+      "description": "ثقة وصيدلة: بحث بارز، أقسام على شكل شرائح، بطاقات منتج أفقية، وزر «اسألي الصيدلاني» بالأعلى وبصفحة المنتج والفوتر.",
+      "script": "clinic",
+      "css": "clinic.css",
+      "dataTemplate": "clinic",
+      "aliases": [],
+      "homeOrder": [
+        "hero",
+        "promo-cards",
+        "best-sellers",
+        "brands"
+      ],
+      "status": "beta",
+      "preview": null
+    },
+    {
+      "id": "market",
+      "name": "Market",
+      "description": "كتالوج كبير: شبكة مضغوطة (2–5 أعمدة)، شريط أقسام ثابت أعلى الشاشة، وتركيز على السعر ونسبة الخصم والتوفير.",
+      "script": "market",
+      "css": "market.css",
+      "dataTemplate": "market",
+      "aliases": [],
+      "homeOrder": [
+        "hero",
+        "promo-cards",
+        "best-sellers",
+        "brands"
+      ],
+      "status": "beta",
+      "preview": null
+    }
+  ]
+}
