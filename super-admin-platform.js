@@ -88,6 +88,7 @@
           showToast('تم حفظ التعديلات وعزل الأسرار بنجاح ✓');
         }
 
+        await ensureOwnerStaffDoc(newSlug, adminEmail);
         closeFullEditModal();
         fetchPharmaciesList();
       } catch (err) {
@@ -380,7 +381,7 @@
             </tr>`;
         }).join('');
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-red-400">خطأ: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-red-400">خطأ: ${escSA(err.message)}</td></tr>`;
       }
     }
 
