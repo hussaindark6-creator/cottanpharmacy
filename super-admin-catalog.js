@@ -268,7 +268,7 @@
           `;
         }).join('');
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-red-400">خطأ: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-red-400">خطأ: ${escSA(err.message)}</td></tr>`;
       }
     }
 
