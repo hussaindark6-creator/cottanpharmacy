@@ -612,6 +612,36 @@
 
     document.addEventListener('DOMContentLoaded', renderColorSwatchGrid);
 
+
+    // 🎨 لون الثيم (خلفية الموقع) — ألوان فاتحة فقط
+    const PAGE_BG_PRESETS = ['#FFFFFF','#FFF9F5','#FDF2F6','#F5F0E8','#F4F1EA','#EEF6F0','#EAF4EE','#EEF4FB','#F3F0FA','#FFF8E7','#FBF3E4','#F2F2F2'];
+    function pageBgIsLightEnough(hex) {
+      const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+      return (0.299*r + 0.587*g + 0.114*b) / 255 >= 0.6;
+    }
+    function renderPageBgSwatches() {
+      const grid = document.getElementById('pageBgSwatchGrid');
+      if (!grid) return;
+      const cur = (document.getElementById('adminPageBgValue').value || '').toUpperCase();
+      grid.style.display = 'grid'; grid.style.gridTemplateColumns = 'repeat(6, 1fr)'; grid.style.gap = '6px';
+      grid.innerHTML = PAGE_BG_PRESETS.map(c => `
+        <button type="button" onclick="selectPageBg('${c}')" title="${c}"
+          style="aspect-ratio:1/1; width:100%; border-radius:8px; background:${c}; cursor:pointer; padding:0;
+          border:${c === cur ? '3px solid #111827' : '1px solid rgba(0,0,0,0.12)'};"></button>`).join('');
+    }
+    function selectPageBg(hex) {
+      if (hex && !pageBgIsLightEnough(hex)) { showToast('اختاري لوناً أفتح ليبقى الكلام مقروءاً'); return; }
+      document.getElementById('adminPageBgValue').value = hex;
+      document.getElementById('adminPageBgPicker').value = hex || '#FFFFFF';
+      renderPageBgSwatches();
+      if (typeof applyPageBgColor === 'function') applyPageBgColor(hex); // معاينة فورية
+    }
+    function onPageBgChange() {
+      const hex = document.getElementById('adminPageBgPicker').value;
+      selectPageBg(hex);
+    }
+    document.addEventListener('DOMContentLoaded', renderPageBgSwatches);
+
     // 🌸 قراءة إعدادات الصيدلية وشاشة التحميل المخصصة
     async function loadPharmacyDesignAndSecrets() {
       if (!db) return;
@@ -622,6 +652,7 @@
           if (document.getElementById('adminPharmacyNameInput')) document.getElementById('adminPharmacyNameInput').value = p.name || '';
           if (document.getElementById('adminPrimaryColorPicker')) document.getElementById('adminPrimaryColorPicker').value = p.primaryColor || '#E85D8A';
           renderColorSwatchGrid();
+          if (document.getElementById('adminPageBgValue')) { document.getElementById('adminPageBgValue').value = p.pageBgColor || ''; document.getElementById('adminPageBgPicker').value = p.pageBgColor || '#FFFFFF'; renderPageBgSwatches(); }
           if (document.getElementById('adminSocialWhatsappInput')) document.getElementById('adminSocialWhatsappInput').value = p.socialWhatsapp || '';
           if (document.getElementById('adminSocialPhoneInput')) document.getElementById('adminSocialPhoneInput').value = p.socialPhone || '';
           if (document.getElementById('adminDeliveryStandard')) document.getElementById('adminDeliveryStandard').value = p.deliveryFeeStandard || 4000;
@@ -670,6 +701,8 @@
       const name = document.getElementById('adminPharmacyNameInput').value.trim();
       const logoUrl = sanitizeUrl(document.getElementById('adminPharmacyLogoInput').value.trim());
       const primaryColor = document.getElementById('adminPrimaryColorPicker').value;
+      const pageBgRaw = (document.getElementById('adminPageBgValue')?.value || '').trim();
+      const pageBgColor = (/^#[0-9A-Fa-f]{6}$/.test(pageBgRaw) && pageBgIsLightEnough(pageBgRaw)) ? pageBgRaw : '';
       const socialWhatsapp = document.getElementById('adminSocialWhatsappInput').value.trim();
       const socialPhone = document.getElementById('adminSocialPhoneInput').value.trim();
       const deliveryFeeStandard = Number(document.getElementById('adminDeliveryStandard').value || 4000);
@@ -714,6 +747,7 @@
           name: sanitizeText(name),
           logoUrl,
           primaryColor,
+          pageBgColor,
           socialWhatsapp: sanitizeText(socialWhatsapp),
           socialPhone: sanitizeText(socialPhone),
           deliveryFeeStandard,
