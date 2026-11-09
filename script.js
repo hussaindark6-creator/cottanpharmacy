@@ -478,7 +478,10 @@ function getTemplateHelpers() {
 async function loadDynamicTheme(templateId) {
   if (window.TemplateEngine) {
     try {
+      const prevTemplateId = activeThemeModule ? activeThemeModule.id : null;
       activeThemeModule = await window.TemplateEngine.load(pharmacyProfile, { helpers: getTemplateHelpers() });
+      // 🎨 البطاقات تُرسم أحياناً قبل أن ينتهي تحميل القالب (لقطة المتجر والكتالوج يصلان بالتوازي)؛ فإذا تغيّر القالب نعيد رسم الشاشة الحالية
+      if (prevTemplateId !== activeThemeModule.id && typeof renderCurrentActiveView === 'function') renderCurrentActiveView();
       return;
     } catch (err) {
       console.error('[Theme Engine] فشل المحرك، سنستخدم الأنماط القديمة:', err);
