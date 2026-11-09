@@ -1277,6 +1277,21 @@
             </div>
             <input type="hidden" id="adminPageBgValue" value="">
           </div>
+
+          <div style="background:#F9FAFB; padding:12px 14px; border-radius:12px; margin-top:8px;">
+            <div style="font-weight:800; font-size:13.5px; color:var(--ink); margin-bottom:4px;">🎨 تنسيقات ألوان جاهزة (لونان متناسقان)</div>
+            <p style="font-size:11px; color:#6B7280; margin:0 0 10px;">اختاري تنسيقاً واحداً فيضبط اللون الأساسي والثانوي والخلفية معاً بتناسق احترافي. ثم عدّلي أي لون يدوياً إن أردتِ.</p>
+            <div id="palettePresetGrid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px;"></div>
+          </div>
+          <div style="background:#F9FAFB; padding:12px 14px; border-radius:12px; margin-top:8px;">
+            <div style="font-weight:800; font-size:13.5px; color:var(--ink); margin-bottom:4px;">✨ اللون الثانوي (تفاصيل فقط)</div>
+            <p style="font-size:11px; color:#6B7280; margin:0 0 10px;">يظهر بتفاصيل صغيرة فقط: قلب المفضلة، اسم الماركة، شارة الخصم، الخط تحت العناوين، ونقطة التبويب. لا يطغى على الأساسي، ويُنسَّق تلقائياً معه إن كانا متقاربين جداً.</p>
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+              <input type="color" id="adminSecondaryPicker" value="#C9A24B" oninput="onSecondaryChange()" style="width:44px; height:36px; padding:2px; cursor:pointer; border-radius:8px; border:1px solid #D1D5DB;">
+              <button type="button" onclick="clearSecondary()" style="font-size:11px; font-weight:800; padding:6px 10px; border-radius:8px; border:1px solid #D1D5DB; background:#fff; cursor:pointer;">بدون لون ثانوي</button>
+            </div>
+            <input type="hidden" id="adminSecondaryValue" value="">
+          </div>
         </fieldset>
 
         <!-- 🌸 (بُسِّط بطلبك) تخصيص واجهة شاشة التحميل الأولية — صورة ونصوص فقط الآن. حُذف
