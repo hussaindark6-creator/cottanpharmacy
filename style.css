@@ -192,7 +192,7 @@ svg {
 }
 
 .admin-gate-card {
-  background: #fff;
+  background: var(--card, #fff);
   border-radius: var(--radius-lg);
   padding: 32px 24px;
   max-width: 400px;
@@ -221,7 +221,7 @@ svg {
 header { 
   position: relative; 
   z-index: 40; 
-  background: #fff; 
+  background: var(--card, #fff);
   border-bottom: 1px solid var(--line); 
 }
 
@@ -371,7 +371,7 @@ header .nav .logo-block {
   height: 28px;
   border-radius: 50%;
   overflow: hidden;
-  background: #fff;
+  background: var(--card, #fff);
   border: 1.5px solid var(--rose);
   display: flex;
   align-items: center;
@@ -403,7 +403,7 @@ header .nav .logo-block {
   display: flex; 
   align-items: center; 
   gap: 10px; 
-  background: #fff; 
+  background: var(--card, #fff);
   border: 1.5px solid var(--line); 
   border-radius: 999px; 
   padding: 10px 16px; 
@@ -554,7 +554,7 @@ header .nav .logo-block {
   display: inline-block;
   font-size: 11px;
   font-weight: 900;
-  background: #fff;
+  background: var(--card, #fff);
   color: var(--accent);
   padding: 3px 10px;
   border-radius: 999px;
@@ -671,7 +671,7 @@ header .nav .logo-block {
   bottom: 0; 
   right: 0; 
   width: min(300px, 82vw); 
-  background: #fff; 
+  background: var(--card, #fff);
   z-index: 80; 
   box-shadow: -10px 0 30px rgba(0,0,0,.12); 
   transform: translateX(100%); 
@@ -960,7 +960,7 @@ header .nav .logo-block {
   width: 44px; 
   height: 44px; 
   border-radius: 50%; 
-  background: #fff; 
+  background: var(--card, #fff);
   border: 1.5px solid var(--line); 
   display: flex; 
   align-items: center; 
@@ -1062,7 +1062,7 @@ header .nav .logo-block {
   width: 68px;
   height: 68px;
   border-radius: 18px;
-  background: #FFFFFF;
+  background: var(--card, #fff);
   border: 1.5px solid var(--line);
   display: flex;
   align-items: center;
@@ -1199,7 +1199,7 @@ header .nav .logo-block {
   flex: 0 0 auto;
   width: 42vw;
   max-width: 132px;
-  background: #fff;
+  background: var(--card, #fff);
   border: 1.5px solid var(--line);
   border-radius: var(--radius-lg);
   padding: 8px;
@@ -1272,7 +1272,7 @@ header .nav .logo-block {
   width: 28px;
   height: 28px;
   border-radius: 6px;
-  background: #fff;
+  background: var(--card, #fff);
   border: 1px solid var(--line);
   display: flex;
   align-items: center;
@@ -1380,7 +1380,7 @@ header .nav .logo-block {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #FFFFFF;
+  background: var(--card, #fff);
   border: 1px solid var(--rose, #FFB7C5);
   color: var(--ink);
   padding: 4px 10px;
@@ -1431,7 +1431,7 @@ header .nav .logo-block {
   font-family: inherit;
   font-size: 12.5px;
   outline: none;
-  background: #FFFFFF;
+  background: var(--card, #fff);
 }
 
 .bundle-search-input:focus {
@@ -1445,7 +1445,7 @@ header .nav .logo-block {
   right: 0;
   max-height: 220px;
   overflow-y: auto;
-  background: #FFFFFF;
+  background: var(--card, #fff);
   border: 1.5px solid var(--line);
   border-radius: 12px;
   box-shadow: var(--shadow-hover);
@@ -1487,7 +1487,7 @@ header .nav .logo-block {
   position: static;
   max-height: 260px;
   overflow-y: auto;
-  background: #FFFFFF;
+  background: var(--card, #fff);
   border: 1.5px solid var(--line);
   border-radius: 12px;
   padding: 4px;
@@ -1565,7 +1565,7 @@ header .nav .logo-block {
 }
 
 .product-card { 
-  background: #fff; 
+  background: var(--card, #fff);
   border: 1px solid var(--line); 
   border-radius: var(--radius-lg); 
   padding: 12px; 
@@ -1739,7 +1739,7 @@ header .nav .logo-block {
 }
 
 .load-more-btn {
-  background: #FFFFFF;
+  background: var(--card, #fff);
   color: var(--rose-deep, var(--accent));
   border: 1.5px solid var(--line);
   font-size: 13.5px;
@@ -1837,7 +1837,7 @@ header .nav .logo-block {
 }
 
 .modern-cat-card {
-  background: #FFFFFF;
+  background: var(--card, #fff);
   border: 1.5px solid var(--line);
   border-radius: var(--radius-lg);
   overflow: hidden;
@@ -1917,7 +1917,7 @@ header .nav .logo-block {
   width: 80px; 
   height: 96px; 
   border-radius: 14px; 
-  background: #fff; 
+  background: var(--card, #fff);
   flex-shrink: 0; 
   display: flex; 
   align-items: center; 
@@ -1977,7 +1977,7 @@ header .nav .logo-block {
   font-weight: 700; 
   font-size: 13.5px; 
   text-transform: uppercase; 
-  background: #fff; 
+  background: var(--card, #fff);
   color: var(--ink); 
   outline: none; 
 }
@@ -2009,7 +2009,7 @@ header .nav .logo-block {
    MY ORDERS VIEW & TIMELINE
    ========================================================== */
 .order-card { 
-  background: #fff; 
+  background: var(--card, #fff);
   border: 1.5px solid var(--line); 
   border-radius: var(--radius-md); 
   padding: 16px; 
@@ -2460,7 +2460,7 @@ header .nav .logo-block {
   border-radius: 14px; 
   font-family: inherit; 
   font-size: 13.5px; 
-  background: #fff; 
+  background: var(--card, #fff);
   color: var(--ink); 
   outline: none; 
 }
@@ -2512,7 +2512,7 @@ header .nav .logo-block {
    ACCOUNT & AUTH
    ========================================================== */
 .account-card { 
-  background: #fff; 
+  background: var(--card, #fff);
   border: 1px solid var(--line); 
   border-radius: var(--radius-lg); 
   padding: 24px 20px; 
@@ -2562,7 +2562,7 @@ header .nav .logo-block {
 
 .auth-btn-google { 
   width: 100%; 
-  background: #fff; 
+  background: var(--card, #fff);
   color: #1F2937; 
   border: 1.5px solid #E5E7EB; 
   padding: 14px 18px; 
@@ -2598,7 +2598,7 @@ header .nav .logo-block {
   border: none;
 }
 .phone-auth-tab.active {
-  background: #fff;
+  background: var(--card, #fff);
   color: var(--ink);
   box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
@@ -2654,7 +2654,7 @@ header .nav .logo-block {
 
 .welcome-card, .admin-quick-card, .consult-modal-card, .notif-modal-card, 
 .success-card, .iab-content, .receipt-modal-card {
-  background: #fff;
+  background: var(--card, #fff);
   border-radius: var(--radius-lg);
   padding: 28px 22px;
   max-width: 440px;
@@ -2719,12 +2719,12 @@ header .nav .logo-block {
 .receipt-modal-card {
   max-width: 380px;
   padding: 16px;
-  background: #fff;
+  background: var(--card, #fff);
   text-align: right;
 }
 
 .receipt-print-area {
-  background: #fff;
+  background: var(--card, #fff);
   color: #000;
   font-family: 'IBM Plex Mono', monospace;
   font-size: 12px;
@@ -3249,3 +3249,60 @@ header .nav .logo-block {
 .badge-low-stock { position: absolute; top: 12px; left: 12px; z-index: 2; background: #F59E0B; color: #fff; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 999px; }
 .pd-low-stock { display: inline-block; margin-inline-start: 8px; background: #FFEDD5; color: #9A3412; font-size: 12px; font-weight: 800; padding: 2px 10px; border-radius: 999px; }
 .btn-reorder { background: var(--surface, #F3F4F6); color: var(--text, #1F2937); border: 1.5px solid var(--line, #E5E7EB); border-radius: 999px; padding: 6px 14px; font-size: 12px; font-weight: 800; cursor: pointer; margin-inline-start: 6px; }
+
+
+/* ==========================================================
+   ✨ بطاقة المنتج الفاخرة (Luxury Product Card) + صفحة كل الماركات
+   ========================================================== */
+.product-card {
+  background: var(--card, #fff);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 10px 10px 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06), 0 1px 0 rgba(255,255,255,0.8) inset;
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+.product-card:hover { transform: translateY(-3px); box-shadow: 0 14px 32px rgba(0,0,0,0.11); }
+.product-thumb {
+  border-radius: 18px;
+  background: radial-gradient(120% 90% at 50% 0%, var(--surface-hover) 0%, var(--surface) 55%, var(--card, #fff) 100%);
+  margin-bottom: 12px;
+}
+.product-thumb img { object-fit: contain; padding: 8px; box-sizing: border-box; transition: transform .35s ease; }
+.product-card:hover .product-thumb img { transform: scale(1.05); }
+.wish-btn {
+  width: 34px; height: 34px;
+  background: linear-gradient(145deg, #FFF8E1, #F3DFA2);
+  color: #9A7410;
+  border: 1px solid rgba(154,116,16,0.25);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+}
+.wish-btn.active { color: #C2185B; }
+.p-name { font-weight: 800; font-size: 14px; text-align: center; min-height: 40px; margin-bottom: 2px; }
+.p-brand { text-align: center; font-size: 11px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--accent-dark, var(--accent)); margin-bottom: 4px; }
+.p-size {
+  text-align: center; font-size: 11.5px; color: var(--text-soft); margin-bottom: 8px;
+  display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
+}
+.p-price-row { justify-content: center; margin-bottom: 12px; }
+.p-price { font-size: 16px; font-weight: 900; color: var(--ink); }
+.add-cart-btn {
+  background: linear-gradient(135deg, var(--accent-dark, var(--accent)) 0%, var(--accent) 100%);
+  padding: 12px 10px;
+  font-size: 13px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.18), 0 0 0 1px rgba(242,184,7,0.35) inset;
+}
+.discount-badge, .badge-out-stock, .badge-low-stock { border-radius: 999px; }
+
+.brands-full-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 4px 2px 20px; }
+@media (min-width: 640px) { .brands-full-grid { grid-template-columns: repeat(5, 1fr); } }
+.brand-tile {
+  background: var(--card, #fff); border: 1px solid var(--line); border-radius: 20px;
+  padding: 14px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  cursor: pointer; box-shadow: var(--shadow-soft); transition: transform .2s ease, box-shadow .2s ease;
+}
+.brand-tile:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
+.brand-tile-img { width: 64px; height: 64px; border-radius: 18px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: var(--surface); }
+.brand-tile-img img { width: 100%; height: 100%; object-fit: contain; }
+.brand-tile-name { font-weight: 800; font-size: 12.5px; color: var(--ink); text-align: center; }
+.brand-tile-count { font-size: 10.5px; color: var(--text-soft); }
