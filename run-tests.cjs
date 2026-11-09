@@ -408,6 +408,10 @@ section('القوالب والدومينات');
       });
     }
   }
+  // انحدار: القالب قد ينتهي تحميله بعد رسم البطاقات؛ يجب أن يعيد loadDynamicTheme رسم الشاشة عند تغيّر القالب
+  const sj = read('script.js') || '';
+  const ldt = sj.slice(sj.indexOf('async function loadDynamicTheme'), sj.indexOf('async function loadDynamicTheme') + 1400);
+  /prevTemplateId\s*!==\s*activeThemeModule\.id[\s\S]*renderCurrentActiveView\(\)/.test(ldt) ? pass('loadDynamicTheme يعيد رسم الشاشة عند تغيّر القالب (سباق التحميل)') : fail('loadDynamicTheme لا يعيد الرسم بعد تحميل القالب: ستبقى البطاقات بالشكل القديم');
   ['platform-host.js', 'template-engine.js', 'template-contract.js'].forEach(f => read(f) ? pass(`${f} موجود`) : fail(`${f} غير موجود`));
   ['index.html', 'admin.html', 'super-admin.html'].forEach(p => (read(p) || '').includes('src="platform-host.js"') ? pass(`${p} يحمّل platform-host.js`) : fail(`${p} لا يحمّل platform-host.js`));
   const noPwa = ['index.html', 'vite.config.js', 'run-tests.cjs'].filter(f => /growth-pwa|barcode-scanner|manifest\.webmanifest|installAppLink/.test((read(f) || '').replace(/\/growth-pwa\|[^\n]*/, '')));
