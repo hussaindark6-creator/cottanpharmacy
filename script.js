@@ -396,6 +396,7 @@ let pharmacyProfile = {
   name: 'الصيدلية',
   templateId: 'template_default',
   primaryColor: '#E85D8A',
+  pageBgColor: '',
   logoUrl: '',
   bannerImgUrl: 'https://imgdb.io/i/EQ4D9ag.png',
   announcementText: '✨ أهلاً بكم في متجرنا الإلكتروني 🌸',
@@ -507,6 +508,21 @@ function applyDynamicThemeColor(hexColor) {
   root.style.setProperty('--rose', `rgba(${r}, ${g}, ${b}, 0.4)`);
   root.style.setProperty('--accent-dark', `rgb(${Math.max(0, r-30)}, ${Math.max(0, g-30)}, ${Math.max(0, b-30)})`);
 }
+
+
+// 🎨 لون الثيم (خلفية الموقع): تختاره الصيدلية. الخلفية = اللون المختار، والبطاقات = نفس اللون أفتح بدرجة (تبقى النصوص مقروءة).
+// ألوان داكنة جداً تُتجاهل لأن نصوص الموقع داكنة.
+function applyPageBgColor(hex) {
+  const root = document.documentElement;
+  if (!hex || !/^#[0-9A-F]{6}$/i.test(hex)) { root.style.removeProperty('--paper'); root.style.removeProperty('--card'); return; }
+  const r = parseInt(hex.slice(1,3), 16), g = parseInt(hex.slice(3,5), 16), b = parseInt(hex.slice(5,7), 16);
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  if (lum < 0.6) return;
+  const mix = (c) => Math.round(c + (255 - c) * 0.6);
+  root.style.setProperty('--paper', hex);
+  root.style.setProperty('--card', `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`);
+}
+window.applyPageBgColor = applyPageBgColor;
 
 function applyPharmacyTemplate(templateId = 'template-one') {
   const htmlRoot = document.getElementById('htmlRoot') || document.documentElement;
@@ -642,6 +658,7 @@ function renderCurrentActiveView() {
   if (currentView === 'home') renderHome();
   else if (currentView === 'listing') renderListing();
   else if (currentView === 'categories') renderModernCategories();
+  else if (currentView === 'brands') renderAllBrands();
   else if (currentView === 'bundles') renderAllBundles();
   else if (currentView === 'orders') renderMyOrders();
   else if (currentView === 'offers') renderOffers();
@@ -860,11 +877,12 @@ function renderProductGrid(targetId, list, emptyMsg) {
         ${!inStock ? `<span class="badge-out-stock">نفذت الكمية</span>` : ''}
         ${(inStock && p.stockQuantity !== undefined && p.stockQuantity > 0 && p.stockQuantity <= 5) ? `<span class="badge-low-stock">بقي ${Number(p.stockQuantity)} فقط</span>` : ''}
         
-        <div class="product-thumb" style="background:${color}18;">
+        <div class="product-thumb">
           ${cleanImg ? `<img src="${cleanImg}" alt="${sanitizeText(p.name)}" loading="lazy">` : (icons[p.type] || icons.bottle)(color)}
         </div>
         <div class="p-name">${sanitizeText(p.name)}</div>
-        <div class="p-size">${sanitizeText(p.size || '')}</div>
+        ${p.brand ? `<div class="p-brand">${sanitizeText(p.brand)}</div>` : ''}
+        <div class="p-size">${sanitizeText(p.description ? String(p.description).slice(0, 70) : (p.size || ''))}</div>
         <div class="p-price-row">
           <span class="p-price mono" id="price-val-${sanitizeText(p.id)}">${fmtPrice(p.price)}</span>
           ${p.oldPrice ? `<span class="p-oldprice mono" id="oldprice-val-${sanitizeText(p.id)}">${fmtPrice(p.oldPrice)}</span>` : ''}
@@ -995,7 +1013,7 @@ async function deleteAdminCategory(catId, catLabel) {
 // 🌸 (إصلاح #1: وميض شاشة التحميل) إخفاء متدرّج لشاشة التحميل الأولية بعد اكتمال أول رسم فعلي للواجهة.
 // ملاحظة: القيم (الصورة، اللون، الحجم) نفسها تُحقن فوراً من سكربت متزامن (Inline) في أعلى <head>
 // الخاص بـ index.html قبل أي Paint، لذا لا يحدث أي وميض بصورة افتراضية ثم صورة الصيدلية الحقيقية.
-function hideAppLoadingOverlay() {
+function hideAppLoadingOverlay(instant) {
   const overlay = document.getElementById('appLoadingOverlay');
   if (!overlay || overlay.dataset.hidden) return;
   overlay.dataset.hidden = '1';
@@ -1004,14 +1022,16 @@ function hideAppLoadingOverlay() {
   const pct = document.getElementById('loaderPercentText');
   if (bar) bar.style.width = '100%';
   if (pct) pct.textContent = '100%';
-  setTimeout(() => {
-    overlay.style.opacity = '0';
-    overlay.style.pointerEvents = 'none';
-    setTimeout(() => overlay.remove(), 400);
-  }, 150);
+  // ⚡ الموقع سريع (البيانات جاهزة بأقل من ~0.35 ثانية): نحذف شاشة التحميل فوراً بلا أي انتظار أو تلاشي
+  if (instant) { overlay.remove(); return; }
+  overlay.style.transition = 'opacity .25s ease';
+  overlay.style.opacity = '0';
+  overlay.style.pointerEvents = 'none';
+  setTimeout(() => overlay.remove(), 260);
 }
 
 function applyStoreSettings() {
+  applyPageBgColor(pharmacyProfile.pageBgColor || '');
   if (pharmacyProfile.primaryColor) {
     applyDynamicThemeColor(pharmacyProfile.primaryColor);
     const colorPicker = document.getElementById('adminPrimaryColorPicker');
@@ -1802,14 +1822,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   await loadDynamicTheme(pharmacyProfile.templateId);
   renderCurrentActiveView();
 
-  // ⚡ شاشة التحميل: حد أدنى قصير (0.7 ثانية) بدل 3 ثوانٍ، وتبقى بعده حتى تكتمل البيانات فعلياً
-  // (لقطة المتجر + الأقسام + البكجات + الكتالوج من الووركر). فالزبون لا يرى الموقع أبداً قبل وصول آخر
-  // تعديلات الأدمن، وإن كانت الشبكة سريعة يدخل الموقع فوراً. هذا الملف يخدم index.html وadmin.html معاً.
-  const MIN_LOADER_DISPLAY_MS = 700;
-  const minDisplayPromise = new Promise(resolve => setTimeout(resolve, MIN_LOADER_DISPLAY_MS));
-  const dataReadyPromise = initFirestoreSync();
-
-  Promise.all([minDisplayPromise, dataReadyPromise]).finally(hideAppLoadingOverlay);
+  // ⚡ شاشة التحميل: لا حد أدنى للعرض بعد الآن. إن جاءت البيانات بسرعة (< 350ms) تُحذف الشاشة فوراً،
+  // وإن تأخرت الشبكة تبقى حتى تكتمل البيانات فعلياً ثم تتلاشى بسرعة (فالزبون لا يرى الموقع قبل آخر تعديلات الأدمن).
+  const loaderStartedAt = performance.now();
+  initFirestoreSync().finally(() => hideAppLoadingOverlay(performance.now() - loaderStartedAt < 350));
 
   window.addEventListener('hashchange', checkUrlHashForProduct);
 
