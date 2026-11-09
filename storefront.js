@@ -510,7 +510,8 @@ function renderListing() {
     category: (categories.find(c => c.id === listingValue) || {}).label,
     search: `نتائج البحث عن: "${listingValue}"`,
     bestsellers: 'المنتجات المتوفرة',
-    promo_offer: `عروض: ${window.__currentPromoTitle || 'المنتجات المشمولة بالعرض'}`
+    promo_offer: `عروض: ${window.__currentPromoTitle || 'المنتجات المشمولة بالعرض'}`,
+    brand: `ماركة: ${(brandsData[listingValue] && brandsData[listingValue].name) || listingValue}`
   };
   titleEl.textContent = titles[listingMode] || 'المنتجات';
 
@@ -528,6 +529,8 @@ function renderListing() {
       .map(x => x.p);
   } else if (listingMode === 'bestsellers') {
     list = sortProductsByCategoryOrder(list.filter(p => p.inStock !== false));
+  } else if (listingMode === 'brand') {
+    list = list.filter(p => p.brand === listingValue);
   } else if (listingMode === 'promo_offer') {
     const allowedSet = new Set((listingValue || []).map(String));
     list = list.filter(p => allowedSet.has(String(p.id)));
@@ -1200,3 +1203,39 @@ function applyWelcomeAndShop() {
 }
 
 
+
+
+// 🏢 صفحة "كل الماركات": تعرض كل الماركات الموجودة فعلاً (وليس الشريط الأفقي فقط)، والضغط على ماركة يفتح منتجاتها
+function openAllBrands() { showView('brands'); }
+
+function openBrandListing(brandKey) {
+  listingMode = 'brand';
+  listingValue = brandKey;
+  listingCatActive = 'all';
+  renderListing();
+  showListingView();
+}
+
+function renderAllBrands() {
+  const grid = document.getElementById('brandsFullGrid');
+  if (!grid) return;
+  const keys = Object.keys(brandsData);
+  const countEl = document.getElementById('brandsTotalCount');
+  if (countEl) countEl.textContent = keys.length + ' ماركة';
+  if (!keys.length) { grid.innerHTML = '<div class="no-results">لا توجد ماركات حالياً.</div>'; return; }
+  const counts = {};
+  products.forEach(p => { if (p.isDeleted !== true && p.brand) counts[p.brand] = (counts[p.brand] || 0) + 1; });
+  grid.innerHTML = keys.map(k => {
+    const b = brandsData[k] || {};
+    const logo = sanitizeUrl(b.logoUrl);
+    const nm = sanitizeText(b.name || k);
+    return `
+      <div class="brand-tile" onclick="openBrandListing('${sanitizeText(k)}')">
+        <div class="brand-tile-img">
+          ${logo ? `<img src="${logo}" alt="${nm}" loading="lazy">` : `<div class="brand-chip-placeholder" style="background:${sanitizeText(b.color)};">${(b.name || k).charAt(0).toUpperCase()}</div>`}
+        </div>
+        <span class="brand-tile-name">${nm}</span>
+        <span class="brand-tile-count">${counts[k] || 0} منتج</span>
+      </div>`;
+  }).join('');
+}
