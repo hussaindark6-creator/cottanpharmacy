@@ -397,6 +397,7 @@ let pharmacyProfile = {
   templateId: 'template_default',
   primaryColor: '#E85D8A',
   pageBgColor: '',
+  secondaryColor: '',
   logoUrl: '',
   bannerImgUrl: 'https://imgdb.io/i/EQ4D9ag.png',
   announcementText: '✨ أهلاً بكم في متجرنا الإلكتروني 🌸',
@@ -523,6 +524,49 @@ function applyPageBgColor(hex) {
   root.style.setProperty('--card', `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`);
 }
 window.applyPageBgColor = applyPageBgColor;
+// 🎨 نظام اللونين: اللون الأساسي + اللون الثانوي (تفاصيل صغيرة فقط) + الخلفية.
+// يُنسّق تلقائياً: إن كان الثانوي قريباً جداً من الأساسي (نفس الدرجة تقريباً) يُفرَّق بينهما بالإضاءة،
+// ويُحدّ التشبّع والإضاءة حتى لا يطغى الثانوي على الأساسي ولا يصطدم به.
+function hexToHsl(hex) {
+  const r = parseInt(hex.slice(1,3),16)/255, g = parseInt(hex.slice(3,5),16)/255, b = parseInt(hex.slice(5,7),16)/255;
+  const max = Math.max(r,g,b), min = Math.min(r,g,b); let h = 0, s = 0; const l = (max+min)/2;
+  if (max !== min) {
+    const d = max - min; s = l > 0.5 ? d/(2-max-min) : d/(max+min);
+    if (max === r) h = ((g-b)/d + (g<b?6:0)); else if (max === g) h = (b-r)/d + 2; else h = (r-g)/d + 4;
+    h *= 60;
+  }
+  return { h, s, l };
+}
+function hslToHex(h, s, l) {
+  h = ((h % 360) + 360) % 360;
+  const k = n => (n + h/30) % 12, a = s * Math.min(l, 1-l);
+  const f = n => Math.round(255 * (l - a * Math.max(-1, Math.min(k(n)-3, Math.min(9-k(n), 1)))));
+  return '#' + [f(0), f(8), f(4)].map(x => x.toString(16).padStart(2,'0')).join('').toUpperCase();
+}
+function lumOf(hex) { return (0.299*parseInt(hex.slice(1,3),16) + 0.587*parseInt(hex.slice(3,5),16) + 0.114*parseInt(hex.slice(5,7),16)) / 255; }
+function harmonizeSecondary(primaryHex, secondaryHex) {
+  const p = hexToHsl(primaryHex), q = hexToHsl(secondaryHex);
+  let hd = Math.abs(p.h - q.h); if (hd > 180) hd = 360 - hd;
+  q.s = Math.min(q.s, 0.78);
+  q.l = Math.max(0.28, Math.min(0.72, q.l));
+  if (hd < 22 && Math.abs(p.l - q.l) < 0.18) q.l = p.l > 0.5 ? Math.max(0.28, p.l - 0.28) : Math.min(0.72, p.l + 0.28);
+  return hslToHex(q.h, q.s, q.l);
+}
+function applyThemeColors(profile) {
+  const root = document.documentElement;
+  const prim = /^#[0-9A-F]{6}$/i.test(profile.primaryColor || '') ? profile.primaryColor : '';
+  if (prim) root.style.setProperty('--on-accent', lumOf(prim) > 0.72 ? '#1F2937' : '#FFFFFF');
+  const sec = /^#[0-9A-F]{6}$/i.test(profile.secondaryColor || '') ? profile.secondaryColor : '';
+  if (sec) {
+    const fixed = prim ? harmonizeSecondary(prim, sec) : sec;
+    root.style.setProperty('--accent-2', fixed);
+    root.style.setProperty('--on-accent-2', lumOf(fixed) > 0.62 ? '#1F2937' : '#FFFFFF');
+  } else {
+    root.style.removeProperty('--accent-2'); root.style.removeProperty('--on-accent-2');
+  }
+}
+window.applyThemeColors = applyThemeColors;
+
 
 function applyPharmacyTemplate(templateId = 'template-one') {
   const htmlRoot = document.getElementById('htmlRoot') || document.documentElement;
@@ -880,9 +924,9 @@ function renderProductGrid(targetId, list, emptyMsg) {
         <div class="product-thumb">
           ${cleanImg ? `<img src="${cleanImg}" alt="${sanitizeText(p.name)}" loading="lazy">` : (icons[p.type] || icons.bottle)(color)}
         </div>
-        <div class="p-name">${sanitizeText(p.name)}</div>
         ${p.brand ? `<div class="p-brand">${sanitizeText(p.brand)}</div>` : ''}
-        <div class="p-size">${sanitizeText(p.description ? String(p.description).slice(0, 70) : (p.size || ''))}</div>
+        <div class="p-name">${sanitizeText(p.name)}</div>
+        <div class="p-size">${sanitizeText(p.description ? String(p.description).slice(0, 70) : ((p.size && p.size !== 'عبوة قياسية') ? p.size : ''))}</div>
         <div class="p-price-row">
           <span class="p-price mono" id="price-val-${sanitizeText(p.id)}">${fmtPrice(p.price)}</span>
           ${p.oldPrice ? `<span class="p-oldprice mono" id="oldprice-val-${sanitizeText(p.id)}">${fmtPrice(p.oldPrice)}</span>` : ''}
@@ -1034,6 +1078,7 @@ function applyStoreSettings() {
   applyPageBgColor(pharmacyProfile.pageBgColor || '');
   if (pharmacyProfile.primaryColor) {
     applyDynamicThemeColor(pharmacyProfile.primaryColor);
+    applyThemeColors(pharmacyProfile);
     const colorPicker = document.getElementById('adminPrimaryColorPicker');
     if (colorPicker) colorPicker.value = pharmacyProfile.primaryColor;
   }
