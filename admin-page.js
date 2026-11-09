@@ -604,10 +604,12 @@
     function selectColorSwatch(hex) {
       document.getElementById('adminPrimaryColorPicker').value = hex;
       renderColorSwatchGrid();
+      if (typeof previewTheme === 'function') previewTheme();
     }
 
     function onColorPickerChange() {
       renderColorSwatchGrid();
+      if (typeof previewTheme === 'function') previewTheme();
     }
 
     document.addEventListener('DOMContentLoaded', renderColorSwatchGrid);
@@ -642,6 +644,55 @@
     }
     document.addEventListener('DOMContentLoaded', renderPageBgSwatches);
 
+
+    // 🎨 تنسيقات جاهزة: (أساسي + ثانوي + خلفية) مدروسة لتتناسق ولا يطغى لون على آخر
+    const PALETTE_PRESETS = [
+      { name: 'زمرد وذهب',   p: '#1F5D46', s: '#C9A24B', bg: '#F4F1EA' },
+      { name: 'كحلي وشامبين', p: '#1E3A5F', s: '#C8A97E', bg: '#F5F2EC' },
+      { name: 'وردي وذهب',   p: '#C2456B', s: '#D9A441', bg: '#FFF6F8' },
+      { name: 'تيل ومرجان',  p: '#0F766E', s: '#F08A6B', bg: '#F2F8F7' },
+      { name: 'عنابي وذهب',  p: '#7A1F3D', s: '#C9A24B', bg: '#FBF5F2' },
+      { name: 'بنفسجي وذهب', p: '#5B3A8E', s: '#D4A94F', bg: '#F6F2FA' },
+      { name: 'زيتوني وبرونز', p: '#4F6B3A', s: '#B07D4F', bg: '#F6F3EA' },
+      { name: 'أزرق وفضي',   p: '#1D6FA3', s: '#94A3B8', bg: '#F1F6FA' },
+      { name: 'فحمي وذهب',   p: '#1F2937', s: '#C9A24B', bg: '#F7F5F0' },
+      { name: 'خوخي وكحلي',  p: '#E07A5F', s: '#3D405B', bg: '#FFF5EE' }
+    ];
+    function renderPalettePresets() {
+      const g = document.getElementById('palettePresetGrid');
+      if (!g) return;
+      g.innerHTML = PALETTE_PRESETS.map((x, i) => `
+        <button type="button" onclick="applyPalettePreset(${i})" style="display:flex; align-items:center; gap:8px; padding:8px; border-radius:12px; border:1px solid #E5E7EB; background:${x.bg}; cursor:pointer; text-align:start;">
+          <span style="display:flex; flex-shrink:0;"><span style="width:22px; height:22px; border-radius:50%; background:${x.p}; border:2px solid #fff; box-shadow:0 0 0 1px rgba(0,0,0,.1);"></span><span style="width:22px; height:22px; border-radius:50%; background:${x.s}; border:2px solid #fff; margin-inline-start:-8px; box-shadow:0 0 0 1px rgba(0,0,0,.1);"></span></span>
+          <span style="font-size:11.5px; font-weight:800; color:#1F2937;">${x.name}</span>
+        </button>`).join('');
+    }
+    function previewTheme() {
+      if (typeof applyThemeColors !== 'function') return;
+      const prim = document.getElementById('adminPrimaryColorPicker').value;
+      const sec = document.getElementById('adminSecondaryValue').value;
+      if (typeof applyDynamicThemeColor === 'function') applyDynamicThemeColor(prim);
+      applyThemeColors({ primaryColor: prim, secondaryColor: sec });
+    }
+    function applyPalettePreset(i) {
+      const x = PALETTE_PRESETS[i]; if (!x) return;
+      document.getElementById('adminPrimaryColorPicker').value = x.p;
+      renderColorSwatchGrid();
+      document.getElementById('adminSecondaryValue').value = x.s;
+      document.getElementById('adminSecondaryPicker').value = x.s;
+      selectPageBg(x.bg);
+      previewTheme();
+    }
+    function onSecondaryChange() {
+      document.getElementById('adminSecondaryValue').value = document.getElementById('adminSecondaryPicker').value;
+      previewTheme();
+    }
+    function clearSecondary() {
+      document.getElementById('adminSecondaryValue').value = '';
+      previewTheme();
+    }
+    document.addEventListener('DOMContentLoaded', renderPalettePresets);
+
     // 🌸 قراءة إعدادات الصيدلية وشاشة التحميل المخصصة
     async function loadPharmacyDesignAndSecrets() {
       if (!db) return;
@@ -652,6 +703,7 @@
           if (document.getElementById('adminPharmacyNameInput')) document.getElementById('adminPharmacyNameInput').value = p.name || '';
           if (document.getElementById('adminPrimaryColorPicker')) document.getElementById('adminPrimaryColorPicker').value = p.primaryColor || '#E85D8A';
           renderColorSwatchGrid();
+          if (document.getElementById('adminSecondaryValue')) { document.getElementById('adminSecondaryValue').value = p.secondaryColor || ''; document.getElementById('adminSecondaryPicker').value = p.secondaryColor || '#C9A24B'; }
           if (document.getElementById('adminPageBgValue')) { document.getElementById('adminPageBgValue').value = p.pageBgColor || ''; document.getElementById('adminPageBgPicker').value = p.pageBgColor || '#FFFFFF'; renderPageBgSwatches(); }
           if (document.getElementById('adminSocialWhatsappInput')) document.getElementById('adminSocialWhatsappInput').value = p.socialWhatsapp || '';
           if (document.getElementById('adminSocialPhoneInput')) document.getElementById('adminSocialPhoneInput').value = p.socialPhone || '';
@@ -701,6 +753,8 @@
       const name = document.getElementById('adminPharmacyNameInput').value.trim();
       const logoUrl = sanitizeUrl(document.getElementById('adminPharmacyLogoInput').value.trim());
       const primaryColor = document.getElementById('adminPrimaryColorPicker').value;
+      const secRaw = (document.getElementById('adminSecondaryValue')?.value || '').trim();
+      const secondaryColor = /^#[0-9A-Fa-f]{6}$/.test(secRaw) ? secRaw : '';
       const pageBgRaw = (document.getElementById('adminPageBgValue')?.value || '').trim();
       const pageBgColor = (/^#[0-9A-Fa-f]{6}$/.test(pageBgRaw) && pageBgIsLightEnough(pageBgRaw)) ? pageBgRaw : '';
       const socialWhatsapp = document.getElementById('adminSocialWhatsappInput').value.trim();
@@ -748,6 +802,7 @@
           logoUrl,
           primaryColor,
           pageBgColor,
+          secondaryColor,
           socialWhatsapp: sanitizeText(socialWhatsapp),
           socialPhone: sanitizeText(socialPhone),
           deliveryFeeStandard,
