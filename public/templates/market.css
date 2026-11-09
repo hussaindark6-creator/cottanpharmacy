@@ -22,7 +22,9 @@ html[data-template="market"] .search-wrap { padding-top: 4px; padding-bottom: 8p
 html[data-template="market"] .search-bar { background: var(--mk-bg); border: 1px solid var(--mk-line); border-radius: 8px; box-shadow: none; }
 
 /* ---------- شريط الأقسام الثابت ---------- */
-html[data-template="market"] .mk-catbar { position: sticky; top: 0; z-index: 35; background: #fff; border-bottom: 1px solid var(--mk-line); box-shadow: 0 2px 8px rgba(17, 24, 39, .06); }
+/* الالتصاق يجب أن يكون على الفتحة نفسها (حاوية الشريط) وليس على الشريط، وإلا يبقى محصوراً داخل حاويته ولا يلتصق */
+html[data-template="market"] #tplHeaderSlot { position: sticky; top: 0; z-index: 35; }
+html[data-template="market"] .mk-catbar { background: #fff; border-bottom: 1px solid var(--mk-line); box-shadow: 0 2px 8px rgba(17, 24, 39, .06); }
 html[data-template="market"] .mk-catbar-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 8px 12px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 html[data-template="market"] .mk-catbar-scroll::-webkit-scrollbar { display: none; }
 html[data-template="market"] .mk-chip { flex: 0 0 auto; background: var(--mk-bg); color: var(--mk-ink); border: 1px solid var(--mk-line); border-radius: 999px; padding: 6px 14px; font-size: 12.5px; font-weight: 800; cursor: pointer; white-space: nowrap; }
@@ -54,8 +56,8 @@ html[data-template="market"] .product-card.mk-card:hover { transform: none; box-
 html[data-template="market"] .mk-media { position: relative; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; overflow: hidden; }
 html[data-template="market"] .mk-media img { width: 100%; height: 100%; object-fit: cover; }
 html[data-template="market"] .mk-media svg { max-width: 55%; max-height: 55%; }
-html[data-template="market"] .mk-off { position: absolute; top: 0; inset-inline-start: 0; background: var(--mk-sale); color: #fff; font-weight: 900; font-size: 12px; padding: 3px 9px; border-end-end-radius: 8px; z-index: 2; }
-html[data-template="market"] .mk-wish { position: absolute; top: 6px; inset-inline-end: 6px; width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; z-index: 2; }
+html[data-template="market"] .mk-off { position: absolute; top: 0; left: 0; right: auto; background: var(--mk-sale); color: #fff; font-weight: 900; font-size: 12px; padding: 3px 9px; border-bottom-right-radius: 8px; z-index: 2; }
+html[data-template="market"] .mk-wish { position: absolute; top: 6px; right: 6px; left: auto; width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; z-index: 2; }
 html[data-template="market"] .mk-stock { position: absolute; left: 0; right: 0; bottom: 0; text-align: center; font-size: 11px; font-weight: 800; padding: 3px 6px; color: #fff; }
 html[data-template="market"] .mk-stock-out { background: rgba(75, 85, 99, .92); }
 html[data-template="market"] .mk-stock-low { background: rgba(217, 119, 6, .92); }
