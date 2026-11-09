@@ -64,6 +64,7 @@
               root.style.setProperty('--card', 'rgb(' + mx(br) + ',' + mx(bg) + ',' + mx(bb) + ')');
             }
           }
+          if (settings.secondaryColor && /^#[0-9A-Fa-f]{6}$/.test(settings.secondaryColor)) root.style.setProperty('--accent-2', settings.secondaryColor);
           if (settings.templateId) root.setAttribute('data-template', settings.templateId);
           if (settings.loaderBgColor) root.style.setProperty('--early-loader-bg', settings.loaderBgColor);
         }
