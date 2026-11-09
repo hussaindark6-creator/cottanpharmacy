@@ -19,6 +19,7 @@
     "renderAccountView",
     "renderAllBundles",
     "renderBrandStrip",
+    "renderAllBrands",
     "renderCart",
     "renderCheckoutSummary",
     "renderHeroCarousel",
