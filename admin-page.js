@@ -615,83 +615,114 @@
     document.addEventListener('DOMContentLoaded', renderColorSwatchGrid);
 
 
-    // 🎨 لون الثيم (خلفية الموقع) — ألوان فاتحة فقط
-    const PAGE_BG_PRESETS = ['#FFFFFF','#FFF9F5','#FDF2F6','#F5F0E8','#F4F1EA','#EEF6F0','#EAF4EE','#EEF4FB','#F3F0FA','#FFF8E7','#FBF3E4','#F2F2F2'];
-    function pageBgIsLightEnough(hex) {
-      const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
-      return (0.299*r + 0.587*g + 0.114*b) / 255 >= 0.6;
+    // 🎨 ألوان الموقع الخمسة: الخلفية، البطاقات، الأساسي، الثانوي، النص (الخلفية/البطاقات/الثانوي/النص اختيارية = تلقائي)
+    const THEME_OPTS = {
+      bg:   { pick: 'adminPageBgPicker',   val: 'adminPageBgValue',   hex: 'adminPageBgHex',   def: '#FFFFFF', autoLabel: 'أبيض (افتراضي)' },
+      card: { pick: 'adminCardPicker',     val: 'adminCardValue',     hex: 'adminCardHex',     def: '#FFFFFF', autoLabel: 'تلقائي' },
+      sec:  { pick: 'adminSecondaryPicker', val: 'adminSecondaryValue', hex: 'adminSecondaryHex', def: '#C9A24B', autoLabel: 'بدون' },
+      text: { pick: 'adminTextPicker',     val: 'adminTextValue',     hex: 'adminTextHex',     def: '#1F2937', autoLabel: 'تلقائي' }
+    };
+    const PAGE_BG_PRESETS = ['#FFFFFF','#FFF9F5','#FDF2F6','#F5F0E8','#F4F1EA','#EAF4EE','#EEF4FB','#F3F0FA','#14211C','#0F1B2D','#1B1A2E','#1F2937'];
+    function themeOptVal(k) { return (document.getElementById(THEME_OPTS[k].val)?.value || '').trim(); }
+    function readThemeInputs() {
+      const hexOk = (x) => /^#[0-9A-Fa-f]{6}$/.test(x) ? x : '';
+      return {
+        primaryColor: hexOk(document.getElementById('adminPrimaryColorPicker')?.value || ''),
+        pageBgColor: hexOk(themeOptVal('bg')),
+        cardColor: hexOk(themeOptVal('card')),
+        secondaryColor: hexOk(themeOptVal('sec')),
+        textColor: hexOk(themeOptVal('text'))
+      };
     }
     function renderPageBgSwatches() {
       const grid = document.getElementById('pageBgSwatchGrid');
       if (!grid) return;
-      const cur = (document.getElementById('adminPageBgValue').value || '').toUpperCase();
-      grid.style.display = 'grid'; grid.style.gridTemplateColumns = 'repeat(6, 1fr)'; grid.style.gap = '6px';
+      const cur = themeOptVal('bg').toUpperCase();
       grid.innerHTML = PAGE_BG_PRESETS.map(c => `
-        <button type="button" onclick="selectPageBg('${c}')" title="${c}"
-          style="aspect-ratio:1/1; width:100%; border-radius:8px; background:${c}; cursor:pointer; padding:0;
-          border:${c === cur ? '3px solid #111827' : '1px solid rgba(0,0,0,0.12)'};"></button>`).join('');
+        <button type="button" onclick="setThemeOpt('bg','${c}')" title="${c}"
+          style="aspect-ratio:1/1; width:100%; border-radius:10px; background:${c}; cursor:pointer; padding:0;
+          border:${c === cur ? '3px solid #111827' : '1px solid rgba(0,0,0,0.15)'};"></button>`).join('');
     }
-    function selectPageBg(hex) {
-      if (hex && !pageBgIsLightEnough(hex)) { showToast('اختاري لوناً أفتح ليبقى الكلام مقروءاً'); return; }
-      document.getElementById('adminPageBgValue').value = hex;
-      document.getElementById('adminPageBgPicker').value = hex || '#FFFFFF';
+    function updateThemeHexLabels() {
+      Object.keys(THEME_OPTS).forEach(k => {
+        const o = THEME_OPTS[k], v = themeOptVal(k);
+        const el = document.getElementById(o.hex); if (el) el.textContent = v ? v.toUpperCase() : o.autoLabel;
+      });
+      const p = document.getElementById('adminPrimaryColorPicker'), ph = document.getElementById('adminPrimaryHex');
+      if (p && ph) ph.textContent = (p.value || '').toUpperCase();
+    }
+    function previewTheme() {
+      const box = document.getElementById('themePreviewBox');
+      updateThemeHexLabels();
       renderPageBgSwatches();
-      if (typeof applyPageBgColor === 'function') applyPageBgColor(hex); // معاينة فورية
+      if (!box || typeof applyThemeColors !== 'function') return;
+      const prof = readThemeInputs();
+      const tokens = applyThemeColors(prof, box);
+      const prim = prof.primaryColor || '#E85D8A';
+      box.style.setProperty('--accent', prim);
+      box.style.setProperty('--accent-dark', thMix(prim, '#000000', 0.18));
+      if (!prof.secondaryColor) box.style.setProperty('--accent-2', prim);
+      const card = tokens['--card'] || '#FFFFFF';
+      const txt = tokens['--ink'] || '#1F2937';
+      box.style.setProperty('--line', thMix(card, txt, 0.14));
+      box.style.setProperty('--surface', thMix(card, prim, 0.08));
+      box.style.setProperty('--ink', txt);
+      box.style.setProperty('--text-soft', tokens['--text-soft'] || '#6B7280');
+      if (!tokens['--on-accent']) box.style.setProperty('--on-accent', '#FFFFFF');
     }
-    function onPageBgChange() {
-      const hex = document.getElementById('adminPageBgPicker').value;
-      selectPageBg(hex);
+    function setThemeOpt(k, hex) {
+      const o = THEME_OPTS[k];
+      document.getElementById(o.val).value = hex || '';
+      document.getElementById(o.pick).value = hex || o.def;
+      previewTheme();
     }
-    document.addEventListener('DOMContentLoaded', renderPageBgSwatches);
+    function onThemeOptInput(k) {
+      const o = THEME_OPTS[k];
+      document.getElementById(o.val).value = document.getElementById(o.pick).value;
+      previewTheme();
+    }
 
-
-    // 🎨 تنسيقات جاهزة: (أساسي + ثانوي + خلفية) مدروسة لتتناسق ولا يطغى لون على آخر
+    // 🎨 تنسيقات جاهزة: ألوان مدروسة لتتناسق ولا يطغى لون على آخر
     const PALETTE_PRESETS = [
-      { name: 'زمرد وذهب',   p: '#1F5D46', s: '#C9A24B', bg: '#F4F1EA' },
-      { name: 'كحلي وشامبين', p: '#1E3A5F', s: '#C8A97E', bg: '#F5F2EC' },
-      { name: 'وردي وذهب',   p: '#C2456B', s: '#D9A441', bg: '#FFF6F8' },
-      { name: 'تيل ومرجان',  p: '#0F766E', s: '#F08A6B', bg: '#F2F8F7' },
-      { name: 'عنابي وذهب',  p: '#7A1F3D', s: '#C9A24B', bg: '#FBF5F2' },
-      { name: 'بنفسجي وذهب', p: '#5B3A8E', s: '#D4A94F', bg: '#F6F2FA' },
-      { name: 'زيتوني وبرونز', p: '#4F6B3A', s: '#B07D4F', bg: '#F6F3EA' },
-      { name: 'أزرق وفضي',   p: '#1D6FA3', s: '#94A3B8', bg: '#F1F6FA' },
-      { name: 'فحمي وذهب',   p: '#1F2937', s: '#C9A24B', bg: '#F7F5F0' },
-      { name: 'خوخي وكحلي',  p: '#E07A5F', s: '#3D405B', bg: '#FFF5EE' }
+      { name: 'زمرد وذهب',    p: '#1F5D46', s: '#C9A24B', bg: '#F4F1EA' },
+      { name: 'كحلي وشامبين', p: '#1E3A5F', s: '#B8924F', bg: '#F5F2EC' },
+      { name: 'وردي وذهب',    p: '#C2456B', s: '#C99532', bg: '#FFF6F8' },
+      { name: 'تيل ومرجان',   p: '#0F766E', s: '#E0714F', bg: '#F2F8F7' },
+      { name: 'عنابي وذهب',   p: '#7A1F3D', s: '#C9A24B', bg: '#FBF5F2' },
+      { name: 'بنفسجي وذهب',  p: '#5B3A8E', s: '#C9972F', bg: '#F6F2FA' },
+      { name: 'زيتوني وبرونز', p: '#4F6B3A', s: '#A8703F', bg: '#F6F3EA' },
+      { name: 'أزرق وفضي',    p: '#1D6FA3', s: '#64748B', bg: '#F1F6FA' },
+      { name: 'ليلي أخضر وذهب', p: '#C9A24B', s: '#E7D7A8', bg: '#14211C' },
+      { name: 'ليلي كحلي',     p: '#5AA9E6', s: '#F2C078', bg: '#0F1B2D' }
     ];
     function renderPalettePresets() {
       const g = document.getElementById('palettePresetGrid');
       if (!g) return;
       g.innerHTML = PALETTE_PRESETS.map((x, i) => `
         <button type="button" onclick="applyPalettePreset(${i})" style="display:flex; align-items:center; gap:8px; padding:8px; border-radius:12px; border:1px solid #E5E7EB; background:${x.bg}; cursor:pointer; text-align:start;">
-          <span style="display:flex; flex-shrink:0;"><span style="width:22px; height:22px; border-radius:50%; background:${x.p}; border:2px solid #fff; box-shadow:0 0 0 1px rgba(0,0,0,.1);"></span><span style="width:22px; height:22px; border-radius:50%; background:${x.s}; border:2px solid #fff; margin-inline-start:-8px; box-shadow:0 0 0 1px rgba(0,0,0,.1);"></span></span>
-          <span style="font-size:11.5px; font-weight:800; color:#1F2937;">${x.name}</span>
+          <span style="display:flex; flex-shrink:0;"><span style="width:22px; height:22px; border-radius:50%; background:${x.p}; border:2px solid #fff; box-shadow:0 0 0 1px rgba(0,0,0,.15);"></span><span style="width:22px; height:22px; border-radius:50%; background:${x.s}; border:2px solid #fff; margin-inline-start:-8px; box-shadow:0 0 0 1px rgba(0,0,0,.15);"></span></span>
+          <span style="font-size:11.5px; font-weight:800; color:${thHexLum(x.bg) < 0.45 ? '#F3F4F6' : '#1F2937'};">${x.name}</span>
         </button>`).join('');
     }
-    function previewTheme() {
-      if (typeof applyThemeColors !== 'function') return;
-      const prim = document.getElementById('adminPrimaryColorPicker').value;
-      const sec = document.getElementById('adminSecondaryValue').value;
-      if (typeof applyDynamicThemeColor === 'function') applyDynamicThemeColor(prim);
-      applyThemeColors({ primaryColor: prim, secondaryColor: sec });
-    }
+    function thHexLum(h) { return (0.299*parseInt(h.slice(1,3),16) + 0.587*parseInt(h.slice(3,5),16) + 0.114*parseInt(h.slice(5,7),16)) / 255; }
     function applyPalettePreset(i) {
       const x = PALETTE_PRESETS[i]; if (!x) return;
       document.getElementById('adminPrimaryColorPicker').value = x.p;
       renderColorSwatchGrid();
-      document.getElementById('adminSecondaryValue').value = x.s;
-      document.getElementById('adminSecondaryPicker').value = x.s;
-      selectPageBg(x.bg);
+      document.getElementById(THEME_OPTS.sec.val).value = x.s; document.getElementById(THEME_OPTS.sec.pick).value = x.s;
+      document.getElementById(THEME_OPTS.bg.val).value = x.bg; document.getElementById(THEME_OPTS.bg.pick).value = x.bg;
+      setThemeOpt('card', ''); setThemeOpt('text', '');
+    }
+    function loadThemeColorInputs(p) {
+      if (p.primaryColor) document.getElementById('adminPrimaryColorPicker').value = p.primaryColor;
+      const map = { bg: p.pageBgColor, card: p.cardColor, sec: p.secondaryColor, text: p.textColor };
+      Object.keys(THEME_OPTS).forEach(k => {
+        const o = THEME_OPTS[k], v = /^#[0-9A-Fa-f]{6}$/.test(map[k] || '') ? map[k] : '';
+        document.getElementById(o.val).value = v; document.getElementById(o.pick).value = v || o.def;
+      });
       previewTheme();
     }
-    function onSecondaryChange() {
-      document.getElementById('adminSecondaryValue').value = document.getElementById('adminSecondaryPicker').value;
-      previewTheme();
-    }
-    function clearSecondary() {
-      document.getElementById('adminSecondaryValue').value = '';
-      previewTheme();
-    }
-    document.addEventListener('DOMContentLoaded', renderPalettePresets);
+    document.addEventListener('DOMContentLoaded', () => { renderPalettePresets(); renderPageBgSwatches(); previewTheme(); });
 
     // 🌸 قراءة إعدادات الصيدلية وشاشة التحميل المخصصة
     async function loadPharmacyDesignAndSecrets() {
@@ -703,8 +734,7 @@
           if (document.getElementById('adminPharmacyNameInput')) document.getElementById('adminPharmacyNameInput').value = p.name || '';
           if (document.getElementById('adminPrimaryColorPicker')) document.getElementById('adminPrimaryColorPicker').value = p.primaryColor || '#E85D8A';
           renderColorSwatchGrid();
-          if (document.getElementById('adminSecondaryValue')) { document.getElementById('adminSecondaryValue').value = p.secondaryColor || ''; document.getElementById('adminSecondaryPicker').value = p.secondaryColor || '#C9A24B'; }
-          if (document.getElementById('adminPageBgValue')) { document.getElementById('adminPageBgValue').value = p.pageBgColor || ''; document.getElementById('adminPageBgPicker').value = p.pageBgColor || '#FFFFFF'; renderPageBgSwatches(); }
+          if (document.getElementById('adminPageBgValue')) loadThemeColorInputs(p);
           if (document.getElementById('adminSocialWhatsappInput')) document.getElementById('adminSocialWhatsappInput').value = p.socialWhatsapp || '';
           if (document.getElementById('adminSocialPhoneInput')) document.getElementById('adminSocialPhoneInput').value = p.socialPhone || '';
           if (document.getElementById('adminDeliveryStandard')) document.getElementById('adminDeliveryStandard').value = p.deliveryFeeStandard || 4000;
@@ -753,10 +783,8 @@
       const name = document.getElementById('adminPharmacyNameInput').value.trim();
       const logoUrl = sanitizeUrl(document.getElementById('adminPharmacyLogoInput').value.trim());
       const primaryColor = document.getElementById('adminPrimaryColorPicker').value;
-      const secRaw = (document.getElementById('adminSecondaryValue')?.value || '').trim();
-      const secondaryColor = /^#[0-9A-Fa-f]{6}$/.test(secRaw) ? secRaw : '';
-      const pageBgRaw = (document.getElementById('adminPageBgValue')?.value || '').trim();
-      const pageBgColor = (/^#[0-9A-Fa-f]{6}$/.test(pageBgRaw) && pageBgIsLightEnough(pageBgRaw)) ? pageBgRaw : '';
+      const themeInputs = readThemeInputs();
+      const { pageBgColor, cardColor, secondaryColor, textColor } = themeInputs;
       const socialWhatsapp = document.getElementById('adminSocialWhatsappInput').value.trim();
       const socialPhone = document.getElementById('adminSocialPhoneInput').value.trim();
       const deliveryFeeStandard = Number(document.getElementById('adminDeliveryStandard').value || 4000);
@@ -802,7 +830,9 @@
           logoUrl,
           primaryColor,
           pageBgColor,
+          cardColor,
           secondaryColor,
+          textColor,
           socialWhatsapp: sanitizeText(socialWhatsapp),
           socialPhone: sanitizeText(socialPhone),
           deliveryFeeStandard,
