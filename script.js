@@ -398,6 +398,8 @@ let pharmacyProfile = {
   primaryColor: '#E85D8A',
   pageBgColor: '',
   secondaryColor: '',
+  cardColor: '',
+  textColor: '',
   logoUrl: '',
   bannerImgUrl: 'https://imgdb.io/i/EQ4D9ag.png',
   announcementText: '✨ أهلاً بكم في متجرنا الإلكتروني 🌸',
@@ -511,24 +513,15 @@ function applyDynamicThemeColor(hexColor) {
 }
 
 
-// 🎨 لون الثيم (خلفية الموقع): تختاره الصيدلية. الخلفية = اللون المختار، والبطاقات = نفس اللون أفتح بدرجة (تبقى النصوص مقروءة).
-// ألوان داكنة جداً تُتجاهل لأن نصوص الموقع داكنة.
-function applyPageBgColor(hex) {
-  const root = document.documentElement;
-  if (!hex || !/^#[0-9A-F]{6}$/i.test(hex)) { root.style.removeProperty('--paper'); root.style.removeProperty('--card'); return; }
-  const r = parseInt(hex.slice(1,3), 16), g = parseInt(hex.slice(3,5), 16), b = parseInt(hex.slice(5,7), 16);
-  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  if (lum < 0.6) return;
-  const mix = (c) => Math.round(c + (255 - c) * 0.6);
-  root.style.setProperty('--paper', hex);
-  root.style.setProperty('--card', `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`);
-}
-window.applyPageBgColor = applyPageBgColor;
-// 🎨 نظام اللونين: اللون الأساسي + اللون الثانوي (تفاصيل صغيرة فقط) + الخلفية.
-// يُنسّق تلقائياً: إن كان الثانوي قريباً جداً من الأساسي (نفس الدرجة تقريباً) يُفرَّق بينهما بالإضاءة،
-// ويُحدّ التشبّع والإضاءة حتى لا يطغى الثانوي على الأساسي ولا يصطدم به.
+// 🎨 محرك ألوان الموقع: خمسة ألوان تختارها الصيدلية (الخلفية، البطاقات، الأساسي، الثانوي، النص).
+// ما لم تُحدَّد يُشتق تلقائياً بتناسق. بلا أي رفض للألوان الغامقة: الصيدلية حرة، ولو اختارت خلفية غامقة بلا لون نص يُختار نص فاتح تلقائياً.
+const THEME_HEX_RE = /^#[0-9A-F]{6}$/i;
+function thHexToRgb(h) { return [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)]; }
+function thRgbToHex(r,g,b) { return '#' + [r,g,b].map(x => Math.max(0, Math.min(255, Math.round(x))).toString(16).padStart(2,'0')).join('').toUpperCase(); }
+function thMix(a, b, t) { const A = thHexToRgb(a), B = thHexToRgb(b); return thRgbToHex(A[0]+(B[0]-A[0])*t, A[1]+(B[1]-A[1])*t, A[2]+(B[2]-A[2])*t); }
+function lumOf(hex) { const c = thHexToRgb(hex); return (0.299*c[0] + 0.587*c[1] + 0.114*c[2]) / 255; }
 function hexToHsl(hex) {
-  const r = parseInt(hex.slice(1,3),16)/255, g = parseInt(hex.slice(3,5),16)/255, b = parseInt(hex.slice(5,7),16)/255;
+  const [r0,g0,b0] = thHexToRgb(hex), r = r0/255, g = g0/255, b = b0/255;
   const max = Math.max(r,g,b), min = Math.min(r,g,b); let h = 0, s = 0; const l = (max+min)/2;
   if (max !== min) {
     const d = max - min; s = l > 0.5 ? d/(2-max-min) : d/(max+min);
@@ -540,10 +533,10 @@ function hexToHsl(hex) {
 function hslToHex(h, s, l) {
   h = ((h % 360) + 360) % 360;
   const k = n => (n + h/30) % 12, a = s * Math.min(l, 1-l);
-  const f = n => Math.round(255 * (l - a * Math.max(-1, Math.min(k(n)-3, Math.min(9-k(n), 1)))));
-  return '#' + [f(0), f(8), f(4)].map(x => x.toString(16).padStart(2,'0')).join('').toUpperCase();
+  const f = n => 255 * (l - a * Math.max(-1, Math.min(k(n)-3, Math.min(9-k(n), 1))));
+  return thRgbToHex(f(0), f(8), f(4));
 }
-function lumOf(hex) { return (0.299*parseInt(hex.slice(1,3),16) + 0.587*parseInt(hex.slice(3,5),16) + 0.114*parseInt(hex.slice(5,7),16)) / 255; }
+// ينسّق الثانوي مع الأساسي: إن تقاربا جداً (نفس الدرجة تقريباً) يُفرَّق بينهما بالإضاءة، ويُحدّ تشبّع الثانوي حتى لا يطغى.
 function harmonizeSecondary(primaryHex, secondaryHex) {
   const p = hexToHsl(primaryHex), q = hexToHsl(secondaryHex);
   let hd = Math.abs(p.h - q.h); if (hd > 180) hd = 360 - hd;
@@ -552,20 +545,54 @@ function harmonizeSecondary(primaryHex, secondaryHex) {
   if (hd < 22 && Math.abs(p.l - q.l) < 0.18) q.l = p.l > 0.5 ? Math.max(0.28, p.l - 0.28) : Math.min(0.72, p.l + 0.28);
   return hslToHex(q.h, q.s, q.l);
 }
-function applyThemeColors(profile) {
-  const root = document.documentElement;
-  const prim = /^#[0-9A-F]{6}$/i.test(profile.primaryColor || '') ? profile.primaryColor : '';
-  if (prim) root.style.setProperty('--on-accent', lumOf(prim) > 0.72 ? '#1F2937' : '#FFFFFF');
-  const sec = /^#[0-9A-F]{6}$/i.test(profile.secondaryColor || '') ? profile.secondaryColor : '';
+const THEME_MANAGED_VARS = ['--paper','--card','--media','--img-blend','--img-radius','--img-bg','--img-inset','--ink','--text','--text-soft','--accent-2','--on-accent','--on-accent-2','--name-color'];
+function computeThemeTokens(profile) {
+  const v = {};
+  const ok = (x) => THEME_HEX_RE.test(x || '');
+  const prim = ok(profile.primaryColor) ? profile.primaryColor : '';
+  const bg = ok(profile.pageBgColor) ? profile.pageBgColor : '';
+  const cardIn = ok(profile.cardColor) ? profile.cardColor : '';
+  const txtIn = ok(profile.textColor) ? profile.textColor : '';
+  const sec = ok(profile.secondaryColor) ? profile.secondaryColor : '';
+  const bgEff = bg || '#FFFFFF';
+  const dark = lumOf(bgEff) < 0.45;
+  if (bg) v['--paper'] = bg;
+  const cardEff = cardIn || (bg ? (dark ? thMix(bg, '#FFFFFF', 0.09) : thMix(bg, '#FFFFFF', 0.6)) : '#FFFFFF');
+  if (cardIn || bg) {
+    v['--card'] = cardEff;
+    const cardDark = lumOf(cardEff) < 0.45;
+    v['--media'] = thMix(cardEff, prim || (cardDark ? '#FFFFFF' : '#888888'), cardDark ? 0.14 : 0.07);
+    v['--img-blend'] = cardDark ? 'normal' : 'multiply';
+    v['--img-radius'] = cardDark ? '16px' : '0';
+    v['--img-bg'] = cardDark ? '#FFFFFF' : 'transparent';
+    v['--img-inset'] = cardDark ? '14px' : '0';
+  }
+  const txt = txtIn || (lumOf(cardEff) < 0.45 ? '#F3F4F6' : '');
+  if (txt) { v['--ink'] = txt; v['--text'] = txt; v['--text-soft'] = thMix(txt, cardEff, 0.4); }
+  if (prim) v['--on-accent'] = lumOf(prim) > 0.72 ? '#1F2937' : '#FFFFFF';
   if (sec) {
     const fixed = prim ? harmonizeSecondary(prim, sec) : sec;
-    root.style.setProperty('--accent-2', fixed);
-    root.style.setProperty('--on-accent-2', lumOf(fixed) > 0.62 ? '#1F2937' : '#FFFFFF');
-  } else {
-    root.style.removeProperty('--accent-2'); root.style.removeProperty('--on-accent-2');
+    v['--accent-2'] = fixed;
+    v['--on-accent-2'] = lumOf(fixed) > 0.62 ? '#1F2937' : '#FFFFFF';
+    // اسم المنتج بالثانوي: نقرّبه تدريجياً من لون النص إلى أن يصير التباين مع البطاقة مقروءاً (فرق إضاءة ≥ 0.42)
+    const base = txt || (lumOf(cardEff) < 0.45 ? '#F3F4F6' : '#1F2937');
+    let nameC = fixed;
+    for (let t = 0; t <= 1.001 && Math.abs(lumOf(nameC) - lumOf(cardEff)) < 0.42; t += 0.1) nameC = thMix(fixed, base, t);
+    v['--name-color'] = nameC;
   }
+  return v;
+}
+function applyThemeColors(profile, target) {
+  const root = target || document.documentElement;
+  const tokens = computeThemeTokens(profile || {});
+  THEME_MANAGED_VARS.forEach(k => { if (tokens[k]) root.style.setProperty(k, tokens[k]); else root.style.removeProperty(k); });
+  if (!target) {
+    try { localStorage.setItem(getStorageKey('theme_tokens'), JSON.stringify(tokens)); } catch (e) { /* غير حرج */ }
+  }
+  return tokens;
 }
 window.applyThemeColors = applyThemeColors;
+window.computeThemeTokens = computeThemeTokens;
 
 
 function applyPharmacyTemplate(templateId = 'template-one') {
@@ -924,16 +951,22 @@ function renderProductGrid(targetId, list, emptyMsg) {
         <div class="product-thumb">
           ${cleanImg ? `<img src="${cleanImg}" alt="${sanitizeText(p.name)}" loading="lazy">` : (icons[p.type] || icons.bottle)(color)}
         </div>
-        ${p.brand ? `<div class="p-brand">${sanitizeText(p.brand)}</div>` : ''}
         <div class="p-name">${sanitizeText(p.name)}</div>
         <div class="p-size">${sanitizeText(p.description ? String(p.description).slice(0, 70) : ((p.size && p.size !== 'عبوة قياسية') ? p.size : ''))}</div>
-        <div class="p-price-row">
-          <span class="p-price mono" id="price-val-${sanitizeText(p.id)}">${fmtPrice(p.price)}</span>
-          ${p.oldPrice ? `<span class="p-oldprice mono" id="oldprice-val-${sanitizeText(p.id)}">${fmtPrice(p.oldPrice)}</span>` : ''}
+        <div class="p-foot">
+          <div class="p-price-block">
+            <span class="p-price mono" id="price-val-${sanitizeText(p.id)}">${fmtPrice(p.price)}</span>
+            ${p.oldPrice ? `<span class="p-oldprice mono" id="oldprice-val-${sanitizeText(p.id)}">${fmtPrice(p.oldPrice)}</span>` : ''}
+          </div>
+          ${inStock
+            ? `<button class="p-bag-btn" aria-label="أضف إلى السلة" onclick="event.stopPropagation(); this.classList.remove('pop'); void this.offsetWidth; this.classList.add('pop'); addToCart('${sanitizeText(p.id)}')">
+                 <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg>
+                 <span class="p-bag-plus">+</span>
+               </button>`
+            : `<button class="p-bag-btn is-alert" aria-label="أبلغيني عند التوفر" onclick="event.stopPropagation(); openStockAlertModal('${sanitizeText(p.id)}')">
+                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+               </button>`}
         </div>
-        <button class="add-cart-btn" style="${!inStock ? 'background:var(--surface); color:var(--text); border:1.5px solid var(--line);' : ''}" onclick="event.stopPropagation(); ${inStock ? `addToCart('${sanitizeText(p.id)}')` : `openStockAlertModal('${sanitizeText(p.id)}')`}">
-          ${inStock ? 'أضف إلى السلة' : '🔔 أبلغيني عند التوفر'}
-        </button>
       </div>`;
   }).join('');
 }
@@ -1075,10 +1108,8 @@ function hideAppLoadingOverlay(instant) {
 }
 
 function applyStoreSettings() {
-  applyPageBgColor(pharmacyProfile.pageBgColor || '');
   if (pharmacyProfile.primaryColor) {
     applyDynamicThemeColor(pharmacyProfile.primaryColor);
-    applyThemeColors(pharmacyProfile);
     const colorPicker = document.getElementById('adminPrimaryColorPicker');
     if (colorPicker) colorPicker.value = pharmacyProfile.primaryColor;
   }
@@ -1177,6 +1208,8 @@ function applyStoreSettings() {
   if (tLink) tLink.href = pharmacyProfile.socialTelegram || '#';
   if (iLink) iLink.href = pharmacyProfile.socialInstagram || '#';
   if (pLink) pLink.href = `tel:${pharmacyProfile.socialPhone || ''}`;
+  // لوحة الأدمن لا تتأثر بألوان المتجر (تبقى مقروءة دائماً)، وفيها معاينة مستقلة
+  if (!/admin/i.test(location.pathname)) applyThemeColors(pharmacyProfile);
 }
 
 // ================= 31. FIRESTORE REALTIME SYNC (FIX #1: ADMIN-ONLY LIVE PRICE SYNC) =================
