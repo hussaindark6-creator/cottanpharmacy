@@ -844,17 +844,16 @@ function renderProductDetailDOM(p) {
   const color = getBrandColor(p.brand);
   const pdImgEl = document.getElementById('pdImage');
   if (!pdImgEl) return;
-  pdImgEl.style.background = color + '18';
   const cleanImg = sanitizeUrl(p.imageUrl);
   pdImgEl.innerHTML = cleanImg ? `<img src="${cleanImg}">` : (icons[p.type] || icons.bottle)(color);
 
-  document.getElementById('pdBrand').textContent = p.brand || '';
-  document.getElementById('pdName').textContent = p.name + (p.size ? ' — ' + p.size : '');
+  document.getElementById('pdName').textContent = p.name + ((p.size && p.size !== 'عبوة قياسية') ? ' — ' + p.size : '');
 
   const discountPct = p.oldPrice ? Math.round((1 - p.price/p.oldPrice) * 100) : null;
   document.getElementById('pdPriceRow').innerHTML = `
     <span class="pd-price mono">${fmtPrice(p.price)}</span>
-    ${p.oldPrice ? `<span class="pd-oldprice mono">${fmtPrice(p.oldPrice)}</span>` : ''}`;
+    ${p.oldPrice ? `<span class="pd-oldprice mono">${fmtPrice(p.oldPrice)}</span>` : ''}
+    ${(p.oldPrice && discountPct > 0) ? `<span class="pd-discount">وفّري ${discountPct}%</span>` : ''}`;
 
   const stockEl = document.getElementById('pdStock');
   const inStock = (p.inStock !== false && (p.stockQuantity === undefined || p.stockQuantity > 0));
@@ -873,7 +872,8 @@ function renderProductDetailDOM(p) {
 
   const addBtn = document.getElementById('pdAddBtn');
   if (!addBtn.dataset.orig) addBtn.dataset.orig = addBtn.innerHTML;
-  addBtn.innerHTML = inStock ? addBtn.dataset.orig : '🔔 أبلغيني عند التوفر';
+  addBtn.innerHTML = inStock ? addBtn.dataset.orig : '<span class="pd-add-label">🔔 أبلغيني عند التوفر</span><span class="pd-add-total mono" id="pdAddTotal"></span>';
+  updatePdTotal(p);
   addBtn.onclick = () => {
     if (inStock) addToCart(p.id, false, pdQty);
     else openStockAlertModal(p.id);
@@ -949,10 +949,18 @@ function switchPdTab(tab) {
   if (dTab) dTab.classList.add('active');
 }
 
+function updatePdTotal(p) {
+  const el = document.getElementById('pdAddTotal');
+  if (!el) return;
+  const prod = p || findProduct(currentProductId);
+  el.textContent = prod ? fmtPrice((Number(prod.price) || 0) * pdQty) : '';
+}
+
 function changePdQty(delta) {
   pdQty = Math.max(1, pdQty + delta);
   const qtyEl = document.getElementById('pdQtyVal');
   if (qtyEl) qtyEl.textContent = pdQty;
+  updatePdTotal();
 }
 
 function renderCrossSelling(currentP) {
