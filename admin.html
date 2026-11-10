@@ -1257,40 +1257,123 @@
             </div>
           </div>
 
-          <div style="background:#F9FAFB; padding:12px 14px; border-radius:12px; margin-top:8px;">
-            <div style="font-weight:800; font-size:13.5px; color:var(--ink); margin-bottom:10px;">اللون الرئيسي للموقع (Theme Color)</div>
-            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;" id="colorSwatchGrid"></div>
-            <div style="display:flex; align-items:center; gap:10px;">
-              <input type="color" id="adminPrimaryColorPicker" value="#E85D8A" oninput="onColorPickerChange()" style="width:44px; height:36px; padding:2px; cursor:pointer; border-radius:8px; border:1px solid #D1D5DB;">
-              <span style="font-size:11px; color:#6B7280;">أو اختاري لون مخصص بالكامل من هنا</span>
-            </div>
-          </div>
+          <style>
+            .tc-panel { margin-top:10px; }
+            .tc-title { font-weight:900; font-size:15px; color:var(--ink); margin:0 0 4px; }
+            .tc-sub { font-size:11.5px; color:#6B7280; margin:0 0 12px; line-height:1.7; }
+            .tc-preview-wrap { position:sticky; top:8px; z-index:5; background:#fff; border:1px solid #E5E7EB; border-radius:16px; padding:10px; margin-bottom:12px; box-shadow:0 6px 18px rgba(0,0,0,.06); }
+            .tc-preview-label { font-size:11px; font-weight:800; color:#6B7280; margin-bottom:6px; }
+            .tp-box { border-radius:14px; padding:10px; border:1px solid rgba(0,0,0,.08); transition:background .2s; }
+            .tp-top { display:flex; align-items:center; justify-content:space-between; padding:6px 10px; border-radius:10px; font-weight:800; font-size:12px; margin-bottom:8px; }
+            .tp-top i { width:8px; height:8px; border-radius:50%; display:inline-block; }
+            .tp-row { display:flex; gap:8px; }
+            .tp-card { flex:1; border-radius:14px; padding:6px; border:1px solid var(--line); }
+            .tp-media { position:relative; height:64px; border-radius:10px; margin-bottom:6px; }
+            .tp-heart { position:absolute; top:5px; inset-inline-end:5px; width:20px; height:20px; border-radius:50%; border:1px solid; display:grid; place-items:center; font-size:11px; background:var(--card,#fff); }
+            .tp-name { font-weight:800; font-size:11.5px; margin:0 3px 4px; }
+            .tp-foot { display:flex; align-items:center; justify-content:space-between; margin:0 3px; padding-top:4px; border-top:1px dashed var(--line); }
+            .tp-foot b { font-size:11.5px; }
+            .tp-bag { width:26px; height:26px; border-radius:9px 9px 9px 3px; display:grid; place-items:center; font-size:13px; }
+            .tp-note { font-size:11px; margin:8px 4px 0; }
+            .tc-row { background:#F9FAFB; border:1px solid #EEF0F3; border-radius:14px; padding:12px 14px; margin-bottom:10px; }
+            .tc-row-head { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+            .tc-num { width:22px; height:22px; border-radius:50%; background:#111827; color:#fff; font-size:12px; font-weight:900; display:grid; place-items:center; flex-shrink:0; }
+            .tc-name { font-weight:900; font-size:13.5px; color:#111827; }
+            .tc-pct { margin-inline-start:auto; font-size:10.5px; font-weight:800; color:#6B7280; background:#fff; border:1px solid #E5E7EB; border-radius:999px; padding:2px 8px; }
+            .tc-changes { font-size:11.5px; color:#4B5563; line-height:1.8; margin:0 0 10px; }
+            .tc-changes b { color:#111827; }
+            .tc-ctrl { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+            .tc-ctrl input[type=color] { width:46px; height:38px; padding:2px; cursor:pointer; border-radius:10px; border:1px solid #D1D5DB; background:#fff; }
+            .tc-hex { font-family:monospace; font-size:12px; color:#374151; background:#fff; border:1px solid #E5E7EB; border-radius:8px; padding:4px 8px; direction:ltr; }
+            .tc-auto { font-size:11px; font-weight:800; padding:6px 10px; border-radius:8px; border:1px solid #D1D5DB; background:#fff; cursor:pointer; }
+            .tc-presets { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+            @media (min-width:700px){ .tc-presets { grid-template-columns:repeat(3,1fr); } }
+          </style>
+          <div class="tc-panel">
+            <div class="tc-title">🎨 ألوان الموقع</div>
+            <p class="tc-sub">المتجر يعتمد 5 ألوان فقط. غيّري أي لون وستري أثره فوراً بالمعاينة أدناه. تحت كل لون مكتوب بالضبط ما الذي يتغيّر به.</p>
 
-          <div style="background:#F9FAFB; padding:12px 14px; border-radius:12px; margin-top:8px;">
-            <div style="font-weight:800; font-size:13.5px; color:var(--ink); margin-bottom:4px;">🎨 تغيير لون الثيم (لون خلفية الموقع)</div>
-            <p style="font-size:11px; color:#6B7280; margin:0 0 10px;">اللون الأبيض بالموقع يصير اللون الذي تختارينه، والبطاقات تأخذ درجة أفتح منه. اختاري لوناً فاتحاً ليبقى الكلام مقروءاً.</p>
-            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;" id="pageBgSwatchGrid"></div>
-            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-              <input type="color" id="adminPageBgPicker" value="#FFFFFF" oninput="onPageBgChange()" style="width:44px; height:36px; padding:2px; cursor:pointer; border-radius:8px; border:1px solid #D1D5DB;">
-              <span style="font-size:11px; color:#6B7280;">لون مخصص</span>
-              <button type="button" onclick="selectPageBg('')" style="font-size:11px; font-weight:800; padding:6px 10px; border-radius:8px; border:1px solid #D1D5DB; background:#fff; cursor:pointer;">↺ الأبيض الافتراضي</button>
+            <div class="tc-preview-wrap">
+              <div class="tc-preview-label">👁️ معاينة مباشرة (بطاقة منتج كما ستظهر لزبائنك)</div>
+              <div class="tp-box" id="themePreviewBox" style="background:var(--paper,#fff); color:var(--ink,#1F2937);">
+                <div class="tp-top" style="background:var(--card,#fff); border:1px solid var(--line,#eee);"><span style="color:var(--ink);">متجرك</span><i style="background:var(--accent-2,var(--accent));"></i></div>
+                <div class="tp-row">
+                  <div class="tp-card" style="background:var(--card,#fff);">
+                    <div class="tp-media" style="background:var(--media, var(--surface,#f5f5f5));"><span class="tp-heart" style="color:var(--accent-2);">♥</span></div>
+                    <div class="tp-name" style="color:var(--name-color,var(--ink));">اسم المنتج هنا</div>
+                    <div class="tp-foot"><b style="color:var(--ink);">12,000 د.ع</b><span class="tp-bag" style="background:var(--accent); color:var(--on-accent,#fff);">🛍</span></div>
+                  </div>
+                  <div class="tp-card" style="background:var(--card,#fff);">
+                    <div class="tp-media" style="background:var(--media, var(--surface,#f5f5f5));"><span class="tp-heart" style="color:var(--accent-2);">♥</span></div>
+                    <div class="tp-name" style="color:var(--name-color,var(--ink));">منتج آخر</div>
+                    <div class="tp-foot"><b style="color:var(--ink);">8,500 د.ع</b><span class="tp-bag" style="background:var(--accent); color:var(--on-accent,#fff);">🛍</span></div>
+                  </div>
+                </div>
+                <div class="tp-note" style="color:var(--text-soft);">هذا نص ثانوي (وصف المنتج، الملاحظات)</div>
+              </div>
             </div>
-            <input type="hidden" id="adminPageBgValue" value="">
-          </div>
 
-          <div style="background:#F9FAFB; padding:12px 14px; border-radius:12px; margin-top:8px;">
-            <div style="font-weight:800; font-size:13.5px; color:var(--ink); margin-bottom:4px;">🎨 تنسيقات ألوان جاهزة (لونان متناسقان)</div>
-            <p style="font-size:11px; color:#6B7280; margin:0 0 10px;">اختاري تنسيقاً واحداً فيضبط اللون الأساسي والثانوي والخلفية معاً بتناسق احترافي. ثم عدّلي أي لون يدوياً إن أردتِ.</p>
-            <div id="palettePresetGrid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px;"></div>
-          </div>
-          <div style="background:#F9FAFB; padding:12px 14px; border-radius:12px; margin-top:8px;">
-            <div style="font-weight:800; font-size:13.5px; color:var(--ink); margin-bottom:4px;">✨ اللون الثانوي (تفاصيل فقط)</div>
-            <p style="font-size:11px; color:#6B7280; margin:0 0 10px;">يظهر بتفاصيل صغيرة فقط: قلب المفضلة، اسم الماركة، شارة الخصم، الخط تحت العناوين، ونقطة التبويب. لا يطغى على الأساسي، ويُنسَّق تلقائياً معه إن كانا متقاربين جداً.</p>
-            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-              <input type="color" id="adminSecondaryPicker" value="#C9A24B" oninput="onSecondaryChange()" style="width:44px; height:36px; padding:2px; cursor:pointer; border-radius:8px; border:1px solid #D1D5DB;">
-              <button type="button" onclick="clearSecondary()" style="font-size:11px; font-weight:800; padding:6px 10px; border-radius:8px; border:1px solid #D1D5DB; background:#fff; cursor:pointer;">بدون لون ثانوي</button>
+            <div class="tc-row">
+              <div class="tc-row-head"><span class="tc-num">★</span><span class="tc-name">ابدئي بتنسيق جاهز (اختياري)</span></div>
+              <p class="tc-changes">الضغطة الواحدة تضبط الألوان كلها معاً بتناسق احترافي، وبعدها عدّلي أي لون يدوياً.</p>
+              <div class="tc-presets" id="palettePresetGrid"></div>
             </div>
-            <input type="hidden" id="adminSecondaryValue" value="">
+
+            <div class="tc-row">
+              <div class="tc-row-head"><span class="tc-num">1</span><span class="tc-name">لون الخلفية</span><span class="tc-pct">~60%</span></div>
+              <p class="tc-changes"><b>يتغيّر به:</b> خلفية كل صفحات المتجر (الرئيسية، الأقسام، السلة، حسابي…) والمساحات بين البطاقات.</p>
+              <div style="display:grid; grid-template-columns:repeat(8,1fr); gap:6px; margin-bottom:10px;" id="pageBgSwatchGrid"></div>
+              <div class="tc-ctrl">
+                <input type="color" id="adminPageBgPicker" value="#FFFFFF" oninput="onThemeOptInput('bg')">
+                <span class="tc-hex" id="adminPageBgHex">أبيض (افتراضي)</span>
+                <button type="button" class="tc-auto" onclick="setThemeOpt('bg','')">↺ الأبيض الافتراضي</button>
+              </div>
+              <input type="hidden" id="adminPageBgValue" value="">
+            </div>
+
+            <div class="tc-row">
+              <div class="tc-row-head"><span class="tc-num">2</span><span class="tc-name">لون البطاقات</span><span class="tc-pct">~20%</span></div>
+              <p class="tc-changes"><b>يتغيّر به:</b> خلفية بطاقات المنتجات، الشريط العلوي والسفلي، النوافذ المنبثقة، وصندوق الوصف بصفحة المنتج. والمساحة بين صورة المنتج والسعر. <b>تلقائي</b> = يُشتق من لون الخلفية.</p>
+              <div class="tc-ctrl">
+                <input type="color" id="adminCardPicker" value="#FFFFFF" oninput="onThemeOptInput('card')">
+                <span class="tc-hex" id="adminCardHex">تلقائي</span>
+                <button type="button" class="tc-auto" onclick="setThemeOpt('card','')">↺ تلقائي</button>
+              </div>
+              <input type="hidden" id="adminCardValue" value="">
+            </div>
+
+            <div class="tc-row">
+              <div class="tc-row-head"><span class="tc-num">3</span><span class="tc-name">اللون الأساسي (هوية الصيدلية)</span><span class="tc-pct">~20%</span></div>
+              <p class="tc-changes"><b>يتغيّر به:</b> زر كيس التسوق على البطاقات، زر «أضف إلى السلة» بصفحة المنتج، التبويب النشط بالشريط السفلي، الروابط («عرض الكل»)، والأزرار الرئيسية.</p>
+              <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px;" id="colorSwatchGrid"></div>
+              <div class="tc-ctrl">
+                <input type="color" id="adminPrimaryColorPicker" value="#E85D8A" oninput="onColorPickerChange()">
+                <span class="tc-hex" id="adminPrimaryHex">#E85D8A</span>
+                <span style="font-size:11px; color:#6B7280;">أو اختاري لوناً مخصصاً</span>
+              </div>
+            </div>
+
+            <div class="tc-row">
+              <div class="tc-row-head"><span class="tc-num">4</span><span class="tc-name">اللون الثانوي</span><span class="tc-pct">~10%</span></div>
+              <p class="tc-changes"><b>يتغيّر به:</b> اسم المنتج على البطاقة وبصفحته، قلب المفضلة، شارة الخصم، الخط الصغير تحت العناوين، علامة (+) على زر التسوق، ونقطة التبويب النشط. يُنسَّق تلقائياً مع الأساسي ولا يطغى عليه.</p>
+              <div class="tc-ctrl">
+                <input type="color" id="adminSecondaryPicker" value="#C9A24B" oninput="onThemeOptInput('sec')">
+                <span class="tc-hex" id="adminSecondaryHex">بدون</span>
+                <button type="button" class="tc-auto" onclick="setThemeOpt('sec','')">بدون لون ثانوي</button>
+              </div>
+              <input type="hidden" id="adminSecondaryValue" value="">
+            </div>
+
+            <div class="tc-row">
+              <div class="tc-row-head"><span class="tc-num">5</span><span class="tc-name">لون النص</span></div>
+              <p class="tc-changes"><b>يتغيّر به:</b> الأسعار، العناوين، الأيقونات، وكل الكتابة بالمتجر (والنص الثانوي يُشتق منه). إن اخترتِ خلفية غامقة اختاري نصاً فاتحاً. <b>تلقائي</b> = غامق مع الخلفية الفاتحة، وفاتح مع الغامقة.</p>
+              <div class="tc-ctrl">
+                <input type="color" id="adminTextPicker" value="#1F2937" oninput="onThemeOptInput('text')">
+                <span class="tc-hex" id="adminTextHex">تلقائي</span>
+                <button type="button" class="tc-auto" onclick="setThemeOpt('text','')">↺ تلقائي</button>
+              </div>
+              <input type="hidden" id="adminTextValue" value="">
+            </div>
           </div>
         </fieldset>
 
