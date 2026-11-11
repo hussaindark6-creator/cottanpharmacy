@@ -3439,3 +3439,144 @@ header .nav .logo-block {
   .pd-add-total { font-size: 12px; padding: 3px 8px; }
 }
 .pd-add-label { white-space: nowrap; }
+
+
+/* ==========================================================
+   🌿 هوية بصرية فاخرة (v3): تبويب سفلي بفقاعة نافرة، شريط مميزات، حركات ناعمة، تسجيل دخول متدرج
+   مقتبسة من: شريط التنقل المنحني (Mobile Navigation Bar)، الأزرار والتبويبات والإشعارات (Calm Kit)،
+   شاشات الدخول المتدرجة، وصفحة المنتج الراقية (Velora)
+   ========================================================== */
+
+/* ---------- 1) الشريط السفلي: فقاعة نافرة للتبويب النشط ---------- */
+.bottom-nav {
+  background: var(--card, #fff); backdrop-filter: none;
+  border-radius: 28px 28px 0 0; border-top: 1px solid var(--line);
+  box-shadow: 0 -10px 30px rgba(0,0,0,.08);
+  padding: 10px 6px calc(8px + env(safe-area-inset-bottom));
+  overflow: visible;
+}
+.bn-item { padding: 6px 2px 2px; gap: 4px; border-radius: 0; z-index: 1; }
+.bn-item::before, .bn-item.active::before, .bn-item.active::after { display: none !important; animation: none; }
+.bn-item svg { width: 23px; height: 23px; transition: transform .35s cubic-bezier(.34,1.56,.64,1), background .25s, color .25s, margin .25s; }
+.bn-item .lbl { font-size: 10.5px; font-weight: 700; transition: color .2s, transform .3s; }
+.bn-item.active { color: var(--ink); }
+.bn-item.active svg {
+  width: 58px; height: 58px; padding: 13px; box-sizing: border-box;
+  margin-bottom: -33px; transform: translateY(-34px);
+  border-radius: 50%; border: 5px solid var(--paper, #fff);
+  background: linear-gradient(145deg, var(--accent) 0%, var(--accent-dark, var(--accent)) 100%);
+  color: var(--on-accent); box-shadow: 0 10px 22px rgba(0,0,0,.22);
+  animation: bnBubbleIn .45s cubic-bezier(.34,1.56,.64,1);
+}
+.bn-item.active .lbl { color: var(--accent); font-weight: 900; }
+@keyframes bnBubbleIn { from { transform: translateY(-14px) scale(.6); opacity: .4; } to { transform: translateY(-34px) scale(1); opacity: 1; } }
+#bn-cart.active .badge-count { top: -30px !important; left: 50% !important; transform: translateX(14px) !important; z-index: 3; }
+#bn-cart { transition: transform .2s; }
+#bn-cart.cart-bump svg { animation: cartBump .5s cubic-bezier(.34,1.56,.64,1); }
+@keyframes cartBump { 0% { transform: scale(1); } 40% { transform: scale(1.35) rotate(-8deg); } 100% { transform: scale(1); } }
+#bn-cart.active.cart-bump svg { animation: none; }
+body { padding-bottom: 96px; }
+
+/* ---------- 2) شريط المميزات تحت البنر ---------- */
+.trust-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 14px 0 4px; }
+.trust-item {
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px;
+  background: var(--card, #fff); border: 1px solid var(--line); border-radius: 18px; padding: 10px 4px 9px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.04);
+}
+.trust-ico { width: 38px; height: 38px; border-radius: 14px; display: grid; place-items: center; color: var(--accent); background: var(--surface); margin-bottom: 4px; }
+.trust-ico svg { width: 21px; height: 21px; }
+.trust-item b { font-size: 11px; font-weight: 800; color: var(--ink); line-height: 1.3; }
+.trust-item small { font-size: 9.5px; color: var(--text-soft); line-height: 1.3; }
+@media (min-width: 768px) { .trust-strip { gap: 14px; margin-top: 18px; } .trust-item { flex-direction: row; text-align: start; gap: 12px; padding: 14px 16px; } .trust-item > b, .trust-item > small { display: block; } .trust-ico { margin: 0; flex-shrink: 0; width: 44px; height: 44px; } .trust-item b { font-size: 13px; } .trust-item small { font-size: 11px; } }
+
+/* ---------- 3) لمسات الفخامة العامة ---------- */
+.hero-slider-wrapper, .hero-slider-track { border-radius: 26px; }
+.hero-wrap { box-shadow: none; }
+.double-banner-card { border-radius: 24px; box-shadow: 0 10px 26px rgba(0,0,0,.08); }
+.search-bar { box-shadow: 0 8px 24px rgba(0,0,0,.05); padding: 12px 18px; }
+.form-field input, .form-field textarea, .form-field select { border-radius: 16px; background: var(--surface); border: 1.5px solid transparent; transition: border-color .2s, background .2s, box-shadow .2s; color: var(--ink); }
+.form-field input:focus, .form-field textarea:focus, .form-field select:focus { background: var(--card, #fff); border-color: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent); outline: none; }
+
+/* ---------- 4) الحركة: انتقال الصفحات، الظهور التدريجي، لمعان تحميل الصور ---------- */
+.view.active { animation: viewIn .42s cubic-bezier(.22,1,.36,1); }
+@keyframes viewIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.rv { opacity: 0; transform: translateY(18px) scale(.985); }
+.rv.rv-in { opacity: 1; transform: none; transition: opacity .55s ease var(--rv-d, 0ms), transform .6s cubic-bezier(.22,1,.36,1) var(--rv-d, 0ms); }
+.product-thumb::after, .pd-image::after {
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,.55) 50%, transparent 70%);
+  background-size: 220% 100%; animation: shimmer 1.6s linear 2; opacity: .7;
+}
+@keyframes shimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+.product-thumb img, .pd-image img { position: relative; z-index: 1; animation: imgIn .6s ease both; }
+@keyframes imgIn { from { opacity: 0; transform: scale(1.04); } to { opacity: 1; transform: none; } }
+@media (hover: hover) { .product-card:hover .product-thumb img { transform: scale(1.06); transition: transform .5s cubic-bezier(.22,1,.36,1); } .product-thumb img { transition: transform .5s cubic-bezier(.22,1,.36,1); } }
+
+/* ---------- 5) الإشعار (Toast) بنمط بطاقة ناعمة ---------- */
+.toast {
+  bottom: 112px; background: var(--card, #fff); color: var(--ink); border: 1px solid var(--line);
+  border-inline-start: 4px solid var(--accent-2); border-radius: 18px; padding: 12px 18px;
+  box-shadow: 0 16px 38px rgba(0,0,0,.18); white-space: normal; max-width: min(86vw, 420px);
+  display: flex; align-items: center; gap: 10px; text-align: start; font-weight: 800;
+}
+.toast::before { content: "✓"; flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; font-size: 13px; font-weight: 900; }
+
+/* ---------- 6) تسجيل الدخول: ترويسة متدرجة + بطاقة نموذج ---------- */
+.auth-shell { border-radius: 30px; overflow: hidden; background: var(--card, #fff); border: 1px solid var(--line); box-shadow: 0 18px 44px rgba(0,0,0,.10); margin: 6px 0 24px; max-width: 520px; margin-inline: auto; }
+.auth-hero { position: relative; text-align: center; padding: 30px 22px 54px; color: var(--on-accent); background: linear-gradient(150deg, var(--accent) 0%, var(--accent-dark, var(--accent)) 100%); }
+.auth-hero::before, .auth-hero::after { content: ""; position: absolute; border-radius: 50%; background: rgba(255,255,255,.10); }
+.auth-hero::before { width: 150px; height: 150px; top: -50px; inset-inline-start: -40px; }
+.auth-hero::after { width: 90px; height: 90px; bottom: 10px; inset-inline-end: -20px; }
+.auth-logo { width: 62px; height: 62px; border-radius: 22px; margin: 0 auto 12px; display: grid; place-items: center; background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.3); backdrop-filter: blur(6px); position: relative; z-index: 1; }
+.auth-logo svg { width: 32px; height: 32px; }
+.auth-hero h3 { font-size: 19px; font-weight: 900; margin: 0 0 6px; position: relative; z-index: 1; }
+.auth-hero p { font-size: 12.5px; opacity: .9; margin: 0; position: relative; z-index: 1; }
+.auth-wave { position: absolute; bottom: -1px; left: 0; width: 100%; height: 34px; z-index: 1; }
+.auth-sheet { padding: 6px 20px 22px; }
+.auth-sheet .phone-auth-tabs { display: flex; gap: 4px; padding: 4px; background: var(--surface); border-radius: 18px; margin: 0 0 16px; border: 0; }
+.auth-sheet .phone-auth-tab { flex: 1; padding: 11px 8px; border-radius: 14px; border: 0; background: transparent; color: var(--text-soft); font-family: inherit; font-weight: 800; font-size: 13px; cursor: pointer; transition: background .25s, color .25s, box-shadow .25s; }
+.auth-sheet .phone-auth-tab.active { background: var(--accent); color: var(--on-accent); box-shadow: 0 6px 14px rgba(0,0,0,.16); }
+.auth-field { position: relative; margin-bottom: 12px; }
+.auth-field-ico { position: absolute; inset-inline-start: 14px; top: 50%; transform: translateY(-50%); color: var(--accent); display: grid; pointer-events: none; }
+.auth-field-ico svg { width: 20px; height: 20px; }
+.auth-field input { width: 100%; box-sizing: border-box; padding: 15px 16px 15px 16px; padding-inline-start: 46px; border-radius: 18px; border: 1.5px solid transparent; background: var(--surface); font-family: inherit; font-size: 14px; color: var(--ink); transition: border-color .2s, background .2s, box-shadow .2s; }
+.auth-field input::placeholder { color: var(--text-soft); opacity: .8; }
+.auth-field input:focus { outline: none; background: var(--card, #fff); border-color: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent); }
+.auth-btn-primary { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; height: 52px; border: 0; border-radius: 999px; cursor: pointer; font-family: inherit; font-weight: 900; font-size: 14.5px; color: var(--on-accent); background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark, var(--accent)) 100%); box-shadow: 0 10px 22px rgba(0,0,0,.18); margin-bottom: 10px; transition: transform .2s; }
+.auth-btn-primary:active { transform: scale(.98); }
+.auth-btn-secondary { width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; height: 50px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--card, #fff); color: var(--ink); font-family: inherit; font-weight: 800; font-size: 14px; cursor: pointer; }
+.auth-divider { display: flex; align-items: center; gap: 10px; margin: 14px 0; color: var(--text-soft); font-size: 12px; }
+.auth-divider::before, .auth-divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+/* ---------- 7) صفحة المنتج: شارات، زر مفضلة، صف الثقة ---------- */
+.pd-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; min-height: 0; }
+.pd-badge { font-size: 11px; font-weight: 900; padding: 4px 12px; border-radius: 999px; background: var(--surface); color: var(--ink); }
+.pd-badge.accent { background: var(--accent-2); color: var(--on-accent-2); }
+.pd-badge.warn { background: #FEF3C7; color: #92400E; }
+.pd-badge.muted { background: var(--line); color: var(--text-soft); }
+.pd-float-end { display: flex; gap: 8px; }
+.pd-wish { color: var(--accent-2); transition: transform .25s cubic-bezier(.34,1.56,.64,1), background .2s; }
+.pd-wish:active { transform: scale(.88); }
+.pd-wish.active { background: var(--accent-2); color: var(--on-accent-2); border-color: var(--accent-2); }
+.pd-trust { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 0 0 22px; }
+.pd-trust > div { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; padding: 10px 4px; border-radius: 16px; background: var(--surface); }
+.pd-trust svg { width: 22px; height: 22px; color: var(--accent); margin-bottom: 3px; }
+.pd-trust b { font-size: 11px; font-weight: 800; color: var(--ink); }
+.pd-trust small { font-size: 9.5px; color: var(--text-soft); }
+.pd-buy .pd-qty-stepper { order: 3; }
+
+@media (min-width: 768px) { .pd-trust small { font-size: 11px; } .pd-trust b { font-size: 12.5px; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .rv, .rv.rv-in { opacity: 1 !important; transform: none !important; transition: none !important; }
+  .view.active, .product-thumb img, .pd-image img, .bn-item.active svg, .p-bag-btn.pop { animation: none !important; }
+  .product-thumb::after, .pd-image::after { display: none; }
+}
+
+/* بطاقتا العروض تتبعان ألوان الثيم بدل الوردي/الأزرق الثابتين */
+.double-banner-bundles { background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 12%, var(--card, #fff)) 0%, color-mix(in srgb, var(--accent) 26%, var(--card, #fff)) 100%) !important; border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent) !important; }
+.double-banner-offers { background: linear-gradient(135deg, color-mix(in srgb, var(--accent-2) 14%, var(--card, #fff)) 0%, color-mix(in srgb, var(--accent-2) 32%, var(--card, #fff)) 100%) !important; border: 1px solid color-mix(in srgb, var(--accent-2) 28%, transparent) !important; }
+.double-banner-text h4 { color: var(--ink); }
+.double-banner-text p { color: var(--text-soft); }
+.double-banner-btn { background: var(--card, #fff); color: var(--accent); }
