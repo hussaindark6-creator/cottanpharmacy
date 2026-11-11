@@ -959,7 +959,7 @@ function renderProductGrid(targetId, list, emptyMsg) {
             ${p.oldPrice ? `<span class="p-oldprice mono" id="oldprice-val-${sanitizeText(p.id)}">${fmtPrice(p.oldPrice)}</span>` : ''}
           </div>
           ${inStock
-            ? `<button class="p-bag-btn" aria-label="أضف إلى السلة" onclick="event.stopPropagation(); this.classList.remove('pop'); void this.offsetWidth; this.classList.add('pop'); addToCart('${sanitizeText(p.id)}')">
+            ? `<button class="p-bag-btn" aria-label="أضف إلى السلة" onclick="event.stopPropagation(); this.classList.remove('pop'); void this.offsetWidth; this.classList.add('pop'); flyToCart(this.closest('.product-card')?.querySelector('.product-thumb img')); addToCart('${sanitizeText(p.id)}')">
                  <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg>
                  <span class="p-bag-plus">+</span>
                </button>`
@@ -1883,6 +1883,56 @@ function showToast(msg) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
 }
+
+
+// ✨ حركة "الطيران للسلة": نسخة مصغرة من صورة المنتج تطير إلى أيقونة السلة بالشريط السفلي ثم ترتد الأيقونة
+function flyToCart(imgEl) {
+  try {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const target = document.querySelector('#bn-cart svg') || document.getElementById('bn-cart');
+    if (!imgEl || !target || !imgEl.getBoundingClientRect) return;
+    const a = imgEl.getBoundingClientRect(), t = target.getBoundingClientRect();
+    if (!a.width || !t.width) return;
+    const size = Math.min(84, Math.max(48, a.width * 0.5));
+    const fly = document.createElement('img');
+    fly.src = imgEl.currentSrc || imgEl.src; fly.alt = '';
+    Object.assign(fly.style, { position: 'fixed', zIndex: 9999, left: (a.left + a.width/2 - size/2) + 'px', top: (a.top + a.height/2 - size/2) + 'px', width: size + 'px', height: size + 'px', objectFit: 'contain', borderRadius: '18px', background: 'var(--card, #fff)', boxShadow: '0 12px 28px rgba(0,0,0,.25)', pointerEvents: 'none', padding: '6px', boxSizing: 'border-box' });
+    document.body.appendChild(fly);
+    const dx = (t.left + t.width/2) - (a.left + a.width/2), dy = (t.top + t.height/2) - (a.top + a.height/2);
+    const anim = fly.animate([
+      { transform: 'translate(0,0) scale(1)', opacity: 1 },
+      { transform: `translate(${dx*0.55}px, ${dy*0.35 - 60}px) scale(.8)`, opacity: .95, offset: .55 },
+      { transform: `translate(${dx}px, ${dy}px) scale(.18)`, opacity: .15 }
+    ], { duration: 720, easing: 'cubic-bezier(.5,0,.2,1)' });
+    anim.onfinish = () => { fly.remove(); const c = document.getElementById('bn-cart'); if (c) { c.classList.remove('cart-bump'); void c.offsetWidth; c.classList.add('cart-bump'); } };
+  } catch (e) { /* الحركة اختيارية */ }
+}
+window.flyToCart = flyToCart;
+
+// ✨ ظهور تدريجي للبطاقات عند التمرير (متدرج) — بلا أي تأثير على من يفضّل تقليل الحركة
+(function initRevealOnScroll() {
+  if (!('IntersectionObserver' in window) || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+  const SEL = '.product-card, .brand-tile, .cat-card-modern, .bundle-card, .trust-item, .double-banner-card';
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(en => { if (en.isIntersecting) { en.target.classList.add('rv-in'); io.unobserve(en.target); } });
+  }, { rootMargin: '0px 0px -6% 0px', threshold: 0.05 });
+  const seen = new WeakSet();
+  const prep = (root) => {
+    root.querySelectorAll(SEL).forEach((el) => {
+      if (seen.has(el)) return; seen.add(el);
+      const idx = Array.prototype.indexOf.call(el.parentElement ? el.parentElement.children : [], el);
+      el.style.setProperty('--rv-d', Math.min(idx, 7) * 60 + 'ms');
+      el.classList.add('rv');
+      io.observe(el);
+      setTimeout(() => el.classList.add('rv-in'), 2500); // احتياط: لا يبقى عنصر مخفياً أبداً
+    });
+  };
+  window.addEventListener('DOMContentLoaded', () => {
+    const main = document.querySelector('main.wrap') || document.body;
+    prep(main);
+    new MutationObserver((muts) => { muts.forEach(m => m.addedNodes.forEach(n => { if (n.nodeType === 1) { if (n.matches && n.matches(SEL)) prep(n.parentElement || n); else prep(n); } })); }).observe(main, { childList: true, subtree: true });
+  });
+})();
 
 // ================= 35. INITIALIZATION & BOOTSTRAP =================
 window.addEventListener('DOMContentLoaded', async () => {
