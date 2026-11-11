@@ -874,8 +874,18 @@ function renderProductDetailDOM(p) {
   if (!addBtn.dataset.orig) addBtn.dataset.orig = addBtn.innerHTML;
   addBtn.innerHTML = inStock ? addBtn.dataset.orig : '<span class="pd-add-label">🔔 أبلغيني عند التوفر</span><span class="pd-add-total mono" id="pdAddTotal"></span>';
   updatePdTotal(p);
+  const badgesEl = document.getElementById('pdBadges');
+  if (badgesEl) {
+    const bs = [];
+    const created = p.createdAt || p.addedAt || p.updatedAt;
+    const ageDays = created ? (Date.now() - new Date(created).getTime()) / 86400000 : 9999;
+    if (inStock && ageDays >= 0 && ageDays <= 21) bs.push('<span class="pd-badge accent">وصل حديثاً</span>');
+    if (!inStock) bs.push('<span class="pd-badge muted">غير متوفر حالياً</span>');
+    badgesEl.innerHTML = bs.join('');
+  }
+  updatePdWish();
   addBtn.onclick = () => {
-    if (inStock) addToCart(p.id, false, pdQty);
+    if (inStock) { if (typeof flyToCart === 'function') flyToCart(document.querySelector('#pdImage img')); addToCart(p.id, false, pdQty); }
     else openStockAlertModal(p.id);
   };
 
@@ -947,6 +957,20 @@ function switchPdTab(tab) {
   pdActiveTab = 'desc';
   const dTab = document.getElementById('pdTabDesc');
   if (dTab) dTab.classList.add('active');
+}
+
+function updatePdWish() {
+  const btn = document.getElementById('pdWishBtn');
+  if (!btn) return;
+  const on = typeof wishlist !== 'undefined' && wishlist.has(String(currentProductId));
+  btn.classList.toggle('active', !!on);
+  const svg = btn.querySelector('svg');
+  if (svg) svg.setAttribute('fill', on ? 'currentColor' : 'none');
+}
+function pdToggleWish() {
+  if (!currentProductId) return;
+  toggleWishlist(currentProductId);
+  updatePdWish();
 }
 
 function updatePdTotal(p) {
@@ -1077,54 +1101,43 @@ function renderAccountView() {
       </div>`;
   } else {
     container.innerHTML = `
-      <div class="account-card">
-        <div style="font-size:38px; margin-bottom:8px;">🌸</div>
-        <h3 style="font-size:17px; font-weight:900; margin:0 0 6px;">مرحباً بك في ${sanitizeText(pharmacyProfile.name || 'الصيدلية')}</h3>
-        <p style="font-size:12.5px; color:var(--text-soft); margin:0 0 16px;">سجلي الدخول لحفظ منتجاتك المفضلة ومتابعة طلباتكِ:</p>
-
-        <div class="phone-auth-tabs">
-          <button type="button" class="phone-auth-tab active" id="phoneAuthTabLogin" onclick="switchPhoneAuthTab('login')">تسجيل الدخول</button>
-          <button type="button" class="phone-auth-tab" id="phoneAuthTabRegister" onclick="switchPhoneAuthTab('register')">حساب جديد</button>
+      <div class="auth-shell">
+        <div class="auth-hero">
+          <div class="auth-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c-4.5-1.5-7-5-7-9.5C5 8 7.5 5 12 3c4.5 2 7 5 7 8.5 0 4.5-2.5 8-7 9.5Z"/><path d="M12 8v13"/><path d="m12 13 3-3M12 16l-3-3"/></svg></div>
+          <h3>مرحباً بك في ${sanitizeText(pharmacyProfile.name || 'الصيدلية')}</h3>
+          <p>سجلي الدخول لحفظ منتجاتك المفضلة ومتابعة طلباتكِ</p>
+          <svg class="auth-wave" viewBox="0 0 400 40" preserveAspectRatio="none" aria-hidden="true"><path d="M0 40V22C60 4 120 0 200 14s140 22 200 2v24Z" fill="var(--card, #fff)"/></svg>
         </div>
-
-        <div id="phoneAuthErrorBox" class="phone-auth-error hidden"></div>
-
-        <div id="phoneAuthFormLogin">
-          <div class="form-field" style="text-align:right;">
-            <label>رقم الهاتف</label>
-            <input type="tel" id="phoneLoginPhone" placeholder="07xxxxxxxxx" inputmode="numeric">
+        <div class="auth-sheet">
+          <div class="phone-auth-tabs">
+            <button type="button" class="phone-auth-tab active" id="phoneAuthTabLogin" onclick="switchPhoneAuthTab('login')">تسجيل الدخول</button>
+            <button type="button" class="phone-auth-tab" id="phoneAuthTabRegister" onclick="switchPhoneAuthTab('register')">حساب جديد</button>
           </div>
-          <div class="form-field" style="text-align:right;">
-            <label>كلمة المرور (الرمز السري)</label>
-            <input type="password" id="phoneLoginPin" placeholder="••••" inputmode="numeric" maxlength="6">
+
+          <div id="phoneAuthErrorBox" class="phone-auth-error hidden"></div>
+
+          <div id="phoneAuthFormLogin">
+            <div class="auth-field"><span class="auth-field-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M11 18.5h2"/></svg></span><input type="tel" id="phoneLoginPhone" placeholder="07xxxxxxxxx" inputmode="numeric" aria-label="رقم الهاتف"></div>
+            <div class="auth-field"><span class="auth-field-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="3"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><input type="password" id="phoneLoginPin" placeholder="الرمز السري" inputmode="numeric" maxlength="6" aria-label="الرمز السري"></div>
+            <div id="turnstileLoginBox" style="display:flex; justify-content:center; margin-bottom:8px;"></div>
+            <button class="auth-btn-google auth-btn-primary" onclick="loginWithPhone()"><span>تسجيل الدخول</span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg></button>
           </div>
-          <div id="turnstileLoginBox" style="display:flex; justify-content:center; margin-bottom:8px;"></div>
-          <button class="auth-btn-google" style="background:var(--accent); color:#fff; border:none; margin-bottom:10px;" onclick="loginWithPhone()">تسجيل الدخول</button>
+
+          <div id="phoneAuthFormRegister" class="hidden">
+            <div class="auth-field"><span class="auth-field-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg></span><input type="text" id="phoneRegisterName" placeholder="الاسم الكامل" aria-label="الاسم الكامل"></div>
+            <div class="auth-field"><span class="auth-field-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M11 18.5h2"/></svg></span><input type="tel" id="phoneRegisterPhone" placeholder="07xxxxxxxxx" inputmode="numeric" aria-label="رقم الهاتف"></div>
+            <div class="auth-field"><span class="auth-field-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="3"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><input type="password" id="phoneRegisterPin" placeholder="رمز سري من 6 أرقام" inputmode="numeric" maxlength="6" aria-label="الرمز السري"></div>
+            <div id="turnstileRegisterBox" style="display:flex; justify-content:center; margin-bottom:8px;"></div>
+            <button class="auth-btn-google auth-btn-primary" onclick="registerWithPhone()"><span>إنشاء الحساب</span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"/></svg></button>
+          </div>
+
+          <div class="auth-divider"><span>أو تابعي عبر</span></div>
+
+          <button class="auth-btn-google auth-btn-secondary" onclick="signInWithGoogle()">
+            <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+            <span>Google</span>
+          </button>
         </div>
-
-        <div id="phoneAuthFormRegister" class="hidden">
-          <div class="form-field" style="text-align:right;">
-            <label>الاسم الكامل</label>
-            <input type="text" id="phoneRegisterName" placeholder="اسمكِ الكامل">
-          </div>
-          <div class="form-field" style="text-align:right;">
-            <label>رقم الهاتف</label>
-            <input type="tel" id="phoneRegisterPhone" placeholder="07xxxxxxxxx" inputmode="numeric">
-          </div>
-          <div class="form-field" style="text-align:right;">
-            <label>كلمة المرور (رمز سري من 6 أرقام)</label>
-            <input type="password" id="phoneRegisterPin" placeholder="••••••" inputmode="numeric" maxlength="6">
-          </div>
-          <div id="turnstileRegisterBox" style="display:flex; justify-content:center; margin-bottom:8px;"></div>
-          <button class="auth-btn-google" style="background:var(--accent); color:#fff; border:none; margin-bottom:10px;" onclick="registerWithPhone()">إنشاء الحساب</button>
-        </div>
-
-        <div class="auth-divider"><span>أو</span></div>
-
-        <button class="auth-btn-google" onclick="signInWithGoogle()">
-          <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-          المتابعة عبر Google
-        </button>
       </div>`;
   }
 }
