@@ -400,6 +400,7 @@ let pharmacyProfile = {
   secondaryColor: '',
   cardColor: '',
   textColor: '',
+  look: {},
   logoUrl: '',
   bannerImgUrl: 'https://imgdb.io/i/EQ4D9ag.png',
   announcementText: '✨ أهلاً بكم في متجرنا الإلكتروني 🌸',
@@ -586,13 +587,56 @@ function applyThemeColors(profile, target) {
   const root = target || document.documentElement;
   const tokens = computeThemeTokens(profile || {});
   THEME_MANAGED_VARS.forEach(k => { if (tokens[k]) root.style.setProperty(k, tokens[k]); else root.style.removeProperty(k); });
-  if (!target) {
+  if (!target && !window.__LOOK_PREVIEW) {
     try { localStorage.setItem(getStorageKey('theme_tokens'), JSON.stringify(tokens)); } catch (e) { /* غير حرج */ }
   }
   return tokens;
 }
 window.applyThemeColors = applyThemeColors;
 window.computeThemeTokens = computeThemeTokens;
+// ================= 🎛️ نظام الخيارات (Look): تطبيق تصميم الصيدلية =================
+// كل خيار يتحول إلى خاصية data-lk-* على <html>، وCSS يستجيب لها. القيم تُنقَّى دائماً عبر LookRegistry.normalizeLook
+// (قائمة مسموحة فقط)، فلا يمكن لأي قيمة مخزَّنة أن تحقن CSS أو HTML.
+window.__LOOK_PREVIEW = /[?&]lookPreview=1(&|$)/.test(location.search);
+function applyLook(rawLook) {
+  const L = window.LookRegistry;
+  if (!L) return null;
+  const look = L.normalizeLook(rawLook);
+  const root = document.documentElement;
+  Object.keys(look).forEach(k => root.setAttribute('data-lk-' + k.replace(/_/g, '-'), look[k]));
+  const body = L.FONTS[look.font_body] || L.FONTS.cairo;
+  const head = look.font_head === 'same' ? body : (L.FONTS[look.font_head] || body);
+  root.style.setProperty('--lk-font-body', body.fam);
+  root.style.setProperty('--lk-font-head', head.fam);
+  const url = L.fontsUrl(look);
+  let link = document.getElementById('lkFonts');
+  if (url && !(look.font_body === 'cairo' && look.font_head === 'same')) {
+    if (!link) { link = document.createElement('link'); link.id = 'lkFonts'; link.rel = 'stylesheet'; document.head.appendChild(link); }
+    if (link.getAttribute('href') !== url) link.setAttribute('href', url);
+  } else if (link) { link.remove(); }
+  if (!window.__LOOK_PREVIEW) { try { localStorage.setItem(getStorageKey('look'), JSON.stringify(look)); } catch (e) { /* غير حرج */ } }
+  return look;
+}
+window.applyLook = applyLook;
+
+// معاينة حية من استوديو التصميم (إطار داخل لوحة الأدمن بنفس الأصل فقط)
+if (window.__LOOK_PREVIEW) {
+  document.documentElement.classList.add('lk-preview');
+  window.addEventListener('message', (e) => {
+    if (e.origin !== location.origin) return;
+    const d = e.data;
+    if (!d || d.type !== 'look-preview') return;
+    try {
+      applyLook(d.look);
+      if (d.colors && typeof d.colors === 'object') {
+        if (d.colors.primaryColor && typeof applyDynamicThemeColor === 'function') applyDynamicThemeColor(d.colors.primaryColor);
+        applyThemeColors(d.colors);
+      }
+    } catch (err) { console.warn('look preview failed', err); }
+  });
+  try { window.parent.postMessage({ type: 'look-preview-ready' }, location.origin); } catch (e) { /* خارج إطار */ }
+}
+
 
 
 function applyPharmacyTemplate(templateId = 'template-one') {
@@ -780,7 +824,7 @@ function renderHomeCategoryCircles() {
   const wrap = document.getElementById('homeCategoryCircles');
   if (!wrap) return;
 
-  const visibleCats = categories.slice(0, 6);
+  const visibleCats = categories.slice(0, 10);
   const circlesHtml = visibleCats.map(c => {
     const cleanImg = sanitizeUrl(c.imageUrl);
     return `
@@ -795,7 +839,7 @@ function renderHomeCategoryCircles() {
   const moreHtml = `
     <div class="home-cat-circle" onclick="showView('categories')">
       <div class="home-cat-circle-img home-cat-circle-more">⋯</div>
-      <span class="home-cat-circle-lbl">المزيد</span>
+      <span class="home-cat-circle-lbl">كل الأقسام</span>
     </div>`;
 
   wrap.innerHTML = circlesHtml + moreHtml;
@@ -960,11 +1004,14 @@ function renderProductGrid(targetId, list, emptyMsg) {
           </div>
           ${inStock
             ? `<button class="p-bag-btn" aria-label="أضف إلى السلة" onclick="event.stopPropagation(); this.classList.remove('pop'); void this.offsetWidth; this.classList.add('pop'); flyToCart(this.closest('.product-card')?.querySelector('.product-thumb img')); addToCart('${sanitizeText(p.id)}')">
-                 <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg>
+                 <svg class="ic ic-cart" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.6L21 8H6"/><circle cx="9" cy="20.2" r="1.3"/><circle cx="17" cy="20.2" r="1.3"/></svg>
+                 <svg class="ic ic-bag" viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg>
+                 <svg class="ic ic-plus" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                 <span class="ic ic-text">أضف للسلة</span>
                  <span class="p-bag-plus">+</span>
                </button>`
             : `<button class="p-bag-btn is-alert" aria-label="أبلغيني عند التوفر" onclick="event.stopPropagation(); openStockAlertModal('${sanitizeText(p.id)}')">
-                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+                 <svg class="ic-bell" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
                </button>`}
         </div>
       </div>`;
@@ -1209,7 +1256,7 @@ function applyStoreSettings() {
   if (iLink) iLink.href = pharmacyProfile.socialInstagram || '#';
   if (pLink) pLink.href = `tel:${pharmacyProfile.socialPhone || ''}`;
   // لوحة الأدمن لا تتأثر بألوان المتجر (تبقى مقروءة دائماً)، وفيها معاينة مستقلة
-  if (!/admin/i.test(location.pathname)) applyThemeColors(pharmacyProfile);
+  if (!/admin/i.test(location.pathname)) { applyThemeColors(pharmacyProfile); applyLook(pharmacyProfile.look); }
 }
 
 // ================= 31. FIRESTORE REALTIME SYNC (FIX #1: ADMIN-ONLY LIVE PRICE SYNC) =================
@@ -1806,7 +1853,7 @@ async function handleSignOut() {
 const ADMIN_SECTION_PERMS = {
   stats: 'reports', orders: 'orders.view', import: 'products.create', products: 'products.view', trash: 'products.archive',
   cats: 'settings', offers: 'marketing', bundles: 'marketing', coupons: 'marketing', brands: 'settings', notifs: 'marketing',
-  audit: 'settings', staff: 'staff', subscription: 'settings', design: 'settings'
+  audit: 'settings', staff: 'staff', subscription: 'settings', design: 'settings', studio: 'settings'
 };
 
 function applyRoleToAdminUI() {
@@ -1888,7 +1935,7 @@ function showToast(msg) {
 // ✨ حركة "الطيران للسلة": نسخة مصغرة من صورة المنتج تطير إلى أيقونة السلة بالشريط السفلي ثم ترتد الأيقونة
 function flyToCart(imgEl) {
   try {
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if ((window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) || document.documentElement.getAttribute('data-lk-motion') === 'off') return;
     const target = document.querySelector('#bn-cart svg') || document.getElementById('bn-cart');
     if (!imgEl || !target || !imgEl.getBoundingClientRect) return;
     const a = imgEl.getBoundingClientRect(), t = target.getBoundingClientRect();
