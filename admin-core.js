@@ -309,7 +309,7 @@ function switchAdminSection(sec) {
     showToast('⚠️ هذا القسم غير متاح لصلاحيات دورك.');
     sec = defaultAdminSection();
   }
-  const sections = ['Stats', 'Orders', 'Import', 'Products', 'Cats', 'Offers', 'Bundles', 'Coupons', 'Brands', 'Notifs', 'Audit', 'Staff', 'Design', 'Subscription', 'Trash'];
+  const sections = ['Stats', 'Orders', 'Import', 'Products', 'Cats', 'Offers', 'Bundles', 'Coupons', 'Brands', 'Notifs', 'Audit', 'Staff', 'Studio', 'Design', 'Subscription', 'Trash'];
   
   sections.forEach(k => {
     const btn = document.getElementById('btnTabV' + k);
@@ -319,6 +319,7 @@ function switchAdminSection(sec) {
     if (el) el.style.display = isTarget ? 'block' : 'none';
   });
 
+  if (sec === 'studio' && typeof window.studioOpen === 'function') window.studioOpen();
   if (sec === 'stats') fetchRealAnalytics();
   if (sec === 'orders') fetchAdminOrdersList();
   if (sec === 'import' && typeof fetchTenantMasterCatalog === 'function') fetchTenantMasterCatalog();
