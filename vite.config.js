@@ -20,7 +20,7 @@ const CLASSIC_SCRIPTS = ['script.js', 'storefront.js', 'storefront-stubs.js', 'a
   'admin-page.js',
   'delivery-zones.js', 'smart-search.js', 'stock-alerts.js', 'reorder.js',
   'platform-host.js', 'template-contract.js', 'template-engine.js', 'super-admin-templates.js', 'super-admin-onboarding.js',
-  'admin-order-tools.js', 'image-compress.js', 'admin-inventory-badges.js',
+  'admin-order-tools.js', 'image-compress.js', 'admin-inventory-badges.js', 'admin-calm.js', 'look-registry.js', 'admin-studio.js',
   'super-admin-core.js', 'super-admin-pharmacies.js', 'super-admin-catalog.js', 'super-admin-billing.js', 'super-admin-reports.js', 'super-admin-platform.js'];
 function copyClassicScripts(defineMap) {
   return {
