@@ -7,8 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node run-tests.cjs && node run-platform-tests.cjs && node run-engine-tests.cjs && node run-onboarding-tests.cjs",
-    "prebuild": "node run-tests.cjs && node run-platform-tests.cjs && node run-engine-tests.cjs && node run-onboarding-tests.cjs"
+    "test": "node run-tests.cjs && node run-platform-tests.cjs && node run-engine-tests.cjs && node run-onboarding-tests.cjs && node run-look-tests.cjs",
+    "prebuild": "node run-tests.cjs && node run-platform-tests.cjs && node run-engine-tests.cjs && node run-onboarding-tests.cjs && node run-look-tests.cjs"
   },
   "devDependencies": {
     "vite": "^5.4.0"
