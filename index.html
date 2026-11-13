@@ -57,6 +57,10 @@
             root.style.setProperty('--rose', 'rgba(' + r + ',' + g + ',' + b + ',0.4)');
           }
           try {
+            var lk = JSON.parse(localStorage.getItem('saas_' + pid + '_look') || '{}');
+            for (var lkk in lk) { if (Object.prototype.hasOwnProperty.call(lk, lkk) && /^[a-z_]+$/.test(lkk) && /^[a-z0-9]{1,12}$/.test(String(lk[lkk]))) root.setAttribute('data-lk-' + lkk.replace(/_/g, '-'), String(lk[lkk])); }
+          } catch (e3) {}
+          try {
             var tk = JSON.parse(localStorage.getItem('saas_' + pid + '_theme_tokens') || '{}');
             for (var k in tk) { if (Object.prototype.hasOwnProperty.call(tk, k) && /^--[a-z0-9-]+$/.test(k)) root.style.setProperty(k, String(tk[k])); }
           } catch (e2) {}
@@ -341,6 +345,7 @@
           <div class="trust-item"><span class="trust-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z"/><path d="M9 11h6M9 14h4"/></svg></span><b>استشارة مجانية</b><small>مع الصيدلي</small></div>
           <div class="trust-item"><span class="trust-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7.5-4.9-10-9.5C.5 7.8 2.7 4 6.5 4 9 4 11 5.5 12 7c1-1.5 3-3 5.5-3 3.8 0 6 3.8 4.5 7.5C19.5 16.1 12 21 12 21Z"/></svg></span><b>عناية بتفاصيلك</b><small>اختيار موثوق</small></div>
         </div>
+        <div class="home-cat-circles-row" id="homeCategoryCircles"></div>
       </div>
 
       <!-- 🎁 بطاقتا العروض المزدوجتان -->
@@ -709,6 +714,7 @@
 
   <!-- Main JavaScript -->
   <!-- 🆕 المرحلة 3: كود الأدمن لم يعد يُحمَّل للزبائن. هذا المحمِّل الصغير يجلب admin-panel.js عند الحاجة لحساب الأدمن فقط. يجب أن يسبق script.js -->
+  <script defer src="look-registry.js"></script>
   <script defer src="admin-stubs.js"></script>
   <!-- 🆕 كود واجهة الزبون (السلة/الطلبات/العرض) في ملف مستقل — يجب أن يسبق script.js -->
   <script defer src="storefront.js"></script>
