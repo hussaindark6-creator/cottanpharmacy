@@ -320,6 +320,42 @@
     }
     input[type="file"] { background: var(--card) !important; border: 1.5px dashed var(--line) !important; border-radius: 16px !important; }
 
+
+    /* ===== استوديو التصميم ===== */
+    .st-layout { display: grid; gap: 18px; grid-template-columns: 1fr; margin-top: 14px; }
+    .st-preview { order: -1; position: sticky; top: 60px; z-index: 12; background: var(--card); border: 1px solid var(--line); border-radius: 26px; padding: 10px; box-shadow: var(--shadow-soft); }
+    @media (min-width: 1000px) { .st-layout { grid-template-columns: minmax(0, 1fr) 440px; align-items: start; } .st-preview { order: 0; top: 76px; } }
+    .st-preview-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+    .st-dirty { font-size: 11px; font-weight: 900; color: #B45309; background: #FEF3C7; padding: 3px 10px; border-radius: 999px; }
+    .st-devices { display: flex; gap: 4px; background: var(--surface); padding: 3px; border-radius: 999px; margin-inline-start: auto; }
+    .st-devices button { border: 0; background: transparent; font-family: inherit; font-weight: 800; font-size: 11.5px; padding: 6px 12px; border-radius: 999px; cursor: pointer; color: var(--text-soft); }
+    .st-devices button.on { background: var(--accent); color: var(--on-accent, #fff); }
+    .st-frame-wrap { position: relative; width: 100%; height: 360px; overflow: hidden; border-radius: 18px; background: #fff; border: 1px solid var(--line); }
+    @media (min-width: 1000px) { .st-frame-wrap { height: 620px; } }
+    .st-frame-wrap iframe { position: absolute; top: 0; left: 0; border: 0; transform-origin: 0 0; background: #fff; }
+    .st-note { font-size: 10.5px; color: var(--text-soft); margin: 8px 4px 0; line-height: 1.7; }
+    .st-group { background: var(--card); border: 1px solid var(--line); border-radius: 26px; margin-bottom: 14px; box-shadow: var(--shadow-soft); overflow: hidden; }
+    .st-group-head { display: flex; align-items: center; gap: 8px; padding: 14px 18px; cursor: pointer; font-size: 14.5px; user-select: none; }
+    .st-group-head::after { content: "›"; margin-inline-start: auto; width: 28px; height: 28px; border-radius: 50%; background: var(--surface); display: grid; place-items: center; font-size: 18px; font-weight: 900; color: var(--accent-dark); transform: rotate(-90deg); transition: transform .25s; }
+    .st-group.closed .st-group-head::after { transform: rotate(90deg); }
+    .st-group.closed .st-group-body { display: none; }
+    .st-group-body { padding: 4px 18px 16px; }
+    .st-opt { margin-bottom: 18px; }
+    .st-opt-label { font-weight: 900; font-size: 13px; color: var(--ink); margin-bottom: 8px; }
+    .st-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .st-chip { border: 1.5px solid var(--line); background: var(--card); color: var(--ink); border-radius: 14px; padding: 9px 13px; cursor: pointer; text-align: start; font-family: inherit; font-weight: 800; font-size: 12.5px; transition: border-color .2s, background .2s, transform .15s; }
+    .st-chip small { display: block; font-weight: 600; font-size: 10.5px; color: var(--text-soft); margin-top: 1px; }
+    .st-chip:active { transform: scale(.97); }
+    .st-chip.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 11%, var(--card)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent); }
+    .st-actions { display: flex; gap: 10px; flex-wrap: wrap; position: sticky; bottom: 14px; z-index: 30; margin-top: 8px; padding: 10px; background: color-mix(in srgb, var(--card) 88%, transparent); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 999px; box-shadow: 0 14px 34px rgba(70,60,40,.14); }
+    .st-btn { border: 0; font-family: inherit; font-weight: 900; font-size: 13.5px; padding: 12px 20px; border-radius: 999px; cursor: pointer; }
+    .st-btn.ghost { background: var(--surface); color: var(--ink); }
+    .st-btn.primary { margin-inline-start: auto; background: linear-gradient(135deg, var(--accent), var(--accent-dark)); color: var(--on-accent, #fff); box-shadow: 0 10px 22px color-mix(in srgb, var(--accent) 32%, transparent); }
+    .st-btn:disabled { opacity: .6; cursor: wait; }
+    #studioColorsHost .tc-preview-wrap { display: none; }
+    #studioColorsHost .tc-panel { margin-top: 0; }
+    #studioColorsHost .tc-title, #studioColorsHost .tc-sub { display: none; }
+
     /* الأزرار */
     .admin-btn-save { background: linear-gradient(135deg, var(--accent), var(--accent-dark)) !important; color: var(--on-accent, #fff) !important; border-radius: 999px !important; height: 54px; font-size: 15px !important; box-shadow: 0 14px 30px color-mix(in srgb, var(--accent) 35%, transparent) !important; position: sticky; bottom: 16px; z-index: 30; border: 0; }
     .admin-float-btn { background: linear-gradient(145deg, var(--accent), var(--accent-dark)) !important; box-shadow: 0 14px 30px color-mix(in srgb, var(--accent) 38%, transparent) !important; }
@@ -494,6 +530,7 @@
       <button class="admin-tab-btn-v" id="btnTabVAudit" onclick="switchAdminSection('audit')">🛡️ سجل العمليات والحماية</button>
       <button class="admin-tab-btn-v" id="btnTabVStaff" onclick="switchAdminSection('staff')">👥 الموظفين والصلاحيات</button>
       <button class="admin-tab-btn-v" id="btnTabVSubscription" onclick="switchAdminSection('subscription')">💳 بيانات الاشتراك والدفع</button>
+      <button class="admin-tab-btn-v" id="btnTabVStudio" onclick="switchAdminSection('studio')">🎛️ استوديو التصميم</button>
       <button class="admin-tab-btn-v" id="btnTabVDesign" onclick="switchAdminSection('design')">🎨 الهوية، الشعار وشاشة التحميل</button>
     </div>
 
@@ -1312,6 +1349,38 @@
     </div>
 
     <!-- 15. DESIGN, BRANDING & APP LOADER CUSTOMIZATION -->
+    <div id="adminSecStudio" style="display:none;">
+      <div class="admin-view-header">
+        <h2>🎛️ استوديو التصميم</h2>
+        <p>اختاري كل تفصيلة من واجهة متجرك بنفسك: الألوان، الخطوط، شكل البطاقات والأزرار والشريط السفلي والبنر. شاهدي النتيجة فوراً في المعاينة، ولا يتغير متجر زبائنك إلا عند الضغط على «نشر التصميم».</p>
+      </div>
+      <div class="st-layout">
+        <div class="st-controls" id="studioControls">
+          <div class="st-group" id="studioColorsGroup">
+            <div class="st-group-head"><span>🎨</span><b>الألوان (قاعدة 60 / 30 / 10)</b></div>
+            <div class="st-group-body" id="studioColorsHost"></div>
+          </div>
+        </div>
+        <div class="st-preview">
+          <div class="st-preview-bar">
+            <span class="st-dirty" id="studioDirty" style="display:none;">● تغييرات غير منشورة</span>
+            <div class="st-devices" id="studioDevices">
+              <button type="button" data-dev="mobile" class="on">📱 جوال</button>
+              <button type="button" data-dev="tablet">📟 آيباد</button>
+              <button type="button" data-dev="laptop">💻 لابتوب</button>
+            </div>
+          </div>
+          <div class="st-frame-wrap" id="studioFrameWrap"><iframe id="studioFrame" title="معاينة المتجر" loading="lazy"></iframe></div>
+          <div class="st-note">المعاينة تعرض متجرك الحقيقي ومنتجاته بالخيارات الحالية، ولا تغيّر شيئاً للزبائن قبل النشر.</div>
+        </div>
+      </div>
+      <div class="st-actions">
+        <button type="button" class="st-btn ghost" onclick="studioRevert()">↩ تراجع عن التغييرات</button>
+        <button type="button" class="st-btn ghost" onclick="studioResetDefaults()">✦ الإعدادات الافتراضية</button>
+        <button type="button" class="st-btn primary" id="studioPublishBtn" onclick="studioPublish()">🚀 نشر التصميم</button>
+      </div>
+    </div>
+
     <div id="adminSecDesign" style="display:none;">
       <form onsubmit="handleSaveCustomization(event)">
         <fieldset class="admin-fieldset">
@@ -1796,12 +1865,14 @@
   <script src="admin-orders.js"></script>
   <script src="admin-reports.js"></script>
   <script src="admin-marketing.js"></script>
-  <script src="admin-calm.js"></script>
   <script src="admin-settings.js"></script>
   <script src="admin-page.js"></script>
   <script src="admin-order-tools.js"></script>
   <script src="image-compress.js"></script>
   <script src="admin-inventory-badges.js"></script>
+  <script src="admin-calm.js"></script>
+  <script src="look-registry.js"></script>
+  <script src="admin-studio.js"></script>
   <script src="script.js"></script>
 
   
