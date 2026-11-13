@@ -669,6 +669,7 @@
       box.style.setProperty('--ink', txt);
       box.style.setProperty('--text-soft', tokens['--text-soft'] || '#6B7280');
       if (!tokens['--on-accent']) box.style.setProperty('--on-accent', '#FFFFFF');
+      if (typeof window.studioPush === 'function') window.studioPush();
     }
     function setThemeOpt(k, hex) {
       const o = THEME_OPTS[k];
