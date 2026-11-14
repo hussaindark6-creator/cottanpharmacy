@@ -734,22 +734,25 @@ function showView(name) {
   const target = document.getElementById('view-' + name);
   if (target) target.classList.add('active');
   currentView = name;
-  closeMenu();
-  window.scrollTo({top: 0, behavior: 'instant'});
 
+  // 🛡️ التبويب السفلي يُحدَّث أولاً وقبل أي شيء قد يفشل، فلا تبقى الفقاعة عالقة على «الرئيسية» أبداً
   ['home', 'wishlist', 'categories', 'bundles', 'orders', 'cart', 'account', 'admin'].forEach(k => {
     const el = document.getElementById('bn-' + k);
     if (el) el.classList.toggle('active', name === k);
   });
-
   // 🎯 شريط التبويبات الأفقي العلوي (الرئيسية | أقسام | بكجات | العروض)
   ['home', 'categories', 'bundles', 'offers'].forEach(k => {
     const el = document.getElementById('tab-' + k);
     if (el) el.classList.toggle('active', name === k);
   });
 
-  if (name === 'checkout') checkAndAutofillCustomer();
-  renderCurrentActiveView();
+  try { closeMenu(); } catch (e) { reportBootError(e); }
+  try { window.scrollTo({ top: 0, behavior: 'instant' }); } catch (e) { window.scrollTo(0, 0); }
+
+  try {
+    if (name === 'checkout') checkAndAutofillCustomer();
+    renderCurrentActiveView();
+  } catch (e) { reportBootError(e); }
 }
 
 function openCategory(catId) {
@@ -1982,25 +1985,84 @@ window.flyToCart = flyToCart;
 })();
 
 // ================= 35. INITIALIZATION & BOOTSTRAP =================
+// ================= 🛡️ سلامة الإقلاع: كشف الملفات الناقصة، وعرض الأخطاء، وعدم توقف المتجر بخطأ واحد =================
+// لو لم يُحمَّل أحد ملفات المتجر (404، كاش قديم، رفع ناقص) كان الموقع يبقى 12 ثانية بشاشة التحميل ثم يظهر فارغاً
+// وتتجمد الفقاعة. الآن: نكشف النقص فوراً، نعيد المحاولة مرة واحدة تلقائياً، ثم نعرض رسالة واضحة بدل صفحة فارغة.
+const BOOT_REQUIRED_FUNCTIONS = ['renderHeroCarousel', 'renderAccountView', 'closeMenu', 'renderListing', 'openProduct', 'renderModernCategories', 'populateCategoryDropdowns'];
+window.__bootErrors = window.__bootErrors || [];
+function reportBootError(err, source) {
+  try {
+    const msg = (err && err.message) ? err.message : String(err);
+    const where = source || ((err && err.stack) ? String(err.stack).split('\n')[1] || '' : '');
+    window.__bootErrors.push({ msg: msg, where: String(where).trim().slice(0, 160) });
+    console.error('[boot]', msg, where);
+    if (/[?&]debug=1(&|$)/.test(location.search)) {
+      let bar = document.getElementById('__dbgBar');
+      if (!bar) {
+        bar = document.createElement('div'); bar.id = '__dbgBar';
+        bar.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:2147483647;background:#7F1D1D;color:#fff;font:12px/1.5 monospace;padding:8px 10px;max-height:40vh;overflow:auto;direction:ltr;text-align:left;white-space:pre-wrap;';
+        document.body.appendChild(bar);
+      }
+      bar.textContent += '• ' + msg + '  @ ' + String(where).trim().slice(0, 140) + '\n';
+    }
+  } catch (e) { /* غير حرج */ }
+}
+window.addEventListener('error', (e) => reportBootError(e.error || e.message, (e.filename || '') + ':' + (e.lineno || '')));
+window.addEventListener('unhandledrejection', (e) => reportBootError(e.reason || 'unhandledrejection'));
+
+function showBootFailure(missing) {
+  try { const ov = document.getElementById('appLoadingOverlay'); if (ov) ov.remove(); if (window.__loaderInterval) clearInterval(window.__loaderInterval); } catch (e) { /* */ }
+  const box = document.createElement('div');
+  box.style.cssText = 'position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:24px;background:#F8FAFC;font-family:Cairo,sans-serif;direction:rtl;';
+  const card = document.createElement('div');
+  card.style.cssText = 'max-width:380px;text-align:center;background:#fff;border:1px solid #E5E7EB;border-radius:24px;padding:26px 22px;box-shadow:0 16px 40px rgba(0,0,0,.08);';
+  const h = document.createElement('div'); h.textContent = '⚠️ تعذّر تحميل جزء من المتجر'; h.style.cssText = 'font-weight:900;font-size:16px;margin-bottom:8px;color:#111827;';
+  const p = document.createElement('div'); p.textContent = 'ربما انقطع الاتصال أو بقيت نسخة قديمة بالذاكرة. اضغطي إعادة المحاولة.'; p.style.cssText = 'font-size:13px;color:#6B7280;line-height:1.8;margin-bottom:14px;';
+  const d = document.createElement('div'); d.textContent = 'الملفات الناقصة: ' + missing.join(', '); d.style.cssText = 'font-size:11px;color:#9CA3AF;direction:ltr;margin-bottom:14px;word-break:break-all;';
+  const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = 'إعادة المحاولة';
+  btn.style.cssText = 'border:0;border-radius:999px;padding:12px 26px;background:#111827;color:#fff;font-family:inherit;font-weight:800;font-size:14px;cursor:pointer;';
+  btn.onclick = () => { try { sessionStorage.removeItem('__bootReload'); } catch (e) { /* */ } location.replace(location.pathname + '?r=' + Date.now() + location.hash); };
+  card.append(h, p, d, btn); box.appendChild(card); document.body.appendChild(box);
+}
+
+function bootIntegrityOk() {
+  if (/admin/i.test(location.pathname)) return true; // لوحة الأدمن تعتمد بدائل storefront-stubs
+  const missing = BOOT_REQUIRED_FUNCTIONS.filter(n => typeof window[n] !== 'function');
+  if (!missing.length) { try { sessionStorage.removeItem('__bootReload'); } catch (e) { /* */ } return true; }
+  console.error('[boot] ملفات ناقصة:', missing.join(', '));
+  let already = false;
+  try { already = sessionStorage.getItem('__bootReload') === '1'; } catch (e) { /* */ }
+  if (!already) { try { sessionStorage.setItem('__bootReload', '1'); } catch (e) { /* */ } location.reload(); return false; }
+  showBootFailure(missing);
+  return false;
+}
+
 window.addEventListener('DOMContentLoaded', async () => {
-  patchTenantLinks();
-  applyStoreSettings();
-  renderHome();
-  renderModernCategories();
-  populateCategoryDropdowns();
-  updateCartBadge();
-  renderAccountView();
-  updateUserHeaderProfile();
-  checkAndShowWelcomeModal();
-  checkUrlHashForProduct();
+  if (!bootIntegrityOk()) return;
+  const step = (fn) => { try { return fn(); } catch (e) { reportBootError(e); } };
+  step(patchTenantLinks);
+  step(applyStoreSettings);
+  step(renderHome);
+  step(renderModernCategories);
+  step(populateCategoryDropdowns);
+  step(updateCartBadge);
+  step(renderAccountView);
+  step(updateUserHeaderProfile);
+  step(checkAndShowWelcomeModal);
+  step(checkUrlHashForProduct);
 
-  await loadDynamicTheme(pharmacyProfile.templateId);
-  renderCurrentActiveView();
-
-  // ⚡ شاشة التحميل: لا حد أدنى للعرض بعد الآن. إن جاءت البيانات بسرعة (< 350ms) تُحذف الشاشة فوراً،
-  // وإن تأخرت الشبكة تبقى حتى تكتمل البيانات فعلياً ثم تتلاشى بسرعة (فالزبون لا يرى الموقع قبل آخر تعديلات الأدمن).
+  // ⚡ البيانات تبدأ فوراً وبالتوازي مع تحميل القالب (كان الإقلاع ينتظر القالب أولاً فيتأخر ظهور المتجر عند بطء الشبكة)
+  // وشاشة التحميل: لا حد أدنى للعرض. إن جاءت البيانات بسرعة (< 350ms) تُحذف فوراً، وإلا تبقى حتى تكتمل ثم تتلاشى بسرعة.
   const loaderStartedAt = performance.now();
-  initFirestoreSync().finally(() => hideAppLoadingOverlay(performance.now() - loaderStartedAt < 350));
+  const dataReady = initFirestoreSync().catch((e) => { reportBootError(e); });
+  dataReady.finally(() => hideAppLoadingOverlay(performance.now() - loaderStartedAt < 350));
+
+  // القالب بحد أقصى 2.5 ثانية: إن تأخر نكمل بالافتراضي ولا نعطّل المتجر
+  await Promise.race([
+    Promise.resolve().then(() => loadDynamicTheme(pharmacyProfile.templateId)).catch((e) => { reportBootError(e); }),
+    new Promise((resolve) => setTimeout(resolve, 2500))
+  ]);
+  step(renderCurrentActiveView);
 
   window.addEventListener('hashchange', checkUrlHashForProduct);
 
