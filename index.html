@@ -173,83 +173,9 @@
   <script defer src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 
-  <script>
-    // 🌸 حقن الصورة/العنوان/الحجم فوراً في شاشة التحميل بمجرد توفر عنصرها بالـ DOM (بلا انتظار script.js بالكامل)
-    document.addEventListener('DOMContentLoaded', function () {
-      var s = window.__preloadedStoreSettings;
-      var overlay = document.getElementById('appLoadingOverlay');
-      if (overlay && s) {
-        if (s.loaderBgColor) overlay.style.background = s.loaderBgColor;
-
-        // 🌟 صورة شاشة التحميل تتمدد لتغطي كامل الشاشة (100vw × 100vh) بلا أي دائرة أو
-        // ختم صغير وبلا أي طبقة تغبيش فوقها — نظيفة تماماً كما طُلب. إن لم يرفع الأدمن
-        // صورة مخصصة لشاشة التحميل بعد، تُستخدم صورة البانر الرئيسية للمتجر كخط رجعة
-        // بدل ترك الشاشة بلا أي صورة إطلاقاً.
-        var bgImg = document.getElementById('loaderBgImage');
-        var bgTarget = s.loaderImgUrl || s.bannerImgUrl || '';
-        if (bgImg && bgTarget) {
-          bgImg.src = bgTarget;
-          bgImg.onload = function () { bgImg.style.display = 'block'; bgImg.setAttribute('data-loaded', '1'); };
-        }
-
-        var title = document.getElementById('loaderTitleText');
-        if (title && s.loaderTitle) title.textContent = s.loaderTitle;
-        var sub = document.getElementById('loaderSubText');
-        if (sub && s.loaderSubText) sub.textContent = s.loaderSubText;
-      }
-
-      // 🌟 (جديد — إكمال ميزة كانت ناقصة) شريط تقدم وهمي سلس يمنح إحساساً بتحميل حقيقي
-      // بدل ظهور دائري فقط بلا أي مؤشر تقدم. main.js يستخدم هذين العنصرين ويوقف
-      // window.__loaderInterval تلقائياً عند اكتمال التحميل الفعلي — هذا فقط يبدأ الحركة.
-      var bar = document.getElementById('loaderProgressBar');
-      var pct = document.getElementById('loaderPercentText');
-      var fakeProgress = 0;
-      if (bar && pct) {
-        window.__loaderInterval = setInterval(function () {
-          fakeProgress += (90 - fakeProgress) * 0.12 + 0.4;
-          if (fakeProgress > 90) fakeProgress = 90;
-          bar.style.width = fakeProgress.toFixed(0) + '%';
-          pct.textContent = fakeProgress.toFixed(0) + '%';
-        }, 220);
-      }
-
-      // 🛡️ (تعديل — كان يتعارض مع منطق "الخمس ثوانٍ المضمونة") صمام الأمان كان مضبوطاً
-      // على 6 ثوانٍ فقط، وهي قريبة جداً من الـ5 ثوانٍ التي يفرضها main.js كحد أدنى — فلو
-      // تأخرت الشبكة قليلاً عن ذلك (شبكة بطيئة، أو Firestore بطيء لحظياً)، كان هذا الصمام
-      // سيُخفي شاشة التحميل قسراً وهي غير مكتملة البيانات بعد، فيظهر الزائر تحديداً "الشكل
-      // القديم/الناقص" الذي لا نريده. رُفع السقف الآن لـ12 ثانية، أي هامش أمان حقيقي فوق
-      // الـ5 ثوانٍ المقصودة + وقت انتظار البيانات الفعلي في main.js، فلا يتدخل هذا الصمام
-      // إلا في حالة تعطل شبكة حقيقي كامل — لا في الاستخدام العادي إطلاقاً.
-      setTimeout(function () {
-        if (overlay && !overlay.dataset.hidden) {
-          if (window.__loaderInterval) clearInterval(window.__loaderInterval);
-          overlay.style.opacity = '0';
-          setTimeout(function () { overlay.remove(); }, 400);
-        }
-      }, 8000);
-    });
-  </script>
 </head>
 <body>
 
-  <!-- ================= شاشة التحميل الأولية (صورة ملء الشاشة نظيفة، بلا تغبيش) ================= -->
-  <div id="appLoadingOverlay" style="position:fixed; inset:0; z-index:99999; display:flex; align-items:center; justify-content:center; overflow:hidden; transition:opacity .4s ease;">
-    <img id="loaderBgImage" class="app-loader-bg-img" src="" alt="">
-
-    <div class="app-loader-content">
-      <div class="app-loader-title-wrap">
-        <svg class="app-loader-vine" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="color:#fff; opacity:.85;"><path d="M12 21c0-6 3-9 7-11M12 10c1.5 1 1 3.5 3 4.5" stroke-linecap="round"/><circle cx="12" cy="21" r="1" fill="currentColor" stroke="none"/></svg>
-        <div id="loaderTitleText">جاري تحميل الموقع</div>
-        <svg class="app-loader-vine is-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="color:#fff; opacity:.85;"><path d="M12 21c0-6 3-9 7-11M12 10c1.5 1 1 3.5 3 4.5" stroke-linecap="round"/><circle cx="12" cy="21" r="1" fill="currentColor" stroke="none"/></svg>
-      </div>
-      <div id="loaderSubText">انتظر لحظة من فضلك ..</div>
-
-      <div class="app-loader-progress-track">
-        <div id="loaderProgressBar"></div>
-      </div>
-      <div id="loaderPercentText">0%</div>
-    </div>
-  </div>
 
   <!-- ================= شاشة تجميد المتجر (اشتراك منتهي / موقوف) ================= -->
   <div class="welcome-modal-overlay" id="storefrontFreezeModal" style="z-index:99998;">
