@@ -500,7 +500,7 @@ function showListingView() {
   const lView = document.getElementById('view-listing');
   if (lView) lView.classList.add('active');
   currentView = 'listing';
-  window.scrollTo({top: 0, behavior: 'instant'});
+  window.scrollTo(0, 0);
 }
 
 function renderListing() {
