@@ -22,6 +22,21 @@ const CLASSIC_SCRIPTS = ['script.js', 'storefront.js', 'storefront-stubs.js', 'a
   'platform-host.js', 'template-contract.js', 'template-engine.js', 'super-admin-templates.js', 'super-admin-onboarding.js',
   'admin-order-tools.js', 'image-compress.js', 'admin-inventory-badges.js', 'admin-calm.js', 'look-registry.js', 'admin-studio.js',
   'super-admin-core.js', 'super-admin-pharmacies.js', 'super-admin-catalog.js', 'super-admin-billing.js', 'super-admin-reports.js', 'super-admin-platform.js'];
+
+// 🧩 يضيف بصمة إصدار (?v=...) لكل سكربت كلاسيكي في صفحات HTML عند البناء. السكربتات الكلاسيكية بلا بصمة بأسمائها،
+// فكانت المتصفحات (خصوصاً متصفح إنستغرام الداخلي) تحتفظ بنسخة قديمة من بعضها وتخلطها مع نسخة جديدة من غيرها
+// فيتعطل المتجر (ملف يستدعي دالة من ملف آخر قديم). مع البصمة كل نشر يجلب مجموعة ملفات متطابقة.
+function stampClassicScripts() {
+  const stamp = Date.now().toString(36);
+  return {
+    name: 'stamp-classic-scripts',
+    apply: 'build',
+    transformIndexHtml(html) {
+      return html.replace(/(<script\b[^>]*\bsrc=")([^"?:]+\.js)(")/g, (m, a, file, c) => CLASSIC_SCRIPTS.includes(file) ? a + file + '?v=' + stamp + c : m);
+    }
+  };
+}
+
 function copyClassicScripts(defineMap) {
   return {
     name: 'copy-classic-scripts',
@@ -68,7 +83,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     define: defineMap,
-    plugins: [copyClassicScripts(defineMap)],
+    plugins: [copyClassicScripts(defineMap), stampClassicScripts()],
     build: {
       outDir: 'dist',
       rollupOptions: {
