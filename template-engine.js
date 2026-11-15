@@ -42,7 +42,7 @@
     if (!registryPromise) {
       registryPromise = fetch('templates/registry.json?v=' + ENGINE_VERSION)
         .then(function (r) { if (!r.ok) throw new Error('registry HTTP ' + r.status); return r.json(); })
-        .then(function (j) { if (!j || !Array.isArray(j.templates) || !j.templates.length) throw new Error('registry فارغ'); return j; })
+        .then(function (j) { if (!j || !Array.isArray(j.templates) || !j.templates.length) throw new Error('registry فارغ'); window.__tplRegistry = j; return j; })
         .catch(function (e) { reportError('تعذر قراءة registry.json (نستخدم الافتراضي)', e); return FALLBACK_REGISTRY; });
     }
     return registryPromise;
