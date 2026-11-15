@@ -15,28 +15,13 @@ import { copyFileSync, readFileSync, writeFileSync, mkdirSync, existsSync } from
 // 🆕 المرحلة 3: ملفات السكربتات الكلاسيكية (بلا type="module") لا يضمّنها Vite ولا ينسخها إلى dist
 // تلقائياً عند البناء. هذه الإضافة تنسخها بعد البناء مع تطبيق نفس قيم "define" (استبدال نصي وقت
 // البناء)، حتى يعمل الموقع المنشور من dist بنفس سلوك التشغيل المحلي تماماً. لا تؤثر على npm run dev.
-const CLASSIC_SCRIPTS = ['script.js', 'storefront.js', 'storefront-stubs.js', 'admin-stubs.js',
+const CLASSIC_SCRIPTS = ['design-system.js', 'script.js', 'storefront.js', 'storefront-stubs.js', 'admin-stubs.js',
   'admin-core.js', 'admin-products.js', 'admin-catalog-tools.js', 'admin-orders.js', 'admin-reports.js', 'admin-marketing.js', 'admin-settings.js',
   'admin-page.js',
   'delivery-zones.js', 'smart-search.js', 'stock-alerts.js', 'reorder.js',
   'platform-host.js', 'template-contract.js', 'template-engine.js', 'super-admin-templates.js', 'super-admin-onboarding.js',
   'admin-order-tools.js', 'image-compress.js', 'admin-inventory-badges.js', 'admin-calm.js', 'look-registry.js', 'admin-studio.js',
   'super-admin-core.js', 'super-admin-pharmacies.js', 'super-admin-catalog.js', 'super-admin-billing.js', 'super-admin-reports.js', 'super-admin-platform.js'];
-
-// 🧩 يضيف بصمة إصدار (?v=...) لكل سكربت كلاسيكي في صفحات HTML عند البناء. السكربتات الكلاسيكية بلا بصمة بأسمائها،
-// فكانت المتصفحات (خصوصاً متصفح إنستغرام الداخلي) تحتفظ بنسخة قديمة من بعضها وتخلطها مع نسخة جديدة من غيرها
-// فيتعطل المتجر (ملف يستدعي دالة من ملف آخر قديم). مع البصمة كل نشر يجلب مجموعة ملفات متطابقة.
-function stampClassicScripts() {
-  const stamp = Date.now().toString(36);
-  return {
-    name: 'stamp-classic-scripts',
-    apply: 'build',
-    transformIndexHtml(html) {
-      return html.replace(/(<script\b[^>]*\bsrc=")([^"?:]+\.js)(")/g, (m, a, file, c) => CLASSIC_SCRIPTS.includes(file) ? a + file + '?v=' + stamp + c : m);
-    }
-  };
-}
-
 function copyClassicScripts(defineMap) {
   return {
     name: 'copy-classic-scripts',
@@ -83,7 +68,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     define: defineMap,
-    plugins: [copyClassicScripts(defineMap), stampClassicScripts()],
+    plugins: [copyClassicScripts(defineMap)],
     build: {
       outDir: 'dist',
       rollupOptions: {
