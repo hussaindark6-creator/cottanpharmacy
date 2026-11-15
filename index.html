@@ -265,12 +265,19 @@
           <div class="hero-slider-track" id="heroCarouselTrack"></div>
         </div>
         <div class="hero-slider-dots" id="heroCarouselDots"></div>
+      </div>
+
+      <div data-home-section="trust">
         <div class="trust-strip" aria-label="مميزات المتجر">
           <div class="trust-item"><span class="trust-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 4.5 3.2 7.8 8 9 4.8-1.2 8-4.5 8-9V6l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg></span><b>منتجات أصلية</b><small>مضمونة 100%</small></div>
           <div class="trust-item"><span class="trust-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"/><circle cx="7.5" cy="17.5" r="1.7"/><circle cx="17.5" cy="17.5" r="1.7"/></svg></span><b>توصيل سريع</b><small>لباب بيتك</small></div>
           <div class="trust-item"><span class="trust-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z"/><path d="M9 11h6M9 14h4"/></svg></span><b>استشارة مجانية</b><small>مع الصيدلي</small></div>
           <div class="trust-item"><span class="trust-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7.5-4.9-10-9.5C.5 7.8 2.7 4 6.5 4 9 4 11 5.5 12 7c1-1.5 3-3 5.5-3 3.8 0 6 3.8 4.5 7.5C19.5 16.1 12 21 12 21Z"/></svg></span><b>عناية بتفاصيلك</b><small>اختيار موثوق</small></div>
         </div>
+      </div>
+
+      <div data-home-section="categories" class="ds-cats-sec">
+        <div class="section-head ds-cats-head" style="display:none;"><h2 data-block-title></h2></div>
         <div class="home-cat-circles-row" id="homeCategoryCircles"></div>
       </div>
 
@@ -278,17 +285,17 @@
       <div class="double-banner-row" data-home-section="promo-cards">
         <div class="double-banner-card double-banner-bundles" onclick="showView('bundles')">
           <div class="double-banner-text">
-            <h4>بكجات مميزة</h4>
-            <p>توفير أكثر.. عناية أكمل</p>
-            <span class="double-banner-btn">اكتشف البكجات ←</span>
+            <h4 data-copy="promo_b_title">بكجات مميزة</h4>
+            <p data-copy="promo_b_sub">توفير أكثر.. عناية أكمل</p>
+            <span class="double-banner-btn" data-copy="promo_b_btn">اكتشف البكجات ←</span>
           </div>
           <div class="double-banner-icon">🎁</div>
         </div>
         <div class="double-banner-card double-banner-offers" onclick="showView('offers')">
           <div class="double-banner-text">
-            <h4>عروض خاصة</h4>
-            <p>على أفضل المنتجات</p>
-            <span class="double-banner-btn">تسوق الآن ←</span>
+            <h4 data-copy="promo_o_title">عروض خاصة</h4>
+            <p data-copy="promo_o_sub">على أفضل المنتجات</p>
+            <span class="double-banner-btn" data-copy="promo_o_btn">تسوق الآن ←</span>
           </div>
           <div class="double-banner-icon">🏷️</div>
         </div>
@@ -297,8 +304,8 @@
       <!-- 🏢 أشهر الماركات -->
       <div class="section" data-home-section="brands">
         <div class="section-head">
-          <span class="see-all" onclick="openAllBrands()">عرض الكل ›</span>
-          <h2>أشهر الماركات</h2>
+          <span class="see-all" data-copy="see_all" onclick="openAllBrands()">عرض الكل ›</span>
+          <h2 data-block-title data-copy="brands_title">أشهر الماركات</h2>
         </div>
         <div class="brand-strip" id="brandStrip"></div>
       </div>
@@ -306,10 +313,47 @@
       <!-- 🔥 الأكثر مبيعاً -->
       <div class="section" data-home-section="best-sellers">
         <div class="section-head">
-          <span class="see-all" onclick="openBestSellers()">عرض الكل ›</span>
-          <h2 id="homeGridTitle">المنتجات المتوفرة</h2>
+          <span class="see-all" data-copy="see_all" onclick="openBestSellers()">عرض الكل ›</span>
+          <h2 id="homeGridTitle" data-block-title>المنتجات المتوفرة</h2>
         </div>
         <div class="product-grid" id="bestSellersGrid"></div>
+      </div>
+
+      <!-- ✨ كتل التصميم الاختيارية (تُفعَّل من استوديو التصميم) -->
+      <div class="section ds-block" data-home-section="new-arrivals" style="display:none;">
+        <div class="section-head"><span class="see-all" data-copy="see_all" onclick="openNewArrivals()">عرض الكل ›</span><h2 data-block-title data-copy="newarr_title">وصل حديثاً</h2></div>
+        <p class="ds-sub" data-block-sub></p>
+        <div class="product-grid" id="dsNewGrid"></div>
+      </div>
+
+      <div class="section ds-block" data-home-section="offers" style="display:none;">
+        <div class="section-head"><span class="see-all" data-copy="see_all" onclick="showView('offers')">عرض الكل ›</span><h2 data-block-title data-copy="offers_title">عروض لفترة محدودة</h2></div>
+        <p class="ds-sub" data-block-sub></p>
+        <div class="ds-countdown" id="dsCountdown" aria-live="off"></div>
+        <div class="product-grid" id="dsOffersGrid"></div>
+      </div>
+
+      <div class="section ds-block" data-home-section="bundles" id="homeBundlesSection" style="display:none;">
+        <div class="section-head"><span class="see-all" data-copy="see_all" onclick="showView('bundles')">عرض الكل ›</span><h2 data-block-title data-copy="bundles_title">بكجات التوفير</h2></div>
+        <p class="ds-sub" data-block-sub></p>
+        <div class="product-grid" id="homeBundlesGrid"></div>
+      </div>
+
+      <section class="ds-block ds-story" data-home-section="story" style="display:none;">
+        <div class="ds-story-img" id="dsStoryImg"></div>
+        <div class="ds-story-body"><h2 data-block-title></h2><p id="dsStoryText"></p></div>
+      </section>
+
+      <section class="ds-block ds-contact" data-home-section="contact" style="display:none;">
+        <div class="ds-contact-text"><h3 data-block-title></h3><p data-block-sub></p></div>
+        <div class="ds-contact-actions" id="dsContactActions"></div>
+      </section>
+
+      <div class="ds-block ds-footer" data-home-section="footer" style="display:none;">
+        <div class="ds-footer-about" id="dsFooterAbout"></div>
+        <div class="ds-footer-links" id="dsFooterLinks"></div>
+        <div class="ds-footer-social" id="dsFooterSocial"></div>
+        <div class="ds-footer-copy" id="dsFooterCopy"></div>
       </div>
 
     </div>
@@ -367,7 +411,7 @@
 
     <!-- ▬▬▬▬▬▬▬▬▬▬ VIEW: السلة ▬▬▬▬▬▬▬▬▬▬ -->
     <div class="view" id="view-cart">
-      <div class="section-head" style="margin-top:14px;"><h2>🛒 سلة المشتريات</h2></div>
+      <div class="section-head" style="margin-top:14px;"><h2>🛒 <span data-copy="cart_title">سلة المشتريات</span></h2></div>
       <div class="applied-promo-tag" id="appliedPromoBadge" style="display:none;"></div>
       <div id="cartItemsList"></div>
       <div id="cartSummaryBlock"></div>
@@ -471,13 +515,15 @@
             <div class="pd-tab-content active" id="pdTabDesc"></div>
           </div>
 
+          <div id="pdInfoBlocks" class="pd-info-blocks" style="display:none;"></div>
+
           <div class="pd-buy">
             <div class="pd-qty-stepper">
               <button onclick="changePdQty(-1)" aria-label="إنقاص">−</button>
               <span class="val" id="pdQtyVal">1</span>
               <button onclick="changePdQty(1)" aria-label="زيادة">+</button>
             </div>
-            <button class="pd-add-btn" id="pdAddBtn"><span class="pd-add-label">أضف إلى السلة</span><span class="pd-add-total mono" id="pdAddTotal"></span></button>
+            <button class="pd-add-btn" id="pdAddBtn"><span class="pd-add-label" data-copy="add_to_cart">أضف إلى السلة</span><span class="pd-add-total mono" id="pdAddTotal"></span></button>
           </div>
           <div class="pd-trust">
             <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 4.5 3.2 7.8 8 9 4.8-1.2 8-4.5 8-9V6l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg><b>أصلي مضمون</b><small>من الصيدلية مباشرة</small></div>
@@ -647,6 +693,7 @@
   <!-- 🎨 محرك القوالب: العقد ثم المحرك (يسبقان script.js) -->
   <script defer src="template-contract.js"></script>
   <script defer src="template-engine.js"></script>
+  <script defer src="design-system.js"></script>
   <script defer src="script.js"></script>
   <script defer src="delivery-zones.js"></script>
   <script defer src="smart-search.js"></script>
