@@ -300,6 +300,8 @@ function openAdminQuickEditModal(id) {
     if (document.getElementById('quickEditProdDesc')) document.getElementById('quickEditProdDesc').value = p.description || '';
     if (document.getElementById('quickEditProdIng')) document.getElementById('quickEditProdIng').value = p.ingredients || p.medicalIndications || '';
     if (document.getElementById('quickEditProdUsage')) document.getElementById('quickEditProdUsage').value = p.usage || '';
+    if (document.getElementById('quickEditProdWarnings')) document.getElementById('quickEditProdWarnings').value = p.warnings || '';
+    if (document.getElementById('quickEditProdAge')) document.getElementById('quickEditProdAge').value = p.ageRange || '';
     if (document.getElementById('quickEditProdExpiry')) document.getElementById('quickEditProdExpiry').value = p.expiryDate ? String(p.expiryDate).slice(0, 10) : '';
     if (document.getElementById('quickEditProdBatch')) document.getElementById('quickEditProdBatch').value = p.batchNo || '';
     if (document.getElementById('quickEditProdInStock')) document.getElementById('quickEditProdInStock').checked = (p.inStock !== false);
@@ -343,6 +345,8 @@ async function saveAdminQuickEdit() {
   const description = document.getElementById('quickEditProdDesc') ? sanitizeText(document.getElementById('quickEditProdDesc').value.trim()) : '';
   const ingredients = document.getElementById('quickEditProdIng') ? sanitizeText(document.getElementById('quickEditProdIng').value.trim()) : '';
   const usage = document.getElementById('quickEditProdUsage') ? sanitizeText(document.getElementById('quickEditProdUsage').value.trim()) : '';
+  const warnings = document.getElementById('quickEditProdWarnings') ? sanitizeText(document.getElementById('quickEditProdWarnings').value.trim()).slice(0, 300) : '';
+  const ageRange = document.getElementById('quickEditProdAge') ? sanitizeText(document.getElementById('quickEditProdAge').value.trim()).slice(0, 40) : '';
   const inStock = document.getElementById('quickEditProdInStock') ? document.getElementById('quickEditProdInStock').checked : true;
   const isSpecialOffer = document.getElementById('quickEditProdIsOffer') ? document.getElementById('quickEditProdIsOffer').checked : false;
   const expiryRaw = document.getElementById('quickEditProdExpiry') ? document.getElementById('quickEditProdExpiry').value : '';
@@ -368,6 +372,8 @@ async function saveAdminQuickEdit() {
     description,
     ingredients,
     usage,
+    warnings,
+    ageRange,
     inStock: inStock && stockQty > 0,
     isSpecialOffer,
     expiryDate,
@@ -432,6 +438,8 @@ function resetAdminProductForm() {
   document.getElementById('adminProdDesc').value = '';
   document.getElementById('adminProdIng').value = '';
   document.getElementById('adminProdUsage').value = '';
+  if (document.getElementById('adminProdWarnings')) document.getElementById('adminProdWarnings').value = '';
+  if (document.getElementById('adminProdAge')) document.getElementById('adminProdAge').value = '';
   if (document.getElementById('adminProdStockQty')) document.getElementById('adminProdStockQty').value = '10';
   if (document.getElementById('adminProdExpiry')) document.getElementById('adminProdExpiry').value = '';
   if (document.getElementById('adminProdBatch')) document.getElementById('adminProdBatch').value = '';
@@ -477,6 +485,8 @@ async function handleAdminProductSave(e) {
     description: sanitizeText(document.getElementById('adminProdDesc').value.trim()),
     ingredients: sanitizeText(document.getElementById('adminProdIng').value.trim()),
     usage: sanitizeText(document.getElementById('adminProdUsage').value.trim()),
+    warnings: document.getElementById('adminProdWarnings') ? sanitizeText(document.getElementById('adminProdWarnings').value.trim()).slice(0, 300) : '',
+    ageRange: document.getElementById('adminProdAge') ? sanitizeText(document.getElementById('adminProdAge').value.trim()).slice(0, 40) : '',
     inStock: document.getElementById('adminProdInStock').checked && stockQty > 0,
     isSpecialOffer: document.getElementById('adminProdIsOffer').checked,
     expiryDate: (() => { const v = document.getElementById('adminProdExpiry') ? document.getElementById('adminProdExpiry').value : ''; return /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : ''; })(),
