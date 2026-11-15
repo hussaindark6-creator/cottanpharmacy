@@ -347,6 +347,33 @@
     .st-chip small { display: block; font-weight: 600; font-size: 10.5px; color: var(--text-soft); margin-top: 1px; }
     .st-chip:active { transform: scale(.97); }
     .st-chip.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 11%, var(--card)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent); }
+    .st-note-s { font-size: 12px; color: var(--text-soft); line-height: 1.8; margin: 8px 0; }
+    .st-mini { border: 1.5px solid var(--line); background: var(--card); color: var(--ink); border-radius: 12px; min-height: 44px; min-width: 44px; padding: 0 12px; cursor: pointer; font-family: inherit; font-weight: 800; font-size: 12px; }
+    .st-mini:disabled { opacity: .35; cursor: default; }
+    .st-blk { border: 1px solid var(--line); border-radius: 18px; margin: 8px 0; background: var(--card); }
+    .st-blk.off { opacity: .6; }
+    .st-blk-head { display: flex; align-items: center; gap: 10px; padding: 8px 12px; }
+    .st-blk-name { flex: 1; font-size: 13px; color: var(--ink); }
+    .st-blk-btns { display: flex; gap: 6px; }
+    .st-blk-body { padding: 4px 14px 14px; border-top: 1px dashed var(--line); display: grid; gap: 10px; }
+    .st-f { display: grid; gap: 4px; font-size: 12px; font-weight: 800; color: var(--ink); }
+    .st-f input[type=text], .st-f input[type=url], .st-f input[type=date], .st-f input[type=datetime-local], .st-f select, .st-f textarea, .st-row3 select, .st-row3 input[type=date] { width: 100%; min-height: 44px; padding: 8px 12px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--card); color: var(--ink); font-family: inherit; font-size: 13px; box-sizing: border-box; }
+    .st-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 4px; }
+    .st-row3 { display: grid; grid-template-columns: 1fr 1fr 1fr auto auto; gap: 6px; align-items: center; margin: 8px 0; }
+    .st-checks { display: flex; flex-wrap: wrap; gap: 8px 14px; font-weight: 700; }
+    .st-checks label { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; }
+    .st-sw { position: relative; display: inline-block; width: 46px; height: 28px; flex-shrink: 0; }
+    .st-sw input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; z-index: 1; }
+    .st-sw span { position: absolute; inset: 0; border-radius: 999px; background: var(--line); transition: background .2s; }
+    .st-sw span::after { content: ''; position: absolute; top: 3px; inset-inline-start: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: transform .2s; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
+    .st-sw input:checked + span { background: var(--accent); }
+    .st-sw input:checked + span::after { transform: translateX(-18px); }
+    .st-score { display: flex; align-items: baseline; gap: 6px; justify-content: center; margin: 8px 0 12px; }
+    .st-score b { font-size: 38px; font-weight: 900; }
+    .st-score.good b { color: #16A34A; } .st-score.mid b { color: #D97706; } .st-score.low b { color: #DC2626; }
+    .st-hi { display: flex; gap: 10px; align-items: flex-start; padding: 8px 4px; font-size: 12.5px; font-weight: 700; color: var(--ink); border-bottom: 1px solid var(--line); }
+    .st-hi small { display: block; font-weight: 600; color: var(--text-soft); margin-top: 2px; }
+    .st-hi.ok span { color: #16A34A; } .st-hi.warn span { color: #D97706; } .st-hi.bad span { color: #DC2626; }
     .st-actions { display: flex; gap: 10px; flex-wrap: wrap; position: sticky; bottom: 14px; z-index: 30; margin-top: 8px; padding: 10px; background: color-mix(in srgb, var(--card) 88%, transparent); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 999px; box-shadow: 0 14px 34px rgba(70,60,40,.14); }
     .st-btn { border: 0; font-family: inherit; font-weight: 900; font-size: 13.5px; padding: 12px 20px; border-radius: 999px; cursor: pointer; }
     .st-btn.ghost { background: var(--surface); color: var(--ink); }
@@ -858,6 +885,16 @@
             <label>الوصف المفصل والفوائد الطبية *</label>
             <textarea id="adminProdDesc" rows="3" placeholder="فوائد المنتج ومميزاته بالتفصيل..."></textarea>
           </div>
+        <div style="display:flex; gap:10px;">
+          <div class="form-field" style="flex:2;">
+            <label>التحذيرات (تظهر بصفحة المنتج)</label>
+            <input type="text" id="adminProdWarnings" maxlength="300" placeholder="للاستعمال الخارجي فقط، يُحفظ بعيداً عن الأطفال...">
+          </div>
+          <div class="form-field" style="flex:1;">
+            <label>العمر المناسب</label>
+            <input type="text" id="adminProdAge" maxlength="40" placeholder="+12 سنة">
+          </div>
+        </div>
           <div style="display:flex; gap:10px;">
             <div class="form-field" style="flex:1;">
               <label>المكونات الفعالة والتركيبة (Ingredients)</label>
@@ -1736,6 +1773,16 @@
           <textarea id="quickEditProdDesc" rows="3" placeholder="تفاصيل المنتج والفوائد..."></textarea>
         </div>
 
+        <div style="display:flex; gap:10px;">
+          <div class="form-field" style="flex:2;">
+            <label>التحذيرات (تظهر بصفحة المنتج)</label>
+            <input type="text" id="quickEditProdWarnings" maxlength="300" placeholder="للاستعمال الخارجي فقط، يُحفظ بعيداً عن الأطفال...">
+          </div>
+          <div class="form-field" style="flex:1;">
+            <label>العمر المناسب</label>
+            <input type="text" id="quickEditProdAge" maxlength="40" placeholder="+12 سنة">
+          </div>
+        </div>
         <div style="display:flex; gap:10px;">
           <div class="form-field" style="flex:1;">
             <label>المكونات الفعالة والتركيبة (Ingredients)</label>
