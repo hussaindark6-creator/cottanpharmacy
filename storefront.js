@@ -633,7 +633,7 @@ function renderHomeProductGrid() {
   if (homeActiveBrand === 'all') {
     // 🔄 (تحديث بطلب صريح) استُبدل قسم "الأكثر مبيعاً 🔥" بـ"المنتجات المتوفرة" — يعرض
     // المنتجات المتوفرة بالمخزون حالياً بدل ترتيبها حسب عدد المبيعات.
-    title.textContent = 'المنتجات المتوفرة';
+    title.textContent = window.DS ? window.DS.productsTitle() : 'المنتجات المتوفرة';
     list = list.filter(p => p.inStock !== false);
   } else {
     title.textContent = 'منتجات ' + homeActiveBrand;
@@ -863,6 +863,7 @@ function renderProductDetailDOM(p) {
   document.getElementById('pdTabDesc').textContent = p.description || 'منتج أصلي معتمد من الصيدلية.';
   
   renderCrossSelling(p);
+  if (window.DS) { window.DS.renderProductInfo(p); window.DS.applyCopy(); }
   switchPdTab('desc');
   document.getElementById('pdQtyVal').textContent = pdQty;
 
@@ -1198,6 +1199,7 @@ function handleConsultSubmit(e) {
 }
 
 function checkAndShowWelcomeModal() {
+  if (document.documentElement.getAttribute('data-lk-welcome') === 'off') return;
   if (!localStorage.getItem(getStorageKey('welcomed'))) {
     setTimeout(() => {
       const m = document.getElementById('welcomeOfferModal');
