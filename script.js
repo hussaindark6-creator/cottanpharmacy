@@ -438,7 +438,7 @@ let superAdminPaymentInfo = {
   notes: 'يرجى إرسال صورة وصل التحويل عبر الواتساب لتجديد الاشتراك فورياً'
 };
 
-function fmtPrice(n) { return (Number(n) || 0).toLocaleString('en-US') + ' د.ع'; }
+function fmtPrice(n) { const s = (Number(n) || 0).toLocaleString('en-US') + ' د.ع'; return window.DS ? window.DS.digits(s) : s; }
 function findProduct(id) { return products.find(p => String(p.id) === String(id)); }
 function findBundle(id) { return bundles.find(b => String(b.id) === String(id)); }
 function starIcon() { return `<svg viewBox="0 0 24 24" width="12" height="12" style="width:12px;height:12px;" fill="currentColor"><path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.9-6.2-3.3-6.2 3.3 1.2-6.9-5-4.9 6.9-1z"/></svg>`; }
@@ -627,6 +627,21 @@ if (window.__LOOK_PREVIEW) {
     const d = e.data;
     if (!d || d.type !== 'look-preview') return;
     try {
+      if (window.DS) {
+        const prev = Object.assign({}, pharmacyProfile, d.colors || {}, { look: d.look });
+        if (d.homeBlocks) prev.homeBlocks = d.homeBlocks;
+        if (d.copy) prev.copy = d.copy;
+        if (d.seasons) prev.seasons = d.seasons;
+        pharmacyProfile = Object.assign({}, pharmacyProfile, { homeBlocks: prev.homeBlocks, copy: prev.copy, seasons: prev.seasons });
+        const e = window.DS.effective(prev);
+        applyLook(e.look);
+        applyThemeColors(Object.assign({}, prev, e.colors));
+        window.DS.applyAll(prev);
+        if (typeof renderHome === 'function') renderHome();
+        if (e.colors.primaryColor && typeof applyDynamicThemeColor === 'function') applyDynamicThemeColor(e.colors.primaryColor);
+        if (typeof currentProductId !== 'undefined' && currentProductId && currentView === 'product' && typeof renderProductDetailDOM === 'function') { const pr = findProduct(currentProductId); if (pr) renderProductDetailDOM(pr); }
+        return;
+      }
       applyLook(d.look);
       if (d.colors && typeof d.colors === 'object') {
         if (d.colors.primaryColor && typeof applyDynamicThemeColor === 'function') applyDynamicThemeColor(d.colors.primaryColor);
@@ -792,6 +807,7 @@ function renderHome() {
   renderHomeBundlesPreview();
   renderBrandStrip();
   renderHomeProductGrid();
+  if (window.DS) window.DS.applyBlocks();
 }
 
 // ================= 7b. HERO CAROUSEL (بنر متحرك بنقاط تصفح) =================
@@ -1256,7 +1272,13 @@ function applyStoreSettings() {
   if (iLink) iLink.href = pharmacyProfile.socialInstagram || '#';
   if (pLink) pLink.href = `tel:${pharmacyProfile.socialPhone || ''}`;
   // لوحة الأدمن لا تتأثر بألوان المتجر (تبقى مقروءة دائماً)، وفيها معاينة مستقلة
-  if (!/admin/i.test(location.pathname)) { applyThemeColors(pharmacyProfile); applyLook(pharmacyProfile.look); }
+  if (!/admin/i.test(location.pathname)) {
+    // التصميم الفعّال = ما حفظه المالك + طبقة الموسم الفعّال (إن وُجد)
+    const eff = window.DS ? window.DS.effective(pharmacyProfile) : null;
+    applyThemeColors(eff ? Object.assign({}, pharmacyProfile, eff.colors) : pharmacyProfile);
+    applyLook(eff ? eff.look : pharmacyProfile.look);
+    if (window.DS) window.DS.applyAll(pharmacyProfile);
+  }
 }
 
 // ================= 31. FIRESTORE REALTIME SYNC (FIX #1: ADMIN-ONLY LIVE PRICE SYNC) =================
