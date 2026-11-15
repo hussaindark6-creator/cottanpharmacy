@@ -79,6 +79,48 @@
       { key: 'font_size', label: 'حجم الخط العام', def: 'm', values: [
         { v: 's', l: 'صغير' }, { v: 'm', l: 'متوسط' }, { v: 'l', l: 'كبير' } ] }
     ] },
+    { id: 'header2', title: 'الترويسة والبحث', icon: '🔝', options: [
+      { key: 'header_logo', label: 'حجم اسم/شعار المتجر', def: 'm', values: [ { v: 's', l: 'صغير' }, { v: 'm', l: 'متوسط' }, { v: 'l', l: 'كبير' } ] },
+      { key: 'header_sticky', label: 'تثبيت الترويسة عند التمرير', def: 'off', values: [ { v: 'off', l: 'غير مثبتة' }, { v: 'on', l: 'مثبتة بالأعلى' } ] },
+      { key: 'search_style', label: 'شكل حقل البحث', def: 'bar', values: [ { v: 'bar', l: 'شريط بظل' }, { v: 'flat', l: 'مسطّح بإطار' }, { v: 'compact', l: 'مدمج صغير' } ] }
+    ] },
+    { id: 'card2', title: 'تفاصيل بطاقة المنتج', icon: '🏷️', options: [
+      { key: 'card_desc', label: 'سطر الوصف تحت الاسم', def: 'shown', values: [ { v: 'shown', l: 'ظاهر' }, { v: 'hidden', l: 'مخفي' } ] },
+      { key: 'card_oldprice', label: 'السعر القديم', def: 'shown', values: [ { v: 'shown', l: 'ظاهر' }, { v: 'hidden', l: 'مخفي' } ] },
+      { key: 'card_stock', label: 'شارات المخزون (نفذت/بقي القليل)', def: 'shown', values: [ { v: 'shown', l: 'ظاهرة' }, { v: 'hidden', l: 'مخفية' } ] },
+      { key: 'card_wish', label: 'زر المفضلة على البطاقة', def: 'shown', values: [ { v: 'shown', l: 'ظاهر' }, { v: 'hidden', l: 'مخفي' } ] }
+    ] },
+    { id: 'product', title: 'صفحة المنتج', icon: '📄', options: [
+      { key: 'pd_layout', label: 'تخطيط صفحة المنتج', def: 'stack', values: [
+        { v: 'stack', l: 'كتلة علوية', d: 'الصورة فوق والتفاصيل تحتها' },
+        { v: 'split', l: 'عمودان', d: 'الصورة بجانب التفاصيل بالشاشات الكبيرة' },
+        { v: 'immersive', l: 'غامر', d: 'صورة كبيرة ممتدة للحافة' },
+        { v: 'compact', l: 'مدمج', d: 'صورة أصغر ومسافات أقل' } ] },
+      { key: 'pd_info', label: 'عرض معلومات المنتج (المكوّنات/الاستخدام/التحذيرات)', def: 'stack', values: [
+        { v: 'stack', l: 'متتابعة' }, { v: 'tabs', l: 'تبويبات' }, { v: 'accordion', l: 'أكورديون قابل للطي' } ] },
+      { key: 'pd_sticky_buy', label: 'شريط الشراء الثابت', def: 'off', values: [ { v: 'off', l: 'معطّل' }, { v: 'on', l: 'ثابت أسفل الشاشة' } ] },
+      { key: 'pd_trust', label: 'صف الثقة (أصلي/توصيل/استشارة)', def: 'on', values: [ { v: 'on', l: 'ظاهر' }, { v: 'off', l: 'مخفي' } ] },
+      { key: 'pd_share', label: 'زر المشاركة', def: 'on', values: [ { v: 'on', l: 'ظاهر' }, { v: 'off', l: 'مخفي' } ] },
+      { key: 'qty_style', label: 'شكل عدّاد الكمية', def: 'pill', values: [ { v: 'pill', l: 'كبسولة' }, { v: 'square', l: 'مربعات' }, { v: 'plain', l: 'بسيط' } ] },
+      { key: 'similar_style', label: 'المنتجات ذات الصلة', def: 'grid', values: [ { v: 'grid', l: 'شبكة' }, { v: 'slider', l: 'شريط أفقي' }, { v: 'hidden', l: 'مخفية' } ] }
+    ] },
+    { id: 'cart', title: 'السلة والنوافذ', icon: '🛒', options: [
+      { key: 'cart_free_bar', label: 'شريط «تبقّى لك X للتوصيل المجاني»', def: 'on', values: [ { v: 'on', l: 'ظاهر' }, { v: 'off', l: 'مخفي' } ] },
+      { key: 'welcome', label: 'نافذة الترحيب بالزائر الجديد', def: 'on', values: [ { v: 'on', l: 'تظهر' }, { v: 'off', l: 'لا تظهر' } ] }
+    ] },
+    { id: 'decor', title: 'الزخرفة والأيقونات والأرقام', icon: '🌿', options: [
+      { key: 'bg_deco', label: 'زخرفة الخلفية', def: 'none', values: [
+        { v: 'none', l: 'بلا' }, { v: 'waves', l: 'موجات' }, { v: 'dots', l: 'نقاط' }, { v: 'leaves', l: 'أوراق' } ] },
+      { key: 'icons', label: 'نمط الأيقونات', def: 'line', values: [ { v: 'line', l: 'خطية' }, { v: 'bold', l: 'خطية سميكة' }, { v: 'duo', l: 'ثنائية اللون' } ] },
+      { key: 'digits', label: 'الأرقام', def: 'latin', values: [ { v: 'latin', l: 'لاتينية (123)' }, { v: 'arabic', l: 'عربية (١٢٣)' } ] }
+    ] },
+    { id: 'typo2', title: 'الطباعة والكثافة', icon: '🔠', options: [
+      { key: 'font_weight', label: 'وزن النصوص', def: 'regular', values: [ { v: 'regular', l: 'عادي' }, { v: 'medium', l: 'متوسط' }, { v: 'semibold', l: 'ثقيل' } ] },
+      { key: 'leading', label: 'تباعد الأسطر', def: 'normal', values: [ { v: 'normal', l: 'عادي' }, { v: 'relaxed', l: 'مريح' } ] },
+      { key: 'density', label: 'الكثافة', def: 'normal', values: [ { v: 'normal', l: 'متوسط' }, { v: 'comfy', l: 'مريح' }, { v: 'compact', l: 'مضغوط' } ] },
+      { key: 'container', label: 'عرض الحاوية بالشاشات الكبيرة', def: 'normal', values: [ { v: 'normal', l: 'عادي' }, { v: 'narrow', l: 'ضيق' }, { v: 'wide', l: 'عريض' } ] },
+      { key: 'section_gap', label: 'الفراغ بين الأقسام', def: 'm', values: [ { v: 's', l: 'صغير' }, { v: 'm', l: 'متوسط' }, { v: 'l', l: 'كبير' } ] }
+    ] },
     { id: 'motion', title: 'الحركة', icon: '✨', options: [
       { key: 'motion', label: 'مستوى الحركة', def: 'full', values: [
         { v: 'full', l: 'كاملة', d: 'ظهور تدريجي وطيران للسلة' }, { v: 'subtle', l: 'هادئة' }, { v: 'off', l: 'بلا حركة' } ] }
@@ -122,7 +164,225 @@
     return fams.length ? 'https://fonts.googleapis.com/css2?' + fams.join('&') + '&display=swap' : '';
   }
 
-  var api = { GROUPS: G, FONTS: FONTS, DEFAULTS: DEFAULTS, ALLOWED: ALLOWED, normalizeLook: normalizeLook, fontsUrl: fontsUrl };
+
+  // ================= مخطط التصميم الموسّع (كتل الرئيسية + النصوص + المواسم) =================
+  // كل الحدود هنا تُولَّد منها نسخة الووركر (gen-worker-design.cjs) فلا يختلف التحقق بين الواجهة والسيرفر.
+  // @@SHARED-BEGIN (تُنسخ حرفياً إلى الووركر عبر gen-worker-design.cjs — لا تضيفي هنا اعتماداً على window/document)
+  var SOCIAL_HOSTS = { instagram: ['instagram.com'], facebook: ['facebook.com', 'fb.com'], tiktok: ['tiktok.com'], youtube: ['youtube.com', 'youtu.be'], snapchat: ['snapchat.com'], whatsapp: ['wa.me'], telegram: ['t.me'] };
+  var FOOTER_LINKS = ['categories', 'bundles', 'offers', 'orders', 'account', 'cart'];
+  var BLOCK_DEFS = {
+    'hero':         { label: 'البنر الرئيسي', styles: [], fields: [] },
+    'trust':        { label: 'شريط المميزات', styles: [], fields: ['items'] },
+    'categories':   { label: 'شريط الأقسام', styles: [], fields: ['title'] },
+    'promo-cards':  { label: 'بطاقتا العروض والبكجات', styles: [], fields: [] },
+    'brands':       { label: 'الماركات', styles: [], fields: ['title', 'subtitle'] },
+    'best-sellers': { label: 'المنتجات المتوفرة / الأكثر مبيعاً', styles: ['grid', 'slider'], fields: ['title', 'subtitle'] },
+    'new-arrivals': { label: 'وصل حديثاً', styles: ['grid', 'slider'], fields: ['title', 'subtitle'] },
+    'offers':       { label: 'العروض مع عدّاد تنازلي', styles: ['grid', 'slider'], fields: ['title', 'subtitle', 'endAt'] },
+    'bundles':      { label: 'البكجات', styles: ['grid', 'slider'], fields: ['title', 'subtitle'] },
+    'story':        { label: 'قصة الصيدلية', styles: ['side', 'center'], fields: ['title', 'text', 'image'] },
+    'contact':      { label: 'دعوة للتواصل', styles: ['card', 'bar'], fields: ['title', 'subtitle'] },
+    'footer':       { label: 'التذييل', styles: ['simple', 'columns'], fields: ['text', 'links', 'social'] }
+  };
+  var DEFAULT_BLOCKS = [
+    { id: 'hero', on: true }, { id: 'trust', on: true }, { id: 'categories', on: true }, { id: 'promo-cards', on: true },
+    { id: 'brands', on: true }, { id: 'best-sellers', on: true },
+    { id: 'new-arrivals', on: false }, { id: 'offers', on: false }, { id: 'bundles', on: false },
+    { id: 'story', on: false }, { id: 'contact', on: false }, { id: 'footer', on: false }
+  ];
+  var TRUST_DEFAULT = [ { t: 'منتجات أصلية', s: 'مضمونة 100%' }, { t: 'توصيل سريع', s: 'لباب بيتك' }, { t: 'استشارة مجانية', s: 'مع الصيدلي' }, { t: 'عناية بتفاصيلك', s: 'اختيار موثوق' } ];
+  var LIMITS = { blocks: 12, title: 40, subtitle: 80, text: 400, itemT: 24, itemS: 30, items: 4, links: 6, copy: 60, copyKeys: 40, seasons: 6, imageUrl: 300 };
+
+  // نصوص قابلة للتحرير. d = الافتراضي (مؤنث). n/m = صيغة المخاطبة المحايدة/المذكرة عند اختلافها.
+  var COPY_DEFS = {
+    brands_title:   { label: 'عنوان الماركات', d: 'أشهر الماركات' },
+    products_title: { label: 'عنوان المنتجات', d: 'المنتجات المتوفرة' },
+    newarr_title:   { label: 'عنوان «وصل حديثاً»', d: 'وصل حديثاً' },
+    offers_title:   { label: 'عنوان العروض', d: 'عروض لفترة محدودة' },
+    bundles_title:  { label: 'عنوان البكجات', d: 'بكجات التوفير' },
+    see_all:        { label: 'رابط «عرض الكل»', d: 'عرض الكل ›' },
+    promo_b_title:  { label: 'بطاقة البكجات: العنوان', d: 'بكجات مميزة' },
+    promo_b_sub:    { label: 'بطاقة البكجات: الوصف', d: 'توفير أكثر.. عناية أكمل' },
+    promo_b_btn:    { label: 'بطاقة البكجات: الزر', d: 'اكتشف البكجات ←', n: 'اكتشف البكجات ←', m: 'اكتشف البكجات ←' },
+    promo_o_title:  { label: 'بطاقة العروض: العنوان', d: 'عروض خاصة' },
+    promo_o_sub:    { label: 'بطاقة العروض: الوصف', d: 'على أفضل المنتجات' },
+    promo_o_btn:    { label: 'بطاقة العروض: الزر', d: 'تسوق الآن ←' },
+    add_to_cart:    { label: 'زر الإضافة بصفحة المنتج', d: 'أضف إلى السلة' },
+    contact_btn:    { label: 'زر التواصل', d: 'تواصلي معنا', n: 'تواصل معنا', m: 'تواصل معنا' },
+    search_ph:      { label: 'نص حقل البحث', d: 'إبحث عن منتج، ماركة أو قسم...' },
+    cart_title:     { label: 'عنوان السلة', d: 'سلة المشتريات' }
+  };
+  var VOICES = ['f', 'n', 'm'];
+  var SEASON_PRESETS = {
+    ramadan: { label: 'رمضان', colors: { primaryColor: '#7B5EA7', pageBgColor: '#F6F1FB', secondaryColor: '#D9A441' }, look: { bg_deco: 'dots', announce: 'dark' }, announce: 'رمضان كريم 🌙 عروض خاصة بمناسبة الشهر الفضيل' },
+    eid:     { label: 'العيد', colors: { primaryColor: '#E0823D', pageBgColor: '#FFF7EE', secondaryColor: '#2F9E8F' }, look: { bg_deco: 'waves', announce: 'solid' }, announce: 'عيدكم مبارك 🎉 كل عام وأنتم بخير' },
+    newyear: { label: 'رأس السنة', colors: { primaryColor: '#2F6FDE', pageBgColor: '#F3F7FF', secondaryColor: '#E6B422' }, look: { bg_deco: 'dots', announce: 'dark' }, announce: 'سنة جديدة سعيدة ✨ خصومات بداية العام' }
+  };
+  var SEASON_IDS = Object.keys(SEASON_PRESETS);
+
+  // ---------- أدوات تنقية (نقية بلا اعتماد خارجي: تُنسخ كما هي إلى الووركر) ----------
+  function dsText(v, max) {
+    if (typeof v !== 'string') return '';
+    return v.replace(/[\u0000-\u001f\u007f<>`\\]/g, '').replace(/\s+/g, ' ').trim().slice(0, max);
+  }
+  function dsHttpsHost(url, hosts) {
+    if (typeof url !== 'string' || url.length > 300) return '';
+    var m = /^https:\/\/([a-z0-9.-]+)(\/[A-Za-z0-9._~:\/?#@!$&()*+,;=%-]*)?$/i.exec(url.trim());
+    if (!m) return '';
+    var h = m[1].toLowerCase().replace(/^www\./, '');
+    for (var i = 0; i < hosts.length; i++) { if (h === hosts[i] || h.slice(-(hosts[i].length + 1)) === '.' + hosts[i]) return url.trim(); }
+    return '';
+  }
+  function dsImageUrl(url) {
+    if (typeof url !== 'string' || url.length > 300) return '';
+    return /^https:\/\/[a-z0-9.-]+\/api\/images\/pharmacy_[A-Za-z0-9_.%-]+\.(jpg|png|webp)$/i.test(url.trim()) ? url.trim() : '';
+  }
+  function dsIso(v) {
+    if (typeof v !== 'string') return '';
+    var m = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/.exec(v.trim());
+    if (!m) return '';
+    var mo = +m[2], d = +m[3];
+    if (mo < 1 || mo > 12 || d < 1 || d > 31) return '';
+    var hh = m[4] === undefined ? 23 : +m[4], mm = m[5] === undefined ? 59 : +m[5];
+    if (hh > 23 || mm > 59) return '';
+    return m[1] + '-' + m[2] + '-' + m[3] + 'T' + (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm;
+  }
+  function dsDate(v) { var x = dsIso(v); return x ? x.slice(0, 10) : ''; }
+
+  function normalizeOneBlock(b) {
+    var defs = BLOCK_DEFS, L = LIMITS;
+    if (!b || typeof b !== 'object' || typeof b.id !== 'string' || !defs.hasOwnProperty(b.id)) return null;
+    var def = defs[b.id], f = def.fields, o = { id: b.id, on: !(b.on === false || b.on === 'false') };
+    if (def.styles.length) o.style = def.styles.indexOf(b.style) !== -1 ? b.style : def.styles[0];
+    if (f.indexOf('title') !== -1) o.title = dsText(b.title, L.title);
+    if (f.indexOf('subtitle') !== -1) o.subtitle = dsText(b.subtitle, L.subtitle);
+    if (f.indexOf('text') !== -1) o.text = dsText(b.text, L.text);
+    if (f.indexOf('image') !== -1) o.image = dsImageUrl(b.image);
+    if (f.indexOf('endAt') !== -1) o.endAt = dsIso(b.endAt);
+    if (f.indexOf('items') !== -1) {
+      var items = [];
+      (Array.isArray(b.items) ? b.items.slice(0, L.items) : []).forEach(function (it) {
+        if (it && typeof it === 'object') items.push({ t: dsText(it.t, L.itemT), s: dsText(it.s, L.itemS) });
+      });
+      while (items.length < L.items) items.push({ t: '', s: '' });
+      o.items = items.map(function (it, i) { return it.t ? it : { t: TRUST_DEFAULT[i].t, s: TRUST_DEFAULT[i].s }; });
+    }
+    if (f.indexOf('links') !== -1) {
+      var links = [], ls = {};
+      (Array.isArray(b.links) ? b.links : []).forEach(function (k) { if (FOOTER_LINKS.indexOf(k) !== -1 && !ls[k] && links.length < L.links) { ls[k] = 1; links.push(k); } });
+      o.links = links;
+    }
+    if (f.indexOf('social') !== -1) {
+      var soc = {}, src = (b.social && typeof b.social === 'object') ? b.social : {};
+      Object.keys(SOCIAL_HOSTS).forEach(function (k) { var u = dsHttpsHost(src[k], SOCIAL_HOSTS[k]); if (u) soc[k] = u; });
+      o.social = soc;
+    }
+    return o;
+  }
+  function normalizeHomeBlocks(raw) {
+    var out = [], seen = {};
+    (Array.isArray(raw) ? raw.slice(0, LIMITS.blocks) : []).forEach(function (b) {
+      var o = normalizeOneBlock(b);
+      if (o && !seen[o.id]) { seen[o.id] = 1; out.push(o); }
+    });
+    // أي كتلة معروفة غير مذكورة تُضاف بقيمتها الافتراضية بنهاية القائمة (تبقى القائمة كاملة دوماً)
+    DEFAULT_BLOCKS.forEach(function (d) {
+      if (!seen[d.id]) { seen[d.id] = 1; out.push(normalizeOneBlock({ id: d.id, on: d.on })); }
+    });
+    return out.slice(0, LIMITS.blocks);
+  }
+  function defaultHomeBlocks() { return normalizeHomeBlocks(DEFAULT_BLOCKS.map(function (d) { return { id: d.id, on: d.on }; })); }
+
+  function normalizeCopy(raw) {
+    var out = {}, src = (raw && typeof raw === 'object') ? raw : {}, n = 0;
+    Object.keys(COPY_DEFS).forEach(function (k) {
+      if (n >= LIMITS.copyKeys) return;
+      var v = dsText(src[k], LIMITS.copy);
+      if (v) { out[k] = v; n++; }
+    });
+    var voice = VOICES.indexOf(src.voice) !== -1 ? src.voice : 'f';
+    out.voice = voice;
+    return out;
+  }
+  function copyText(copy, key) {
+    var def = COPY_DEFS[key]; if (!def) return '';
+    var c = copy || {};
+    if (c[key]) return c[key];
+    var v = c.voice === 'n' ? (def.n || def.d) : (c.voice === 'm' ? (def.m || def.d) : def.d);
+    return v;
+  }
+
+  function normalizeSeasons(raw) {
+    var out = [], seen = {};
+    (Array.isArray(raw) ? raw.slice(0, LIMITS.seasons) : []).forEach(function (s) {
+      if (!s || typeof s !== 'object' || SEASON_IDS.indexOf(s.preset) === -1) return;
+      var from = dsDate(s.from), to = dsDate(s.to);
+      if (!from || !to || to < from) return;
+      var key = s.preset + from; if (seen[key]) return; seen[key] = 1;
+      out.push({ preset: s.preset, from: from, to: to, on: s.on !== false && s.on !== 'false' });
+    });
+    return out;
+  }
+  // @@SHARED-END
+
+  // ================= ترحيل القوالب القديمة إلى خيارات التصميم =================
+  // القوالب القديمة (boutique/clinic/market) ترسم HTML مخصصاً للبطاقات والترويسة لا يمكن نسخه حرفياً بخيارات؛
+  // لذلك الترحيل تقريبي للروح العامة (ترتيب الرئيسية + استدارة + خطوط + بطاقة/تنقل قريبان) ويبقى المالك يضبطه ثم ينشره.
+  // لا يُنفَّذ تلقائياً: يُعرض بالاستوديو كنقطة بداية (بالذاكرة فقط) ولا يُحفظ شيء إلا بزر «نشر».
+  var TEMPLATE_MIGRATION = {
+    'template_default': { order: ['hero', 'promo-cards', 'brands', 'best-sellers'], look: {} },
+    'template-one':     { order: ['hero', 'promo-cards', 'brands', 'best-sellers'], look: {} },
+    'template-two':     { order: ['hero', 'promo-cards', 'brands', 'best-sellers'], look: {} },
+    'boutique': { order: ['hero', 'brands', 'best-sellers', 'promo-cards'], primary: '#B76E79', look: { radius: 'soft', font_head: 'amiri', title: 'center', card: 'soft', btn_fill: 'solid', nav: 'dock' } },
+    'clinic':   { order: ['hero', 'promo-cards', 'best-sellers', 'brands'], primary: '#0284C7', look: { radius: 'soft', trust: 'flat', btn_fill: 'solid', btn_shape: 'rounded', nav: 'flat' } },
+    'market':   { order: ['hero', 'promo-cards', 'best-sellers', 'brands'], primary: '#E11D48', look: { radius: 'soft', card: 'outline', cats_home: 'tile', btn_shape: 'rounded', nav: 'flat', header: 'bar' } }
+  };
+  var RADIUS_MAP = { sm: 'soft', md: 'round', lg: 'round' };
+  function migrateFromTemplate(profile) {
+    var p = profile || {}, m = TEMPLATE_MIGRATION[p.templateId] || TEMPLATE_MIGRATION['template_default'];
+    var d = (p.design && typeof p.design === 'object') ? p.design : {};
+    var order = (d.home && Array.isArray(d.home.order) && d.home.order.length ? d.home.order : m.order).filter(function (id) { return ['hero', 'promo-cards', 'brands', 'best-sellers'].indexOf(id) !== -1; });
+    ['hero', 'promo-cards', 'brands', 'best-sellers'].forEach(function (id) { if (order.indexOf(id) === -1) order.push(id); });
+    var hidden = (d.home && Array.isArray(d.home.hidden)) ? d.home.hidden : [];
+    var seq = [];
+    order.forEach(function (id) { seq.push(id); if (id === 'hero') { seq.push('trust'); seq.push('categories'); } });
+    var look = Object.assign({}, m.look);
+    if (d.shapes && RADIUS_MAP[d.shapes.radius]) look.radius = RADIUS_MAP[d.shapes.radius];
+    if (d.fonts && d.fonts.body && ALLOWED.font_body.indexOf(d.fonts.body) !== -1) look.font_body = d.fonts.body;
+    if (d.fonts && d.fonts.heading && ALLOWED.font_head.indexOf(d.fonts.heading) !== -1) look.font_head = d.fonts.heading;
+    var colors = {};
+    if (!/^#[0-9A-Fa-f]{6}$/.test(p.primaryColor || '')) { var pc = (d.colors && d.colors.primary) || m.primary; if (/^#[0-9A-Fa-f]{6}$/.test(pc || '')) colors.primaryColor = pc; }
+    return { homeBlocks: normalizeHomeBlocks(seq.map(function (id) { return { id: id, on: hidden.indexOf(id) === -1 }; })), look: normalizeLook(look), colors: colors };
+  }
+
+  // الموسم الفعّال اليوم (بتوقيت العراق UTC+3) أو null
+  function activeSeason(seasons, nowMs) {
+    var d = new Date((nowMs === undefined ? Date.now() : nowMs) + 3 * 3600 * 1000).toISOString().slice(0, 10);
+    var list = normalizeSeasons(seasons);
+    for (var i = 0; i < list.length; i++) if (list[i].on && list[i].from <= d && d <= list[i].to) return list[i];
+    return null;
+  }
+
+  // التصميم الفعّال: ما حفظه المالك + طبقة الموسم الفعّال (إن وُجد). لا يعدّل المحفوظ.
+  function effectiveDesign(profile, nowMs) {
+    var p = profile || {};
+    var look = normalizeLook(p.look), colors = {};
+    ['primaryColor', 'pageBgColor', 'cardColor', 'secondaryColor', 'textColor'].forEach(function (k) { if (/^#[0-9A-Fa-f]{6}$/.test(p[k] || '')) colors[k] = p[k]; });
+    var copy = normalizeCopy(p.copy), season = activeSeason(p.seasons, nowMs), announce = '';
+    if (season) {
+      var pre = SEASON_PRESETS[season.preset];
+      Object.keys(pre.colors).forEach(function (k) { colors[k] = pre.colors[k]; });
+      Object.keys(pre.look).forEach(function (k) { look[k] = pre.look[k]; });
+      announce = pre.announce;
+    }
+    return { look: look, colors: colors, copy: copy, season: season, announce: announce, blocks: normalizeHomeBlocks(p.homeBlocks) };
+  }
+
+  var api = { GROUPS: G, FONTS: FONTS, DEFAULTS: DEFAULTS, ALLOWED: ALLOWED, normalizeLook: normalizeLook, fontsUrl: fontsUrl,
+    BLOCK_DEFS: BLOCK_DEFS, DEFAULT_BLOCKS: DEFAULT_BLOCKS, TRUST_DEFAULT: TRUST_DEFAULT, LIMITS: LIMITS, COPY_DEFS: COPY_DEFS, VOICES: VOICES,
+    SOCIAL_HOSTS: SOCIAL_HOSTS, FOOTER_LINKS: FOOTER_LINKS, SEASON_PRESETS: SEASON_PRESETS,
+    normalizeHomeBlocks: normalizeHomeBlocks, defaultHomeBlocks: defaultHomeBlocks, normalizeCopy: normalizeCopy, copyText: copyText,
+    normalizeSeasons: normalizeSeasons, migrateFromTemplate: migrateFromTemplate, TEMPLATE_MIGRATION: TEMPLATE_MIGRATION, safeHttpsHost: dsHttpsHost, safeImageUrl: dsImageUrl, activeSeason: activeSeason, effectiveDesign: effectiveDesign, sanitizeText: dsText };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.LookRegistry = api;
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : {}));
