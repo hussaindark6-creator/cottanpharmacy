@@ -9,7 +9,6 @@ let stuDevice = 'mobile', stuBuilt = false, stuFrameLoaded = false;
 // فتبقى الصيدلية على ترتيب قالبها القديم حتى تقرر التغيير.
 let stuBlocks = STU_R ? STU_R.defaultHomeBlocks() : [], stuSavedBlocks = JSON.stringify(stuBlocks), stuBlocksTouched = false, stuBlocksSaved = false;
 let stuCopy = STU_R ? STU_R.normalizeCopy({}) : {}, stuSavedCopy = JSON.stringify(stuCopy);
-let stuSeasons = [], stuSavedSeasons = '[]';
 let stuOpenBlock = '';
 
 function stuEl(id) { return document.getElementById(id); }
@@ -22,17 +21,18 @@ function stuMarkDirty() {
   const d = stuEl('studioDirty'); if (!d) return;
   const c = stuColors(), pp = (typeof pharmacyProfile !== 'undefined') ? pharmacyProfile : {};
   const colorsChanged = ['primaryColor', 'pageBgColor', 'cardColor', 'secondaryColor', 'textColor'].some(function (k) { return (c[k] || '') !== (pp[k] || ''); });
-  const extra = (stuBlocksTouched && JSON.stringify(stuBlocks) !== stuSavedBlocks) || JSON.stringify(stuCopy) !== stuSavedCopy || JSON.stringify(stuSeasons) !== stuSavedSeasons;
+  const extra = (stuBlocksTouched && JSON.stringify(stuBlocks) !== stuSavedBlocks) || JSON.stringify(stuCopy) !== stuSavedCopy;
   d.style.display = (!stuSame(stuLook, stuSaved) || colorsChanged || extra) ? 'inline-block' : 'none';
 }
 
 // تُستدعى أيضاً من admin-page.js كلما تغيّر لون
-function studioPush() {
+function studioPush(changedKey) {
   if (!STU_R) return;
   const f = stuEl('studioFrame');
   if (f && f.contentWindow && stuFrameLoaded) {
     try {
-      const msg = { type: 'look-preview', look: stuLook, colors: stuColors(), copy: stuCopy, seasons: stuSeasons };
+      const msg = { type: 'look-preview', look: stuLook, colors: stuColors(), copy: stuCopy };
+      if (changedKey) msg.changed = changedKey;
       if (stuBlocksTouched || stuBlocksSaved) msg.homeBlocks = stuBlocks;
       f.contentWindow.postMessage(msg, location.origin);
     } catch (e) { /* غير حرج */ }
@@ -59,7 +59,7 @@ function stuRenderOptions() {
     const box = document.createElement('div');
     box.className = 'st-group closed'; box.setAttribute('data-gid', g.id);
     const opts = g.options.map(function (o) {
-      const chips = o.values.map(function (v) {
+      const chips = o.values.filter(function (v) { return !v.h || stuLook[o.key] === v.v; }).map(function (v) {
         return '<button type="button" class="st-chip' + (stuLook[o.key] === v.v ? ' on' : '') + '" data-k="' + stuEsc(o.key) + '" data-v="' + stuEsc(v.v) + '">' + stuEsc(v.l) + (v.d ? '<small>' + stuEsc(v.d) + '</small>' : '') + '</button>';
       }).join('');
       return '<div class="st-opt"><div class="st-opt-label">' + stuEsc(o.label) + '</div><div class="st-chips">' + chips + '</div></div>';
@@ -89,7 +89,7 @@ function stuBuild() {
     const chip = e.target.closest('.st-chip');
     if (!chip) return;
     stuLook[chip.getAttribute('data-k')] = chip.getAttribute('data-v');
-    stuRefreshChips(); studioPush();
+    stuRefreshChips(); studioPush(chip.getAttribute('data-k'));
   });
   stuEl('studioDevices').addEventListener('click', function (e) {
     const b = e.target.closest('button[data-dev]'); if (!b) return;
@@ -115,7 +115,6 @@ function studioOpen() {
   stuBlocks = stuBlocksSaved ? STU_R.normalizeHomeBlocks(pp.homeBlocks) : STU_R.migrateFromTemplate(pp).homeBlocks;
   stuSavedBlocks = JSON.stringify(stuBlocks); stuBlocksTouched = false;
   stuCopy = STU_R.normalizeCopy(pp.copy); stuSavedCopy = JSON.stringify(stuCopy);
-  stuSeasons = STU_R.normalizeSeasons(pp.seasons); stuSavedSeasons = JSON.stringify(stuSeasons);
   stuRenderExtras();
   if (typeof loadThemeColorInputs === 'function') loadThemeColorInputs(pp);
   stuRefreshChips();
@@ -131,7 +130,7 @@ function studioRevert() {
   const pp = (typeof pharmacyProfile !== 'undefined') ? pharmacyProfile : {};
   stuLook = Object.assign({}, stuSaved);
   stuBlocks = JSON.parse(stuSavedBlocks); stuBlocksTouched = false;
-  stuCopy = JSON.parse(stuSavedCopy); stuSeasons = JSON.parse(stuSavedSeasons);
+  stuCopy = JSON.parse(stuSavedCopy);
   if (typeof loadThemeColorInputs === 'function') loadThemeColorInputs(pp);
   stuRenderExtras(); stuRefreshChips(); studioPush();
 }
@@ -153,18 +152,20 @@ async function studioPublish() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Pharmacy-Id': stuPid(), 'Authorization': 'Bearer ' + token },
       body: JSON.stringify((function () {
-        const b = { look: stuLook, colors: stuColors(), copy: stuCopy, seasons: stuSeasons };
+        const b = { look: stuLook, colors: stuColors(), copy: stuCopy };
         if (stuBlocksTouched || stuBlocksSaved) b.homeBlocks = stuBlocks;
         return b;
       })())
     });
     const data = await res.json().catch(function () { return {}; });
     if (!res.ok || !data.success) throw new Error(data.message || 'تعذر النشر');
+    // 🔎 ووركر قديم يُسقط الخيارات الجديدة بصمت (فلا تظهر لزبائنك): نكشف ذلك ونخبر المالكة
+    const lost = Object.keys(stuLook).filter(function (k) { return stuLook[k] !== STU_R.DEFAULTS[k] && (!data.look || data.look[k] !== stuLook[k]); });
+    if (lost.length) { showToast('⚠️ لم يحفظ السيرفر ' + lost.length + ' من خياراتك: ووركر المنصة قديم. ارفعي worker.js الأحدث على Cloudflare ثم انشري مجدداً.'); }
     stuSaved = STU_R.normalizeLook(data.look || stuLook);
     pharmacyProfile = Object.assign({}, pharmacyProfile, data.colors || {}, { look: stuSaved });
     if (data.homeBlocks) { pharmacyProfile.homeBlocks = data.homeBlocks; stuBlocksSaved = true; stuBlocks = STU_R.normalizeHomeBlocks(data.homeBlocks); stuSavedBlocks = JSON.stringify(stuBlocks); stuBlocksTouched = false; }
     if (data.copy) { pharmacyProfile.copy = data.copy; stuCopy = STU_R.normalizeCopy(data.copy); stuSavedCopy = JSON.stringify(stuCopy); }
-    if (data.seasons) { pharmacyProfile.seasons = data.seasons; stuSeasons = STU_R.normalizeSeasons(data.seasons); stuSavedSeasons = JSON.stringify(stuSeasons); }
     stuRenderExtras();
     if (typeof saveLocalState === 'function') saveLocalState();
     stuMarkDirty();
@@ -177,7 +178,7 @@ async function studioPublish() {
 }
 
 
-// ================= كتل الرئيسية / النصوص / المواسم / صحة التصميم =================
+// ================= كتل الرئيسية / النصوص / صحة التصميم =================
 const STU_STYLE_LABELS = { grid: 'شبكة', slider: 'شريط أفقي', side: 'صورة بجانب النص', center: 'بالمنتصف', card: 'بطاقة', bar: 'شريط ممتد', simple: 'بسيط', columns: 'أعمدة' };
 const STU_LINK_LABELS = { categories: 'الأقسام', bundles: 'البكجات', offers: 'العروض', orders: 'طلباتي', account: 'حسابي', cart: 'السلة' };
 const STU_SOCIAL_LABELS = { instagram: 'Instagram', facebook: 'Facebook', tiktok: 'TikTok', youtube: 'YouTube', snapchat: 'Snapchat', whatsapp: 'WhatsApp (wa.me)', telegram: 'Telegram (t.me)' };
@@ -223,18 +224,6 @@ function stuCopyHtml() {
   return h + '<button type="button" class="st-mini" data-act="creset">إرجاع كل النصوص للافتراضي</button>';
 }
 
-function stuSeasonsHtml() {
-  const P = STU_R.SEASON_PRESETS;
-  return '<div class="st-note-s">اختاري مناسبة وفترتها؛ يتغيّر لون المتجر وزخرفته وشريط الترحيب خلال الفترة فقط ثم يعود تصميمكِ الأصلي تلقائياً (بتوقيت العراق).</div>' +
-    stuSeasons.map(function (s, i) {
-      return '<div class="st-row3"><select data-act="spreset" data-i="' + i + '">' + Object.keys(P).map(function (k) { return '<option value="' + k + '"' + (s.preset === k ? ' selected' : '') + '>' + stuEsc(P[k].label) + '</option>'; }).join('') + '</select>' +
-        '<input type="date" data-act="sfrom" data-i="' + i + '" value="' + s.from + '"><input type="date" data-act="sto" data-i="' + i + '" value="' + s.to + '">' +
-        '<label class="st-sw"><input type="checkbox" data-act="son" data-i="' + i + '"' + (s.on ? ' checked' : '') + '><span></span></label>' +
-        '<button type="button" class="st-mini" data-act="sdel" data-i="' + i + '" aria-label="حذف">✕</button></div>';
-    }).join('') +
-    (stuSeasons.length < STU_R.LIMITS.seasons ? '<button type="button" class="st-mini" data-act="sadd">+ إضافة موسم</button>' : '');
-}
-
 function stuGroup(id, icon, title, inner, closed) {
   return '<div class="st-group' + (closed === false ? '' : ' closed') + '" data-gid="' + id + '"><div class="st-group-head"><span>' + icon + '</span><b>' + title + '</b></div><div class="st-group-body" id="stuBody-' + id + '">' + inner + '</div></div>';
 }
@@ -245,7 +234,6 @@ function stuRenderExtras() {
   host.querySelectorAll('.st-group[data-gid^="x-"]').forEach(function (n) { keepOpen[n.getAttribute('data-gid')] = !n.classList.contains('closed'); n.remove(); });
   const html = stuGroup('x-blocks', '🧱', 'ترتيب أقسام الرئيسية', stuBlocksHtml(), keepOpen['x-blocks'] ? false : true) +
     stuGroup('x-copy', '✍️', 'النصوص وصيغة المخاطبة', stuCopyHtml(), keepOpen['x-copy'] ? false : true) +
-    stuGroup('x-seasons', '🌙', 'المواسم والمناسبات', stuSeasonsHtml(), keepOpen['x-seasons'] ? false : true) +
     stuGroup('x-health', '✅', 'درجة صحة التصميم', '<div id="stuHealth"></div>', keepOpen['x-health'] ? false : true);
   host.insertAdjacentHTML('beforeend', html);
   stuRenderHealth();
@@ -265,8 +253,6 @@ function stuExtrasClick(e) {
     stuRefreshChips();
   }
   else if (act === 'creset') { stuCopy = STU_R.normalizeCopy({}); }
-  else if (act === 'sadd') { const d = new Date(Date.now() + 3 * 3600e3), a = d.toISOString().slice(0, 10), b = new Date(d.getTime() + 7 * 864e5).toISOString().slice(0, 10); stuSeasons.push({ preset: 'ramadan', from: a, to: b, on: true }); }
-  else if (act === 'sdel') { stuSeasons.splice(i, 1); }
   else return;
   stuRenderExtras(); studioPush();
 }
@@ -290,10 +276,6 @@ function stuExtrasInput(e) {
     case 'bsocial': b.social = Object.assign({}, b.social); if (v) b.social[k] = v; else delete b.social[k]; stuTouchBlocks(); break;
     case 'cvoice': stuCopy.voice = v; rerender = true; break;
     case 'ctext': if (v) stuCopy[k] = v; else delete stuCopy[k]; break;
-    case 'spreset': stuSeasons[i].preset = v; break;
-    case 'sfrom': stuSeasons[i].from = v; break;
-    case 'sto': stuSeasons[i].to = v; break;
-    case 'son': stuSeasons[i].on = v; break;
     default: return;
   }
   if (rerender) stuRenderExtras();
@@ -340,8 +322,6 @@ function stuComputeHealth() {
   if (offers && !offers.endAt) add('warn', 'كتلة العروض بلا موعد انتهاء فلن يظهر عدّاد', 'حدّدي تاريخ ووقت انتهاء العرض.', 3);
   const story = stuBlocks.filter(function (b) { return b.id === 'story' && b.on; })[0];
   if (story && !story.text) add('warn', 'كتلة «قصة الصيدلية» مفعّلة بلا نص فلن تظهر', 'اكتبي نصاً قصيراً أو أطفئيها.', 3);
-  const ov = stuSeasons.filter(function (s, i) { return s.on && stuSeasons.some(function (o, j) { return j !== i && o.on && s.from <= o.to && o.from <= s.to; }); });
-  if (ov.length) add('warn', 'مواسم متداخلة بالتواريخ (يُطبَّق الأول فقط)', 'اجعلي فترات المواسم منفصلة.', 3);
   return { score: Math.max(0, Math.min(100, score)), items: items };
 }
 
@@ -351,4 +331,14 @@ function stuRenderHealth() {
   el.innerHTML = '<div class="st-score ' + cls + '"><b>' + h.score + '</b><span>/ 100</span></div>' +
     h.items.map(function (it) { return '<div class="st-hi ' + it.level + '"><span>' + (it.level === 'ok' ? '✔' : '⚠') + '</span><div>' + stuEsc(it.text) + (it.fix ? '<small>' + stuEsc(it.fix) + '</small>' : '') + '</div></div>'; }).join('') +
     '<div class="st-note-s">المؤشر استرشادي ولا يمنع النشر.</div>';
+}
+
+
+// ================= درج الخيارات (المعاينة بملء الشاشة) =================
+function studioToggleDrawer(force) {
+  const box = stuEl('studioControls'); if (!box) return;
+  const open = (typeof force === 'boolean') ? force : !box.classList.contains('open');
+  box.classList.toggle('open', open);
+  const fab = stuEl('studioFab'); if (fab) fab.classList.toggle('on', open);
+  setTimeout(stuFit, 260);
 }
