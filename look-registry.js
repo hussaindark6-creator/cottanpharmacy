@@ -18,6 +18,19 @@
         { v: 'solid', l: 'بلون أساسي', d: 'شريط بارز' },
         { v: 'dark', l: 'داكن', d: 'شريط غامق أنيق' },
         { v: 'hidden', l: 'مخفي', d: 'بدون شريط' } ] },
+      { key: 'hero_layout', label: 'تركيب البنر (الصورة والنص)', def: 'split', values: [
+        { v: 'split', l: 'صورة بجانب النص', d: 'الحالي: نص على جهة وصورة على الجهة الأخرى' },
+        { v: 'overlay', l: 'نص فوق الصورة', d: 'الصورة تغطي كل البنر والنص فوقها' },
+        { v: 'stack', l: 'صورة فوق ونص تحتها', d: 'مناسب للجوال والصور الطويلة' },
+        { v: 'textonly', l: 'نص فقط', d: 'بدون صورة، خلفية ملوّنة نظيفة' } ] },
+      { key: 'hero_bg', label: 'خلفية البنر', def: 'soft', values: [
+        { v: 'soft', l: 'ناعمة بتدرّج' }, { v: 'brand', l: 'بلون المتجر ونص أبيض' }, { v: 'paper', l: 'بيضاء نظيفة' } ] },
+      { key: 'hero_align', label: 'محاذاة نص البنر', def: 'start', values: [ { v: 'start', l: 'للبداية' }, { v: 'center', l: 'بالمنتصف' } ] },
+      { key: 'hero_text', label: 'لون نص البنر', def: 'auto', values: [ { v: 'auto', l: 'تلقائي' }, { v: 'light', l: 'فاتح (فوق صورة داكنة)' }, { v: 'dark', l: 'داكن' } ] },
+      { key: 'hero_overlay', label: 'تعتيم فوق الصورة', def: 'none', values: [ { v: 'none', l: 'بلا' }, { v: 'soft', l: 'خفيف' }, { v: 'dark', l: 'داكن لإبراز النص' }, { v: 'brand', l: 'بلون المتجر' } ] },
+      { key: 'hero_title_size', label: 'حجم عنوان البنر', def: 'm', values: [ { v: 's', l: 'صغير' }, { v: 'm', l: 'متوسط' }, { v: 'l', l: 'كبير' }, { v: 'xl', l: 'ضخم' } ] },
+      { key: 'hero_cta', label: 'زر البنر', def: 'fill', values: [ { v: 'fill', l: 'معبّأ' }, { v: 'outline', l: 'إطار فقط' }, { v: 'text', l: 'نص بسهم' }, { v: 'hidden', l: 'بدون زر' } ] },
+      { key: 'hero_dots', label: 'مؤشرات الشرائح', def: 'dots', values: [ { v: 'dots', l: 'نقاط' }, { v: 'line', l: 'خطوط طويلة' }, { v: 'hidden', l: 'مخفية' } ] },
       { key: 'hero_size', label: 'حجم البنر الرئيسي', def: 'standard', values: [
         { v: 'compact', l: 'مصغّر' }, { v: 'standard', l: 'عادي' }, { v: 'tall', l: 'كبير' }, { v: 'immersive', l: 'ضخم' } ] },
       { key: 'hero_image', label: 'طريقة عرض صورة البنر', def: 'fade', values: [
@@ -38,9 +51,13 @@
         { v: 'shop', l: 'تسوّق', d: 'السعر وزر العربة أسفل البطاقة' },
         { v: 'soft', l: 'ناعمة', d: 'الاسم والسعر بسطر وزر عريض' },
         { v: 'outline', l: 'مؤطّرة', d: 'إطار نحيف ونص بالمنتصف' },
-        { v: 'row', l: 'قائمة', d: 'الصورة بجانب التفاصيل' } ] },
+        { v: 'row', l: 'قائمة', d: 'الصورة بجانب التفاصيل' },
+        { v: 'tint', l: 'ملوّنة', d: 'خلفية صورة بلون المتجر الناعم وسطر الماركة وزر عريض' },
+        { v: 'plain', l: 'مسطّحة', d: 'بلا ظل، إطار رفيع وزاوية صغيرة (أسلوب المتاجر العالمية)' },
+        { v: 'catalog', l: 'كتالوج', d: 'إطار حاد رفيع ونص صغير بالمنتصف' },
+        { v: 'float', l: 'عائمة', d: 'بلا إطار على خلفية رمادية دافئة وزر صغير' } ] },
       { key: 'add_btn', label: 'زر الإضافة للسلة', def: 'cart', values: [
-        { v: 'cart', l: 'عربة' }, { v: 'bag', l: 'كيس تسوق' }, { v: 'plus', l: 'زائد (+)' }, { v: 'text', l: 'نص «أضف»' } ] },
+        { v: 'cart', l: 'عربة' }, { v: 'bag', l: 'كيس تسوق' }, { v: 'plus', l: 'زائد (+)' }, { v: 'text', l: 'نص «أضف»' }, { v: 'wide', l: 'زر عريض كامل' } ] },
       { key: 'thumb_ratio', label: 'نسبة إطار الصورة', def: 'square', values: [
         { v: 'square', l: 'مربع' }, { v: 'portrait', l: 'طولي' }, { v: 'wide', l: 'عريض' } ] },
       { key: 'thumb_fit', label: 'ملاءمة الصورة', def: 'contain', values: [
@@ -63,7 +80,9 @@
         { v: 'bubble', l: 'فقاعة نافرة', d: 'أيقونة النشط تبرز في دائرة' },
         { v: 'dock', l: 'رصيف عائم', d: 'شريط مستدير بتمييز ناعم' },
         { v: 'flat', l: 'مسطّح', d: 'شريط بسيط بنقطة تحت النشط' },
-        { v: 'glass', l: 'زجاجي', d: 'شفاف مموّه' } ] },
+        { v: 'glass', l: 'زجاجي', d: 'شفاف مموّه' },
+        { v: 'solid', l: 'ملوّن كامل', d: 'شريط بلون المتجر وأيقونات بيضاء' },
+        { v: 'fab', l: 'زر السلة المركزي البارز', d: 'شريط ملوّن وزر سلة دائري كبير بالمنتصف (يخفي زر البكجات منه)' } ] },
       { key: 'title', label: 'عناوين الأقسام', def: 'line', values: [
         { v: 'line', l: 'خط جانبي' }, { v: 'center', l: 'بالمنتصف بزخرفة' }, { v: 'bold', l: 'ضخمة وثقيلة' } ] },
       { key: 'trust', label: 'شريط المميزات', def: 'cards', values: [
@@ -71,20 +90,36 @@
     ] },
     { id: 'type', title: 'الخطوط', icon: '🔤', options: [
       { key: 'font_body', label: 'خط النصوص', def: 'cairo', values: [
-        { v: 'cairo', l: 'Cairo' }, { v: 'tajawal', l: 'Tajawal' }, { v: 'almarai', l: 'Almarai' },
-        { v: 'plex', l: 'IBM Plex Arabic' }, { v: 'readex', l: 'Readex Pro' }, { v: 'kufi', l: 'Noto Kufi' } ] },
+        { v: 'cairo', l: 'Cairo — هندسي معاصر' }, { v: 'tajawal', l: 'Tajawal — نظيف وخفيف' }, { v: 'naskh', l: 'Naskh — نسخ تقليدي مقروء' },
+        { v: 'changa', l: 'Changa — مدوّر وضيّق' }, { v: 'baloo', l: 'Baloo — مرح ومدوّر' }, { v: 'elmessiri', l: 'El Messiri — أنيق بلمسة زخرفية' },
+        { v: 'lemonada', l: 'Lemonada — ودّي وناعم' },
+        { v: 'almarai', l: 'Almarai', h: true }, { v: 'plex', l: 'IBM Plex Arabic', h: true }, { v: 'readex', l: 'Readex Pro', h: true }, { v: 'kufi', l: 'Noto Kufi', h: true } ] },
       { key: 'font_head', label: 'خط العناوين', def: 'same', values: [
-        { v: 'same', l: 'نفس خط النصوص' }, { v: 'amiri', l: 'Amiri (نسخ)' }, { v: 'markazi', l: 'Markazi (نسخ)' },
-        { v: 'reem', l: 'Reem Kufi' }, { v: 'kufi', l: 'Noto Kufi' } ] },
+        { v: 'same', l: 'نفس خط النصوص' }, { v: 'amiri', l: 'Amiri — خط كلاسيكي فاخر' }, { v: 'markazi', l: 'Markazi — عناوين مكثّفة' },
+        { v: 'reem', l: 'Reem Kufi — كوفي هندسي' }, { v: 'lalezar', l: 'Lalezar — عريض لافت' }, { v: 'elmessiri', l: 'El Messiri — أنيق' },
+        { v: 'arefruqaa', l: 'Aref Ruqaa — رقعة بخط اليد' }, { v: 'rakkas', l: 'Rakkas — بارز وجريء' }, { v: 'changa', l: 'Changa — مدوّر' }, { v: 'baloo', l: 'Baloo — مرح',},
+        { v: 'kufi', l: 'Noto Kufi', h: true } ] },
       { key: 'font_size', label: 'حجم الخط العام', def: 'm', values: [
         { v: 's', l: 'صغير' }, { v: 'm', l: 'متوسط' }, { v: 'l', l: 'كبير' } ] }
     ] },
     { id: 'header2', title: 'الترويسة والبحث', icon: '🔝', options: [
+      { key: 'header_brand', label: 'عرض اسم الصيدلية', def: 'text', values: [
+        { v: 'text', l: 'نص فقط', d: 'الاسم بالمنتصف' },
+        { v: 'tile', l: 'شعار بمستطيل + الاسم + الشعار اللفظي', d: 'مثل «صيدلية الرند»: مستطيل مدوّر بالشعار وبجانبه الاسم والعبارة' },
+        { v: 'tile-lg', l: 'مستطيل كبير مع الاسم', d: 'شعار كبير بمستطيل وأسفله الاسم' },
+        { v: 'logo', l: 'شعار فقط', d: 'صورة الشعار بدل الاسم' } ] },
+      { key: 'header_tabs', label: 'شريط التنقل بالترويسة', def: 'off', values: [ { v: 'off', l: 'مخفي' }, { v: 'on', l: 'تبويبات أفقية (الرئيسية، الأقسام...)' } ] },
       { key: 'header_logo', label: 'حجم اسم/شعار المتجر', def: 'm', values: [ { v: 's', l: 'صغير' }, { v: 'm', l: 'متوسط' }, { v: 'l', l: 'كبير' } ] },
       { key: 'header_sticky', label: 'تثبيت الترويسة عند التمرير', def: 'off', values: [ { v: 'off', l: 'غير مثبتة' }, { v: 'on', l: 'مثبتة بالأعلى' } ] },
       { key: 'search_style', label: 'شكل حقل البحث', def: 'bar', values: [ { v: 'bar', l: 'شريط بظل' }, { v: 'flat', l: 'مسطّح بإطار' }, { v: 'compact', l: 'مدمج صغير' } ] }
     ] },
     { id: 'card2', title: 'تفاصيل بطاقة المنتج', icon: '🏷️', options: [
+      { key: 'card_meta', label: 'سطر «الماركة · القسم»', def: 'hidden', values: [ { v: 'hidden', l: 'مخفي' }, { v: 'shown', l: 'ظاهر فوق الاسم' } ] },
+      { key: 'card_align', label: 'محاذاة نص البطاقة', def: 'start', values: [ { v: 'start', l: 'للبداية' }, { v: 'center', l: 'بالمنتصف' } ] },
+      { key: 'card_shadow', label: 'ظل البطاقة', def: 'auto', values: [ { v: 'auto', l: 'حسب الشكل' }, { v: 'none', l: 'بلا ظل' }, { v: 'lift', l: 'يرتفع عند اللمس' }, { v: 'glow', l: 'توهّج بلون المتجر' } ] },
+      { key: 'price_style', label: 'شكل السعر', def: 'bold', values: [ { v: 'bold', l: 'غامق' }, { v: 'accent', l: 'بلون المتجر' }, { v: 'pill', l: 'داخل كبسولة' } ] },
+      { key: 'grid_mobile', label: 'ترتيب المنتجات بالجوال', def: 'two', values: [ { v: 'two', l: 'عمودان' }, { v: 'three', l: 'ثلاثة أعمدة مضغوطة' }, { v: 'one', l: 'عمود واحد كبير' } ] },
+      { key: 'grid_wide', label: 'عدد الأعمدة بالآيباد واللابتوب', def: 'auto', values: [ { v: 'auto', l: 'تلقائي' }, { v: 'four', l: '4 أعمدة' }, { v: 'five', l: '5 أعمدة' } ] },
       { key: 'card_desc', label: 'سطر الوصف تحت الاسم', def: 'shown', values: [ { v: 'shown', l: 'ظاهر' }, { v: 'hidden', l: 'مخفي' } ] },
       { key: 'card_oldprice', label: 'السعر القديم', def: 'shown', values: [ { v: 'shown', l: 'ظاهر' }, { v: 'hidden', l: 'مخفي' } ] },
       { key: 'card_stock', label: 'شارات المخزون (نفذت/بقي القليل)', def: 'shown', values: [ { v: 'shown', l: 'ظاهرة' }, { v: 'hidden', l: 'مخفية' } ] },
@@ -101,7 +136,6 @@
       { key: 'pd_sticky_buy', label: 'شريط الشراء الثابت', def: 'off', values: [ { v: 'off', l: 'معطّل' }, { v: 'on', l: 'ثابت أسفل الشاشة' } ] },
       { key: 'pd_trust', label: 'صف الثقة (أصلي/توصيل/استشارة)', def: 'on', values: [ { v: 'on', l: 'ظاهر' }, { v: 'off', l: 'مخفي' } ] },
       { key: 'pd_share', label: 'زر المشاركة', def: 'on', values: [ { v: 'on', l: 'ظاهر' }, { v: 'off', l: 'مخفي' } ] },
-      { key: 'qty_style', label: 'شكل عدّاد الكمية', def: 'pill', values: [ { v: 'pill', l: 'كبسولة' }, { v: 'square', l: 'مربعات' }, { v: 'plain', l: 'بسيط' } ] },
       { key: 'similar_style', label: 'المنتجات ذات الصلة', def: 'grid', values: [ { v: 'grid', l: 'شبكة' }, { v: 'slider', l: 'شريط أفقي' }, { v: 'hidden', l: 'مخفية' } ] }
     ] },
     { id: 'cart', title: 'السلة والنوافذ', icon: '🛒', options: [
@@ -118,8 +152,17 @@
       { key: 'font_weight', label: 'وزن النصوص', def: 'regular', values: [ { v: 'regular', l: 'عادي' }, { v: 'medium', l: 'متوسط' }, { v: 'semibold', l: 'ثقيل' } ] },
       { key: 'leading', label: 'تباعد الأسطر', def: 'normal', values: [ { v: 'normal', l: 'عادي' }, { v: 'relaxed', l: 'مريح' } ] },
       { key: 'density', label: 'الكثافة', def: 'normal', values: [ { v: 'normal', l: 'متوسط' }, { v: 'comfy', l: 'مريح' }, { v: 'compact', l: 'مضغوط' } ] },
-      { key: 'container', label: 'عرض الحاوية بالشاشات الكبيرة', def: 'normal', values: [ { v: 'normal', l: 'عادي' }, { v: 'narrow', l: 'ضيق' }, { v: 'wide', l: 'عريض' } ] },
-      { key: 'section_gap', label: 'الفراغ بين الأقسام', def: 'm', values: [ { v: 's', l: 'صغير' }, { v: 'm', l: 'متوسط' }, { v: 'l', l: 'كبير' } ] }
+      { key: 'container', label: 'عرض الحاوية بالشاشات الكبيرة', def: 'normal', values: [ { v: 'normal', l: 'عادي' }, { v: 'narrow', l: 'ضيق' }, { v: 'wide', l: 'عريض' } ] }
+    ] },
+    { id: 'loader', title: 'شاشة التحميل (ثانيتان)', icon: '⏳', options: [
+      { key: 'loader', label: 'شكل شاشة التحميل', def: 'pulse', values: [
+        { v: 'pulse', l: 'نبض الشعار', d: 'الشعار يكبر ويصغر بهدوء' },
+        { v: 'ring', l: 'حلقة تدور', d: 'حلقة رفيعة تدور حول الشعار' },
+        { v: 'bar', l: 'شريط تقدّم', d: 'شريط رفيع يمتلئ تحت الاسم' },
+        { v: 'dots', l: 'نقاط قافزة', d: 'ثلاث نقاط تقفز بالتتابع' },
+        { v: 'reveal', l: 'ظهور الاسم', d: 'الاسم يظهر حرفاً حرفاً' },
+        { v: 'curtain', l: 'ستارة تنفتح', d: 'لوحان ينفتحان عن المتجر' },
+        { v: 'none', l: 'بدون شاشة تحميل' } ] }
     ] },
     { id: 'motion', title: 'الحركة', icon: '✨', options: [
       { key: 'motion', label: 'مستوى الحركة', def: 'full', values: [
@@ -137,7 +180,15 @@
     kufi:    { fam: "'Noto Kufi Arabic', sans-serif",   q: 'Noto+Kufi+Arabic:wght@400;600;700;800' },
     amiri:   { fam: "'Amiri', serif",                   q: 'Amiri:wght@400;700' },
     markazi: { fam: "'Markazi Text', serif",            q: 'Markazi+Text:wght@500;600;700' },
-    reem:    { fam: "'Reem Kufi', sans-serif",          q: 'Reem+Kufi:wght@500;600;700' }
+    reem:    { fam: "'Reem Kufi', sans-serif",          q: 'Reem+Kufi:wght@500;600;700' },
+    naskh:   { fam: "'Noto Naskh Arabic', serif",       q: 'Noto+Naskh+Arabic:wght@400;500;600;700' },
+    changa:  { fam: "'Changa', sans-serif",             q: 'Changa:wght@400;500;600;700;800' },
+    baloo:   { fam: "'Baloo Bhaijaan 2', sans-serif",   q: 'Baloo+Bhaijaan+2:wght@400;500;600;700;800' },
+    lemonada:{ fam: "'Lemonada', cursive",              q: 'Lemonada:wght@400;500;600;700' },
+    elmessiri:{ fam: "'El Messiri', sans-serif",        q: 'El+Messiri:wght@400;500;600;700' },
+    lalezar: { fam: "'Lalezar', cursive",               q: 'Lalezar' },
+    arefruqaa:{ fam: "'Aref Ruqaa', serif",             q: 'Aref+Ruqaa:wght@400;700' },
+    rakkas:  { fam: "'Rakkas', cursive",                q: 'Rakkas' }
   };
 
   var DEFAULTS = {}, ALLOWED = {};
@@ -191,7 +242,7 @@
     { id: 'story', on: false }, { id: 'contact', on: false }, { id: 'footer', on: false }
   ];
   var TRUST_DEFAULT = [ { t: 'منتجات أصلية', s: 'مضمونة 100%' }, { t: 'توصيل سريع', s: 'لباب بيتك' }, { t: 'استشارة مجانية', s: 'مع الصيدلي' }, { t: 'عناية بتفاصيلك', s: 'اختيار موثوق' } ];
-  var LIMITS = { blocks: 12, title: 40, subtitle: 80, text: 400, itemT: 24, itemS: 30, items: 4, links: 6, copy: 60, copyKeys: 40, seasons: 6, imageUrl: 300 };
+  var LIMITS = { blocks: 12, title: 40, subtitle: 80, text: 400, itemT: 24, itemS: 30, items: 4, links: 6, copy: 60, copyKeys: 40, imageUrl: 300 };
 
   // نصوص قابلة للتحرير. d = الافتراضي (مؤنث). n/m = صيغة المخاطبة المحايدة/المذكرة عند اختلافها.
   var COPY_DEFS = {
@@ -210,15 +261,10 @@
     add_to_cart:    { label: 'زر الإضافة بصفحة المنتج', d: 'أضف إلى السلة' },
     contact_btn:    { label: 'زر التواصل', d: 'تواصلي معنا', n: 'تواصل معنا', m: 'تواصل معنا' },
     search_ph:      { label: 'نص حقل البحث', d: 'إبحث عن منتج، ماركة أو قسم...' },
-    cart_title:     { label: 'عنوان السلة', d: 'سلة المشتريات' }
+    cart_title:     { label: 'عنوان السلة', d: 'سلة المشتريات' },
+    tagline:        { label: 'العبارة تحت اسم المتجر (للشكل ذي المستطيل)', d: '' }
   };
   var VOICES = ['f', 'n', 'm'];
-  var SEASON_PRESETS = {
-    ramadan: { label: 'رمضان', colors: { primaryColor: '#7B5EA7', pageBgColor: '#F6F1FB', secondaryColor: '#D9A441' }, look: { bg_deco: 'dots', announce: 'dark' }, announce: 'رمضان كريم 🌙 عروض خاصة بمناسبة الشهر الفضيل' },
-    eid:     { label: 'العيد', colors: { primaryColor: '#E0823D', pageBgColor: '#FFF7EE', secondaryColor: '#2F9E8F' }, look: { bg_deco: 'waves', announce: 'solid' }, announce: 'عيدكم مبارك 🎉 كل عام وأنتم بخير' },
-    newyear: { label: 'رأس السنة', colors: { primaryColor: '#2F6FDE', pageBgColor: '#F3F7FF', secondaryColor: '#E6B422' }, look: { bg_deco: 'dots', announce: 'dark' }, announce: 'سنة جديدة سعيدة ✨ خصومات بداية العام' }
-  };
-  var SEASON_IDS = Object.keys(SEASON_PRESETS);
 
   // ---------- أدوات تنقية (نقية بلا اعتماد خارجي: تُنسخ كما هي إلى الووركر) ----------
   function dsText(v, max) {
@@ -312,17 +358,6 @@
     return v;
   }
 
-  function normalizeSeasons(raw) {
-    var out = [], seen = {};
-    (Array.isArray(raw) ? raw.slice(0, LIMITS.seasons) : []).forEach(function (s) {
-      if (!s || typeof s !== 'object' || SEASON_IDS.indexOf(s.preset) === -1) return;
-      var from = dsDate(s.from), to = dsDate(s.to);
-      if (!from || !to || to < from) return;
-      var key = s.preset + from; if (seen[key]) return; seen[key] = 1;
-      out.push({ preset: s.preset, from: from, to: to, on: s.on !== false && s.on !== 'false' });
-    });
-    return out;
-  }
   // @@SHARED-END
 
   // ================= ترحيل القوالب القديمة إلى خيارات التصميم =================
@@ -355,34 +390,20 @@
     return { homeBlocks: normalizeHomeBlocks(seq.map(function (id) { return { id: id, on: hidden.indexOf(id) === -1 }; })), look: normalizeLook(look), colors: colors };
   }
 
-  // الموسم الفعّال اليوم (بتوقيت العراق UTC+3) أو null
-  function activeSeason(seasons, nowMs) {
-    var d = new Date((nowMs === undefined ? Date.now() : nowMs) + 3 * 3600 * 1000).toISOString().slice(0, 10);
-    var list = normalizeSeasons(seasons);
-    for (var i = 0; i < list.length; i++) if (list[i].on && list[i].from <= d && d <= list[i].to) return list[i];
-    return null;
-  }
 
-  // التصميم الفعّال: ما حفظه المالك + طبقة الموسم الفعّال (إن وُجد). لا يعدّل المحفوظ.
-  function effectiveDesign(profile, nowMs) {
+  // التصميم الفعّال: ما حفظته المالكة (look + ألوان + نصوص + كتل)
+  function effectiveDesign(profile) {
     var p = profile || {};
     var look = normalizeLook(p.look), colors = {};
     ['primaryColor', 'pageBgColor', 'cardColor', 'secondaryColor', 'textColor'].forEach(function (k) { if (/^#[0-9A-Fa-f]{6}$/.test(p[k] || '')) colors[k] = p[k]; });
-    var copy = normalizeCopy(p.copy), season = activeSeason(p.seasons, nowMs), announce = '';
-    if (season) {
-      var pre = SEASON_PRESETS[season.preset];
-      Object.keys(pre.colors).forEach(function (k) { colors[k] = pre.colors[k]; });
-      Object.keys(pre.look).forEach(function (k) { look[k] = pre.look[k]; });
-      announce = pre.announce;
-    }
-    return { look: look, colors: colors, copy: copy, season: season, announce: announce, blocks: normalizeHomeBlocks(p.homeBlocks) };
+    return { look: look, colors: colors, copy: normalizeCopy(p.copy), blocks: normalizeHomeBlocks(p.homeBlocks) };
   }
 
   var api = { GROUPS: G, FONTS: FONTS, DEFAULTS: DEFAULTS, ALLOWED: ALLOWED, normalizeLook: normalizeLook, fontsUrl: fontsUrl,
     BLOCK_DEFS: BLOCK_DEFS, DEFAULT_BLOCKS: DEFAULT_BLOCKS, TRUST_DEFAULT: TRUST_DEFAULT, LIMITS: LIMITS, COPY_DEFS: COPY_DEFS, VOICES: VOICES,
-    SOCIAL_HOSTS: SOCIAL_HOSTS, FOOTER_LINKS: FOOTER_LINKS, SEASON_PRESETS: SEASON_PRESETS,
+    SOCIAL_HOSTS: SOCIAL_HOSTS, FOOTER_LINKS: FOOTER_LINKS,
     normalizeHomeBlocks: normalizeHomeBlocks, defaultHomeBlocks: defaultHomeBlocks, normalizeCopy: normalizeCopy, copyText: copyText,
-    normalizeSeasons: normalizeSeasons, migrateFromTemplate: migrateFromTemplate, TEMPLATE_MIGRATION: TEMPLATE_MIGRATION, safeHttpsHost: dsHttpsHost, safeImageUrl: dsImageUrl, activeSeason: activeSeason, effectiveDesign: effectiveDesign, sanitizeText: dsText };
+    migrateFromTemplate: migrateFromTemplate, TEMPLATE_MIGRATION: TEMPLATE_MIGRATION, safeHttpsHost: dsHttpsHost, safeImageUrl: dsImageUrl, effectiveDesign: effectiveDesign, sanitizeText: dsText };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.LookRegistry = api;
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : {}));
