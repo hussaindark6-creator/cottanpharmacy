@@ -378,3 +378,13 @@ function announceCacheStatusToAdminIfNeeded() {
     showToast(`⚡ كاش Cloudflare R2: [${lastCatalogCacheStatus}] (كاش ساعة كاملة)`);
   }, 1000);
 }
+
+
+// ☰ درج قائمة الأقسام بلوحة الأدمن (يُفتح بزر ويُغلق عند اختيار قسم)
+function toggleAdminDrawer(force) {
+  const open = (typeof force === 'boolean') ? force : !document.body.classList.contains('admin-drawer-open');
+  document.body.classList.toggle('admin-drawer-open', open);
+}
+document.addEventListener('click', function (e) {
+  if (e.target.closest && e.target.closest('.admin-tab-btn-v')) document.body.classList.remove('admin-drawer-open');
+});
