@@ -4,7 +4,7 @@
    يطبّق على الصفحة ما يحدده مالك الصيدلية من استوديو التصميم، كله من لقطة المتجر (صفر قراءات إضافية):
      • كتل الرئيسية (homeBlocks): ترتيب/إظهار/إخفاء/نمط/عناوين + الكتل الجديدة (وصل حديثاً، عروض بعدّاد، بكجات، قصة، تواصل، تذييل).
      • النصوص القابلة للتحرير (copy) وصيغة المخاطبة.
-     • المواسم المجدولة (رمضان/العيد/رأس السنة) بتوقيت العراق.
+     • هوية الترويسة (شعار بمستطيل + الاسم + العبارة).
      • أرقام الأسعار (لاتينية/عربية) ومعلومات صفحة المنتج (مكوّنات/استخدام/تحذيرات/عمر).
    كل قيمة تمر عبر LookRegistry (قوائم مسموحة وحدود طول) قبل أن تصل للصفحة، ولا يوجد innerHTML بنص خام.
    يجب تحميله بعد look-registry.js وقبل script.js.
@@ -181,11 +181,39 @@
     show(n, true);
   }
 
-  // ---------- الموسم والإعلان ----------
-  function applySeasonBits(e) {
-    document.documentElement.setAttribute('data-ds-season', e.season ? e.season.preset : '');
-    var el = $('announcementText'), bar = $('announcementBar');
-    if (e.announce && el && bar && bar.style.display !== 'none') el.textContent = e.announce;
+  // ---------- هوية الترويسة (مستطيل الشعار + الاسم + العبارة) ----------
+  function applyBrand(profile) {
+    var p = profile || prof(), tile = $('dsBrandTile'), nm = $('dsBrandName'), tg = $('dsBrandTag');
+    if (!tile || !nm) return;
+    var name = String(p.name || '').slice(0, 60);
+    nm.textContent = name;
+    if (tg) { var tag = t('tagline'); tg.textContent = tag; tg.style.display = tag ? '' : 'none'; }
+    // شاشة التحميل تتعرف على اسم المتجر وشعاره حال وصول البيانات
+    var ln = $('dsLoaderName'), lm = $('dsLoaderMark');
+    if (ln && !ln.textContent) ln.textContent = name;
+    if (lm && lm.textContent === '•') lm.textContent = (name.replace(/^صيدلية\s*/, '') || name).charAt(0) || '•';
+    var logo = (typeof sanitizeUrl === 'function') ? sanitizeUrl(p.logoUrl || '') : '';
+    if (logo && /^https?:\/\//.test(logo)) { tile.innerHTML = '<img alt="" src="' + esc(logo) + '">'; }
+    else { tile.textContent = (name.replace(/^صيدلية\s*/, '') || name).charAt(0) || '•'; }
+  }
+
+  // ---------- إبراز ما تغيّر بالمعاينة الحية ----------
+  var FLASH_SELECTORS = {
+    header: 'header', header_brand: '.logo-block', header_logo: '.logo-block', header_sticky: 'header', header_tabs: '#dsTabs', search_style: '.search-bar',
+    announce: '#announcementBar', hero_size: '[data-home-section="hero"]', hero_image: '[data-home-section="hero"]', hero_frame: '[data-home-section="hero"]',
+    cats_home: '[data-home-section="categories"]', trust: '[data-home-section="trust"]', nav: '.bottom-nav',
+    card: '.product-card', add_btn: '.p-bag-btn', thumb_ratio: '.product-thumb', thumb_fit: '.product-thumb', thumb_tone: '.product-thumb', badge: '.discount-badge',
+    card_meta: '.product-card', card_align: '.product-card', card_shadow: '.product-card', price_style: '.p-price', grid_mobile: '.product-grid', grid_wide: '.product-grid',
+    card_desc: '.product-card', card_oldprice: '.product-card', card_stock: '.product-card', card_wish: '.product-card', bg_deco: 'main',
+    title: '.section-head'
+  };
+  function flash(key) {
+    var sel = FLASH_SELECTORS[key]; if (!sel) return;
+    var els = document.querySelectorAll(sel); if (!els.length) return;
+    var list = Array.prototype.slice.call(els, 0, 3);
+    list.forEach(function (el) { el.classList.remove('ds-flash'); void el.offsetWidth; el.classList.add('ds-flash'); });
+    try { list[0].scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) { /* غير حرج */ }
+    setTimeout(function () { list.forEach(function (el) { el.classList.remove('ds-flash'); }); }, 1500);
   }
 
   // ---------- معلومات صفحة المنتج ----------
@@ -217,11 +245,14 @@
   function applyAll(profile) {
     var e = eff(profile);
     applyCopy(e.copy);
-    applySeasonBits(e);
+    // لون الزر المركزي بالشريط السفلي: اللون الثانوي إن حدّدته المالكة وإلا ذهبي
+    var sec = (profile || prof()).secondaryColor;
+    document.documentElement.style.setProperty('--fab-color', /^#[0-9A-Fa-f]{6}$/.test(sec || '') ? sec : '#F59E0B');
+    applyBrand(profile);
     applyBlocks(profile);
   }
   window.DS = {
-    effective: eff, applyAll: applyAll, applyBlocks: applyBlocks, applyCopy: applyCopy, digits: digits, t: t,
+    effective: eff, applyAll: applyAll, applyBrand: applyBrand, flash: flash, applyBlocks: applyBlocks, applyCopy: applyCopy, digits: digits, t: t,
     renderProductInfo: renderProductInfo, productInfoItems: productInfoItems,
     productsTitle: function () { var b = (lastBlocks || []).filter(function (x) { return x.id === 'best-sellers'; })[0]; return (b && b.title) || t('products_title'); },
     isLegacy: function () { return legacyMode; }
