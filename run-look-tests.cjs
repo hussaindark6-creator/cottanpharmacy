@@ -75,13 +75,7 @@ ok(!/[<>]/.test(cp.brands_title) && cp.brands_title.includes('ماركاتنا')
 ok(!('evil_key' in cp) && cp.voice === 'f' && cp.see_all.length === R.LIMITS.copy, 'مفاتيح غريبة تُهمل والصيغة الافتراضية مؤنث والطول محدود');
 ok(R.copyText({ voice: 'm' }, 'contact_btn') === 'تواصل معنا' && R.copyText({}, 'contact_btn') === 'تواصلي معنا', 'صيغة المخاطبة تغيّر الافتراضي فقط');
 ok(R.copyText({ brands_title: 'ماركاتنا' }, 'brands_title') === 'ماركاتنا', 'نص المالك يغلب الافتراضي');
-const ss = R.normalizeSeasons([{ preset: 'eid', from: '2026-03-20', to: '2026-03-25' }, { preset: 'x', from: '2026-01-01', to: '2026-01-02' }, { preset: 'ramadan', from: '2026-03-10', to: '2026-03-01' }]);
-ok(ss.length === 1 && ss[0].preset === 'eid', 'المواسم: preset معروف وتاريخ نهاية ≥ البداية فقط');
-ok(R.activeSeason(ss, Date.parse('2026-03-22T10:00:00Z')).preset === 'eid' && R.activeSeason(ss, Date.parse('2026-03-26T10:00:00Z')) === null, 'الموسم يفعَّل بتواريخه فقط');
-ok(R.activeSeason(ss, Date.parse('2026-03-25T20:00:00Z')).preset === 'eid' && R.activeSeason(ss, Date.parse('2026-03-25T22:00:00Z')) === null, 'التقييم بتوقيت العراق (UTC+3): 20:00 UTC لا يزال اليوم، و22:00 UTC صار اليوم التالي');
-const ef = R.effectiveDesign({ primaryColor: '#112233', look: { nav: 'dock' }, seasons: ss }, Date.parse('2026-03-22T10:00:00Z'));
-ok(ef.colors.primaryColor === R.SEASON_PRESETS.eid.colors.primaryColor && ef.look.nav === 'dock' && ef.announce, 'الموسم يطبّق فوق تصميم المالك ويحفظ بقية خياراته');
-ok(R.effectiveDesign({ primaryColor: '#112233' }).colors.primaryColor === '#112233', 'خارج الموسم: تصميم المالك كما هو');
+ok(R.effectiveDesign({ primaryColor: '#112233', look: { nav: 'dock' } }).colors.primaryColor === '#112233', 'التصميم الفعّال يحفظ ألوان المالكة');
 
 // مقطع الووركر المولَّد
 const gen = require('./gen-worker-design.cjs');
@@ -113,13 +107,11 @@ ok(JSON.stringify(wtable) === JSON.stringify(R.ALLOWED), 'جدول الوورك�
   ok(ev('stuBlocks[4].on') === false && ev('stuBlocksTouched') === true, 'إطفاء كتلة يسجّل التعديل ويفعّل إرسال homeBlocks');
   ev("stuExtrasClick({ target: { closest: () => ({ getAttribute: (k) => ({ 'data-act': 'bdown', 'data-i': '0' })[k], tagName: 'BUTTON' }) } })");
   ok(ev('stuBlocks[0].id') === 'trust' && ev('stuBlocks[1].id') === 'hero', 'السهم لأسفل يبدّل ترتيب الكتل');
-  ev("stuExtrasClick({ target: { closest: () => ({ getAttribute: (k) => ({ 'data-act': 'sadd' })[k], tagName: 'BUTTON' }) } })");
-  ok(ev('stuSeasons.length') === 1 && R.normalizeSeasons(JSON.parse(ev('JSON.stringify(stuSeasons)'))).length === 1, 'إضافة موسم تنتج مدخلاً صالحاً');
 }
 
 // قواعد Firestore (إن وُجدت بجانب المشروع) تحمي حقول التصميم من كتابة المالك
 const rp = ['firestore.rules', 'firestore-5.rules', '../firestore.rules'].map(f => path.join(__dirname, f)).find(f => fs.existsSync(f));
-if (rp) { const rr = fs.readFileSync(rp, 'utf8'); ok(['look', 'homeBlocks', 'copy', 'seasons'].every(k => rr.includes("'" + k + "'")), 'القواعد تحمي look/homeBlocks/copy/seasons'); } else console.log('SKIP قواعد Firestore غير موجودة');
+if (rp) { const rr = fs.readFileSync(rp, 'utf8'); ok(['look', 'homeBlocks', 'copy'].every(k => rr.includes("'" + k + "'")), 'القواعد تحمي look/homeBlocks/copy/seasons'); } else console.log('SKIP قواعد Firestore غير موجودة');
 
 // ترحيل القوالب
 for (const tid of Object.keys(R.TEMPLATE_MIGRATION)) {
@@ -142,11 +134,11 @@ Object.assign(wctx, {
 vm.createContext(wctx); vm.runInContext(region + '\nthis.routeAdminLookSave = routeAdminLookSave;', wctx);
 const mk = (body) => ({ request: { url: 'https://w.dev/x', text: async () => (typeof body === 'string' ? body : JSON.stringify(body)) }, env: {}, ctx: {}, clientIP: '1.1.1.1', tenantId: 'rose', admin: { verifiedUser: { email: 'o@x.com' } } });
 (async () => {
-  const r1 = await wctx.routeAdminLookSave(mk({ look: { nav: 'dock', card: '"><script>' }, colors: { primaryColor: '#abcdef', textColor: 'red' }, homeBlocks: [{ id: 'story', on: true, text: '<b>x</b>' }], copy: { brands_title: '<i>ماركات</i>' }, seasons: [{ preset: 'eid', from: '2026-03-20', to: '2026-03-25' }, { preset: 'zzz' }] }));
+  const r1 = await wctx.routeAdminLookSave(mk({ look: { nav: 'dock', card: '"><script>' }, colors: { primaryColor: '#abcdef', textColor: 'red' }, homeBlocks: [{ id: 'story', on: true, text: '<b>x</b>' }], copy: { brands_title: '<i>ماركات</i>' } }));
   const w = wctx.writes[0];
-  ok(r1.st === 200 && w.path === 'pharmacies/rose' && w.mask.join() === 'primaryColor,look,homeBlocks,copy,seasons', 'الحفظ يكتب الحقول المسموحة فقط بمسار الصيدلية');
+  ok(r1.st === 200 && w.path === 'pharmacies/rose' && w.mask.join() === 'primaryColor,look,homeBlocks,copy', 'الحفظ يكتب الحقول المسموحة فقط بمسار الصيدلية');
   ok(w.fields.look.nav === 'dock' && !('card' in w.fields.look) && w.fields.primaryColor === '#ABCDEF' && !('textColor' in w.fields), 'look وألوان منقّاة بالووركر');
-  ok(w.fields.homeBlocks.length === 12 && !/[<>]/.test(JSON.stringify(w.fields.homeBlocks)) && w.fields.seasons.length === 1 && !/[<>]/.test(JSON.stringify(w.fields.copy)), 'كتل/نصوص/مواسم تُنقّى بالووركر بنفس قواعد الواجهة');
+  ok(w.fields.homeBlocks.length === 12 && !/[<>]/.test(JSON.stringify(w.fields.homeBlocks)) && !/[<>]/.test(JSON.stringify(w.fields.copy)), 'كتل/نصوص تُنقّى بالووركر بنفس قواعد الواجهة');
   const r2 = await wctx.routeAdminLookSave(mk({ look: { nav: 'nope' } }));
   ok(r2.st === 400, 'طلب بلا أي قيمة صالحة يُرفض');
   const r3 = await wctx.routeAdminLookSave(mk('x'.repeat(61000)));
