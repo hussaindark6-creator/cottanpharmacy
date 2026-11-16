@@ -438,6 +438,13 @@ let superAdminPaymentInfo = {
   notes: 'يرجى إرسال صورة وصل التحويل عبر الواتساب لتجديد الاشتراك فورياً'
 };
 
+function catLabelFor(p) {
+  try {
+    const list = (typeof categories !== 'undefined' && Array.isArray(categories)) ? categories : [];
+    const c = list.find(x => String(x.id) === String(p.category) || String(x.name) === String(p.category));
+    return c ? String(c.name || '') : '';
+  } catch (e) { return ''; }
+}
 function fmtPrice(n) { const s = (Number(n) || 0).toLocaleString('en-US') + ' د.ع'; return window.DS ? window.DS.digits(s) : s; }
 function findProduct(id) { return products.find(p => String(p.id) === String(id)); }
 function findBundle(id) { return bundles.find(b => String(b.id) === String(id)); }
@@ -631,14 +638,14 @@ if (window.__LOOK_PREVIEW) {
         const prev = Object.assign({}, pharmacyProfile, d.colors || {}, { look: d.look });
         if (d.homeBlocks) prev.homeBlocks = d.homeBlocks;
         if (d.copy) prev.copy = d.copy;
-        if (d.seasons) prev.seasons = d.seasons;
-        pharmacyProfile = Object.assign({}, pharmacyProfile, { homeBlocks: prev.homeBlocks, copy: prev.copy, seasons: prev.seasons });
+        pharmacyProfile = Object.assign({}, pharmacyProfile, { homeBlocks: prev.homeBlocks, copy: prev.copy });
         const e = window.DS.effective(prev);
         applyLook(e.look);
         applyThemeColors(Object.assign({}, prev, e.colors));
         window.DS.applyAll(prev);
         if (typeof renderHome === 'function') renderHome();
         if (e.colors.primaryColor && typeof applyDynamicThemeColor === 'function') applyDynamicThemeColor(e.colors.primaryColor);
+        if (d.changed && window.DS) setTimeout(function () { window.DS.flash(d.changed); }, 120);
         if (typeof currentProductId !== 'undefined' && currentProductId && currentView === 'product' && typeof renderProductDetailDOM === 'function') { const pr = findProduct(currentProductId); if (pr) renderProductDetailDOM(pr); }
         return;
       }
@@ -1011,6 +1018,7 @@ function renderProductGrid(targetId, list, emptyMsg) {
         <div class="product-thumb">
           ${cleanImg ? `<img src="${cleanImg}" alt="${sanitizeText(p.name)}" loading="lazy">` : (icons[p.type] || icons.bottle)(color)}
         </div>
+        <div class="p-meta">${p.brand ? `<b>${sanitizeText(p.brand)}</b>` : ''}${(p.brand && catLabelFor(p)) ? '<i>·</i>' : ''}${sanitizeText(catLabelFor(p))}</div>
         <div class="p-name">${sanitizeText(p.name)}</div>
         <div class="p-size">${sanitizeText(p.description ? String(p.description).slice(0, 70) : ((p.size && p.size !== 'عبوة قياسية') ? p.size : ''))}</div>
         <div class="p-foot">
