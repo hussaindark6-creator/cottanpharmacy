@@ -17,7 +17,7 @@ const dedent = shared.split('\n').map(l => l.replace(/^  /, '')).join('\n');
 function buildRegion() {
   return `// ================= 🎛️ نظام التصميم (Design): حفظ تصميم الصيدلية =================
 // ⚠️ هذا المقطع مولَّد آلياً من look-registry.js بالأمر: node gen-worker-design.cjs worker.js — لا يُعدَّل يدوياً.
-// المصدر الوحيد للقيم هو look-registry.js. الحفظ هنا فقط (قواعد Firestore تمنع المالك من كتابة look/homeBlocks/copy/seasons مباشرة):
+// المصدر الوحيد للقيم هو look-registry.js. الحفظ هنا فقط (قواعد Firestore تمنع المالك من كتابة look/homeBlocks/copy مباشرة):
 // قيم من قوائم مسموحة وألوان HEX ونصوص قصيرة منقّاة وروابط https بدومينات مسموحة فقط. لا CSS ولا HTML ولا روابط عشوائية.
 const DESIGN_LOOK_ALLOWED = ${JSON.stringify(R.ALLOWED, null, 2)};
 const DESIGN_COLOR_KEYS = ["primaryColor", "pageBgColor", "cardColor", "secondaryColor", "textColor"];
@@ -63,12 +63,10 @@ async function routeAdminLookSave(c) {
     const colors = sanitizeDesignColors(body.colors);
     const hasBlocks = Array.isArray(body.homeBlocks);
     const hasCopy = !!body.copy && typeof body.copy === "object" && !Array.isArray(body.copy);
-    const hasSeasons = Array.isArray(body.seasons);
     const homeBlocks = hasBlocks ? normalizeHomeBlocks(body.homeBlocks) : null;
     const copy = hasCopy ? normalizeCopy(body.copy) : null;
-    const seasons = hasSeasons ? normalizeSeasons(body.seasons) : null;
 
-    if (!Object.keys(look).length && !Object.keys(colors).length && !hasBlocks && !hasCopy && !hasSeasons) {
+    if (!Object.keys(look).length && !Object.keys(colors).length && !hasBlocks && !hasCopy) {
       return jsonResponse({ success: false, message: "لا توجد قيم تصميم صالحة" }, 400, request);
     }
     const fields = { ...colors };
@@ -76,7 +74,6 @@ async function routeAdminLookSave(c) {
     if (Object.keys(look).length) { fields.look = look; mask.push("look"); }
     if (hasBlocks) { fields.homeBlocks = homeBlocks; mask.push("homeBlocks"); }
     if (hasCopy) { fields.copy = copy; mask.push("copy"); }
-    if (hasSeasons) { fields.seasons = seasons; mask.push("seasons"); }
     await firestorePatchFields(env, \`pharmacies/\${tenantId}\`, fields, mask);
 
     // لقطة المتجر والثيم تُحدَّث فوراً (بلا قراءات إضافية للزوار)
@@ -90,8 +87,8 @@ async function routeAdminLookSave(c) {
     } catch (e) { /* غير حرج */ }
     pharmacyCache.delete(tenantId);
 
-    recordAuditLog(env, ctx, "حفظ تصميم المتجر", \`\${Object.keys(look).length} خيار + \${Object.keys(colors).length} لون\${hasBlocks ? " + كتل" : ""}\${hasCopy ? " + نصوص" : ""}\${hasSeasons ? " + مواسم" : ""}\`, verifiedUser.email, clientIP, tenantId);
-    return jsonResponse({ success: true, look, colors, homeBlocks, copy, seasons, snapshotRebuilt: !!snap, message: "تم نشر التصميم ✓" }, 200, request);
+    recordAuditLog(env, ctx, "حفظ تصميم المتجر", \`\${Object.keys(look).length} خيار + \${Object.keys(colors).length} لون\${hasBlocks ? " + كتل" : ""}\${hasCopy ? " + نصوص" : ""}\`, verifiedUser.email, clientIP, tenantId);
+    return jsonResponse({ success: true, look, colors, homeBlocks, copy, snapshotRebuilt: !!snap, message: "تم نشر التصميم ✓" }, 200, request);
   } catch (err) {
     return jsonResponse({ success: false, message: "تعذر حفظ التصميم: " + err.message }, 500, request);
   }
