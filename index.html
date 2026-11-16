@@ -175,6 +175,32 @@
 
 </head>
 <body>
+  <!-- ⏳ شاشة التحميل (ثانيتان كحد أقصى؛ تختفي بـCSS مهما حصل). شكلها من خيار «شاشة التحميل» بالاستوديو -->
+  <div id="dsLoader" aria-hidden="true">
+    <div class="dsl-curtain"></div>
+    <div class="dsl-box">
+      <div class="dsl-logo"><span id="dsLoaderMark">•</span><i class="dsl-ring"></i></div>
+      <div class="dsl-name" id="dsLoaderName"></div>
+      <div class="dsl-fx"><div class="dsl-bar"></div><div class="dsl-dots"><i></i><i></i><i></i></div></div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      try {
+        var st = window.__preloadedStoreSettings || {}, name = String(st.name || '').slice(0, 40);
+        var look = {}; try { look = JSON.parse(localStorage.getItem('saas_' + (window.__earlyPharmacyId || '') + '_look') || '{}'); } catch (e) {}
+        var mark = document.getElementById('dsLoaderMark'), nm = document.getElementById('dsLoaderName');
+        var logo = String(st.logoUrl || '');
+        if (mark && /^https:\/\//.test(logo)) { var im = document.createElement('img'); im.alt = ''; im.src = logo; mark.textContent = ''; mark.parentNode.insertBefore(im, mark); mark.remove(); }
+        else if (mark) mark.textContent = name ? name.replace(/^صيدلية\s*/, '').charAt(0) || name.charAt(0) : '•';
+        if (nm) {
+          if (look.loader === 'reveal') { nm.textContent = ''; name.split('').forEach(function (ch, i) { var sp = document.createElement('span'); sp.textContent = ch === ' ' ? '\u00a0' : ch; sp.style.animationDelay = (i * 55) + 'ms'; nm.appendChild(sp); }); }
+          else nm.textContent = name;
+        }
+      } catch (e) { /* غير حرج */ }
+    })();
+  </script>
+
 
 
   <!-- ================= شاشة تجميد المتجر (اشتراك منتهي / موقوف) ================= -->
@@ -199,6 +225,7 @@
         <!-- 🌸 الشعار في المنتصف -->
         <div class="logo-block" dir="rtl" onclick="showView('home')">
           <span class="logo-text" id="headerLogoText">الصيدلية</span>
+          <div class="ds-brand" id="dsBrand"><div class="ds-brand-tile" id="dsBrandTile"></div><div class="ds-brand-text"><b id="dsBrandName"></b><small id="dsBrandTag"></small></div></div>
         </div>
 
         <!-- 👤 أيقونة القائمة (تظهر على اليمين بصرياً) — ثلاث خطوط، بنفس بنية أيقونة السلة
@@ -208,6 +235,14 @@
           <span id="notifBadge" class="badge-count" style="display:none;">0</span>
         </button>
       </div>
+      <nav class="ds-tabs" id="dsTabs" aria-label="التنقل">
+        <button type="button" onclick="showView('home')">الرئيسية</button>
+        <button type="button" onclick="showView('categories')">الأقسام</button>
+        <button type="button" onclick="openAllBrands()">الماركات</button>
+        <button type="button" onclick="openBestSellers()">الأكثر مبيعاً</button>
+        <button type="button" onclick="showView('offers')">العروض</button>
+        <button type="button" onclick="showView('bundles')">البكجات</button>
+      </nav>
     </div>
 
     <!-- شريط الترحيب -->
