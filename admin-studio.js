@@ -339,6 +339,10 @@ function studioToggleDrawer(force) {
   const box = stuEl('studioControls'); if (!box) return;
   const open = (typeof force === 'boolean') ? force : !box.classList.contains('open');
   box.classList.toggle('open', open);
+  document.body.classList.toggle('st-lock', open);
+  if (open) box.scrollTop = 0;
   const fab = stuEl('studioFab'); if (fab) fab.classList.toggle('on', open);
   setTimeout(stuFit, 260);
 }
+
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') studioToggleDrawer(false); });
