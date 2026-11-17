@@ -209,6 +209,7 @@ function ensureAdminQuickEditModalMarkup() {
             <label>تغيير صورة الصنف (من المعرض مباشرة)</label>
             <input type="file" accept="image/*" onchange="uploadDirectImageFile(this, 'quickEditProdImg', 'quickEditProdImgPreviewEl', 'quickEditProdImgPreviewBox')" style="width:100%; padding:8px; border:1.5px dashed var(--line); border-radius:12px; background:#fff; font-size:12px;">
             <input type="hidden" id="quickEditProdImg" value="">
+            <label class="ds-photo-opt"><input type="checkbox" class="ds-bgclean-chk" onchange="dsSavePhotoPref(this)"> 🧼 اعرض المنتج فقط على خلفية بيضاء</label>
             <div id="quickEditProdImgPreviewBox" style="margin-top:8px; display:none; align-items:center; gap:10px;">
               <img id="quickEditProdImgPreviewEl" src="" style="height:70px; width:70px; object-fit:cover; border-radius:10px; border:1px solid var(--line);" alt="Edit Preview">
               <span style="font-size:11px; color:#16A34A; font-weight:800;">✅ تم تحديث الصورة</span>
