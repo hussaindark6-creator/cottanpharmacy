@@ -200,8 +200,16 @@ async function manualRebuildR2Catalog() {
 
 // دالة رفع الصور المباشرة من الاستوديو أو الكاميرا إلى Cloudflare R2
 async function uploadDirectImageFile(fileInput, targetHiddenUrlId, previewImgId, previewBoxId) {
-  const originalFile = fileInput.files[0];
+  let originalFile = fileInput.files[0];
   if (!originalFile) return;
+  // 🧼 عزل المنتج على خلفية بيضاء (اختياري، لصور المنتجات فقط)
+  if (dsBgCleanPref() && /^(adminProdImgUrl|quickEditProdImg)$/.test(targetHiddenUrlId)) {
+    try {
+      const cleaned = await dsCleanProductBackground(originalFile);
+      if (cleaned) { originalFile = cleaned; showToast('🧼 تم عزل المنتج على خلفية بيضاء'); }
+      else showToast('تعذر عزل المنتج (الخلفية غير سادة) فاستُخدمت الصورة الأصلية');
+    } catch (e) { console.warn('bg clean failed', e); }
+  }
   const file = await compressImageToWebp(originalFile);
 
   showToast('جاري رفع ومعالجة الصورة سحابياً... ⏳');
@@ -388,3 +396,124 @@ function toggleAdminDrawer(force) {
 document.addEventListener('click', function (e) {
   if (e.target.closest && e.target.closest('.admin-tab-btn-v')) document.body.classList.remove('admin-drawer-open');
 });
+
+
+// ================= 🧼 أداة «المنتج فقط على خلفية بيضاء» (بالمتصفح، بلا خدمات خارجية) =================
+// تعمل بتقدير لون الخلفية من حواف الصورة ثم تمسح المتصل بالحواف فقط، فتبقى ألوان داخل المنتج (بياض العبوة) سليمة.
+// فعّالة مع الخلفيات السادة (بيضاء/رمادية/مستوية)؛ إن كانت الخلفية معقّدة تُرجع null فتُستخدم الصورة الأصلية.
+function dsBgCleanPref() { try { return localStorage.getItem('ds_bg_clean') === '1'; } catch (e) { return false; } }
+function dsSavePhotoPref(el) {
+  try { localStorage.setItem('ds_bg_clean', el && el.checked ? '1' : '0'); } catch (e) { /* غير حرج */ }
+  document.querySelectorAll('#adminProdBgClean, .ds-bgclean-chk').forEach(function (c) { c.checked = !!(el && el.checked); });
+}
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('#adminProdBgClean, .ds-bgclean-chk').forEach(function (c) { c.checked = dsBgCleanPref(); });
+});
+document.addEventListener('click', function () {
+  setTimeout(function () { document.querySelectorAll('.ds-bgclean-chk').forEach(function (c) { c.checked = dsBgCleanPref(); }); }, 50);
+});
+
+function dsLoadImage(file) {
+  return new Promise(function (resolve, reject) {
+    const url = URL.createObjectURL(file), im = new Image();
+    im.onload = function () { URL.revokeObjectURL(url); resolve(im); };
+    im.onerror = function () { URL.revokeObjectURL(url); reject(new Error('تعذر قراءة الصورة')); };
+    im.src = url;
+  });
+}
+
+// يرجع { canvas } أو null. (دالة نقية على بيانات البكسل لتسهيل الاختبار)
+function dsIsolateSubject(d, w, h) {
+  const samples = [];
+  function addS(x, y) { const i = (y * w + x) * 4; samples.push([d[i], d[i + 1], d[i + 2]]); }
+  for (let x = 0; x < w; x += 3) { addS(x, 0); addS(x, 1); addS(x, h - 1); addS(x, h - 2); }
+  for (let y = 0; y < h; y += 3) { addS(0, y); addS(1, y); addS(w - 1, y); addS(w - 2, y); }
+  function med(c) { const a = samples.map(function (s) { return s[c]; }).sort(function (p, q) { return p - q; }); return a[a.length >> 1]; }
+  const bgc = [med(0), med(1), med(2)];
+  function dist(i) { return Math.max(Math.abs(d[i] - bgc[0]), Math.abs(d[i + 1] - bgc[1]), Math.abs(d[i + 2] - bgc[2])); }
+  const uniform = samples.filter(function (s) { return Math.max(Math.abs(s[0] - bgc[0]), Math.abs(s[1] - bgc[1]), Math.abs(s[2] - bgc[2])) <= 34; }).length / samples.length;
+  if (uniform < 0.82) return null;                       // خلفية معقّدة
+  const T = 40, bgMask = new Uint8Array(w * h), stack = new Int32Array(w * h);
+  let sp = 0;
+  function push(x, y) { const p = y * w + x; if (!bgMask[p] && dist(p * 4) <= T) { bgMask[p] = 1; stack[sp++] = p; } }
+  for (let x = 0; x < w; x++) { push(x, 0); push(x, h - 1); }
+  for (let y = 0; y < h; y++) { push(0, y); push(w - 1, y); }
+  while (sp) {
+    const p = stack[--sp], x = p % w, y = (p / w) | 0;
+    if (x > 0) push(x - 1, y); if (x < w - 1) push(x + 1, y); if (y > 0) push(x, y - 1); if (y < h - 1) push(x, y + 1);
+  }
+  let minX = w, minY = h, maxX = -1, maxY = -1, count = 0;
+  const out = new Uint8ClampedArray(w * h * 4);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const p = y * w + x, i = p * 4;
+    if (bgMask[p]) { out[i] = out[i + 1] = out[i + 2] = 255; out[i + 3] = 255; continue; }
+    count++; if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y;
+    const edge = (x > 0 && bgMask[p - 1]) || (x < w - 1 && bgMask[p + 1]) || (y > 0 && bgMask[p - w]) || (y < h - 1 && bgMask[p + w]);
+    let a = 1;
+    if (edge) { a = Math.max(0, Math.min(1, (dist(i) - T * 0.6) / (T * 0.9))); }
+    out[i] = d[i] * a + 255 * (1 - a); out[i + 1] = d[i + 1] * a + 255 * (1 - a); out[i + 2] = d[i + 2] * a + 255 * (1 - a); out[i + 3] = 255;
+  }
+  const ratio = count / (w * h);
+  if (ratio < 0.015 || ratio > 0.88 || maxX < 0) return null;
+  return { pixels: out, bbox: { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 } };
+}
+
+async function dsCleanProductBackground(file) {
+  const img = await dsLoadImage(file);
+  const sc = Math.min(1, 1200 / Math.max(img.width, img.height));
+  const w = Math.max(1, Math.round(img.width * sc)), h = Math.max(1, Math.round(img.height * sc));
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const cx = cv.getContext('2d', { willReadFrequently: true });
+  cx.fillStyle = '#fff'; cx.fillRect(0, 0, w, h); cx.drawImage(img, 0, 0, w, h);
+  const id = cx.getImageData(0, 0, w, h);
+  const res = dsIsolateSubject(id.data, w, h);
+  if (!res) return null;
+  cx.putImageData(new ImageData(res.pixels, w, h), 0, 0);
+  const b = res.bbox, side = Math.max(b.w, b.h) * 1.16, size = 1000;
+  const outCv = document.createElement('canvas'); outCv.width = size; outCv.height = size;
+  const ox = outCv.getContext('2d'); ox.fillStyle = '#fff'; ox.fillRect(0, 0, size, size);
+  const k = size / side;
+  ox.drawImage(cv, b.x, b.y, b.w, b.h, (size - b.w * k) / 2, (size - b.h * k) / 2, b.w * k, b.h * k);
+  const blob = await new Promise(function (r) { outCv.toBlob(r, 'image/webp', 0.9); });
+  if (!blob) return null;
+  return new File([blob], String(file.name || 'item').replace(/\.\w+$/, '') + '-clean.webp', { type: 'image/webp' });
+}
+
+// ================= ✨ تعبئة بيانات المنتج من صورته (تحتاج ANTHROPIC_API_KEY على الووركر) =================
+async function dsImageToJpegBase64(file) {
+  const img = await dsLoadImage(file), sc = Math.min(1, 1024 / Math.max(img.width, img.height));
+  const cv = document.createElement('canvas'); cv.width = Math.round(img.width * sc); cv.height = Math.round(img.height * sc);
+  const cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height); cx.drawImage(img, 0, 0, cv.width, cv.height);
+  return cv.toDataURL('image/jpeg', 0.82).split(',')[1];
+}
+async function dsAiFillFromImage() {
+  const btn = document.getElementById('dsAiFillBtn'), input = document.getElementById('adminProdImgFileInput');
+  let file = input && input.files && input.files[0];
+  if (!file) {
+    const src = (document.getElementById('adminProdImgUrl') || {}).value || '';
+    if (!src) { showToast('اختاري صورة المنتج أولاً 📷'); return; }
+    try { file = await (await fetch(src)).blob(); } catch (e) { showToast('تعذر قراءة الصورة، اختاريها من جديد'); return; }
+  }
+  const orig = btn.textContent; btn.disabled = true; btn.textContent = '⏳ جاري قراءة العبوة...';
+  try {
+    const user = auth ? auth.currentUser : currentUser;
+    const headers = { 'Content-Type': 'application/json', 'X-Pharmacy-Id': currentPharmacyId };
+    if (user) headers['Authorization'] = 'Bearer ' + await user.getIdToken();
+    const res = await fetch(WORKER_API_BASE + '/api/admin/ai/product-from-image', { method: 'POST', headers: headers, body: JSON.stringify({ image: await dsImageToJpegBase64(file), mediaType: 'image/jpeg' }) });
+    const data = await res.json();
+    if (!data.success) { showToast('⚠️ ' + (data.message || 'تعذر قراءة المنتج')); return; }
+    const f = data.fields || {}, map = { name: 'adminProdName', brand: 'adminProdBrand', size: 'adminProdSize', description: 'adminProdDesc', ingredients: 'adminProdIng', usage: 'adminProdUsage', warnings: 'adminProdWarnings', ageRange: 'adminProdAge' };
+    let filled = 0;
+    Object.keys(map).forEach(function (k) {
+      const el = document.getElementById(map[k]);
+      if (el && f[k] && !String(el.value || '').trim()) { el.value = f[k]; el.classList.add('ds-ai-filled'); filled++; setTimeout(function () { el.classList.remove('ds-ai-filled'); }, 4000); }
+    });
+    const catEl = document.getElementById('adminProdCat'), hint = String(f.categoryHint || '').trim();
+    if (catEl && hint && !catEl.value) {
+      const opt = Array.prototype.find.call(catEl.options, function (o) { return o.value && (o.text.indexOf(hint) !== -1 || hint.indexOf(o.text.replace(/[^\u0600-\u06FFa-zA-Z ]/g, '').trim()) !== -1); });
+      if (opt) { catEl.value = opt.value; filled++; }
+    }
+    showToast(filled ? '✨ عُبّئت ' + filled + ' حقول. راجعيها قبل الحفظ' : 'لم أجد حقولاً فارغة أو بيانات واضحة بالعبوة');
+  } catch (e) { showToast('⚠️ تعذر الاتصال بخدمة القراءة: ' + e.message); }
+  finally { btn.disabled = false; btn.textContent = orig; }
+}
