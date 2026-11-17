@@ -90,7 +90,7 @@ ok(JSON.stringify(wtable) === JSON.stringify(R.ALLOWED), 'جدول الوورك�
 
 // ================= استوديو الأدمن (منطق بلا DOM) =================
 {
-  const sctx = { window: { LookRegistry: R }, document: { getElementById: () => null, querySelectorAll: () => [], querySelector: () => null }, console, pharmacyProfile: { primaryColor: '#FFE4EC' }, location: { origin: 'x' } };
+  const sctx = { window: { LookRegistry: R }, document: { getElementById: () => null, querySelectorAll: () => [], querySelector: () => null, addEventListener: () => {}, body: { classList: { toggle: () => {}, remove: () => {} } } }, console, pharmacyProfile: { primaryColor: '#FFE4EC' }, location: { origin: 'x' } };
   sctx.window.window = sctx.window; vm.createContext(sctx); vm.runInContext(read('admin-studio.js'), sctx);
   const ev = (c) => vm.runInContext(c, sctx);
   const h1 = ev('stuComputeHealth()');
