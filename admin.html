@@ -365,6 +365,96 @@
       #adminProductFormV > * { grid-column: 2; }
       #adminProductFormV > .ds-photo-panel { grid-column: 1; grid-row: 1 / span 40; position: sticky; top: 90px; }
     }
+    /* 🗂️ صفحة المنتجات (تصميم جديد) */
+    .ap-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 370px; gap: 22px; align-items: start; }
+    .ap-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+    .ap-head h2 { margin: 0; font-size: 26px; font-weight: 900; color: var(--ink); }
+    .ap-head p { margin: 4px 0 0; font-size: 13px; color: var(--text-soft); }
+    .ap-add { min-height: 50px; padding: 0 24px; border: 0; border-radius: 16px; background: linear-gradient(135deg, var(--accent), var(--accent-dark, var(--accent))); color: #fff; font-family: inherit; font-weight: 900; font-size: 14px; cursor: pointer; box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 30%, transparent); }
+    .ap-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+    .ap-kpi { display: flex; align-items: center; gap: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 16px; }
+    .ap-kpi-ico { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; font-size: 22px; background: color-mix(in srgb, var(--accent) 12%, transparent); flex-shrink: 0; }
+    .ap-kpi.warn .ap-kpi-ico { background: #FEF3C7; } .ap-kpi.bad .ap-kpi-ico { background: #FEE2E2; } .ap-kpi.good .ap-kpi-ico { background: #DCFCE7; }
+    .ap-kpi small { display: block; font-size: 12px; color: var(--text-soft); font-weight: 700; }
+    .ap-kpi b { display: block; font-size: 24px; font-weight: 900; color: var(--ink); line-height: 1.3; } .ap-kpi b span { font-size: 12px; font-weight: 700; }
+    .ap-kpi em { display: block; font-style: normal; font-size: 11.5px; color: var(--text-soft); }
+    .ap-kpi.warn em { color: #B45309; } .ap-kpi.bad em { color: #B91C1C; } .ap-kpi.good em { color: #15803D; }
+    .ap-toolbar { display: flex; gap: 8px; flex-wrap: wrap; background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 12px; margin-bottom: 14px; }
+    .ap-toolbar input, .ap-toolbar select { min-height: 46px; padding: 0 14px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--surface, #fff); font-family: inherit; font-size: 13px; font-weight: 700; color: var(--ink); }
+    .ap-toolbar input { flex: 2 1 220px; }
+    .ap-toolbar select { flex: 1 1 140px; }
+    .ap-view { display: flex; border: 1.5px solid var(--line); border-radius: 14px; overflow: hidden; }
+    .ap-view button { min-width: 48px; min-height: 46px; border: 0; background: var(--card); color: var(--text-soft); font-size: 17px; cursor: pointer; }
+    .ap-view button.on { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+    .ap-list { background: var(--card); border: 1px solid var(--line); border-radius: 22px; overflow: hidden; }
+    .ap-row { display: grid; grid-template-columns: minmax(210px, 2.4fr) 1fr .6fr .8fr .8fr 1fr .8fr auto; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--line); cursor: pointer; transition: background .15s; }
+    .ap-row:last-child { border-bottom: 0; }
+    .ap-row:hover { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+    .ap-row.sel { background: color-mix(in srgb, var(--accent) 10%, transparent); box-shadow: inset 4px 0 0 var(--accent); }
+    .ap-headrow { cursor: default; background: var(--surface, #F8F7FB); font-size: 12px; font-weight: 800; color: var(--text-soft); }
+    .ap-headrow:hover { background: var(--surface, #F8F7FB); }
+    .ap-c { font-size: 13px; color: var(--ink); min-width: 0; }
+    .ap-c small, .dim { color: var(--text-soft); font-size: 11.5px; }
+    .ap-prod { display: flex; align-items: center; gap: 12px; }
+    .ap-thumb { width: 58px; height: 58px; border-radius: 14px; background: #fff; border: 1px solid var(--line); display: grid; place-items: center; overflow: hidden; flex-shrink: 0; font-size: 22px; }
+    .ap-thumb img, .ap-card-img img, .ap-d-img img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .ap-pn b { display: block; font-size: 13.5px; font-weight: 800; line-height: 1.5; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .ap-pn small { color: var(--text-soft); }
+    .pos { color: #15803D; font-weight: 800; } .neg { color: #DC2626; font-weight: 800; } .warn { color: #D97706; font-weight: 800; }
+    .ap-chip { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 900; }
+    .ap-chip.ok { background: #DCFCE7; color: #15803D; } .ap-chip.low { background: #FEF3C7; color: #B45309; } .ap-chip.out { background: #FEE2E2; color: #B91C1C; }
+    .ap-acts { display: flex; gap: 6px; }
+    .ap-ic { width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); cursor: pointer; font-size: 15px; }
+    .ap-ic.danger { background: #FEF2F2; border-color: #FECACA; }
+    .ap-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+    .ap-card { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 10px; display: grid; gap: 4px; cursor: pointer; }
+    .ap-card.sel { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+    .ap-card-img { position: relative; aspect-ratio: 1 / 1; background: #fff; border-radius: 14px; display: grid; place-items: center; overflow: hidden; font-size: 30px; }
+    .ap-card-img .ap-chip { position: absolute; top: 8px; inset-inline-start: 8px; }
+    .ap-card-name { font-size: 13px; line-height: 1.5; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .ap-card-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
+    .ap-qty { background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent); border-radius: 10px; padding: 3px 10px; font-weight: 900; font-size: 12px; }
+    .ap-pager { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+    .ap-pager button { min-width: 44px; min-height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); font-weight: 800; cursor: pointer; margin-inline-start: 4px; }
+    .ap-pager button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+    /* لوحة التفاصيل */
+    .ap-detail { position: sticky; top: 84px; background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 16px; max-height: calc(100vh - 100px); overflow-y: auto; }
+    .ap-empty { text-align: center; padding: 50px 14px; color: var(--text-soft); font-size: 13px; line-height: 1.9; } .ap-empty { font-size: 40px; } .ap-empty p { font-size: 13px; margin: 8px 0 0; }
+    .ap-d-top { display: flex; justify-content: space-between; margin-bottom: 8px; }
+    .ap-d-img { aspect-ratio: 1 / 1; max-height: 230px; margin: 0 auto 12px; background: #fff; border-radius: 20px; display: grid; place-items: center; overflow: hidden; font-size: 50px; width: 100%; }
+    .ap-d-name { margin: 0; text-align: center; font-size: 16px; font-weight: 900; line-height: 1.5; }
+    .ap-d-sub { margin: 2px 0 12px; text-align: center; color: var(--text-soft); font-size: 12.5px; }
+    .ap-d-box { background: var(--surface, #F8F7FB); border-radius: 18px; padding: 8px 14px; margin-bottom: 12px; }
+    .ap-d-h { display: block; margin: 6px 0; font-size: 13px; }
+    .ap-kv { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; font-size: 12.5px; border-bottom: 1px dashed var(--line); } .ap-kv:last-child { border-bottom: 0; }
+    .ap-kv span { color: var(--text-soft); } .ap-kv b { text-align: end; }
+    .ap-d-prices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+    .ap-d-prices > div { background: var(--surface, #F8F7FB); border-radius: 16px; padding: 10px 6px; text-align: center; }
+    .ap-d-prices small { display: block; font-size: 11px; color: var(--text-soft); } .ap-d-prices b { display: block; font-size: 15px; font-weight: 900; } .ap-d-prices em { font-style: normal; font-size: 11px; }
+    .ap-d-qty { background: var(--surface, #F8F7FB); border-radius: 18px; padding: 12px; margin-bottom: 12px; }
+    .ap-d-qty small { display: block; font-weight: 800; font-size: 12px; margin-bottom: 8px; }
+    .ap-stepper { display: flex; align-items: center; gap: 8px; }
+    .ap-stepper button { width: 48px; height: 48px; border: 0; border-radius: 14px; background: var(--accent); color: #fff; font-size: 22px; font-weight: 900; cursor: pointer; flex-shrink: 0; }
+    .ap-stepper input { flex: 1; min-width: 0; height: 48px; text-align: center; border: 1.5px solid var(--line); border-radius: 14px; font-size: 17px; font-weight: 900; font-family: inherit; background: var(--card); }
+    .ap-d-qrow { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+    .ap-save { min-height: 44px; padding: 0 16px; border: 0; border-radius: 12px; background: #16A34A; color: #fff; font-family: inherit; font-weight: 900; cursor: pointer; }
+    .ap-d-btns { display: grid; gap: 8px; }
+    .ap-d-btns button { min-height: 50px; border-radius: 15px; font-family: inherit; font-weight: 900; font-size: 13.5px; cursor: pointer; border: 1.5px solid var(--line); background: var(--card); color: var(--ink); }
+    .ap-d-btns .ap-primary { border: 0; background: var(--accent); color: #fff; }
+    .ap-d-btns .ap-danger { border-color: #FECACA; background: #FEF2F2; color: #B91C1C; }
+    .ap-d-close { display: none; }
+    /* درج إضافة منتج جديد */
+    .ap-drawer { position: fixed !important; top: 0; bottom: 0; left: 0; width: min(900px, 100vw); z-index: 1000; margin: 0 !important; border-radius: 0 !important; overflow-y: auto; overscroll-behavior: contain; background: var(--card) !important; box-shadow: 8px 0 40px rgba(0,0,0,.2); padding: calc(16px + env(safe-area-inset-top)) 20px 90px !important; transform: translateX(-108%); visibility: hidden; transition: transform .28s cubic-bezier(.3,.8,.3,1), visibility 0s .28s; }
+    .ap-drawer.open { transform: none; visibility: visible; transition: transform .28s cubic-bezier(.3,.8,.3,1); }
+    body.ap-lock { overflow: hidden; }
+    @media (max-width: 1180px) {
+      .ap-wrap { grid-template-columns: 1fr; }
+      .ap-detail { position: fixed; top: 0; bottom: 0; left: 0; width: min(430px, 100vw); max-height: none; z-index: 950; border-radius: 0; transform: translateX(-108%); visibility: hidden; transition: transform .28s, visibility 0s .28s; box-shadow: 8px 0 40px rgba(0,0,0,.2); }
+      .ap-detail.open { transform: none; visibility: visible; transition: transform .28s; }
+      .ap-d-close { display: inline-block; }
+    }
+    @media (max-width: 1020px) { .ap-hide-m { display: none; } .ap-row { grid-template-columns: minmax(180px, 2.4fr) .6fr .8fr .8fr auto; } .ap-headrow .ap-hide-m { display: none; } }
+    @media (max-width: 720px) { .ap-kpis { grid-template-columns: repeat(2, 1fr); } .ap-row { grid-template-columns: minmax(0, 1fr) auto; } .ap-row .ap-c:not(.ap-prod):not(.ap-acts) { display: none; } .ap-headrow { display: none; } }
     /* ☰ القائمة الجانبية: درج يُفتح بزر على كل الشاشات (الواجهة تأخذ العرض كله، خصوصاً بالآيباد) */
     .admin-menu-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--card); color: var(--ink); font-family: inherit; font-weight: 900; font-size: 13px; cursor: pointer; margin-inline-end: 8px; }
     .admin-drawer-backdrop { display: none; position: fixed; inset: 0; z-index: 38; background: rgba(0,0,0,.38); }
@@ -795,18 +885,27 @@
            أقسام + بحث، وكل منتج ببطاقة فيها صورته وسعره مع أزرار تعديل سريعة (سعر، توفر،
            تعديل كامل، حذف). تُعرض من نفس قائمة المنتجات المحمّلة أصلاً بالذاكرة — صفر قراءات
            إضافية من Firestore، فقط عرض جديد لنفس البيانات. -->
-      <div class="admin-fieldset">
-        <legend>🗂️ كل منتجات الصيدلية (<span id="adminProductGridCount">0</span>)</legend>
-        <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
-          <input type="text" id="adminProductGridSearch" oninput="renderAdminProductManagementGrid()" placeholder="🔍 ابحثي باسم المنتج أو الماركة أو الباركود..." style="flex:2; min-width:220px; padding:10px 14px; border:1.5px solid var(--line); border-radius:12px; font-size:13px;">
-          <select id="adminProductGridStockFilter" onchange="renderAdminProductManagementGrid()" style="padding:10px 12px; border:1.5px solid var(--line); border-radius:12px; font-size:12.5px; font-weight:700;">
-            <option value="all">كل الحالات</option>
-            <option value="in">متوفر فقط 🟢</option>
-            <option value="out">غير متوفر فقط 🔴</option>
-          </select>
+      <div class="ap-wrap" id="apTop">
+        <div class="ap-main">
+          <div class="ap-head">
+            <div><h2>المنتجات</h2><p>إدارة جميع أصناف المنتجات في الصيدلية (<span id="adminProductGridCount">0</span>)</p></div>
+            <button type="button" class="ap-add" onclick="apOpenAdd()">＋ إضافة منتج جديد</button>
+          </div>
+          <div class="ap-kpis" id="apKpis"></div>
+          <div class="ap-toolbar">
+            <input type="text" id="adminProductGridSearch" oninput="apPage=1; renderAdminProductManagementGrid()" placeholder="🔍 ابحثي باسم المنتج أو الماركة أو الباركود...">
+            <select id="apBrand" onchange="apFilterChanged()" aria-label="الماركة"><option value="all">كل الماركات</option></select>
+            <select id="apCat" onchange="apFilterChanged()" aria-label="القسم"><option value="all">كل الأقسام</option></select>
+            <select id="adminProductGridStockFilter" onchange="apFilterChanged()" aria-label="الحالة">
+              <option value="all">كل الحالات</option><option value="in">متوفر 🟢</option><option value="low">منخفض المخزون 🟠</option><option value="out">نافد 🔴</option>
+            </select>
+            <div class="ap-view"><button type="button" data-v="list" onclick="apSetView('list')" aria-label="جدول">☰</button><button type="button" data-v="grid" onclick="apSetView('grid')" aria-label="بطاقات">▦</button></div>
+          </div>
+          <div id="adminProductGridCatTabs" style="display:none;"></div>
+          <div id="adminProductManagementGrid" class="ap-list"></div>
+          <div class="ap-pager" id="apPager"></div>
         </div>
-        <div id="adminProductGridCatTabs" style="display:flex; gap:6px; overflow-x:auto; padding-bottom:6px; margin-bottom:14px;"></div>
-        <div id="adminProductManagementGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(155px, 1fr)); gap:12px;"></div>
+        <aside class="ap-detail" id="apDetail"></aside>
       </div>
 
       <!-- 🩺 (جديد) أداة تشخيص فورية لمشكلة "السعر لا يتحدث للزبون" — تكشف بالضبط أين
@@ -850,12 +949,10 @@
         </div>
       </div>
 
-      <div class="admin-fieldset">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <div class="admin-fieldset ap-drawer" id="apAddDrawer">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:8px;">
+          <button type="button" class="ap-ic" onclick="apCloseAdd()" aria-label="إغلاق">✕</button>
           <legend id="adminFormModeTitleV" style="margin:0;">إضافة منتج أو دواء جديد يدوياً</legend>
-          <button type="button" onclick="toggleLowStockFilter()" id="btnFilterLowStock" style="background:#FEF3C7; color:#B45309; font-weight:800; font-size:11.5px; padding:6px 12px; border-radius:999px; border:1px solid #FDE68A;">
-            ⚠️ عرض المنتجات النافذة فقط
-          </button>
         </div>
 
         <form id="adminProductFormV" onsubmit="handleAdminProductSave(event)">
