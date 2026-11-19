@@ -73,55 +73,180 @@ function renderAdminProductCategoryTabs() {
   `).join('');
 }
 
+// ================= 🗂️ صفحة المنتجات (تصميم جديد): بطاقات إحصاء + أدوات + جدول/شبكة + لوحة تفاصيل =================
+// كلها من قائمة products المحمّلة أصلاً بالذاكرة: صفر قراءات إضافية من Firestore.
+let apView = 'list', apPage = 1, apSelectedId = null, apPendingQty = null;
+const AP_PAGE_SIZE = 10;
+
+function apThreshold() { const t = (typeof pharmacyProfile !== 'undefined' && pharmacyProfile) ? pharmacyProfile.lowStockThreshold : undefined; return t === undefined ? 5 : (Number(t) || 0); }
+function apQty(p) { return (p.stockQuantity !== undefined && p.stockQuantity !== null && p.stockQuantity !== '') ? Number(p.stockQuantity) : null; }
+function apStatus(p) {
+  const q = apQty(p);
+  if (p.inStock === false || (q !== null && q <= 0)) return { k: 'out', t: 'نفذ' };
+  if (q !== null && apThreshold() > 0 && q <= apThreshold()) return { k: 'low', t: 'منخفض' };
+  return { k: 'ok', t: 'متوفر' };
+}
+function apCatLabel(id) { const c = (typeof categories !== 'undefined' ? categories : []).find(x => String(x.id) === String(id)); return c ? c.label : (id || ''); }
+function apMoney(n) { return (Number(n) || 0).toLocaleString('en-US'); }
+function apProfit(p) {
+  const cost = (p.costPrice !== undefined && p.costPrice !== null && p.costPrice !== '') ? Number(p.costPrice) : null;
+  const price = Number(p.price) || 0;
+  if (cost === null || !Number.isFinite(cost) || price <= 0) return null;
+  return { cost, profit: price - cost, pct: Math.round(((price - cost) / price) * 100) };
+}
+
+function apRenderKpis(all) {
+  const host = document.getElementById('apKpis'); if (!host) return;
+  const out = all.filter(p => apStatus(p).k === 'out').length, low = all.filter(p => apStatus(p).k === 'low').length;
+  const value = all.reduce((sum, p) => { const q = apQty(p); return sum + ((q !== null && q > 0) ? q * (Number(p.price) || 0) : 0); }, 0);
+  const card = (cls, ico, label, val, sub) => `<div class="ap-kpi ${cls}"><span class="ap-kpi-ico">${ico}</span><div><small>${label}</small><b class="mono">${val}</b><em>${sub}</em></div></div>`;
+  host.innerHTML =
+    card('', '📦', 'عدد الأصناف', apMoney(all.length), 'منتج بالصيدلية') +
+    card('warn', '⚠️', 'منخفضة المخزون', apMoney(low), low ? 'بحاجة لإعادة طلب' : 'لا شيء ينقص') +
+    card('bad', '⛔', 'نافدة', apMoney(out), out ? 'مخفية عن الزبائن' : 'كلها متوفرة') +
+    card('good', '💰', 'قيمة المخزون (بسعر البيع)', apMoney(value) + ' <span>د.ع</span>', 'للأصناف المتتبَّع مخزونها');
+}
+
+function apRenderFilters(all) {
+  const bSel = document.getElementById('apBrand'), cSel = document.getElementById('apCat'); if (!bSel || !cSel) return;
+  const brand = bSel.value || 'all', cat = adminProductGridActiveCat || 'all';
+  const brands = [...new Set(all.map(p => (p.brand || '').trim()).filter(Boolean))].sort((x, y) => x.localeCompare(y));
+  bSel.innerHTML = '<option value="all">كل الماركات</option>' + brands.map(b => `<option value="${sanitizeText(b)}"${b === brand ? ' selected' : ''}>${sanitizeText(b)}</option>`).join('');
+  cSel.innerHTML = '<option value="all">كل الأقسام</option>' + (typeof categories !== 'undefined' ? categories : []).map(c => `<option value="${sanitizeText(c.id)}"${String(c.id) === String(cat) ? ' selected' : ''}>${sanitizeText(c.label)}</option>`).join('');
+}
+
+function apSetView(v) { apView = v; apPage = 1; renderAdminProductManagementGrid(); }
+function apGoPage(n) { apPage = n; renderAdminProductManagementGrid(); const t = document.getElementById('apTop'); if (t) t.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
+function apFilterChanged() { apPage = 1; const c = document.getElementById('apCat'); if (c) adminProductGridActiveCat = c.value || 'all'; renderAdminProductManagementGrid(); }
+
+function apRowHtml(p) {
+  const img = sanitizeUrl(p.imageUrl), st = apStatus(p), pr = apProfit(p), q = apQty(p), id = sanitizeText(p.id);
+  return `<div class="ap-row${String(apSelectedId) === String(p.id) ? ' sel' : ''}" onclick="apSelect('${id}')">
+    <div class="ap-c ap-prod"><div class="ap-thumb">${img ? `<img src="${img}" alt="" loading="lazy">` : '📦'}</div><div class="ap-pn"><b>${sanitizeText(p.name)}</b><small>${sanitizeText(apCatLabel(p.category))}${p.brand ? ' · ' + sanitizeText(p.brand) : ''}</small></div></div>
+    <div class="ap-c ap-hide-m mono dim">${sanitizeText(p.barcode || '—')}</div>
+    <div class="ap-c mono ${st.k === 'out' ? 'neg' : (st.k === 'low' ? 'warn' : '')}">${q === null ? '∞' : apMoney(q)}</div>
+    <div class="ap-c ap-hide-m mono">${pr ? apMoney(pr.cost) : '—'}</div>
+    <div class="ap-c mono"><b>${apMoney(p.price)}</b></div>
+    <div class="ap-c ap-hide-m mono">${pr ? `<span class="${pr.profit >= 0 ? 'pos' : 'neg'}">${apMoney(pr.profit)}</span><small> (${pr.pct}%)</small>` : '—'}</div>
+    <div class="ap-c"><span class="ap-chip ${st.k}">${st.t}</span></div>
+    <div class="ap-c ap-acts" onclick="event.stopPropagation()">
+      <button type="button" class="ap-ic" onclick="openAdminQuickEditModal('${id}')" aria-label="تعديل">✏️</button>
+      ${can('products.archive') ? `<button type="button" class="ap-ic danger" data-name="${sanitizeText(p.name)}" onclick="archiveProductConfirm('${id}', this.dataset.name)" aria-label="حذف">🗑️</button>` : ''}
+    </div></div>`;
+}
+function apCardHtml(p) {
+  const img = sanitizeUrl(p.imageUrl), st = apStatus(p), id = sanitizeText(p.id), q = apQty(p);
+  return `<div class="ap-card${String(apSelectedId) === String(p.id) ? ' sel' : ''}" onclick="apSelect('${id}')">
+    <div class="ap-card-img">${img ? `<img src="${img}" alt="" loading="lazy">` : '📦'}<span class="ap-chip ${st.k}">${st.t}</span></div>
+    <b class="ap-card-name">${sanitizeText(p.name)}</b>
+    <small class="dim">${sanitizeText(p.size || p.brand || '')}</small>
+    <div class="ap-card-foot"><span class="mono"><b>${apMoney(p.price)}</b> <small>د.ع</small></span><span class="ap-qty mono">${q === null ? '∞' : apMoney(q)}</span></div></div>`;
+}
+
 function renderAdminProductManagementGrid() {
   const grid = document.getElementById('adminProductManagementGrid');
   const countEl = document.getElementById('adminProductGridCount');
   if (!grid) return;
+  const all = products.filter(p => p.isDeleted !== true);
+  apRenderKpis(all); apRenderFilters(all);
 
   const q = (document.getElementById('adminProductGridSearch')?.value || '').trim().toLowerCase();
   const stockFilter = document.getElementById('adminProductGridStockFilter')?.value || 'all';
-
-  let list = products.filter(p => p.isDeleted !== true);
-  if (adminProductGridActiveCat !== 'all') list = list.filter(p => p.category === adminProductGridActiveCat);
-  if (stockFilter === 'in') list = list.filter(p => p.inStock !== false);
-  if (stockFilter === 'out') list = list.filter(p => p.inStock === false);
-  if (q) {
-    list = list.filter(p =>
-      (p.name || '').toLowerCase().includes(q) ||
-      (p.brand || '').toLowerCase().includes(q) ||
-      (p.barcode || '').toLowerCase().includes(q)
-    );
-  }
-
+  const brand = document.getElementById('apBrand')?.value || 'all';
+  let list = all.slice();
+  if (adminProductGridActiveCat !== 'all') list = list.filter(p => String(p.category) === String(adminProductGridActiveCat));
+  if (brand !== 'all') list = list.filter(p => (p.brand || '').trim() === brand);
+  if (stockFilter === 'in') list = list.filter(p => apStatus(p).k !== 'out');
+  if (stockFilter === 'out') list = list.filter(p => apStatus(p).k === 'out');
+  if (stockFilter === 'low') list = list.filter(p => apStatus(p).k === 'low');
+  if (q) list = list.filter(p => (p.name || '').toLowerCase().includes(q) || (p.brand || '').toLowerCase().includes(q) || (p.barcode || '').toLowerCase().includes(q));
   if (countEl) countEl.textContent = list.length;
 
-  if (list.length === 0) {
-    grid.innerHTML = `<div class="no-results" style="grid-column:1/-1; padding:24px 0;">لا توجد منتجات مطابقة.</div>`;
-    return;
+  document.querySelectorAll('.ap-view button').forEach(b => b.classList.toggle('on', b.getAttribute('data-v') === apView));
+  const pages = Math.max(1, Math.ceil(list.length / AP_PAGE_SIZE)); if (apPage > pages) apPage = pages;
+  const slice = list.slice((apPage - 1) * AP_PAGE_SIZE, apPage * AP_PAGE_SIZE);
+
+  if (!list.length) { grid.className = 'ap-list'; grid.innerHTML = '<div class="no-results" style="padding:30px 0;">لا توجد منتجات مطابقة.</div>'; }
+  else if (apView === 'grid') { grid.className = 'ap-grid'; grid.innerHTML = slice.map(apCardHtml).join(''); }
+  else {
+    grid.className = 'ap-list';
+    grid.innerHTML = '<div class="ap-row ap-headrow"><div class="ap-c">المنتج</div><div class="ap-c ap-hide-m">الباركود</div><div class="ap-c">الكمية</div><div class="ap-c ap-hide-m">سعر الشراء</div><div class="ap-c">سعر البيع</div><div class="ap-c ap-hide-m">صافي الربح</div><div class="ap-c">الحالة</div><div class="ap-c">إجراءات</div></div>' + slice.map(apRowHtml).join('');
   }
 
-  grid.innerHTML = list.map(p => {
-    const img = sanitizeUrl(p.imageUrl);
-    const inStock = p.inStock !== false;
-    return `
-      <div class="admin-prod-card">
-        <span class="admin-prod-stock-badge" style="background:${inStock ? '#22C55E' : '#EF4444'};" title="${inStock ? 'متوفر' : 'غير متوفر'}"></span>
-        <div class="admin-prod-card-img">
-          ${img ? `<img src="${img}" alt="${sanitizeText(p.name)}" loading="lazy">` : '📦'}
-        </div>
-        <div class="admin-prod-card-name">${sanitizeText(p.name)}</div>
-        <div class="admin-prod-card-brand">${sanitizeText(p.brand || '')}${p.size ? ' · ' + sanitizeText(p.size) : ''}</div>
-        <div class="admin-prod-card-price mono">${fmtPrice(p.price)}</div>
-        ${adminStockExpiryBadges(p)}
-        <div class="admin-prod-card-actions">
-          <button type="button" onclick="quickEditPrice('${sanitizeText(p.id)}', ${Number(p.price) || 0})" style="background:#FEF3C7; color:#92400E;">💰 سعر</button>
-          <button type="button" onclick="quickToggleStock('${sanitizeText(p.id)}')" style="background:${inStock ? '#FEE2E2' : '#DCFCE7'}; color:${inStock ? '#991B1B' : '#15803D'};">${inStock ? '🔴 إخفاء' : '🟢 توفير'}</button>
-          <button type="button" onclick="openAdminQuickEditModal('${sanitizeText(p.id)}')" style="background:var(--surface); color:var(--ink);">✏️ تعديل</button>
-          ${can('products.archive') ? `<button type="button" data-name="${sanitizeText(p.name)}" onclick="archiveProductConfirm('${sanitizeText(p.id)}', this.dataset.name)" style="background:#FEE2E2; color:#991B1B;">🗑️ حذف</button>` : ''}
-        </div>
-      </div>`;
-  }).join('');
+  const pager = document.getElementById('apPager');
+  if (pager) {
+    const nums = []; for (let i = 1; i <= pages; i++) if (i === 1 || i === pages || Math.abs(i - apPage) <= 1) nums.push(i);
+    let html = '', prev = 0;
+    nums.forEach(n => { if (prev && n - prev > 1) html += '<span class="dim">…</span>'; html += `<button type="button" class="${n === apPage ? 'on' : ''}" onclick="apGoPage(${n})">${n}</button>`; prev = n; });
+    pager.innerHTML = `<span class="dim">${list.length ? ((apPage - 1) * AP_PAGE_SIZE + 1) + '–' + Math.min(list.length, apPage * AP_PAGE_SIZE) : 0} من ${list.length} منتج</span><div>${pages > 1 ? html : ''}</div>`;
+  }
+  apRenderDetail();
 }
+
+// ---------- لوحة التفاصيل ----------
+function apSelect(id) {
+  apSelectedId = id; apPendingQty = null;
+  const d = document.getElementById('apDetail'); if (d) d.classList.add('open');
+  renderAdminProductManagementGrid();
+}
+function apCloseDetail() { const d = document.getElementById('apDetail'); if (d) d.classList.remove('open'); apSelectedId = null; renderAdminProductManagementGrid(); }
+function apStep(delta) {
+  const p = findProduct(apSelectedId); if (!p) return;
+  const base = apPendingQty === null ? (apQty(p) === null ? 0 : apQty(p)) : apPendingQty;
+  apPendingQty = Math.max(0, base + delta); apRenderDetail();
+}
+function apQtyInput(v) { const n = parseInt(v, 10); apPendingQty = Number.isFinite(n) && n >= 0 ? n : 0; const b = document.getElementById('apSaveQty'); if (b) b.style.display = ''; }
+async function apSaveQty() {
+  if (!assertCan('products.edit')) return;
+  const p = findProduct(apSelectedId); if (!p || apPendingQty === null) return;
+  const n = apPendingQty;
+  try {
+    if (!db) throw new Error('لا يوجد اتصال بقاعدة البيانات');
+    await dbPaths.productsCol().doc(String(p.id)).set({ stockQuantity: n, inStock: n > 0 }, { merge: true });
+    updateR2CatalogItem(p.id, { stockQuantity: n, inStock: n > 0 });
+    p.stockQuantity = n; p.inStock = n > 0; apPendingQty = null;
+    renderAdminProductManagementGrid(); showToast('تم تحديث الكمية ✓');
+  } catch (err) { showToast('⚠️ تعذر تحديث الكمية: ' + err.message); }
+}
+function apRenderDetail() {
+  const d = document.getElementById('apDetail'); if (!d) return;
+  const p = apSelectedId ? findProduct(apSelectedId) : null;
+  if (!p) { d.innerHTML = '<div class="ap-empty">📦<p>اختاري منتجاً من القائمة لعرض تفاصيله وتعديل كميته وسعره من هنا</p></div>'; return; }
+  const img = sanitizeUrl(p.imageUrl), st = apStatus(p), pr = apProfit(p), id = sanitizeText(p.id);
+  const qty = apPendingQty === null ? (apQty(p) === null ? '' : apQty(p)) : apPendingQty;
+  const row = (k, v) => v ? `<div class="ap-kv"><span>${k}</span><b>${v}</b></div>` : '';
+  d.innerHTML = `
+    <div class="ap-d-top"><button type="button" class="ap-ic ap-d-close" onclick="apCloseDetail()" aria-label="إغلاق">✕</button>
+      <button type="button" class="ap-ic" onclick="openAdminQuickEditModal('${id}')" aria-label="تعديل">✏️</button></div>
+    <div class="ap-d-img">${img ? `<img src="${img}" alt="">` : '📦'}</div>
+    <h3 class="ap-d-name">${sanitizeText(p.name)}</h3>
+    <p class="ap-d-sub">${sanitizeText(apCatLabel(p.category))}</p>
+    <div class="ap-d-box">${row('الباركود', `<span class="mono">${sanitizeText(p.barcode || '')}</span>`)}${row('الماركة', sanitizeText(p.brand || ''))}${row('القسم', sanitizeText(apCatLabel(p.category)))}${row('الحجم', sanitizeText(p.size || ''))}</div>
+    <div class="ap-d-prices">
+      <div><small>سعر الشراء</small><b class="mono">${pr ? apMoney(pr.cost) : '—'}</b></div>
+      <div><small>سعر البيع</small><b class="mono">${apMoney(p.price)}</b></div>
+      <div class="${pr && pr.profit < 0 ? 'neg' : 'pos'}"><small>صافي الربح</small><b class="mono">${pr ? apMoney(pr.profit) : '—'}</b>${pr ? `<em>(${pr.pct}%)</em>` : ''}</div>
+    </div>
+    <div class="ap-d-qty"><small>الكمية المتوفرة</small>
+      <div class="ap-stepper"><button type="button" onclick="apStep(-1)" aria-label="إنقاص">−</button><input type="number" min="0" inputmode="numeric" value="${qty}" placeholder="غير متتبَّعة" oninput="apQtyInput(this.value)"><button type="button" onclick="apStep(1)" aria-label="زيادة">+</button></div>
+      <div class="ap-d-qrow"><span class="ap-chip ${st.k}">${st.t}</span><button type="button" id="apSaveQty" class="ap-save" style="${apPendingQty === null ? 'display:none;' : ''}" onclick="apSaveQty()">حفظ الكمية</button></div></div>
+    <div class="ap-d-box"><b class="ap-d-h">معلومات إضافية</b>${row('تاريخ الانتهاء', sanitizeText(p.expiryDate ? String(p.expiryDate).slice(0, 10) : ''))}${row('رقم التشغيلة', sanitizeText(p.batchNumber || p.batch || ''))}${row('النوع', sanitizeText(p.type || ''))}${p.oldPrice ? row('السعر قبل الخصم', `<span class="mono">${apMoney(p.oldPrice)}</span>`) : ''}</div>
+    <div class="ap-d-btns">
+      <button type="button" class="ap-primary" onclick="openAdminQuickEditModal('${id}')">✏️ تعديل المنتج</button>
+      <button type="button" class="ap-soft" onclick="quickEditPrice('${id}', ${Number(p.price) || 0})">💰 تعديل السعر</button>
+      <button type="button" class="ap-soft" onclick="quickToggleStock('${id}')">${p.inStock === false ? '🟢 إعادة التوفير' : '🔴 إخفاء مؤقتاً'}</button>
+      ${can('products.archive') ? `<button type="button" class="ap-danger" data-name="${sanitizeText(p.name)}" onclick="archiveProductConfirm('${id}', this.dataset.name)">🗑️ حذف المنتج</button>` : ''}
+    </div>`;
+}
+
+// ---------- درج «إضافة منتج جديد» ----------
+function apOpenAdd() {
+  if (typeof resetAdminProductForm === 'function') resetAdminProductForm();
+  const dr = document.getElementById('apAddDrawer'); if (dr) { dr.classList.add('open'); dr.scrollTop = 0; }
+  document.body.classList.add('ap-lock');
+}
+function apCloseAdd() { const dr = document.getElementById('apAddDrawer'); if (dr) dr.classList.remove('open'); document.body.classList.remove('ap-lock'); }
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') apCloseAdd(); });
 
 // 🛡️ (إصلاح — "زر التعديل المباشر لا يعمل") لم أجد عبر المراجعة الساكنة للكود خللاً مؤكداً
 // يمنع فتح هذه النافذة (كل عناصرها موجودة فعلياً بالـ HTML)، لكن أي خطأ غير متوقع (تعارض
@@ -528,6 +653,7 @@ async function handleAdminProductSave(e) {
     if (savedProductId) updateR2CatalogItem(savedProductId, toCatalogSafeObject({ ...payload, id: savedProductId, updatedAt: undefined }), true);
     else triggerR2CatalogRebuild();
     resetAdminProductForm();
+    if (typeof apCloseAdd === 'function') apCloseAdd();
   } catch (err) {
     showToast('حدث خطأ أثناء حفظ المنتج');
   }
