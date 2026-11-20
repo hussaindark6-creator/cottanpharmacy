@@ -143,17 +143,35 @@ const firebaseConfig = {
 let auth = null, db = null, currentUser = null, isFirebaseConfigured = false;
 let currentStaffData = null;
 
+// ⚡ تحميل مكتبة Firestore عند الحاجة فقط (المتجر للزبائن لا يحمّلها؛ تلزم فقط عند تسجيل دخول موظف بإيميل)
+let firestoreLibPromise = null;
+function ensureFirestoreLib() {
+  if (db) return Promise.resolve(db);
+  if (!isFirebaseConfigured || typeof firebase === 'undefined') return Promise.reject(new Error('firebase not ready'));
+  if (typeof firebase.firestore === 'function') { db = firebase.firestore(); return Promise.resolve(db); }
+  if (firestoreLibPromise) return firestoreLibPromise;
+  firestoreLibPromise = new Promise((resolve, reject) => {
+    const sc = document.createElement('script');
+    sc.src = 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js';
+    sc.onload = () => { try { db = firebase.firestore(); resolve(db); } catch (e) { firestoreLibPromise = null; reject(e); } };
+    sc.onerror = () => { firestoreLibPromise = null; reject(new Error('firestore lib load failed')); };
+    document.head.appendChild(sc);
+  });
+  return firestoreLibPromise;
+}
+
 try {
   if (firebaseConfig.apiKey) {
     firebase.initializeApp(firebaseConfig);
     auth = firebase.auth();
-    db = firebase.firestore();
+    // ⚡ المتجر للزبائن لا يحمّل مكتبة Firestore (تُحمَّل بلوحتي الأدمن والسوبر أدمن فقط)
+    db = (typeof firebase.firestore === 'function') ? firebase.firestore() : null;
     isFirebaseConfigured = true;
 
     // 💾 لوحة الأدمن فقط: تخزين Firestore محلي (IndexedDB) فتُعاد قراءة الطلبات بعد تحديث الصفحة بتكلفة التغييرات فقط
     // (ضمن 30 دقيقة) بدل إعادة فوترة كل المستندات. المتجر للزبائن لا يستخدمه.
     try {
-      if (document.getElementById('adminSecStats')) {
+      if (db && document.getElementById('adminSecStats')) {
         db.enablePersistence({ synchronizeTabs: true }).catch(() => { /* تبويبات متعددة/متصفح لا يدعم: نتجاهل */ });
       }
     } catch (e) { /* غير حرج */ }
@@ -896,7 +914,7 @@ function renderBundleCardHtml(b) {
   const linkedProducts = (b.productIds || []).map(id => findProduct(id)).filter(Boolean);
   const thumbsHtml = linkedProducts.slice(0, 3).map(p => {
     const pImg = sanitizeUrl(p.imageUrl);
-    return `<div class="bundle-thumb-item">${pImg ? `<img src="${pImg}" alt="${sanitizeText(p.name)}">` : (icons[p.type] || icons.bottle)(getBrandColor(p.brand))}</div>`;
+    return `<div class="bundle-thumb-item">${pImg ? `<img loading="lazy" decoding="async" src="${pImg}" alt="${sanitizeText(p.name)}">` : (icons[p.type] || icons.bottle)(getBrandColor(p.brand))}</div>`;
   }).join('');
 
   // 🎁 شريط أفقي: الصورة المختارة خلفية كاملة واسم البكج مدموج فوقها بوضوح (طبقة تعتيم تدرّجية تحفظ وضوح النص)
@@ -1071,7 +1089,7 @@ function renderAdminCategoriesList() {
       <div style="background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between;">
         <div style="display:flex; align-items:center; gap:10px;">
           <div style="width:42px; height:42px; border-radius:8px; background:var(--surface); display:flex; align-items:center; justify-content:center; overflow:hidden;">
-            ${cleanImg ? `<img src="${cleanImg}" style="width:100%; height:100%; object-fit:cover;">` : (catIcons[c.icon] || catIcons.jar)('var(--accent, #E85D8A)')}
+            ${cleanImg ? `<img loading="lazy" decoding="async" src="${cleanImg}" style="width:100%; height:100%; object-fit:cover;">` : (catIcons[c.icon] || catIcons.jar)('var(--accent, #E85D8A)')}
           </div>
           <div>
             <div style="font-weight:800; font-size:13.5px;">${sanitizeText(c.label)} (${sanitizeText(c.id)})</div>
@@ -1627,6 +1645,7 @@ async function verifyStaffPermissions(user) {
         if (at && Date.now() - at < 24 * 3600 * 1000) { currentStaffData = null; return; }
       } catch (e) { /* غير حرج */ }
     }
+    if (!db) await ensureFirestoreLib();
     const doc = await dbPaths.staffCol().doc(staffDocId).get();
     if (!doc.exists && !IS_ADMIN_PAGE) { try { localStorage.setItem(staffCacheKey, String(Date.now())); } catch (e) {} }
     if (doc.exists) {
