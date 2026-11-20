@@ -1467,7 +1467,8 @@ function retryWithBackoff(fn, attempt = 0) {
 }
 
 function initFirestoreSync() {
-  if (!isFirebaseConfigured || !db) return Promise.resolve();
+  // ⚠️ الاسم قديم: هذه الدالة تحمّل لقطة المتجر والكتالوج من الووركر/R2 ولا تستخدم Firestore، فلا تشترط وجود db (المتجر لا يحمّل مكتبة Firestore).
+  if (!isFirebaseConfigured) return Promise.resolve();
 
   const cachedProds = localStorage.getItem(getStorageKey('products_cache'));
   if (cachedProds) {
