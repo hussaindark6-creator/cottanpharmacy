@@ -466,18 +466,43 @@
       .admin-nav-header { padding-right: 0 !important; }
       #adminFloatingAddBtn { left: 24px !important; right: auto !important; }
     }
-    /* 🎛️ الاستوديو: المعاينة بملء الشاشة والخيارات بدرج يُفتح بزر */
-    .st-layout, .st-layout:has(.st-preview) { display: block !important; grid-template-columns: 1fr !important; }
-    .st-preview { position: static !important; order: 0 !important; }
-    .st-frame-wrap { min-height: 70vh; }
-    /* درج الخيارات: فوق كل شيء (حتى ترويسة الأدمن)، ورأسه ثابت بلا قفزات، وتمريره لا يحرّك الصفحة خلفه */
-    .st-controls { position: fixed; top: 0; bottom: 0; left: 0; height: 100vh; height: 100dvh; width: min(470px, 100vw); z-index: 1000; background: var(--card); border-inline-end: 1px solid var(--line); box-shadow: 8px 0 40px rgba(0,0,0,.18); overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 0 14px calc(90px + env(safe-area-inset-bottom)); transform: translateX(-108%); visibility: hidden; transition: transform .28s cubic-bezier(.3,.8,.3,1), visibility 0s .28s; }
-    .st-controls.open { transform: none; visibility: visible; transition: transform .28s cubic-bezier(.3,.8,.3,1); }
-    .st-drawer-head { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 -14px 12px; padding: calc(12px + env(safe-area-inset-top)) 14px 12px; background: var(--card); border-bottom: 1px solid var(--line); }
-    .st-fab { position: fixed; bottom: calc(22px + env(safe-area-inset-bottom)); left: 22px; z-index: 900; min-height: 54px; padding: 0 22px; border: 0; border-radius: 999px; background: linear-gradient(135deg, var(--accent), var(--accent-dark, var(--accent))); color: var(--on-accent, #fff); font-family: inherit; font-weight: 900; font-size: 14px; cursor: pointer; box-shadow: 0 14px 30px rgba(0,0,0,.25); }
-    .st-fab.on { opacity: 0; pointer-events: none; }
-    body.st-lock { overflow: hidden; }
-    @media (min-width: 900px) { body.st-lock { overflow: auto; } }
+    /* 🎛️ الاستوديو: معاينة كبيرة ظاهرة دائماً + لوحة خيارات بجانبها (لا أدراج تغطي المعاينة) */
+    .st-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 12px; padding: 8px 12px; background: var(--card); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow-soft); position: sticky; top: 60px; z-index: 40; }
+    .st-toolbar .st-btn { padding: 9px 16px; font-size: 13px; }
+    .st-toolbar .st-devices { margin-inline-start: 0; }
+    .st-toolbar .st-dirty { animation: stPulse 1.6s ease-in-out infinite; }
+    @keyframes stPulse { 50% { opacity: .55; } }
+    .st-layout, .st-layout:has(.st-preview) { display: grid !important; grid-template-columns: 1fr !important; gap: 14px; margin-top: 12px; align-items: start; }
+    .st-preview { position: sticky !important; order: -1 !important; top: 122px !important; z-index: 12; padding: 8px; }
+    .st-preview-bar { margin-bottom: 6px; }
+    .st-preview-bar small { color: var(--text-soft); font-weight: 700; font-size: 10.5px; }
+    .st-frame-wrap { height: 38vh; min-height: 250px; margin-inline: auto; transition: max-width .25s ease; }
+    .st-frame-wrap[data-dev="mobile"] { max-width: 412px; border: 8px solid #111827; border-radius: 34px; }
+    .st-frame-wrap[data-dev="tablet"] { max-width: 800px; border: 6px solid #111827; border-radius: 22px; }
+    .st-frame-wrap[data-dev="laptop"] { max-width: 100%; }
+    .st-controls { position: static; transform: none; visibility: visible; width: auto; padding: 0; background: transparent; border: 0; box-shadow: none; }
+    .st-panel-head { display: flex; align-items: center; gap: 8px; margin: 2px 4px 10px; font-size: 15px; color: var(--ink); }
+    .st-fab, .st-drawer-head { display: none !important; }
+    .st-status { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; padding: 12px 16px; background: color-mix(in srgb, #16A34A 9%, var(--card)); border: 1px solid color-mix(in srgb, #16A34A 30%, var(--line)); border-radius: 20px; }
+    .st-status.warn { background: #FEF3C7; border-color: #F59E0B; }
+    .st-status-ico { font-size: 24px; }
+    .st-status-txt { flex: 1; min-width: 160px; display: grid; gap: 2px; }
+    .st-status-txt b { font-size: 13.5px; color: var(--ink); }
+    .st-status-txt small { font-size: 11.5px; color: var(--text-soft); font-weight: 600; }
+    .st-btn.primary.dirty { box-shadow: 0 0 0 3px color-mix(in srgb, #F59E0B 55%, transparent); }
+    @media (max-width: 699px) {
+      .st-toolbar { flex-wrap: nowrap; gap: 6px; padding: 6px 8px; }
+      .st-toolbar .lbl, .st-toolbar .st-dirty { display: none; }
+      .st-toolbar .st-devices button { padding: 8px 12px; font-size: 15px; }
+      .st-toolbar .st-btn { padding: 9px 13px; white-space: nowrap; }
+    }
+    @media (min-width: 1000px) {
+      .st-toolbar { top: 76px; }
+      .st-layout, .st-layout:has(.st-preview) { grid-template-columns: 430px minmax(0, 1fr) !important; }
+      .st-preview { order: 0 !important; top: 140px !important; }
+      .st-frame-wrap { height: calc(100vh - 260px); min-height: 460px; }
+      .st-controls { position: sticky; top: 140px; max-height: calc(100vh - 160px); overflow-y: auto; overscroll-behavior: contain; padding: 0 2px 20px; scrollbar-width: thin; }
+    }
     .st-note-s { font-size: 12px; color: var(--text-soft); line-height: 1.8; margin: 8px 0; }
     .st-mini { border: 1.5px solid var(--line); background: var(--card); color: var(--ink); border-radius: 12px; min-height: 44px; min-width: 44px; padding: 0 12px; cursor: pointer; font-family: inherit; font-weight: 800; font-size: 12px; }
     .st-mini:disabled { opacity: .35; cursor: default; }
@@ -1531,34 +1556,36 @@
     <div id="adminSecStudio" style="display:none;">
       <div class="admin-view-header">
         <h2>🎛️ استوديو التصميم</h2>
-        <p>اختاري كل تفصيلة من واجهة متجرك بنفسك: الألوان، الخطوط، شكل البطاقات والأزرار والشريط السفلي والبنر. شاهدي النتيجة فوراً في المعاينة، ولا يتغير متجر زبائنك إلا عند الضغط على «نشر التصميم».</p>
+        <p>اختاري كل تفصيلة من واجهة متجرك وشاهدي النتيجة فوراً بجانب الخيارات. لا يتغير متجر زبائنك إلا عند الضغط على «نشر التصميم».</p>
+      </div>
+      <div class="st-toolbar">
+        <span class="st-dirty" id="studioDirty" style="display:none;">● تغييرات غير منشورة</span>
+        <div class="st-devices" id="studioDevices" role="group" aria-label="حجم المعاينة">
+          <button type="button" data-dev="mobile" class="on" aria-label="جوال">📱<span class="lbl"> جوال</span></button>
+          <button type="button" data-dev="tablet" aria-label="آيباد">📟<span class="lbl"> آيباد</span></button>
+          <button type="button" data-dev="laptop" aria-label="لابتوب">💻<span class="lbl"> لابتوب</span></button>
+        </div>
+        <button type="button" class="st-btn ghost" onclick="studioRevert()" aria-label="تراجع عن التغييرات">↩<span class="lbl"> تراجع</span></button>
+        <button type="button" class="st-btn primary" id="studioPublishBtn" onclick="studioPublish()">🚀 نشر التصميم</button>
       </div>
       <div class="st-layout">
         <div class="st-controls" id="studioControls">
-          <div class="st-drawer-head"><b>🎛️ خيارات التصميم</b><button type="button" class="st-mini" onclick="studioToggleDrawer(false)" aria-label="إغلاق">✕ إغلاق</button></div>
+          <div class="st-panel-head"><span>🎨</span><b>خيارات التخصيص</b></div>
           <div class="st-group" id="studioColorsGroup">
             <div class="st-group-head"><span>🎨</span><b>الألوان (قاعدة 60 / 30 / 10)</b></div>
             <div class="st-group-body" id="studioColorsHost"></div>
           </div>
         </div>
         <div class="st-preview">
-          <div class="st-preview-bar">
-            <span class="st-dirty" id="studioDirty" style="display:none;">● تغييرات غير منشورة</span>
-            <div class="st-devices" id="studioDevices">
-              <button type="button" data-dev="mobile" class="on">📱 جوال</button>
-              <button type="button" data-dev="tablet">📟 آيباد</button>
-              <button type="button" data-dev="laptop">💻 لابتوب</button>
-            </div>
-          </div>
-          <div class="st-frame-wrap" id="studioFrameWrap"><iframe id="studioFrame" title="معاينة المتجر" loading="lazy"></iframe></div>
+          <div class="st-preview-bar"><b>👁️ معاينة المتجر</b></div>
+          <div class="st-frame-wrap" id="studioFrameWrap" data-dev="mobile"><iframe id="studioFrame" title="معاينة المتجر" loading="lazy"></iframe></div>
           <div class="st-note">المعاينة تعرض متجرك الحقيقي ومنتجاته بالخيارات الحالية، ولا تغيّر شيئاً للزبائن قبل النشر.</div>
         </div>
       </div>
-      <button type="button" class="st-fab" id="studioFab" onclick="studioToggleDrawer()">🎛️ خيارات التصميم</button>
-      <div class="st-actions">
-        <button type="button" class="st-btn ghost" onclick="studioRevert()">↩ تراجع عن التغييرات</button>
+      <div class="st-status" id="studioStatus">
+        <span class="st-status-ico" id="studioStatusIco">✅</span>
+        <div class="st-status-txt"><b id="studioStatusTitle">كل التغييرات منشورة</b><small id="studioStatusSub">هذا ما يراه زبائنك الآن.</small></div>
         <button type="button" class="st-btn ghost" onclick="studioResetDefaults()">✦ الإعدادات الافتراضية</button>
-        <button type="button" class="st-btn primary" id="studioPublishBtn" onclick="studioPublish()">🚀 نشر التصميم</button>
       </div>
     </div>
 
