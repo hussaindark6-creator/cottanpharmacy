@@ -22,7 +22,16 @@ function stuMarkDirty() {
   const c = stuColors(), pp = (typeof pharmacyProfile !== 'undefined') ? pharmacyProfile : {};
   const colorsChanged = ['primaryColor', 'pageBgColor', 'cardColor', 'secondaryColor', 'textColor'].some(function (k) { return (c[k] || '') !== (pp[k] || ''); });
   const extra = (stuBlocksTouched && JSON.stringify(stuBlocks) !== stuSavedBlocks) || JSON.stringify(stuCopy) !== stuSavedCopy;
-  d.style.display = (!stuSame(stuLook, stuSaved) || colorsChanged || extra) ? 'inline-block' : 'none';
+  const dirty = !stuSame(stuLook, stuSaved) || colorsChanged || extra;
+  d.style.display = dirty ? 'inline-block' : 'none';
+  const pb = stuEl('studioPublishBtn'); if (pb) pb.classList.toggle('dirty', dirty);
+  const box = stuEl('studioStatus');
+  if (box) {
+    box.classList.toggle('warn', dirty);
+    stuEl('studioStatusIco').textContent = dirty ? '⏳' : '✅';
+    stuEl('studioStatusTitle').textContent = dirty ? 'لديكِ تغييرات غير منشورة' : 'كل التغييرات منشورة';
+    stuEl('studioStatusSub').textContent = dirty ? 'اضغطي «نشر التصميم» ليراها زبائنك.' : 'هذا ما يراه زبائنك الآن.';
+  }
 }
 
 // تُستدعى أيضاً من admin-page.js كلما تغيّر لون
@@ -44,6 +53,7 @@ function studioPush(changedKey) {
 function stuFit() {
   const wrap = stuEl('studioFrameWrap'), f = stuEl('studioFrame');
   if (!wrap || !f || !wrap.clientWidth) return;
+  wrap.setAttribute('data-dev', stuDevice);
   const D = STU_DEV_W[stuDevice], W = wrap.clientWidth, H = wrap.clientHeight;
   const scale = Math.min(1, W / D);
   f.style.width = D + 'px';
@@ -334,15 +344,10 @@ function stuRenderHealth() {
 }
 
 
-// ================= درج الخيارات (المعاينة بملء الشاشة) =================
+// ================= اللوحة الجانبية (لم يعد هناك درج يغطي المعاينة) =================
+// تبقى الدالة للتوافق مع أي استدعاء قديم: على الشاشات الصغيرة تمرّر الصفحة إلى الخيارات الواقعة أسفل المعاينة.
 function studioToggleDrawer(force) {
+  if (force === false) return;
   const box = stuEl('studioControls'); if (!box) return;
-  const open = (typeof force === 'boolean') ? force : !box.classList.contains('open');
-  box.classList.toggle('open', open);
-  document.body.classList.toggle('st-lock', open);
-  if (open) box.scrollTop = 0;
-  const fab = stuEl('studioFab'); if (fab) fab.classList.toggle('on', open);
-  setTimeout(stuFit, 260);
+  try { box.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { /* غير حرج */ }
 }
-
-document.addEventListener('keydown', function (e) { if (e.key === 'Escape') studioToggleDrawer(false); });
