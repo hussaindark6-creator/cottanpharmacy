@@ -388,7 +388,7 @@ function renderCart() {
     return `
       <div class="cart-item">
         <div class="thumb" style="background:${color}18;">
-          ${cleanImg ? `<img src="${cleanImg}">` : (icons[item.type || 'bottle'] || icons.bottle)(color)}
+          ${cleanImg ? `<img loading="lazy" decoding="async" src="${cleanImg}">` : (icons[item.type || 'bottle'] || icons.bottle)(color)}
         </div>
         <div class="info">
           <div class="name">${isBundle ? '🎁 [بكج] ' : ''}${sanitizeText(item.name || item.title)}</div>
@@ -665,7 +665,7 @@ function renderBrandStrip() {
     return `
       <div class="brand-chip ${isActive ? 'active' : ''}" onclick="selectHomeBrand('${sanitizeText(k)}')">
         <div class="brand-chip-img-box">
-          ${cleanLogo ? `<img class="brand-chip-img" src="${cleanLogo}" alt="${sanitizeText(b.name || k)}">` : `<div class="brand-chip-placeholder" style="background:${sanitizeText(b.color)};">${(b.name || k).charAt(0).toUpperCase()}</div>`}
+          ${cleanLogo ? `<img loading="lazy" decoding="async" class="brand-chip-img" src="${cleanLogo}" alt="${sanitizeText(b.name || k)}">` : `<div class="brand-chip-placeholder" style="background:${sanitizeText(b.color)};">${(b.name || k).charAt(0).toUpperCase()}</div>`}
         </div>
         <span class="brand-chip-title">${sanitizeText(b.name || k)}</span>
       </div>`;
@@ -731,7 +731,7 @@ function openBundleDetail(bundleId) {
           return `
             <div onclick="closeBundleDetail(); openProduct('${sanitizeText(p.id)}', true)" role="button" style="display:flex; align-items:center; gap:10px; padding:8px; border:1.5px solid var(--line); border-radius:14px; cursor:pointer;">
               <div style="width:48px; height:48px; flex-shrink:0; border-radius:10px; overflow:hidden; background:var(--surface); display:flex; align-items:center; justify-content:center;">
-                ${pImg ? `<img src="${pImg}" alt="${sanitizeText(p.name)}" style="width:100%; height:100%; object-fit:cover;">` : (icons[p.type] || icons.bottle)(getBrandColor(p.brand))}
+                ${pImg ? `<img loading="lazy" decoding="async" src="${pImg}" alt="${sanitizeText(p.name)}" style="width:100%; height:100%; object-fit:cover;">` : (icons[p.type] || icons.bottle)(getBrandColor(p.brand))}
               </div>
               <div style="flex:1; min-width:0;">
                 <div style="font-weight:800; font-size:13px;">${sanitizeText(p.name)}</div>
@@ -1030,7 +1030,7 @@ function renderModernCategories() {
       return `
         <div class="modern-cat-card" onclick="openCategory('${sanitizeText(c.id)}')">
           <div class="modern-cat-img-wrap">
-            ${cleanImg ? `<img src="${cleanImg}" alt="${sanitizeText(c.label)}">` : (catIcons[c.icon] || catIcons.jar)('var(--accent, #E85D8A)')}
+            ${cleanImg ? `<img loading="lazy" decoding="async" src="${cleanImg}" alt="${sanitizeText(c.label)}">` : (catIcons[c.icon] || catIcons.jar)('var(--accent, #E85D8A)')}
           </div>
           <div class="modern-cat-info">
             <h3 class="modern-cat-title">${sanitizeText(c.label)}</h3>
@@ -1262,3 +1262,18 @@ function renderAllBrands() {
       </div>`;
   }).join('');
 }
+
+// ================= PWA خفيف: manifest خاص بكل صيدلية (من الووركر) + Service Worker لصور الصيدليات فقط =================
+window.addEventListener('load', function () {
+  try {
+    if (typeof IS_ADMIN_PAGE !== 'undefined' && IS_ADMIN_PAGE) return;
+    var pid = (typeof currentPharmacyId !== 'undefined') ? currentPharmacyId : '';
+    if (pid && typeof WORKER_API_BASE !== 'undefined' && !document.querySelector('link[rel="manifest"]')) {
+      var l = document.createElement('link');
+      l.rel = 'manifest';
+      l.href = WORKER_API_BASE + '/api/manifest?pharmacy=' + encodeURIComponent(pid);
+      document.head.appendChild(l);
+    }
+    if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('/sw.js').catch(function () {});
+  } catch (e) { /* غير حرج */ }
+});
