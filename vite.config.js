@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv } from 'vite';
 import { resolve } from 'path';
-import { copyFileSync, readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
+import { copyFileSync, readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'fs';
+import { createHash } from 'crypto';
 
 // 🌟 الخطوة 1+2: تغليف بـVite (3 نقاط دخول: المتجر، لوحة الصيدلية، لوحة السوبر أدمن) +
 // متغيرات بيئة حقيقية (.env) محقونة عبر "define" وقت البناء — وليس عبر سكربت module منفصل
@@ -29,12 +30,26 @@ function copyClassicScripts(defineMap) {
     closeBundle() {
       const outDir = resolve(process.cwd(), 'dist');
       if (!existsSync(outDir)) mkdirSync(outDir, { recursive: true });
+      const hashed = {};
       for (const file of CLASSIC_SCRIPTS) {
         const src = resolve(process.cwd(), file);
         if (!existsSync(src)) { console.warn(`[copy-classic-scripts] الملف غير موجود: ${file}`); continue; }
         let code = readFileSync(src, 'utf8');
         for (const [token, value] of Object.entries(defineMap)) code = code.split(token).join(value);
         writeFileSync(resolve(outDir, file), code);
+        // 🔖 نسخة مبصومة (assets/c/<اسم>.<بصمة>.js) تُخدَّم بـ immutable، وتُحدَّث إشارات الـHTML إليها فيتجدد الكاش تلقائياً عند أي تغيير
+        const hash = createHash('md5').update(code).digest('hex').slice(0, 8);
+        const hashedRel = `assets/c/${file.replace(/\.js$/, '')}.${hash}.js`;
+        mkdirSync(resolve(outDir, 'assets/c'), { recursive: true });
+        writeFileSync(resolve(outDir, hashedRel), code);
+        hashed[file] = hashedRel;
+      }
+      for (const page of readdirSync(outDir).filter(f => f.endsWith('.html'))) {
+        let html = readFileSync(resolve(outDir, page), 'utf8');
+        for (const [name, rel] of Object.entries(hashed)) {
+          html = html.split(`src="${name}"`).join(`src="/${rel}"`).split(`src="./${name}"`).join(`src="/${rel}"`);
+        }
+        writeFileSync(resolve(outDir, page), html);
       }
     }
   };
