@@ -82,10 +82,10 @@
 
       html += customList.map(c => `
         <div style="position:relative; display:inline-flex; flex:1; min-width:130px;">
-          <button type="button" onclick="selectTenantMainCategory('${c.id}')" class="consult-toggle-btn ${activeMainCategory === c.id ? 'active' : ''}" style="width:100%; font-weight:900; border-radius:10px; padding:8px 24px 8px 6px; font-size:12px; background:#ECFDF5; color:#047857; border-color:#6EE7B7;">
+          <button type="button" onclick="selectTenantMainCategory('${sanitizeText(c.id)}')" class="consult-toggle-btn ${activeMainCategory === c.id ? 'active' : ''}" style="width:100%; font-weight:900; border-radius:10px; padding:8px 24px 8px 6px; font-size:12px; background:#ECFDF5; color:#047857; border-color:#6EE7B7;">
             ${escapeHtml(c.name)}
           </button>
-          <span onclick="event.stopPropagation(); deleteCustomCategory('${c.id}')" style="position:absolute; top:8px; right:8px; font-size:10px; color:#DC2626; font-weight:900; cursor:pointer; background:#FEE2E2; width:16px; height:16px; border-radius:50%; display:flex; align-items:center; justify-content:center;">✕</span>
+          <span onclick="event.stopPropagation(); deleteCustomCategory('${sanitizeText(c.id)}')" style="position:absolute; top:8px; right:8px; font-size:10px; color:#DC2626; font-weight:900; cursor:pointer; background:#FEE2E2; width:16px; height:16px; border-radius:50%; display:flex; align-items:center; justify-content:center;">✕</span>
         </div>
       `).join('');
 
@@ -431,7 +431,7 @@
         updateTenantBrandDropdown();
         filterTenantMasterCatalog();
       } catch (e) {
-        grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:30px; color:#DC2626; font-weight:800;">خطأ بالتحميل: ${e.message}</div>`;
+        grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:30px; color:#DC2626; font-weight:800;">خطأ بالتحميل: ${sanitizeText(String(e && e.message || e))}</div>`;
       }
     }
 
@@ -486,14 +486,14 @@
               <div style="display:flex; gap:8px; margin-bottom:8px;">
                 <div style="flex:1.5;">
                   <label style="font-size:10.5px; font-weight:800; display:block; margin-bottom:2px;">سعر البيع (د.ع) *</label>
-                  <input type="number" id="inpImpPrice_${item.id}" value="${defaultPrice}" min="500" step="500" style="width:100%; padding:6px 8px; border:1px solid #CBD5E1; border-radius:8px; font-size:12px; font-family:monospace; font-weight:900; color:#047857; background:#fff;">
+                  <input type="number" id="inpImpPrice_${sanitizeText(item.id)}" value="${defaultPrice}" min="500" step="500" style="width:100%; padding:6px 8px; border:1px solid #CBD5E1; border-radius:8px; font-size:12px; font-family:monospace; font-weight:900; color:#047857; background:#fff;">
                 </div>
                 <div style="flex:1;">
                   <label style="font-size:10.5px; font-weight:800; display:block; margin-bottom:2px;">الكمية *</label>
-                  <input type="number" id="inpImpQty_${item.id}" value="10" min="1" style="width:100%; padding:6px 8px; border:1px solid #CBD5E1; border-radius:8px; font-size:12px; font-family:monospace; font-weight:800; text-align:center; background:#fff;">
+                  <input type="number" id="inpImpQty_${sanitizeText(item.id)}" value="10" min="1" style="width:100%; padding:6px 8px; border:1px solid #CBD5E1; border-radius:8px; font-size:12px; font-family:monospace; font-weight:800; text-align:center; background:#fff;">
                 </div>
               </div>
-              <button type="button" onclick="handleTenantImportSingle('${item.id}')" style="width:100%; background:${isImported ? '#059669' : 'var(--accent)'}; color:#fff; font-weight:900; font-size:12px; padding:9px; border-radius:8px; cursor:pointer;">
+              <button type="button" onclick="handleTenantImportSingle('${sanitizeText(item.id)}')" style="width:100%; background:${isImported ? '#059669' : 'var(--accent)'}; color:#fff; font-weight:900; font-size:12px; padding:9px; border-radius:8px; cursor:pointer;">
                 <span>${isImported ? '🔄 تحديث السعر والكمية' : '⚡ استيراد لمخزن الصيدلية'}</span>
               </button>
             </div>
