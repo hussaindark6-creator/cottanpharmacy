@@ -90,8 +90,8 @@ ok(JSON.stringify(wtable) === JSON.stringify(R.ALLOWED), 'جدول الوورك�
 
 // ================= استوديو الأدمن (منطق بلا DOM) =================
 {
-  const sctx = { window: { LookRegistry: R }, document: { getElementById: () => null, querySelectorAll: () => [], querySelector: () => null, addEventListener: () => {}, body: { classList: { toggle: () => {}, remove: () => {} } } }, console, pharmacyProfile: { primaryColor: '#FFE4EC' }, location: { origin: 'x' } };
-  sctx.window.window = sctx.window; vm.createContext(sctx); vm.runInContext(read('admin-studio.js'), sctx);
+  const sctx = { setTimeout: () => 0, clearTimeout: () => {}, localStorage: { getItem: () => null, setItem() {}, removeItem() {} }, window: { LookRegistry: R }, document: { getElementById: () => null, querySelectorAll: () => [], querySelector: () => null, addEventListener: () => {}, body: { classList: { toggle: () => {}, remove: () => {} } } }, console, pharmacyProfile: { primaryColor: '#FFE4EC' }, location: { origin: 'x' } };
+  sctx.window.window = sctx.window; vm.createContext(sctx); vm.runInContext(read('admin-studio.js'), sctx); vm.runInContext(read('admin-studio-hero.js'), sctx);
   const ev = (c) => vm.runInContext(c, sctx);
   const h1 = ev('stuComputeHealth()');
   ok(h1.items.some(i => i.level === 'bad' && /تباين/.test(i.text)) && h1.score < 100, 'درجة الصحة: لون أساسي فاتح جداً يُحذَّر منه');
