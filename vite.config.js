@@ -16,7 +16,7 @@ import { createHash } from 'crypto';
 // 🆕 المرحلة 3: ملفات السكربتات الكلاسيكية (بلا type="module") لا يضمّنها Vite ولا ينسخها إلى dist
 // تلقائياً عند البناء. هذه الإضافة تنسخها بعد البناء مع تطبيق نفس قيم "define" (استبدال نصي وقت
 // البناء)، حتى يعمل الموقع المنشور من dist بنفس سلوك التشغيل المحلي تماماً. لا تؤثر على npm run dev.
-const CLASSIC_SCRIPTS = ['design-system.js', 'script.js', 'storefront.js', 'storefront-stubs.js', 'admin-stubs.js',
+const CLASSIC_SCRIPTS = ['design-system.js', 'hero-design.js', 'admin-studio-hero.js', 'script.js', 'storefront.js', 'storefront-stubs.js', 'admin-stubs.js',
   'admin-core.js', 'admin-products.js', 'admin-catalog-tools.js', 'admin-orders.js', 'admin-reports.js', 'admin-marketing.js', 'admin-settings.js',
   'admin-page.js',
   'delivery-zones.js', 'smart-search.js', 'stock-alerts.js', 'reorder.js',
