@@ -65,8 +65,10 @@ async function routeAdminLookSave(c) {
     const hasCopy = !!body.copy && typeof body.copy === "object" && !Array.isArray(body.copy);
     const homeBlocks = hasBlocks ? normalizeHomeBlocks(body.homeBlocks) : null;
     const copy = hasCopy ? normalizeCopy(body.copy) : null;
+    const hasHero = !!body.heroDesign && typeof body.heroDesign === "object" && !Array.isArray(body.heroDesign);
+    const heroDesign = hasHero ? normalizeHeroDesign(body.heroDesign) : null;
 
-    if (!Object.keys(look).length && !Object.keys(colors).length && !hasBlocks && !hasCopy) {
+    if (!Object.keys(look).length && !Object.keys(colors).length && !hasBlocks && !hasCopy && !hasHero) {
       return jsonResponse({ success: false, message: "لا توجد قيم تصميم صالحة" }, 400, request);
     }
     const fields = { ...colors };
@@ -74,6 +76,7 @@ async function routeAdminLookSave(c) {
     if (Object.keys(look).length) { fields.look = look; mask.push("look"); }
     if (hasBlocks) { fields.homeBlocks = homeBlocks; mask.push("homeBlocks"); }
     if (hasCopy) { fields.copy = copy; mask.push("copy"); }
+    if (hasHero) { fields.heroDesign = heroDesign; mask.push("heroDesign"); }
     await firestorePatchFields(env, \`pharmacies/\${tenantId}\`, fields, mask);
 
     // لقطة المتجر والثيم تُحدَّث فوراً (بلا قراءات إضافية للزوار)
@@ -87,8 +90,8 @@ async function routeAdminLookSave(c) {
     } catch (e) { /* غير حرج */ }
     pharmacyCache.delete(tenantId);
 
-    recordAuditLog(env, ctx, "حفظ تصميم المتجر", \`\${Object.keys(look).length} خيار + \${Object.keys(colors).length} لون\${hasBlocks ? " + كتل" : ""}\${hasCopy ? " + نصوص" : ""}\`, verifiedUser.email, clientIP, tenantId);
-    return jsonResponse({ success: true, look, colors, homeBlocks, copy, snapshotRebuilt: !!snap, message: "تم نشر التصميم ✓" }, 200, request);
+    recordAuditLog(env, ctx, "حفظ تصميم المتجر", \`\${Object.keys(look).length} خيار + \${Object.keys(colors).length} لون\${hasBlocks ? " + كتل" : ""}\${hasHero ? " + هيرو" : ""}\${hasCopy ? " + نصوص" : ""}\`, verifiedUser.email, clientIP, tenantId);
+    return jsonResponse({ success: true, look, colors, homeBlocks, copy, heroDesign, snapshotRebuilt: !!snap, message: "تم نشر التصميم ✓" }, 200, request);
   } catch (err) {
     return jsonResponse({ success: false, message: "تعذر حفظ التصميم: " + err.message }, 500, request);
   }
