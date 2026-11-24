@@ -21,7 +21,7 @@ function stuMarkDirty() {
   const d = stuEl('studioDirty'); if (!d) return;
   const c = stuColors(), pp = (typeof pharmacyProfile !== 'undefined') ? pharmacyProfile : {};
   const colorsChanged = ['primaryColor', 'pageBgColor', 'cardColor', 'secondaryColor', 'textColor'].some(function (k) { return (c[k] || '') !== (pp[k] || ''); });
-  const extra = (stuBlocksTouched && JSON.stringify(stuBlocks) !== stuSavedBlocks) || JSON.stringify(stuCopy) !== stuSavedCopy;
+  const extra = (stuBlocksTouched && JSON.stringify(stuBlocks) !== stuSavedBlocks) || JSON.stringify(stuCopy) !== stuSavedCopy || stuHeroDirty();
   const dirty = !stuSame(stuLook, stuSaved) || colorsChanged || extra;
   d.style.display = dirty ? 'inline-block' : 'none';
   const pb = stuEl('studioPublishBtn'); if (pb) pb.classList.toggle('dirty', dirty);
@@ -43,9 +43,11 @@ function studioPush(changedKey) {
       const msg = { type: 'look-preview', look: stuLook, colors: stuColors(), copy: stuCopy };
       if (changedKey) msg.changed = changedKey;
       if (stuBlocksTouched || stuBlocksSaved) msg.homeBlocks = stuBlocks;
+      const hp = stuHeroPayload(); if (hp) msg.heroDesign = hp;
       f.contentWindow.postMessage(msg, location.origin);
     } catch (e) { /* غير حرج */ }
   }
+  stuHistNote();
   stuMarkDirty();
   stuRenderHealth();
 }
@@ -125,6 +127,7 @@ function studioOpen() {
   stuBlocks = stuBlocksSaved ? STU_R.normalizeHomeBlocks(pp.homeBlocks) : STU_R.migrateFromTemplate(pp).homeBlocks;
   stuSavedBlocks = JSON.stringify(stuBlocks); stuBlocksTouched = false;
   stuCopy = STU_R.normalizeCopy(pp.copy); stuSavedCopy = JSON.stringify(stuCopy);
+  stuHeroLoad(pp);
   stuRenderExtras();
   if (typeof loadThemeColorInputs === 'function') loadThemeColorInputs(pp);
   stuRefreshChips();
@@ -134,6 +137,7 @@ function studioOpen() {
     f.addEventListener('load', function () { setTimeout(function () { stuFrameLoaded = true; stuFit(); studioPush(); }, 600); });
   } else { stuFit(); studioPush(); }
   setTimeout(stuFit, 80);
+  stuHistReset(); stuDraftOffer();
 }
 
 function studioRevert() {
@@ -141,13 +145,14 @@ function studioRevert() {
   stuLook = Object.assign({}, stuSaved);
   stuBlocks = JSON.parse(stuSavedBlocks); stuBlocksTouched = false;
   stuCopy = JSON.parse(stuSavedCopy);
+  stuHeroRevert();
   if (typeof loadThemeColorInputs === 'function') loadThemeColorInputs(pp);
   stuRenderExtras(); stuRefreshChips(); studioPush();
 }
 
 function studioResetDefaults() {
   if (!confirm('إرجاع كل خيارات الشكل (بدون الألوان) إلى الإعدادات الافتراضية؟')) return;
-  stuLook = STU_R.normalizeLook({}); stuRefreshChips(); studioPush();
+  stuLook = STU_R.normalizeLook({}); stuHeroReset(); stuRenderExtras(); stuRefreshChips(); studioPush();
   // (ترتيب الرئيسية والنصوص والمواسم لا تُصفَّر هنا؛ لها أزرارها الخاصة)
 }
 
@@ -164,6 +169,7 @@ async function studioPublish() {
       body: JSON.stringify((function () {
         const b = { look: stuLook, colors: stuColors(), copy: stuCopy };
         if (stuBlocksTouched || stuBlocksSaved) b.homeBlocks = stuBlocks;
+        const hp = stuHeroPayload(); if (hp) b.heroDesign = hp;
         return b;
       })())
     });
@@ -176,6 +182,9 @@ async function studioPublish() {
     pharmacyProfile = Object.assign({}, pharmacyProfile, data.colors || {}, { look: stuSaved });
     if (data.homeBlocks) { pharmacyProfile.homeBlocks = data.homeBlocks; stuBlocksSaved = true; stuBlocks = STU_R.normalizeHomeBlocks(data.homeBlocks); stuSavedBlocks = JSON.stringify(stuBlocks); stuBlocksTouched = false; }
     if (data.copy) { pharmacyProfile.copy = data.copy; stuCopy = STU_R.normalizeCopy(data.copy); stuSavedCopy = JSON.stringify(stuCopy); }
+    if (data.heroDesign) stuHeroAfterSave(data.heroDesign);
+    else if (stuHeroPayload() && typeof showToast === 'function') showToast('⚠️ لم يُحفظ تصميم منطقة التعريف: حدّثي worker.js على Cloudflare إلى النسخة 7.9.0 أو أحدث.');
+    stuDraftClear(); stuHistReset();
     stuRenderExtras();
     if (typeof saveLocalState === 'function') saveLocalState();
     stuMarkDirty();
@@ -246,6 +255,10 @@ function stuRenderExtras() {
     stuGroup('x-copy', '✍️', 'النصوص وصيغة المخاطبة', stuCopyHtml(), keepOpen['x-copy'] ? false : true) +
     stuGroup('x-health', '✅', 'درجة صحة التصميم', '<div id="stuHealth"></div>', keepOpen['x-health'] ? false : true);
   host.insertAdjacentHTML('beforeend', html);
+  const heroOpen = ('x-hero' in keepOpen) ? keepOpen['x-hero'] : true, cg = stuEl('studioColorsGroup');
+  const heroHtml = stuGroup('x-hero', '🧩', 'منطقة التعريف (تكوين حر)', stuHeroHtml(), heroOpen ? false : true);
+  if (cg) cg.insertAdjacentHTML('afterend', heroHtml); else host.insertAdjacentHTML('afterbegin', heroHtml);
+  stuHeroBind();
   stuRenderHealth();
 }
 
