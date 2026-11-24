@@ -250,6 +250,7 @@
     document.documentElement.style.setProperty('--fab-color', /^#[0-9A-Fa-f]{6}$/.test(sec || '') ? sec : '#F59E0B');
     applyBrand(profile);
     applyBlocks(profile);
+    if (window.HeroDesign) window.HeroDesign.apply(profile || prof());
   }
   window.DS = {
     effective: eff, applyAll: applyAll, applyBrand: applyBrand, flash: flash, applyBlocks: applyBlocks, applyCopy: applyCopy, digits: digits, t: t,
