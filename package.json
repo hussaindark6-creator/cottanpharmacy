@@ -7,8 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node run-tests.cjs && node run-platform-tests.cjs && node run-engine-tests.cjs && node run-onboarding-tests.cjs && node run-look-tests.cjs && node run-hardening-tests.cjs",
-    "prebuild": "node run-tests.cjs && node run-platform-tests.cjs && node run-engine-tests.cjs && node run-onboarding-tests.cjs && node run-look-tests.cjs && node run-hardening-tests.cjs",
+    "test": "node run-tests.cjs && node run-platform-tests.cjs && node run-engine-tests.cjs && node run-onboarding-tests.cjs && node run-look-tests.cjs && node run-hardening-tests.cjs && node run-hero-tests.cjs",
+    "prebuild": "node run-tests.cjs && node run-platform-tests.cjs && node run-engine-tests.cjs && node run-onboarding-tests.cjs && node run-look-tests.cjs && node run-hardening-tests.cjs && node run-hero-tests.cjs",
     "e2e": "playwright test e2e"
   },
   "devDependencies": {
