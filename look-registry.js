@@ -358,6 +358,87 @@
     return v;
   }
 
+
+  // ================= نظام بناء منطقة التعريف (Hero Builder): تكوينات مستقلة + عناصر قابلة للإضافة والترتيب =================
+  // كل القيم من قوائم مسموحة أو ألوان HEX أو نصوص قصيرة منقّاة أو صور رفعتها الصيدلية نفسها. لا HTML ولا CSS ولا روابط عشوائية.
+  var HERO_MODES = ['classic', 'overlay', 'split', 'brand', 'editorial', 'cards', 'slides', 'minimal'];
+  var HERO_ENUM = {
+    fit: ['cover', 'contain'], ratio: ['wide', 'square', 'portrait', 'tall'], pos: ['start', 'center', 'end'], side: ['start', 'end'],
+    size: ['compact', 'standard', 'tall', 'immersive'], radius: ['sharp', 'soft', 'round', 'pill'], overlay: ['none', 'soft', 'dark', 'brand'],
+    gap: ['s', 'm', 'l'], shadow: ['none', 'soft', 'lift'], card: ['on', 'off'], elsize: ['s', 'm', 'l', 'xl'], stage: ['s', 'm', 'l']
+  };
+  var HERO_EL_TYPES = ['logo', 'title', 'subtitle', 'text', 'button', 'badge', 'icon', 'divider', 'spacer', 'image'];
+  var HERO_GO = ['listing', 'offers', 'bundles', 'categories', 'new', 'none'];
+  var HERO_ICONS = ['✦', '❀', '✿', '❋', '♡', '★', '☘', '☾', '✚', '✔', '❖', '✧'];
+  var HERO_EL_MAX = { title: 80, subtitle: 100, text: 280, button: 24, badge: 30 };
+  var HERO_LIMITS = { els: 12, slides: 6, cards: 5 };
+
+  function heroEnum(v, key, def) { var a = HERO_ENUM[key]; return (typeof v === 'string' && a.indexOf(v) !== -1) ? v : def; }
+  function heroHex(v) { return (typeof v === 'string' && /^#[0-9A-Fa-f]{6}$/.test(v)) ? v.toUpperCase() : ''; }
+  function heroGo(v) { return HERO_GO.indexOf(v) !== -1 ? v : 'listing'; }
+
+  function normalizeHeroEl(e) {
+    if (!e || typeof e !== 'object' || HERO_EL_TYPES.indexOf(e.t) === -1) return null;
+    var o = { t: e.t };
+    if (HERO_EL_MAX[e.t]) o.x = dsText(e.x, HERO_EL_MAX[e.t]);
+    if (e.t === 'icon') o.x = HERO_ICONS.indexOf(e.x) !== -1 ? e.x : HERO_ICONS[0];
+    if (e.t === 'logo' || e.t === 'image') o.u = dsImageUrl(e.u);
+    o.s = heroEnum(e.s, 'elsize', 'm');
+    o.a = (e.a === 'start' || e.a === 'center' || e.a === 'end') ? e.a : '';
+    o.c = heroHex(e.c);
+    o.v = (e.v === 'm' || e.v === 'd') ? e.v : 'b';
+    o.sp = heroEnum(e.sp, 'gap', 'm');
+    if (e.t === 'button') { o.go = heroGo(e.go); o.st = ['fill', 'outline', 'text'].indexOf(e.st) !== -1 ? e.st : 'fill'; }
+    if (e.t === 'badge') o.st = ['soft', 'solid', 'outline'].indexOf(e.st) !== -1 ? e.st : 'soft';
+    if (e.t === 'divider') o.st = ['line', 'dots', 'leaf', 'vline'].indexOf(e.st) !== -1 ? e.st : 'line';
+    return o;
+  }
+  function normalizeHeroSlide(c) {
+    if (!c || typeof c !== 'object') return null;
+    return { img: dsImageUrl(c.img), t: dsText(c.t, 60), x: dsText(c.x, 160), b: dsText(c.b, 24), go: heroGo(c.go), bg: heroHex(c.bg), ink: heroHex(c.ink), logo: c.logo === true };
+  }
+  function normalizeHeroCard(c) {
+    if (!c || typeof c !== 'object') return null;
+    return { img: dsImageUrl(c.img), t: dsText(c.t, 40), x: dsText(c.x, 100), b: dsText(c.b, 24), go: heroGo(c.go), bg: heroHex(c.bg), big: c.big === true };
+  }
+  function heroList(raw, fn, max) {
+    if (!Array.isArray(raw)) return null;
+    var out = [];
+    raw.slice(0, max).forEach(function (x) { var o = fn(x); if (o) out.push(o); });
+    return out;
+  }
+  // يرجع null إن لم يُرسَل تصميم؛ وإلا كائناً كاملاً دائماً (القيم الناقصة تأخذ الافتراضي). els/slides/cards = null تعني «استخدمي الافتراضي».
+  function normalizeHeroDesign(raw) {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+    var o = { mode: HERO_MODES.indexOf(raw.mode) !== -1 ? raw.mode : 'classic' };
+    o.bg = heroHex(raw.bg); o.bg2 = heroHex(raw.bg2); o.ink = heroHex(raw.ink); o.accent = heroHex(raw.accent);
+    o.img = dsImageUrl(raw.img); o.img2 = dsImageUrl(raw.img2); o.img3 = dsImageUrl(raw.img3);
+    o.fit = heroEnum(raw.fit, 'fit', 'cover'); o.ratio = heroEnum(raw.ratio, 'ratio', 'wide');
+    o.pos = heroEnum(raw.pos, 'pos', 'start'); o.side = heroEnum(raw.side, 'side', 'start');
+    o.size = heroEnum(raw.size, 'size', 'standard'); o.radius = heroEnum(raw.radius, 'radius', 'round');
+    o.overlay = heroEnum(raw.overlay, 'overlay', 'soft');
+    var ovl = parseInt(raw.ovl, 10); o.ovl = (isFinite(ovl) && ovl >= 0 && ovl <= 80) ? ovl : 35;
+    o.gap = heroEnum(raw.gap, 'gap', 'm'); o.shadow = heroEnum(raw.shadow, 'shadow', 'soft'); o.card = heroEnum(raw.card, 'card', 'on');
+    o.stage = heroEnum(raw.stage, 'stage', 'm');
+    o.els = heroList(raw.els, normalizeHeroEl, HERO_LIMITS.els);
+    o.slides = heroList(raw.slides, normalizeHeroSlide, HERO_LIMITS.slides);
+    o.cards = heroList(raw.cards, normalizeHeroCard, HERO_LIMITS.cards);
+    return o;
+  }
+  // العناصر الافتراضية لكل تكوين (نقطة بداية فقط: الأدمن يضيف ويحذف ويعيد الترتيب كما يشاء). x فارغ = يُؤخذ نص المتجر الحالي.
+  function heroDefaultEls(mode) {
+    var E = function (t, extra) { return normalizeHeroEl(Object.assign({ t: t }, extra || {})); };
+    switch (mode) {
+      case 'overlay': return [E('title', { s: 'xl' }), E('subtitle'), E('button')];
+      case 'split': return [E('badge', { x: 'عناية تستحقينها' }), E('title', { s: 'l' }), E('text'), E('button')];
+      case 'brand': return [E('logo', { s: 'xl', a: 'center' }), E('badge', { x: 'عناية تستحقينها', a: 'start' }), E('title', { s: 'xl', x: 'عنايتكِ تبدأ من *اسم المتجر*' }), E('text'), E('button')];
+      case 'editorial': return [E('badge', { x: 'مختارات الموسم' }), E('title', { s: 'xl' }), E('divider', { st: 'vline' }), E('text'), E('button', { st: 'outline' })];
+      case 'minimal': return [E('logo', { s: 's', a: 'center' }), E('title', { s: 'l', a: 'center' }), E('text', { a: 'center' }), E('button', { a: 'center' })];
+      case 'cards': case 'slides': return [];
+      default: return [E('title'), E('subtitle'), E('button')];
+    }
+  }
+
   // @@SHARED-END
 
   // ================= ترحيل القوالب القديمة إلى خيارات التصميم =================
@@ -396,14 +477,16 @@
     var p = profile || {};
     var look = normalizeLook(p.look), colors = {};
     ['primaryColor', 'pageBgColor', 'cardColor', 'secondaryColor', 'textColor'].forEach(function (k) { if (/^#[0-9A-Fa-f]{6}$/.test(p[k] || '')) colors[k] = p[k]; });
-    return { look: look, colors: colors, copy: normalizeCopy(p.copy), blocks: normalizeHomeBlocks(p.homeBlocks) };
+    return { look: look, colors: colors, copy: normalizeCopy(p.copy), blocks: normalizeHomeBlocks(p.homeBlocks), hero: normalizeHeroDesign(p.heroDesign) };
   }
 
   var api = { GROUPS: G, FONTS: FONTS, DEFAULTS: DEFAULTS, ALLOWED: ALLOWED, normalizeLook: normalizeLook, fontsUrl: fontsUrl,
     BLOCK_DEFS: BLOCK_DEFS, DEFAULT_BLOCKS: DEFAULT_BLOCKS, TRUST_DEFAULT: TRUST_DEFAULT, LIMITS: LIMITS, COPY_DEFS: COPY_DEFS, VOICES: VOICES,
     SOCIAL_HOSTS: SOCIAL_HOSTS, FOOTER_LINKS: FOOTER_LINKS,
     normalizeHomeBlocks: normalizeHomeBlocks, defaultHomeBlocks: defaultHomeBlocks, normalizeCopy: normalizeCopy, copyText: copyText,
-    migrateFromTemplate: migrateFromTemplate, TEMPLATE_MIGRATION: TEMPLATE_MIGRATION, safeHttpsHost: dsHttpsHost, safeImageUrl: dsImageUrl, effectiveDesign: effectiveDesign, sanitizeText: dsText };
+    migrateFromTemplate: migrateFromTemplate, TEMPLATE_MIGRATION: TEMPLATE_MIGRATION, safeHttpsHost: dsHttpsHost, safeImageUrl: dsImageUrl, effectiveDesign: effectiveDesign, sanitizeText: dsText,
+    HERO_MODES: HERO_MODES, HERO_ENUM: HERO_ENUM, HERO_EL_TYPES: HERO_EL_TYPES, HERO_GO: HERO_GO, HERO_ICONS: HERO_ICONS, HERO_LIMITS: HERO_LIMITS, HERO_EL_MAX: HERO_EL_MAX,
+    normalizeHeroDesign: normalizeHeroDesign, normalizeHeroEl: normalizeHeroEl, heroDefaultEls: heroDefaultEls };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.LookRegistry = api;
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : {}));
