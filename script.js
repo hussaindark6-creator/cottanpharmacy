@@ -656,6 +656,7 @@ if (window.__LOOK_PREVIEW) {
         const prev = Object.assign({}, pharmacyProfile, d.colors || {}, { look: d.look });
         if (d.homeBlocks) prev.homeBlocks = d.homeBlocks;
         if (d.copy) prev.copy = d.copy;
+        if (d.heroDesign !== undefined) { prev.heroDesign = d.heroDesign; pharmacyProfile = Object.assign({}, pharmacyProfile, { heroDesign: d.heroDesign }); }
         pharmacyProfile = Object.assign({}, pharmacyProfile, { homeBlocks: prev.homeBlocks, copy: prev.copy });
         const e = window.DS.effective(prev);
         applyLook(e.look);
