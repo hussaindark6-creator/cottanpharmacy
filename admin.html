@@ -490,11 +490,47 @@
     .st-status-txt b { font-size: 13.5px; color: var(--ink); }
     .st-status-txt small { font-size: 11.5px; color: var(--text-soft); font-weight: 600; }
     .st-btn.primary.dirty { box-shadow: 0 0 0 3px color-mix(in srgb, #F59E0B 55%, transparent); }
+
+    /* 🧩 منشئ منطقة التعريف (Hero Builder) داخل الاستوديو */
+    .stk { display: grid; gap: 12px; }
+    .stk-note { margin: 0; font-size: 11.5px; color: var(--text-soft); font-weight: 600; line-height: 1.7; }
+    .stk-modes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .stk-mode { border: 1.5px solid var(--line); background: var(--card); border-radius: 16px; padding: 8px; cursor: pointer; text-align: start; display: grid; gap: 3px; font-family: inherit; color: var(--ink); }
+    .stk-mode b { font-size: 12.5px; } .stk-mode small { font-size: 10px; color: var(--text-soft); font-weight: 600; line-height: 1.4; }
+    .stk-mode.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--card)); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+    .stk-thumb { width: 100%; height: auto; border-radius: 10px; background: #f4f6f5; }
+    .stk-sec { display: grid; gap: 8px; border-top: 1px dashed var(--line); padding-top: 10px; }
+    .stk-sec h4 { margin: 0; font-size: 12.5px; color: var(--ink); }
+    .stk-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .stk-f { display: grid; gap: 4px; font-size: 11px; font-weight: 700; color: var(--text-soft); align-content: start; }
+    .stk select, .stk input[type="text"], .stk textarea { width: 100%; padding: 8px 10px; border: 1.5px solid var(--line); border-radius: 10px; background: var(--card); color: var(--ink); font-family: inherit; font-size: 12.5px; box-sizing: border-box; }
+    .stk input[type="range"] { width: 100%; }
+    .stk-color { display: flex; align-items: center; gap: 6px; }
+    .stk-color input[type="color"] { width: 38px; height: 32px; border: 1.5px solid var(--line); border-radius: 8px; padding: 2px; background: var(--card); cursor: pointer; }
+    .stk-mini { border: 1.5px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px; padding: 5px 11px; font-size: 11px; font-weight: 800; cursor: pointer; font-family: inherit; }
+    .stk-mini.on { border-color: var(--accent); color: var(--accent); } .stk-mini:disabled { opacity: .4; cursor: not-allowed; }
+    .stk-del { color: #DC2626 !important; }
+    .stk-img { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .stk-img img { width: 54px; height: 40px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); } .stk-img i { font-size: 11px; color: var(--text-soft); font-style: normal; }
+    .stk-row { border: 1.5px solid var(--line); border-radius: 14px; background: var(--card); overflow: hidden; }
+    .stk-row.open { border-color: var(--accent); }
+    .stk-row-h { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 6px 8px; }
+    .stk-row-t { flex: 1; text-align: start; background: none; border: 0; cursor: pointer; font-family: inherit; color: var(--ink); display: flex; gap: 4px; align-items: baseline; min-width: 0; padding: 4px; }
+    .stk-row-t b { font-size: 12.5px; } .stk-row-t em { font-style: normal; font-size: 11px; color: var(--text-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .stk-ops { display: flex; gap: 4px; } .stk-ops button { width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; font-size: 13px; } .stk-ops button:disabled { opacity: .35; }
+    .stk-row-b { padding: 8px 10px 12px; display: grid; gap: 8px; border-top: 1px dashed var(--line); }
+    .stk-add { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 11px; color: var(--text-soft); font-weight: 700; }
+    .stk-icons { display: flex; flex-wrap: wrap; gap: 6px; } .stk-ic { width: 36px; height: 36px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--card); font-size: 18px; cursor: pointer; } .stk-ic.on { border-color: var(--accent); }
+    .stk-draft { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 12px; margin-bottom: 10px; border-radius: 14px; background: #FEF3C7; border: 1px solid #F59E0B; font-size: 12px; font-weight: 700; }
+    .stk-draft span { flex: 1; min-width: 150px; }
     @media (max-width: 699px) {
       .st-toolbar { flex-wrap: nowrap; gap: 6px; padding: 6px 8px; }
-      .st-toolbar .lbl, .st-toolbar .st-dirty { display: none; }
+      .st-toolbar .lbl, .st-toolbar .st-dirty { display: none !important; }
       .st-toolbar .st-devices button { padding: 8px 12px; font-size: 15px; }
-      .st-toolbar .st-btn { padding: 9px 13px; white-space: nowrap; }
+      .st-toolbar .st-btn { padding: 8px 10px; white-space: nowrap; flex-shrink: 0; }
+      .st-toolbar .st-btn.ghost { padding: 8px 9px; }
+      .st-toolbar .st-devices button { padding: 7px 9px; }
+      .st-toolbar { overflow-x: auto; scrollbar-width: none; }
     }
     @media (min-width: 1000px) {
       .st-toolbar { top: 76px; }
@@ -1565,7 +1601,9 @@
           <button type="button" data-dev="tablet" aria-label="آيباد">📟<span class="lbl"> آيباد</span></button>
           <button type="button" data-dev="laptop" aria-label="لابتوب">💻<span class="lbl"> لابتوب</span></button>
         </div>
-        <button type="button" class="st-btn ghost" onclick="studioRevert()" aria-label="تراجع عن التغييرات">↩<span class="lbl"> تراجع</span></button>
+        <button type="button" class="st-btn ghost" id="studioUndoBtn" onclick="studioUndo()" aria-label="تراجع خطوة" title="تراجع خطوة" disabled>↶</button>
+        <button type="button" class="st-btn ghost" id="studioRedoBtn" onclick="studioRedo()" aria-label="إعادة خطوة" title="إعادة خطوة" disabled>↷</button>
+        <button type="button" class="st-btn ghost" onclick="studioRevert()" aria-label="استعادة آخر نسخة منشورة" title="استعادة آخر نسخة منشورة">⟲<span class="lbl"> المنشور</span></button>
         <button type="button" class="st-btn primary" id="studioPublishBtn" onclick="studioPublish()">🚀 نشر التصميم</button>
       </div>
       <div class="st-layout">
@@ -2091,6 +2129,7 @@
   <script src="admin-calm.js"></script>
   <script src="look-registry.js"></script>
   <script src="admin-studio.js"></script>
+  <script src="admin-studio-hero.js"></script>
   <script src="script.js"></script>
 
   
