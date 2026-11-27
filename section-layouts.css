@@ -1,0 +1,66 @@
+/* section-layouts.css — تخطيطات عرض المنتجات لكل قسم (best-sellers / new-arrivals / offers).
+   تعمل بخصائص data-* على .product-grid الموضوعة من design-system.js (applyLayout). بلا هذه الخصائص لا يتغير شيء. */
+
+/* ---- المسافة ونسبة الصورة ---- */
+html .product-grid[data-gap="s"] { gap: 8px; } html .product-grid[data-gap="m"] { gap: 14px; } html .product-grid[data-gap="l"] { gap: 24px; }
+html .product-grid[data-ratio="square"] .product-thumb { aspect-ratio: 1 / 1; }
+html .product-grid[data-ratio="portrait"] .product-thumb { aspect-ratio: 4 / 5; }
+html .product-grid[data-ratio="wide"] .product-thumb { aspect-ratio: 16 / 11; }
+
+/* ---- قائمة: صورة بجانب التفاصيل ---- */
+html .product-grid.ds-lay-list { display: grid; grid-template-columns: 1fr; gap: 10px; }
+html .product-grid.ds-lay-list > .product-card { display: grid; grid-template-columns: 112px minmax(0, 1fr); grid-template-areas: none; column-gap: 12px; row-gap: 2px; align-items: center; text-align: start; padding: 10px; }
+html .product-grid.ds-lay-list > .product-card > * { grid-area: auto; grid-column: 2; margin-inline: 0; }
+html .product-grid.ds-lay-list > .product-card > .product-thumb { grid-column: 1; grid-row: 1 / span 6; aspect-ratio: 1 / 1; }
+html .product-grid.ds-lay-list > .product-card > .wish-btn, html .product-grid.ds-lay-list > .product-card > .discount-badge, html .product-grid.ds-lay-list > .product-card > [class^="badge-"] { grid-column: auto; }
+
+/* ---- مضغوط ---- */
+html .product-grid.ds-lay-compact { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+html .product-grid.ds-lay-compact .p-size, html .product-grid.ds-lay-compact .p-meta { display: none; }
+html .product-grid.ds-lay-compact .p-name { font-size: 11.5px; }
+html .product-grid.ds-lay-compact > .product-card { padding: 6px; }
+html .product-grid.ds-lay-compact .p-foot { flex-direction: column; align-items: flex-start; gap: 6px; }
+html .product-grid.ds-lay-compact .p-price { font-size: 12.5px; }
+html .product-grid.ds-lay-compact .p-oldprice { font-size: 10px; }
+
+/* ---- Bento: بطاقة كبيرة بين صغيرات ---- */
+html .product-grid.ds-lay-bento { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-flow: dense; gap: 10px; }
+html .product-grid.ds-lay-bento > :nth-child(5n + 1) { grid-column: span 2; }
+html .product-grid.ds-lay-bento > :nth-child(5n + 1) .product-thumb { aspect-ratio: 16 / 10; }
+
+/* ---- Masonry: ارتفاعات متفاوتة ---- */
+html .product-grid.ds-lay-masonry { display: block; column-count: 2; column-gap: 12px; }
+html .product-grid.ds-lay-masonry > .product-card { break-inside: avoid; margin-bottom: 12px; display: block; }
+html .product-grid.ds-lay-masonry > :nth-child(odd) .product-thumb { aspect-ratio: 4 / 5; }
+html .product-grid.ds-lay-masonry > :nth-child(even) .product-thumb { aspect-ratio: 1 / 1; }
+
+/* ---- بارز: منتج رئيسي ثم شبكة ---- */
+html .product-grid.ds-lay-showcase { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+html .product-grid.ds-lay-showcase > :first-child { grid-column: 1 / -1; }
+html .product-grid.ds-lay-showcase > :first-child .product-thumb { aspect-ratio: 16 / 9; }
+
+/* ---- أعمدة الجوال لكل قسم (تتغلب على الإعداد العام) ---- */
+html .product-grid[data-cm="1"]:not(.ds-slider) { grid-template-columns: minmax(0, 1fr); }
+html .product-grid[data-cm="2"]:not(.ds-slider) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+html .product-grid[data-cm="3"]:not(.ds-slider) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+html .product-grid.ds-lay-masonry[data-cm="1"] { column-count: 1; } html .product-grid.ds-lay-masonry[data-cm="2"] { column-count: 2; } html .product-grid.ds-lay-masonry[data-cm="3"] { column-count: 3; }
+html .product-grid.ds-slider[data-cm="1"] > * { flex-basis: 86%; } html .product-grid.ds-slider[data-cm="2"] > * { flex-basis: 46%; } html .product-grid.ds-slider[data-cm="3"] > * { flex-basis: 31%; }
+
+/* ---- أعمدة الكمبيوتر لكل قسم ---- */
+@media (min-width: 900px) {
+  html .product-grid.ds-lay-compact { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  html .product-grid.ds-lay-bento { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  html .product-grid.ds-lay-bento > :nth-child(5n + 1) { grid-column: span 2; grid-row: span 2; }
+  html .product-grid.ds-lay-masonry { column-count: 4; }
+  html .product-grid.ds-lay-showcase { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  html .product-grid.ds-lay-showcase > :first-child .product-thumb { aspect-ratio: 21 / 9; }
+  html .product-grid.ds-lay-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html .product-grid[data-cd="2"]:not(.ds-slider) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html .product-grid[data-cd="3"]:not(.ds-slider) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  html .product-grid[data-cd="4"]:not(.ds-slider) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  html .product-grid[data-cd="5"]:not(.ds-slider) { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  html .product-grid[data-cd="6"]:not(.ds-slider) { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  html .product-grid.ds-lay-masonry[data-cd="2"] { column-count: 2; } html .product-grid.ds-lay-masonry[data-cd="3"] { column-count: 3; } html .product-grid.ds-lay-masonry[data-cd="4"] { column-count: 4; } html .product-grid.ds-lay-masonry[data-cd="5"] { column-count: 5; } html .product-grid.ds-lay-masonry[data-cd="6"] { column-count: 6; }
+  html .product-grid.ds-slider[data-cd="2"] > * { flex-basis: 48%; } html .product-grid.ds-slider[data-cd="3"] > * { flex-basis: 31.5%; } html .product-grid.ds-slider[data-cd="4"] > * { flex-basis: 23.5%; }
+  html .product-grid.ds-slider[data-cd="5"] > * { flex-basis: 18.5%; } html .product-grid.ds-slider[data-cd="6"] > * { flex-basis: 15.2%; }
+}
