@@ -227,9 +227,9 @@
     'categories':   { label: 'شريط الأقسام', styles: [], fields: ['title'] },
     'promo-cards':  { label: 'بطاقتا العروض والبكجات', styles: [], fields: [] },
     'brands':       { label: 'الماركات', styles: [], fields: ['title', 'subtitle'] },
-    'best-sellers': { label: 'المنتجات المتوفرة / الأكثر مبيعاً', styles: ['grid', 'slider'], fields: ['title', 'subtitle'] },
-    'new-arrivals': { label: 'وصل حديثاً', styles: ['grid', 'slider'], fields: ['title', 'subtitle'] },
-    'offers':       { label: 'العروض مع عدّاد تنازلي', styles: ['grid', 'slider'], fields: ['title', 'subtitle', 'endAt'] },
+    'best-sellers': { label: 'المنتجات المتوفرة / الأكثر مبيعاً', styles: ['grid', 'slider', 'list', 'compact', 'bento', 'masonry', 'showcase'], fields: ['title', 'subtitle', 'colsM', 'colsD', 'gap', 'ratio'] },
+    'new-arrivals': { label: 'وصل حديثاً', styles: ['grid', 'slider', 'list', 'compact', 'bento', 'masonry', 'showcase'], fields: ['title', 'subtitle', 'colsM', 'colsD', 'gap', 'ratio'] },
+    'offers':       { label: 'العروض مع عدّاد تنازلي', styles: ['grid', 'slider', 'list', 'compact', 'bento', 'masonry', 'showcase'], fields: ['title', 'subtitle', 'endAt', 'colsM', 'colsD', 'gap', 'ratio'] },
     'bundles':      { label: 'البكجات', styles: ['grid', 'slider'], fields: ['title', 'subtitle'] },
     'story':        { label: 'قصة الصيدلية', styles: ['side', 'center'], fields: ['title', 'text', 'image'] },
     'contact':      { label: 'دعوة للتواصل', styles: ['card', 'bar'], fields: ['title', 'subtitle'] },
@@ -305,6 +305,11 @@
     if (f.indexOf('text') !== -1) o.text = dsText(b.text, L.text);
     if (f.indexOf('image') !== -1) o.image = dsImageUrl(b.image);
     if (f.indexOf('endAt') !== -1) o.endAt = dsIso(b.endAt);
+    // عرض المنتجات لكل قسم: '0'/'auto' = يتبع الإعداد العام (توافق خلفي كامل مع المتاجر المنشورة)
+    if (f.indexOf('colsM') !== -1) o.colsM = ['1', '2', '3'].indexOf(String(b.colsM)) !== -1 ? String(b.colsM) : '0';
+    if (f.indexOf('colsD') !== -1) o.colsD = ['2', '3', '4', '5', '6'].indexOf(String(b.colsD)) !== -1 ? String(b.colsD) : '0';
+    if (f.indexOf('gap') !== -1) o.gap = ['s', 'm', 'l'].indexOf(b.gap) !== -1 ? b.gap : 'auto';
+    if (f.indexOf('ratio') !== -1) o.ratio = ['square', 'portrait', 'wide'].indexOf(b.ratio) !== -1 ? b.ratio : 'auto';
     if (f.indexOf('items') !== -1) {
       var items = [];
       (Array.isArray(b.items) ? b.items.slice(0, L.items) : []).forEach(function (it) {
