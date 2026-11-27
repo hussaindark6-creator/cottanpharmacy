@@ -85,6 +85,7 @@
         if (LEGACY_IDS.concat(['trust', 'categories']).indexOf(b.id) !== -1 && n.style.display === 'none') n.style.display = ''; // المالك يقرر لا القالب القديم
         if (b.style) n.setAttribute('data-ds-style', b.style);
         setBlockText(n, b);
+        applyLayout(n, b);
       });
     }
     var tb = blocks.filter(function (b) { return b.id === 'trust'; })[0];
@@ -107,6 +108,18 @@
   // ---------- محتوى الكتل الجديدة ----------
   function listAvailable() { return (typeof products !== 'undefined' ? products : []).filter(function (x) { return x && x.isDeleted !== true; }); }
   function inStock(x) { return x.inStock !== false && (x.stockQuantity === undefined || x.stockQuantity > 0); }
+  // عرض المنتجات لكل قسم: تخطيط (grid/slider/list/compact/bento/masonry/showcase) + أعمدة الجوال والكمبيوتر + المسافة + نسبة الصورة.
+  var LAYOUT_BLOCKS = ['best-sellers', 'new-arrivals', 'offers'];
+  function setA(el, k, v) { if (v) el.setAttribute(k, v); else el.removeAttribute(k); }
+  function applyLayout(n, b) {
+    if (LAYOUT_BLOCKS.indexOf(b.id) === -1) return;
+    var g = n.querySelector('.product-grid'); if (!g) return;
+    var cls = g.className.split(/\s+/).filter(function (x) { return x && x !== 'ds-slider' && x.indexOf('ds-lay-') !== 0; });
+    if (b.style === 'slider') cls.push('ds-slider'); else if (b.style && b.style !== 'grid') cls.push('ds-lay-' + b.style);
+    g.className = cls.join(' ');
+    setA(g, 'data-cm', b.colsM && b.colsM !== '0' ? b.colsM : ''); setA(g, 'data-cd', b.colsD && b.colsD !== '0' ? b.colsD : '');
+    setA(g, 'data-gap', b.gap && b.gap !== 'auto' ? b.gap : ''); setA(g, 'data-ratio', b.ratio && b.ratio !== 'auto' ? b.ratio : '');
+  }
   function grid(id, list, style) {
     var el = $(id); if (!el) return;
     el.classList.toggle('ds-slider', style === 'slider');
