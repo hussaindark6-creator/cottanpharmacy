@@ -198,7 +198,7 @@ async function studioPublish() {
 
 
 // ================= كتل الرئيسية / النصوص / صحة التصميم =================
-const STU_STYLE_LABELS = { grid: 'شبكة', slider: 'شريط أفقي', side: 'صورة بجانب النص', center: 'بالمنتصف', card: 'بطاقة', bar: 'شريط ممتد', simple: 'بسيط', columns: 'أعمدة' };
+const STU_STYLE_LABELS = { grid: 'شبكة', slider: 'شريط أفقي', list: 'قائمة', compact: 'مضغوط', bento: 'Bento', masonry: 'Masonry', showcase: 'بارز', side: 'صورة بجانب النص', center: 'بالمنتصف', card: 'بطاقة', bar: 'شريط ممتد', simple: 'بسيط', columns: 'أعمدة' };
 const STU_LINK_LABELS = { categories: 'الأقسام', bundles: 'البكجات', offers: 'العروض', orders: 'طلباتي', account: 'حسابي', cart: 'السلة' };
 const STU_SOCIAL_LABELS = { instagram: 'Instagram', facebook: 'Facebook', tiktok: 'TikTok', youtube: 'YouTube', snapchat: 'Snapchat', whatsapp: 'WhatsApp (wa.me)', telegram: 'Telegram (t.me)' };
 
@@ -207,7 +207,7 @@ function stuTouchBlocks() { stuBlocksTouched = true; }
 function stuBlockFieldsHtml(b, i) {
   const def = STU_R.BLOCK_DEFS[b.id], f = def.fields, L = STU_R.LIMITS;
   let h = '';
-  if (def.styles.length) h += '<label class="st-f">نمط العرض<select data-act="bstyle" data-i="' + i + '">' + def.styles.map(function (v) { return '<option value="' + v + '"' + (b.style === v ? ' selected' : '') + '>' + stuEsc(STU_STYLE_LABELS[v] || v) + '</option>'; }).join('') + '</select></label>';
+  if (f.indexOf('colsM') !== -1) h += stuBlockLayoutHtml(b, i); else if (def.styles.length) h += '<label class="st-f">نمط العرض<select data-act="bstyle" data-i="' + i + '">' + def.styles.map(function (v) { return '<option value="' + v + '"' + (b.style === v ? ' selected' : '') + '>' + stuEsc(STU_STYLE_LABELS[v] || v) + '</option>'; }).join('') + '</select></label>';
   if (f.indexOf('title') !== -1) h += '<label class="st-f">العنوان (اتركيه فارغاً للافتراضي)<input type="text" maxlength="' + L.title + '" data-act="btitle" data-i="' + i + '" value="' + stuEsc(b.title || '') + '"></label>';
   if (f.indexOf('subtitle') !== -1) h += '<label class="st-f">العنوان الفرعي<input type="text" maxlength="' + L.subtitle + '" data-act="bsub" data-i="' + i + '" value="' + stuEsc(b.subtitle || '') + '"></label>';
   if (f.indexOf('text') !== -1) h += '<label class="st-f">النص (حتى ' + L.text + ' حرفاً)<textarea rows="4" maxlength="' + L.text + '" data-act="btext" data-i="' + i + '">' + stuEsc(b.text || '') + '</textarea></label>';
@@ -288,6 +288,10 @@ function stuExtrasInput(e) {
   switch (act) {
     case 'bon': b.on = v; stuTouchBlocks(); rerender = true; break;
     case 'bstyle': b.style = v; stuTouchBlocks(); break;
+    case 'bcolsm': b.colsM = v; stuTouchBlocks(); break;
+    case 'bcolsd': b.colsD = v; stuTouchBlocks(); break;
+    case 'bgap': b.gap = v; stuTouchBlocks(); break;
+    case 'bratio': b.ratio = v; stuTouchBlocks(); break;
     case 'btitle': b.title = v; stuTouchBlocks(); break;
     case 'bsub': b.subtitle = v; stuTouchBlocks(); break;
     case 'btext': b.text = v; stuTouchBlocks(); break;
