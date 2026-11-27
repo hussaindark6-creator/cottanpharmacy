@@ -2051,7 +2051,11 @@ window.addEventListener('DOMContentLoaded', async () => {
   // ⚡ شاشة التحميل: لا حد أدنى للعرض بعد الآن. إن جاءت البيانات بسرعة (< 350ms) تُحذف الشاشة فوراً،
   // وإن تأخرت الشبكة تبقى حتى تكتمل البيانات فعلياً ثم تتلاشى بسرعة (فالزبون لا يرى الموقع قبل آخر تعديلات الأدمن).
   const loaderStartedAt = performance.now();
-  initFirestoreSync().finally(() => hideAppLoadingOverlay(performance.now() - loaderStartedAt < 350));
+  initFirestoreSync().finally(() => {
+    hideAppLoadingOverlay(performance.now() - loaderStartedAt < 350);
+    // شاشة التحميل الأولية (#dsLoader): تُكشف عند جاهزية المحتوى مع احترام الحد الأدنى SPLASH_MIN_MS من app-config.js
+    if (window.AppSplash) window.AppSplash.ready();
+  });
 
   window.addEventListener('hashchange', checkUrlHashForProduct);
 
