@@ -215,7 +215,12 @@ function stuTarget(ctx) {
 }
 
 function stuHeroClick(e) {
-  const el = e.target.closest('[data-h]'); if (!el || !el.closest('.stk')) return false;
+  const el = e.target.closest('[data-h]'); if (!el) return false;
+  if (el.getAttribute('data-h') === 'bsty') { // اختيار تخطيط عرض المنتجات لقسم (مكتبة مرئية)
+    const b = stuBlocks[+el.getAttribute('data-i')]; if (!b) return true;
+    b.style = el.getAttribute('data-v'); stuTouchBlocks(); stuRenderExtras(); return true;
+  }
+  if (!el.closest('.stk')) return false;
   const act = el.getAttribute('data-h'), i = +el.getAttribute('data-i'), v = el.getAttribute('data-v');
   if (['set', 'el', 'sl', 'cd'].indexOf(act) !== -1 && el.tagName !== 'BUTTON') return true; // يعالجها input/change
   const h = stuHeroCur();
@@ -332,4 +337,37 @@ function stuDraftRestore() {
   let d = null; try { d = localStorage.getItem('studio_draft_' + stuPid()); } catch (e) { return; }
   if (!d) return; stuApplySnap(d); stuHistNote();
   const b = document.getElementById('stuDraftBar'); if (b) b.remove();
+}
+
+// ================= عرض المنتجات لكل قسم: مكتبة مرئية للتخطيطات + أعمدة الجوال/الكمبيوتر + المسافة + نسبة الصورة =================
+const STU_LAYOUTS = [
+  ['grid', 'شبكة', 'بطاقات متساوية'], ['slider', 'شريط أفقي', 'يُسحب جانبياً'], ['list', 'قائمة', 'صورة بجانب التفاصيل'],
+  ['compact', 'مضغوط', 'بطاقات صغيرة كثيرة'], ['bento', 'Bento', 'بطاقة كبيرة وأخرى صغيرة'], ['masonry', 'Masonry', 'ارتفاعات متفاوتة'], ['showcase', 'بارز', 'منتج رئيسي ثم شبكة']
+];
+function stuLayoutThumb(m) {
+  const A = 'var(--accent,#0f6b3a)', G = '#cfd8d3', B = '#e7ecea';
+  const r = function (x, y, w, h, c) { return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="3" fill="' + (c || G) + '"/>'; };
+  let b = '';
+  switch (m) {
+    case 'grid': b = r(4, 4, 26, 30) + r(34, 4, 26, 30) + r(64, 4, 26, 30) + r(94, 4, 22, 30) + r(4, 38, 26, 26, B) + r(34, 38, 26, 26, B) + r(64, 38, 26, 26, B); break;
+    case 'slider': b = r(4, 8, 40, 48) + r(48, 8, 40, 48) + r(92, 8, 40, 48, B) + r(40, 62, 14, 4, A) + r(58, 62, 6, 4, G); break;
+    case 'list': b = r(4, 4, 112, 18, B) + r(8, 7, 18, 12) + r(30, 9, 40, 4, A) + r(4, 26, 112, 18, B) + r(8, 29, 18, 12) + r(30, 31, 40, 4, A) + r(4, 48, 112, 18, B) + r(8, 51, 18, 12) + r(30, 53, 40, 4, A); break;
+    case 'compact': b = [4, 28, 52, 76, 100].map(function (x) { return r(x, 4, 18, 20) + r(x, 28, 18, 20, B) + r(x, 52, 18, 14); }).join(''); break;
+    case 'bento': b = r(4, 4, 54, 62, A) + r(62, 4, 26, 30) + r(92, 4, 24, 30) + r(62, 38, 26, 28, B) + r(92, 38, 24, 28, B); break;
+    case 'masonry': b = r(4, 4, 36, 38) + r(4, 46, 36, 20, B) + r(44, 4, 36, 22, B) + r(44, 30, 36, 36) + r(84, 4, 32, 32) + r(84, 40, 32, 26, B); break;
+    case 'showcase': b = r(4, 4, 112, 28, A) + r(4, 36, 26, 30) + r(34, 36, 26, 30) + r(64, 36, 26, 30) + r(94, 36, 22, 30); break;
+  }
+  return '<svg viewBox="0 0 120 70" class="stk-thumb" aria-hidden="true">' + b + '</svg>';
+}
+function stuBlockLayoutHtml(b, i) {
+  const sel = function (act, val, opts) { return '<select data-act="' + act + '" data-i="' + i + '">' + opts.map(function (o) { return '<option value="' + o[0] + '"' + (String(val) === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>'; };
+  const f = function (label, inner) { return '<div class="stk-f"><span>' + label + '</span>' + inner + '</div>'; };
+  return '<div class="stk"><div class="stk-modes stk-lays">' + STU_LAYOUTS.map(function (m) {
+    return '<button type="button" class="stk-mode' + (b.style === m[0] ? ' on' : '') + '" data-h="bsty" data-i="' + i + '" data-v="' + m[0] + '">' + stuLayoutThumb(m[0]) + '<b>' + m[1] + '</b><small>' + m[2] + '</small></button>';
+  }).join('') + '</div><div class="stk-grid">' +
+    f('أعمدة الجوال', sel('bcolsm', b.colsM, [['0', 'تلقائي'], ['1', 'عمود'], ['2', 'عمودان'], ['3', '٣ أعمدة']])) +
+    f('أعمدة الكمبيوتر', sel('bcolsd', b.colsD, [['0', 'تلقائي'], ['2', '٢'], ['3', '٣'], ['4', '٤'], ['5', '٥'], ['6', '٦']])) +
+    f('المسافة بين البطاقات', sel('bgap', b.gap, [['auto', 'تلقائي'], ['s', 'ضيقة'], ['m', 'متوسطة'], ['l', 'واسعة']])) +
+    f('نسبة صورة المنتج', sel('bratio', b.ratio, [['auto', 'تلقائي'], ['square', 'مربعة'], ['portrait', 'طولية'], ['wide', 'عريضة']])) +
+    '</div></div>';
 }
