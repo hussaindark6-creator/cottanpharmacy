@@ -3984,7 +3984,9 @@ html[data-lk-header-tabs="on"] .ds-tabs { display: flex; gap: 2px; overflow-x: a
 .ds-tabs button:hover { color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
 
 /* ---- شاشة التحميل: ثانيتان كحد أقصى (تختفي بـCSS حتى لو تعطّل أي سكربت) ---- */
-#dsLoader { position: fixed; inset: 0; z-index: 99999; display: grid; place-items: center; background: var(--paper, var(--card, #fff)); animation: dslGone .4s ease 1.6s forwards; }
+#dsLoader { position: fixed; inset: 0; z-index: 99999; display: grid; place-items: center; background: var(--paper, var(--card, #fff)); animation: dslGone .4s ease var(--ds-splash-max, 12s) forwards; transition: opacity .4s ease, visibility 0s linear .4s; }
+/* ⏱ الكشف يتحكم به JS (app-config.js → AppSplash.ready) بعد جاهزية المحتوى وبعد الحد الأدنى SPLASH_MIN_MS؛ الأنيميشن أعلاه مجرد صمام أمان */
+html.ds-ready #dsLoader { opacity: 0; visibility: hidden; pointer-events: none; animation: none; }
 html[data-lk-loader="none"] #dsLoader { display: none; }
 @keyframes dslGone { to { opacity: 0; visibility: hidden; } }
 .dsl-box { position: relative; display: flex; flex-direction: column; align-items: center; gap: 18px; z-index: 2; }
@@ -3995,13 +3997,16 @@ html[data-lk-loader="none"] #dsLoader { display: none; }
 .dsl-ring, .dsl-curtain { display: none; }
 .dsl-ring { position: absolute; inset: -14px; border-radius: 34px; border: 3px solid transparent; border-top-color: var(--accent); border-inline-end-color: color-mix(in srgb, var(--accent) 35%, transparent); animation: dslSpin .9s linear infinite; }
 .dsl-bar { width: 170px; height: 5px; border-radius: 5px; background: color-mix(in srgb, var(--accent) 16%, transparent); overflow: hidden; }
-.dsl-bar::after { content: ''; display: block; height: 100%; width: 100%; transform-origin: right; transform: scaleX(0); background: var(--accent); border-radius: 5px; animation: dslBar 1.5s cubic-bezier(.3,.7,.3,1) forwards; }
+.dsl-bar::after { content: ''; display: block; height: 100%; width: 100%; transform-origin: right; transform: scaleX(0); background: var(--accent); border-radius: 5px; animation: dslBar var(--ds-splash-min, 3.5s) cubic-bezier(.2,.8,.25,1) forwards; }
 .dsl-dots { gap: 8px; }
 .dsl-dots i { width: 11px; height: 11px; border-radius: 50%; background: var(--accent); animation: dslBounce .8s ease-in-out infinite; }
 .dsl-dots i:nth-child(2) { animation-delay: .12s; } .dsl-dots i:nth-child(3) { animation-delay: .24s; }
 .dsl-curtain { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
-.dsl-curtain::before, .dsl-curtain::after { content: ''; position: absolute; top: 0; bottom: 0; width: 50%; background: var(--accent); animation: dslOpenA .7s cubic-bezier(.7,0,.2,1) 1s forwards; }
-.dsl-curtain::before { right: 0; } .dsl-curtain::after { left: 0; animation-name: dslOpenB; }
+.dsl-curtain::before, .dsl-curtain::after { content: ''; position: absolute; top: 0; bottom: 0; width: 50%; background: var(--accent); }
+.dsl-curtain::before { right: 0; } .dsl-curtain::after { left: 0; }
+html.ds-ready .dsl-curtain::before { animation: dslOpenA .7s cubic-bezier(.7,0,.2,1) forwards; }
+html.ds-ready .dsl-curtain::after { animation: dslOpenB .7s cubic-bezier(.7,0,.2,1) forwards; }
+html[data-lk-loader="curtain"].ds-ready #dsLoader { transition: opacity .01s linear .7s, visibility 0s linear .7s; }
 .dsl-name span { display: inline-block; opacity: 0; animation: dslIn .35s ease forwards; }
 html:not([data-lk-loader]) .dsl-logo, html[data-lk-loader="pulse"] .dsl-logo { animation: dslPulse 1s ease-in-out infinite; }
 html[data-lk-loader="ring"] .dsl-ring, html:not([data-lk-loader]) .dsl-none { display: none; }
@@ -4009,7 +4014,7 @@ html[data-lk-loader="ring"] .dsl-ring { display: block; }
 html[data-lk-loader="bar"] .dsl-bar { display: block; }
 html[data-lk-loader="dots"] .dsl-dots { display: flex; }
 html[data-lk-loader="curtain"] .dsl-curtain { display: block; }
-html[data-lk-loader="curtain"] .dsl-box { animation: dslFadeBox 1s ease forwards; }
+html[data-lk-loader="curtain"].ds-ready .dsl-box { animation: dslFadeBox .5s ease forwards; }
 @keyframes dslSpin { to { transform: rotate(360deg); } }
 @keyframes dslPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
 @keyframes dslBar { to { transform: scaleX(1); } }
@@ -4018,8 +4023,9 @@ html[data-lk-loader="curtain"] .dsl-box { animation: dslFadeBox 1s ease forwards
 @keyframes dslOpenA { to { transform: translateX(100%); } }
 @keyframes dslOpenB { to { transform: translateX(-100%); } }
 @keyframes dslFadeBox { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
-html[data-lk-motion="off"] #dsLoader, html[data-lk-motion="off"] #dsLoader * { animation-duration: .01s !important; animation-delay: 0s !important; }
-@media (prefers-reduced-motion: reduce) { #dsLoader { animation-delay: .5s; } #dsLoader * { animation: none !important; } }
+html[data-lk-motion="off"] #dsLoader *, html[data-lk-motion="off"] #dsLoader { animation-duration: .01s !important; }
+html[data-lk-motion="off"] #dsLoader { transition-duration: .01s; }
+@media (prefers-reduced-motion: reduce) { #dsLoader * { animation: none !important; } #dsLoader { transition-duration: .01s; } }
 
 /* ---- إبراز العنصر المتغيّر بالمعاينة الحية ---- */
 .ds-flash { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 12px; animation: dsFlash 1.4s ease-out; }
