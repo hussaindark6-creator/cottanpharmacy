@@ -23,6 +23,19 @@ t('لا مفاتيح زائدة تتسرب', Object.keys(R.normalizeHeroDesign({
 t('عناصر افتراضية لكل تكوين تمر من المنقّي', R.HERO_MODES.every(m => R.heroDefaultEls(m).every(e => e && R.HERO_EL_TYPES.includes(e.t))));
 t('الإعدادات القديمة (look/homeBlocks/copy) لم تتأثر', Object.keys(R.normalizeLook({})).length >= 50 && R.normalizeHomeBlocks([]).length === 12);
 
+// عرض المنتجات لكل قسم (الكتل)
+const bl = R.normalizeHomeBlocks([{ id: 'best-sellers', style: 'bento', colsM: '3', colsD: '6', gap: 'l', ratio: 'portrait' }, { id: 'new-arrivals', style: 'masonry', colsM: '9', colsD: 'x', gap: '<b>', ratio: 'evil' }, { id: 'offers', style: 'nope' }, { id: 'bundles', style: 'slider', colsM: '2' }]);
+const byId = id => bl.find(b => b.id === id);
+t('تخطيطات المنتجات الجديدة مقبولة وبقيمها', byId('best-sellers').style === 'bento' && byId('best-sellers').colsM === '3' && byId('best-sellers').colsD === '6' && byId('best-sellers').gap === 'l' && byId('best-sellers').ratio === 'portrait');
+t('قيم الأعمدة/المسافة/النسبة غير الصالحة ترجع للتلقائي', byId('new-arrivals').colsM === '0' && byId('new-arrivals').colsD === '0' && byId('new-arrivals').gap === 'auto' && byId('new-arrivals').ratio === 'auto');
+t('تخطيط غير معروف يرجع للشبكة (توافق خلفي)', byId('offers').style === 'grid');
+t('كتلة البكجات لا تتأثر بحقول المنتجات', byId('bundles').style === 'slider' && byId('bundles').colsM === undefined);
+t('كتل قديمة بلا حقول جديدة تأخذ القيم الافتراضية', R.normalizeHomeBlocks([{ id: 'best-sellers', style: 'slider' }])[0].colsM === '0' && R.normalizeHomeBlocks([])[5].gap === 'auto');
+const css = fs.readFileSync('section-layouts.css', 'utf8');
+t('section-layouts.css يغطي كل تخطيطات المنتجات', ['list', 'compact', 'bento', 'masonry', 'showcase'].every(n => css.includes('ds-lay-' + n)));
+t('index.html يربط section-layouts.css', /section-layouts\.css/.test(fs.readFileSync('index.html', 'utf8')));
+t('الشاشة الأولية: المدة من إعداد مركزي واحد 3500ms', /SPLASH_MIN_MS: 3500/.test(fs.readFileSync('app-config.js', 'utf8')) && !/3500/.test(fs.readFileSync('style.css', 'utf8')) && /app-config\.js/.test(fs.readFileSync('index.html', 'utf8')));
+
 // الووركر يطابق المصدر المشترك ويحفظ heroDesign
 const worker = fs.existsSync('/home/claude/final/worker.js') ? fs.readFileSync('/home/claude/final/worker.js', 'utf8') : '';
 if (worker) {
