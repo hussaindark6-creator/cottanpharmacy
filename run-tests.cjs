@@ -27,10 +27,10 @@ const SUPER_FILES = ['super-admin-core.js', 'super-admin-pharmacies.js', 'super-
 // ملفات الميزات الجديدة المستقلة (كل واحد بوظيفة واحدة): واجهة الزبون / لوحة الأدمن
 const STORE_EXTRA = ['delivery-zones.js', 'smart-search.js', 'stock-alerts.js', 'reorder.js'];
 const ADMIN_EXTRA = ['admin-order-tools.js', 'image-compress.js', 'admin-inventory-badges.js'];
-const CLASSIC = ['look-registry.js', 'design-system.js', 'admin-calm.js', 'admin-studio.js', 'admin-studio-hero.js', 'hero-design.js', 'script.js', 'storefront.js', 'storefront-stubs.js', 'admin-stubs.js', ...ADMIN_FILES, 'admin-page.js', ...SUPER_FILES, ...STORE_EXTRA, ...ADMIN_EXTRA];
+const CLASSIC = ['app-config.js', 'look-registry.js', 'design-system.js', 'admin-calm.js', 'admin-studio.js', 'admin-studio-hero.js', 'hero-design.js', 'script.js', 'storefront.js', 'storefront-stubs.js', 'admin-stubs.js', ...ADMIN_FILES, 'admin-page.js', ...SUPER_FILES, ...STORE_EXTRA, ...ADMIN_EXTRA];
 const adminText = () => ADMIN_FILES.map(f => read(f) || '').join('\n');
 const PAGES = {
-  'index.html': { loads: ['look-registry.js', 'admin-stubs.js', 'storefront.js', 'design-system.js', 'hero-design.js', 'script.js', ...STORE_EXTRA], lazy: ADMIN_FILES },
+  'index.html': { loads: ['app-config.js', 'look-registry.js', 'admin-stubs.js', 'storefront.js', 'design-system.js', 'hero-design.js', 'script.js', ...STORE_EXTRA], lazy: ADMIN_FILES },
   'admin.html': { loads: ['storefront-stubs.js', ...ADMIN_FILES, 'admin-page.js', ...ADMIN_EXTRA, 'admin-calm.js', 'look-registry.js', 'admin-studio.js', 'admin-studio-hero.js', 'script.js'], lazy: [] },
   'super-admin.html': { loads: SUPER_FILES, lazy: [], standalone: true },
 };
